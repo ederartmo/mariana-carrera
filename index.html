@@ -1,0 +1,375 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Kinetic Hub | Eventos y Carreras</title>
+    <meta
+      name="description"
+      content="Kinetic Hub es la plataforma para descubrir eventos deportivos, carreras y experiencias que te mueven."
+    />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Sora:wght@500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="page-glow page-glow-a"></div>
+    <div class="page-glow page-glow-b"></div>
+
+    <header class="site-header">
+      <div class="container nav-shell">
+        <a href="index.html" class="brand" aria-label="Ir al inicio de Kinetic Hub">
+          <img class="brand-mascot" src="ajolote.png" alt="Ajolote Kinetic Hub" />
+          <span class="brand-copy">
+            <strong>Kinetic Hub</strong>
+            <small>Run your next challenge</small>
+          </span>
+        </a>
+
+        <button class="menu-toggle" id="menuToggle" aria-expanded="false" aria-controls="siteNav">
+          Menú
+        </button>
+
+        <nav class="site-nav" id="siteNav" aria-label="Navegación principal">
+          <a href="eventos.html">Explorar eventos</a>
+          <a href="series.html">Series</a>
+          <a href="blog.html">Blog</a>
+          <a href="beneficios.html">Beneficios</a>
+          <a href="nosotros.html">Nosotros</a>
+          <a href="contacto.html">Contacto</a>
+        </nav>
+
+        <div class="nav-actions">
+          <a class="ghost-link" href="#future">Mi perfil (próximamente)</a>
+          <a class="btn btn-primary" href="eventos.html">Descubrir eventos</a>
+        </div>
+      </div>
+    </header>
+
+    <main>
+      <section class="hero">
+        <div class="container hero-grid">
+          <div class="hero-copy reveal">
+            <p class="eyebrow">Plataforma de eventos deportivos</p>
+            <h1>Encuentra tu próximo reto, inscríbete y vive el movimiento.</h1>
+            <p>
+              Kinetic Hub conecta carreras y experiencias deportivas con una navegación
+              simple, confiable y lista para crecer contigo.
+            </p>
+            <div class="hero-actions">
+              <a class="btn btn-primary" href="eventos.html">Buscar eventos</a>
+              <a class="btn btn-secondary" href="#proximos">Ver próximos eventos</a>
+            </div>
+          </div>
+
+          <form class="event-search reveal" id="homeSearch" action="eventos.html" method="get">
+            <h2>Buscador principal</h2>
+            <label>
+              Tipo de deporte
+              <select name="deporte">
+                <option value="">Todos</option>
+                <option value="running">Running</option>
+                <option value="trail">Trail</option>
+                <option value="ciclismo">Ciclismo</option>
+                <option value="triatlon">Triatlón</option>
+              </select>
+            </label>
+            <label>
+              Ciudad o ubicación
+              <select name="ciudad">
+                <option value="">Todas</option>
+                <option value="cdmx">CDMX</option>
+                <option value="guadalajara">Guadalajara</option>
+                <option value="queretaro">Querétaro</option>
+                <option value="monterrey">Monterrey</option>
+              </select>
+            </label>
+            <label>
+              Fecha
+              <input type="date" name="fecha" />
+            </label>
+            <label>
+              Categoría
+              <select name="categoria">
+                <option value="">Todas</option>
+                <option value="familiar">Familiar</option>
+                <option value="infantil">Infantil</option>
+                <option value="competitiva">Competitiva</option>
+                <option value="experiencia">Experiencia</option>
+              </select>
+            </label>
+            <button class="btn btn-primary" type="submit">Encontrar eventos</button>
+          </form>
+        </div>
+
+        <div class="container mascot-spotlight reveal">
+          <div class="mascot-copy">
+            <p class="eyebrow">Mascota oficial</p>
+            <h3>Ajolote Kinetic: energía, constancia y comunidad.</h3>
+            <p>
+              Este personaje acompaña la identidad de marca y se usará en campañas,
+              señalética y piezas de comunidad.
+            </p>
+          </div>
+          <img class="mascot-image" src="ajolote.png" alt="Mascota ajolote de Kinetic Hub" />
+        </div>
+      </section>
+
+      <section class="section" id="proximos">
+        <div class="container">
+          <div class="section-head">
+            <div>
+              <p class="eyebrow">Agenda activa</p>
+              <h2>Próximos eventos</h2>
+            </div>
+            <a class="inline-link" href="eventos.html">Ver calendario completo</a>
+          </div>
+
+          <div class="card-grid card-grid-4">
+            <article class="event-card reveal">
+              <div class="event-media media-run"></div>
+              <div class="event-body">
+                <h3>Urban Pulse 10K</h3>
+                <p>CDMX · 14 junio 2026</p>
+                <p class="meta">Distancias: 5K / 10K · Running</p>
+                <a class="btn btn-small" href="evento.html">Ver detalle</a>
+              </div>
+            </article>
+
+            <article class="event-card reveal">
+              <div class="event-media media-trail"></div>
+              <div class="event-body">
+                <h3>Trail Sierra Norte</h3>
+                <p>Puebla · 28 junio 2026</p>
+                <p class="meta">Distancias: 8K / 16K · Trail</p>
+                <a class="btn btn-small" href="evento.html">Ver detalle</a>
+              </div>
+            </article>
+
+            <article class="event-card reveal">
+              <div class="event-media media-cycle"></div>
+              <div class="event-body">
+                <h3>Kinetic Ride Tour</h3>
+                <p>Querétaro · 12 julio 2026</p>
+                <p class="meta">Ruta: 40K / 80K · Ciclismo</p>
+                <a class="btn btn-small" href="evento.html">Ver detalle</a>
+              </div>
+            </article>
+
+            <article class="event-card reveal">
+              <div class="event-media media-family"></div>
+              <div class="event-body">
+                <h3>Family Move Fest</h3>
+                <p>Monterrey · 20 julio 2026</p>
+                <p class="meta">Formato: Familiar · 3K recreativo</p>
+                <a class="btn btn-small" href="evento.html">Ver detalle</a>
+              </div>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <section class="section alt">
+        <div class="container">
+          <div class="section-head">
+            <div>
+              <p class="eyebrow">Experiencias destacadas</p>
+              <h2>Eventos que construyen comunidad</h2>
+            </div>
+          </div>
+
+          <div class="highlight-grid">
+            <article class="highlight-card highlight-a reveal">
+              <h3>Noche Kinetic 5K</h3>
+              <p>Carrera nocturna con música en vivo y zona recovery.</p>
+            </article>
+            <article class="highlight-card highlight-b reveal">
+              <h3>Campus Tri Experience</h3>
+              <p>Formato ideal para atletas amateur que buscan su primer triatlón.</p>
+            </article>
+            <article class="highlight-card highlight-c reveal">
+              <h3>Trail & Forest Camp</h3>
+              <p>Reto de montaña con mentoría, técnica y comunidad outdoor.</p>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <section class="section" id="series">
+        <div class="container">
+          <div class="section-head">
+            <div>
+              <p class="eyebrow">Navega por tipo</p>
+              <h2>Series y categorías</h2>
+            </div>
+            <a class="inline-link" href="series.html">Ver todas las series</a>
+          </div>
+
+          <div class="chip-grid">
+            <a href="series.html" class="chip">Running</a>
+            <a href="series.html" class="chip">Trail</a>
+            <a href="series.html" class="chip">Ciclismo</a>
+            <a href="series.html" class="chip">Triatlón</a>
+            <a href="series.html" class="chip">Familiar</a>
+            <a href="series.html" class="chip">Infantil</a>
+            <a href="series.html" class="chip">Experiencias especiales</a>
+          </div>
+        </div>
+      </section>
+
+      <section class="section alt">
+        <div class="container">
+          <div class="section-head">
+            <div>
+              <p class="eyebrow">¿Por qué Kinetic Hub?</p>
+              <h2>Todo en un mismo lugar para atletas y comunidades</h2>
+            </div>
+          </div>
+
+          <div class="benefit-grid">
+            <article class="benefit-card reveal">
+              <h3>Descubre más rápido</h3>
+              <p>Encuentra eventos por ubicación, fecha y categoría en segundos.</p>
+            </article>
+            <article class="benefit-card reveal">
+              <h3>Decide con claridad</h3>
+              <p>Compara distancias, costos, horarios y beneficios antes de registrarte.</p>
+            </article>
+            <article class="benefit-card reveal">
+              <h3>Escalable desde el día uno</h3>
+              <p>
+                Sitio diseñado para evolucionar a resultados, score e historial sin rehacer todo.
+              </p>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <section class="section" id="future">
+        <div class="container">
+          <div class="section-head">
+            <div>
+              <p class="eyebrow">Evolución de plataforma</p>
+              <h2>Próximamente en Kinetic Hub</h2>
+            </div>
+          </div>
+
+          <p class="notice">
+            Estas funciones pertenecen a la fase avanzada y no forman parte del MVP inicial.
+          </p>
+
+          <div class="future-grid">
+            <article class="future-card reveal"><span>Próximamente</span><h3>Mi perfil deportivo</h3></article>
+            <article class="future-card reveal"><span>Próximamente</span><h3>Resultados y tiempos</h3></article>
+            <article class="future-card reveal"><span>Próximamente</span><h3>Historial y progreso</h3></article>
+            <article class="future-card reveal"><span>Próximamente</span><h3>Score y ranking</h3></article>
+            <article class="future-card reveal"><span>Próximamente</span><h3>Retos y logros</h3></article>
+            <article class="future-card reveal"><span>Próximamente</span><h3>Membresías y beneficios</h3></article>
+          </div>
+        </div>
+      </section>
+
+      <section class="section alt">
+        <div class="container">
+          <div class="section-head">
+            <div>
+              <p class="eyebrow">Contenido y entrenamiento</p>
+              <h2>Blog y noticias</h2>
+            </div>
+            <a class="inline-link" href="blog.html">Ir al blog</a>
+          </div>
+
+          <div class="card-grid card-grid-3">
+            <article class="blog-card reveal">
+              <h3>Cómo preparar tu primer 10K sin lesionarte</h3>
+              <p>Entrenamiento base, volumen semanal y recuperación inteligente.</p>
+              <a class="inline-link" href="blog.html">Leer nota</a>
+            </article>
+            <article class="blog-card reveal">
+              <h3>Guía rápida de nutrición pre-carrera</h3>
+              <p>Qué comer 24h antes para llegar con energía estable y buena hidratación.</p>
+              <a class="inline-link" href="blog.html">Leer nota</a>
+            </article>
+            <article class="blog-card reveal">
+              <h3>Calendario 2026: carreras imperdibles en México</h3>
+              <p>Selección mensual de eventos para planear tu temporada completa.</p>
+              <a class="inline-link" href="blog.html">Leer nota</a>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <section class="section">
+        <div class="container final-cta reveal">
+          <div>
+            <p class="eyebrow">Comunidad Kinetic Hub</p>
+            <h2>Recibe novedades, aperturas y recomendaciones de eventos.</h2>
+          </div>
+          <form class="newsletter" action="#" method="post">
+            <label for="newsletterEmail" class="sr-only">Correo</label>
+            <input id="newsletterEmail" type="email" placeholder="Tu correo electrónico" required />
+            <button class="btn btn-primary" type="submit">Quiero novedades</button>
+          </form>
+        </div>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <div class="container footer-grid">
+        <div>
+          <a href="index.html" class="brand footer-brand" aria-label="Inicio Kinetic Hub">
+            <img class="brand-logo" src="Kinetic%20Logo.png" alt="Kinetic Hub" />
+            <span class="brand-copy">
+              <strong>Kinetic Hub</strong>
+              <small>Run your next challenge</small>
+            </span>
+          </a>
+          <p>Plataforma para descubrir carreras, eventos y experiencias deportivas.</p>
+        </div>
+
+        <div>
+          <h3>Navegación</h3>
+          <a href="eventos.html">Explorar eventos</a>
+          <a href="series.html">Series</a>
+          <a href="beneficios.html">Beneficios</a>
+          <a href="blog.html">Blog</a>
+        </div>
+
+        <div>
+          <h3>Comunidad</h3>
+          <a href="nosotros.html">Nosotros</a>
+          <a href="contacto.html">Contacto</a>
+          <a href="#future">Módulos futuros</a>
+          <a href="#">Instagram</a>
+        </div>
+
+        <div>
+          <h3>Newsletter</h3>
+          <p>Recibe lanzamientos, promociones y contenido semanal.</p>
+          <form class="footer-newsletter" action="#" method="post">
+            <label for="footerMail" class="sr-only">Correo</label>
+            <input id="footerMail" type="email" placeholder="Correo" required />
+            <button class="btn btn-small" type="submit">Suscribirme</button>
+          </form>
+        </div>
+      </div>
+
+      <div class="footer-bottom">
+        <div class="container footer-bottom-shell">
+          <small>© <span id="yearNow"></span> Kinetic Hub. Todos los derechos reservados.</small>
+          <div class="footer-links">
+            <a href="#">Privacidad</a>
+            <a href="#">Términos</a>
+            <a href="#">Cookies</a>
+          </div>
+        </div>
+      </div>
+    </footer>
+
+    <script src="script.js"></script>
+  </body>
+</html>
