@@ -1,0 +1,186 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Kinetic Hub | Contacto</title>
+    <meta
+      name="description"
+      content="Contacto Kinetic Hub para alianzas, organización de eventos y soporte comercial."
+    />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Sora:wght@500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body class="contact-page">
+    <header class="site-header">
+      <div class="container nav-shell">
+        <a href="index.html" class="brand" aria-label="Ir al inicio de Kinetic Hub">
+          <img class="brand-mascot" src="ajolote.png" alt="Ajolote Kinetic Hub" />
+          <span class="brand-copy">
+            <strong>Kinetic Hub</strong>
+            <small>Run your next challenge</small>
+          </span>
+        </a>
+
+        <button class="menu-toggle" id="menuToggle" aria-expanded="false" aria-controls="siteNav">
+          Menú
+        </button>
+
+        <nav class="site-nav" id="siteNav" aria-label="Navegación principal">
+          <a href="eventos.html">Explorar eventos</a>
+          <a href="series.html">Series</a>
+          <a href="blog.html">Blog</a>
+          <a href="beneficios.html">Beneficios</a>
+          <a href="nosotros.html">Nosotros</a>
+          <a href="contacto.html">Contacto</a>
+        </nav>
+
+        <div class="nav-actions">
+          <a class="btn btn-primary" href="eventos.html">Explorar eventos</a>
+        </div>
+      </div>
+    </header>
+
+    <main>
+      <section class="contact-hero">
+        <div class="container contact-hero-panel reveal">
+          <p class="eyebrow">Centro de soporte</p>
+          <h1>Contáctanos</h1>
+          <p>
+            Ponte en contacto con nosotros. Estamos listos para ayudarte con dudas,
+            procesos de inscripción y seguimiento de eventos.
+          </p>
+        </div>
+      </section>
+
+      <section class="contact-shell-section">
+        <div class="container">
+          <form class="contact-form-shell reveal" action="#" method="post" enctype="multipart/form-data">
+            <div class="contact-form-grid">
+              <label for="eventName">
+                Evento <span class="required-mark">*</span>
+              </label>
+              <select id="eventName" name="eventName" required>
+                <option value="">Selecciona tu evento</option>
+                <option value="urban-pulse">Urban Pulse 10K</option>
+                <option value="trail-sierra">Trail Sierra Norte</option>
+                <option value="night-run">Night Run Circuit</option>
+              </select>
+
+              <label for="contactReason">
+                Motivo de contacto <span class="required-mark">*</span>
+              </label>
+              <select id="contactReason" name="contactReason" required>
+                <option value="">Selecciona una opción</option>
+                <option value="inscripcion">Duda de inscripción</option>
+                <option value="pago">Aclaración de pago</option>
+                <option value="resultados">Soporte de resultados</option>
+                <option value="facturacion">Facturación</option>
+                <option value="otro">Otro</option>
+              </select>
+
+              <label for="fullName">
+                Nombre completo <span class="required-mark">*</span>
+              </label>
+              <input id="fullName" name="fullName" type="text" placeholder="Escribe tu nombre completo" required />
+
+              <div class="contact-row-two">
+                <div>
+                  <label for="email">
+                    Correo con el que te inscribiste <span class="required-mark">*</span>
+                  </label>
+                  <input id="email" name="email" type="email" placeholder="tu@correo.com" required />
+                </div>
+                <div>
+                  <label for="phone">
+                    Número de teléfono móvil <span class="required-mark">*</span>
+                  </label>
+                  <input id="phone" name="phone" type="tel" placeholder="55 0000 0000" required />
+                </div>
+              </div>
+
+              <label for="subject">
+                Asunto <span class="required-mark">*</span>
+              </label>
+              <input id="subject" name="subject" type="text" placeholder="Escribe el asunto de tu solicitud" required />
+
+              <label for="requestDetails">
+                Detalla tu solicitud <span class="required-mark">*</span>
+              </label>
+              <textarea
+                id="requestDetails"
+                name="requestDetails"
+                placeholder="Incluye toda la información posible para ayudarte más rápido"
+                required
+              ></textarea>
+
+              <label for="supportFile">Cargar un archivo</label>
+              <input id="supportFile" name="supportFile" type="file" />
+            </div>
+
+            <button class="btn btn-primary contact-submit" type="submit">Enviar</button>
+          </form>
+        </div>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <div class="container footer-grid">
+        <div>
+          <a href="index.html" class="brand footer-brand" aria-label="Inicio Kinetic Hub">
+            <img class="brand-logo" src="Kinetic%20Logo.png" alt="Kinetic Hub" />
+            <span class="brand-copy">
+              <strong>Kinetic Hub</strong>
+              <small>Run your next challenge</small>
+            </span>
+          </a>
+          <p>Plataforma para descubrir carreras, eventos y experiencias deportivas.</p>
+        </div>
+
+        <div>
+          <h3>Navegación</h3>
+          <a href="eventos.html">Explorar eventos</a>
+          <a href="series.html">Series</a>
+          <a href="beneficios.html">Beneficios</a>
+          <a href="blog.html">Blog</a>
+        </div>
+
+        <div>
+          <h3>Comunidad</h3>
+          <a href="nosotros.html">Nosotros</a>
+          <a href="contacto.html">Contacto</a>
+          <a href="index.html#future">Módulos futuros</a>
+          <a href="#">Instagram</a>
+        </div>
+
+        <div>
+          <h3>Newsletter</h3>
+          <p>Recibe lanzamientos, promociones y contenido semanal.</p>
+          <form class="footer-newsletter" action="#" method="post">
+            <label for="footerMail" class="sr-only">Correo</label>
+            <input id="footerMail" type="email" placeholder="Correo" required />
+            <button class="btn btn-small" type="submit">Suscribirme</button>
+          </form>
+        </div>
+      </div>
+
+      <div class="footer-bottom">
+        <div class="container footer-bottom-shell">
+          <small>© <span id="yearNow"></span> Kinetic Hub. Todos los derechos reservados.</small>
+          <div class="footer-links">
+            <a href="#">Privacidad</a>
+            <a href="#">Términos</a>
+            <a href="#">Cookies</a>
+          </div>
+        </div>
+      </div>
+    </footer>
+
+    <script src="script.js"></script>
+  </body>
+</html>

@@ -1,0 +1,155 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Kinetic Hub | Nosotros</title>
+    <meta
+      name="description"
+      content="Conoce la visión de Kinetic Hub: construir una plataforma deportiva clara, moderna y escalable."
+    />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Sora:wght@500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <header class="site-header">
+      <div class="container nav-shell">
+        <a href="index.html" class="brand" aria-label="Ir al inicio de Kinetic Hub">
+          <img class="brand-mascot" src="ajolote.png" alt="Ajolote Kinetic Hub" />
+          <span class="brand-copy">
+            <strong>Kinetic Hub</strong>
+            <small>Run your next challenge</small>
+          </span>
+        </a>
+
+        <button class="menu-toggle" id="menuToggle" aria-expanded="false" aria-controls="siteNav">
+          Menú
+        </button>
+
+        <nav class="site-nav" id="siteNav" aria-label="Navegación principal">
+          <a href="eventos.html">Explorar eventos</a>
+          <a href="series.html">Series</a>
+          <a href="blog.html">Blog</a>
+          <a href="beneficios.html">Beneficios</a>
+          <a href="nosotros.html">Nosotros</a>
+          <a href="contacto.html">Contacto</a>
+        </nav>
+
+        <div class="nav-actions">
+          <a class="btn btn-primary" href="contacto.html">Hablemos</a>
+        </div>
+      </div>
+    </header>
+
+    <main>
+      <section class="page-hero">
+        <div class="container">
+          <p class="eyebrow">Nuestra visión</p>
+          <h1>Somos Kinetic Hub</h1>
+          <p class="page-lead">
+            Una marca enfocada en conectar personas con experiencias deportivas memorables,
+            mediante una plataforma clara, elegante y lista para evolucionar.
+          </p>
+        </div>
+      </section>
+
+      <section class="section">
+        <div class="container benefit-grid">
+          <article class="benefit-card reveal">
+            <h3>Misión</h3>
+            <p>Facilitar el descubrimiento de eventos y mejorar la experiencia de cada atleta.</p>
+          </article>
+          <article class="benefit-card reveal">
+            <h3>Propuesta</h3>
+            <p>Combinar diseño limpio, contenido útil y estructura escalable de producto.</p>
+          </article>
+          <article class="benefit-card reveal">
+            <h3>Comunidad</h3>
+            <p>Impulsar una cultura activa para corredores recurrentes, amateur y familias.</p>
+          </article>
+        </div>
+      </section>
+
+      <section class="section alt">
+        <div class="container">
+          <div class="section-head">
+            <h2>Cómo trabajamos hoy</h2>
+          </div>
+          <div class="card-grid card-grid-3">
+            <article class="benefit-card reveal">
+              <h3>1. Curamos eventos</h3>
+              <p>Priorizamos claridad de datos y experiencia de usuario en cada ficha.</p>
+            </article>
+            <article class="benefit-card reveal">
+              <h3>2. Diseñamos para escalar</h3>
+              <p>El MVP está preparado para conectar resultados y perfiles en fase futura.</p>
+            </article>
+            <article class="benefit-card reveal">
+              <h3>3. Medimos y mejoramos</h3>
+              <p>Seguimos conversiones, interés por categorías y comportamiento del catálogo.</p>
+            </article>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <div class="container footer-grid">
+        <div>
+          <a href="index.html" class="brand footer-brand" aria-label="Inicio Kinetic Hub">
+            <img class="brand-logo" src="Kinetic%20Logo.png" alt="Kinetic Hub" />
+            <span class="brand-copy">
+              <strong>Kinetic Hub</strong>
+              <small>Run your next challenge</small>
+            </span>
+          </a>
+          <p>Plataforma para descubrir carreras, eventos y experiencias deportivas.</p>
+        </div>
+
+        <div>
+          <h3>Navegación</h3>
+          <a href="eventos.html">Explorar eventos</a>
+          <a href="series.html">Series</a>
+          <a href="beneficios.html">Beneficios</a>
+          <a href="blog.html">Blog</a>
+        </div>
+
+        <div>
+          <h3>Comunidad</h3>
+          <a href="nosotros.html">Nosotros</a>
+          <a href="contacto.html">Contacto</a>
+          <a href="index.html#future">Módulos futuros</a>
+          <a href="#">Instagram</a>
+        </div>
+
+        <div>
+          <h3>Newsletter</h3>
+          <p>Recibe lanzamientos, promociones y contenido semanal.</p>
+          <form class="footer-newsletter" action="#" method="post">
+            <label for="footerMail" class="sr-only">Correo</label>
+            <input id="footerMail" type="email" placeholder="Correo" required />
+            <button class="btn btn-small" type="submit">Suscribirme</button>
+          </form>
+        </div>
+      </div>
+
+      <div class="footer-bottom">
+        <div class="container footer-bottom-shell">
+          <small>© <span id="yearNow"></span> Kinetic Hub. Todos los derechos reservados.</small>
+          <div class="footer-links">
+            <a href="#">Privacidad</a>
+            <a href="#">Términos</a>
+            <a href="#">Cookies</a>
+          </div>
+        </div>
+      </div>
+    </footer>
+
+    <script src="script.js"></script>
+  </body>
+</html>

@@ -1,0 +1,221 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Kinetic Hub | Explorar eventos</title>
+    <meta
+      name="description"
+      content="Explora carreras y eventos deportivos por tipo, ciudad y categoría en Kinetic Hub."
+    />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Sora:wght@500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <header class="site-header">
+      <div class="container nav-shell">
+        <a href="index.html" class="brand" aria-label="Ir al inicio de Kinetic Hub">
+          <img class="brand-mascot" src="ajolote.png" alt="Ajolote Kinetic Hub" />
+          <span class="brand-copy">
+            <strong>Kinetic Hub</strong>
+            <small>Run your next challenge</small>
+          </span>
+        </a>
+
+        <button class="menu-toggle" id="menuToggle" aria-expanded="false" aria-controls="siteNav">
+          Menú
+        </button>
+
+        <nav class="site-nav" id="siteNav" aria-label="Navegación principal">
+          <a href="eventos.html">Explorar eventos</a>
+          <a href="series.html">Series</a>
+          <a href="blog.html">Blog</a>
+          <a href="beneficios.html">Beneficios</a>
+          <a href="nosotros.html">Nosotros</a>
+          <a href="contacto.html">Contacto</a>
+        </nav>
+
+        <div class="nav-actions">
+          <a class="ghost-link" href="index.html#future">Mi perfil (próximamente)</a>
+          <a class="btn btn-primary" href="evento.html">Evento destacado</a>
+        </div>
+      </div>
+    </header>
+
+    <main>
+      <section class="page-hero">
+        <div class="container">
+          <p class="eyebrow">Catálogo de eventos</p>
+          <h1>Explorar eventos</h1>
+          <p class="page-lead">
+            Descubre carreras y experiencias deportivas por deporte, ciudad y tipo de experiencia.
+          </p>
+
+          <form class="filter-bar" id="eventFilters">
+            <label class="filter-box" for="filterSport">
+              Deporte
+              <select id="filterSport" class="filter-select">
+                <option value="">Todos</option>
+                <option value="running">Running</option>
+                <option value="trail">Trail</option>
+                <option value="ciclismo">Ciclismo</option>
+                <option value="triatlon">Triatlón</option>
+              </select>
+            </label>
+
+            <label class="filter-box" for="filterCity">
+              Ciudad
+              <select id="filterCity" class="filter-select">
+                <option value="">Todas</option>
+                <option value="cdmx">CDMX</option>
+                <option value="queretaro">Querétaro</option>
+                <option value="monterrey">Monterrey</option>
+                <option value="guadalajara">Guadalajara</option>
+              </select>
+            </label>
+
+            <label class="filter-box" for="filterType">
+              Tipo
+              <select id="filterType" class="filter-select">
+                <option value="">Todos</option>
+                <option value="competitiva">Competitiva</option>
+                <option value="familiar">Familiar</option>
+                <option value="experiencia">Experiencia</option>
+              </select>
+            </label>
+
+            <div class="filter-box">
+              Estado
+              <span id="resultCount">0 eventos disponibles</span>
+            </div>
+          </form>
+        </div>
+      </section>
+
+      <section class="section">
+        <div class="container events-list">
+          <div class="card-grid card-grid-3">
+            <article class="event-card reveal" data-event-card data-sport="running" data-city="cdmx" data-type="competitiva">
+              <div class="event-media media-run"></div>
+              <div class="event-body">
+                <h3>Urban Pulse 10K</h3>
+                <p>CDMX · 14 junio 2026</p>
+                <p class="meta">Running competitivo · 5K / 10K</p>
+                <a class="btn btn-small" href="evento.html">Ver detalle</a>
+              </div>
+            </article>
+
+            <article class="event-card reveal" data-event-card data-sport="trail" data-city="queretaro" data-type="experiencia">
+              <div class="event-media media-trail"></div>
+              <div class="event-body">
+                <h3>Trail Sierra Norte</h3>
+                <p>Querétaro · 28 junio 2026</p>
+                <p class="meta">Trail experiencia · 8K / 16K</p>
+                <a class="btn btn-small" href="evento.html">Ver detalle</a>
+              </div>
+            </article>
+
+            <article class="event-card reveal" data-event-card data-sport="ciclismo" data-city="monterrey" data-type="competitiva">
+              <div class="event-media media-cycle"></div>
+              <div class="event-body">
+                <h3>Kinetic Ride Tour</h3>
+                <p>Monterrey · 12 julio 2026</p>
+                <p class="meta">Ciclismo ruta · 40K / 80K</p>
+                <a class="btn btn-small" href="evento.html">Ver detalle</a>
+              </div>
+            </article>
+
+            <article class="event-card reveal" data-event-card data-sport="running" data-city="guadalajara" data-type="familiar">
+              <div class="event-media media-family"></div>
+              <div class="event-body">
+                <h3>Family Move Fest</h3>
+                <p>Guadalajara · 20 julio 2026</p>
+                <p class="meta">Familiar recreativo · 3K</p>
+                <a class="btn btn-small" href="evento.html">Ver detalle</a>
+              </div>
+            </article>
+
+            <article class="event-card reveal" data-event-card data-sport="triatlon" data-city="cdmx" data-type="experiencia">
+              <div class="event-media media-tri"></div>
+              <div class="event-body">
+                <h3>Tri Experience City</h3>
+                <p>CDMX · 19 julio 2026</p>
+                <p class="meta">Triatlón amateur · Sprint</p>
+                <a class="btn btn-small" href="evento.html">Ver detalle</a>
+              </div>
+            </article>
+
+            <article class="event-card reveal" data-event-card data-sport="running" data-city="cdmx" data-type="experiencia">
+              <div class="event-media media-night"></div>
+              <div class="event-body">
+                <h3>Night Run Circuit</h3>
+                <p>CDMX · 5 julio 2026</p>
+                <p class="meta">Running nocturno · 5K</p>
+                <a class="btn btn-small" href="evento.html">Ver detalle</a>
+              </div>
+            </article>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <div class="container footer-grid">
+        <div>
+          <a href="index.html" class="brand footer-brand" aria-label="Inicio Kinetic Hub">
+            <img class="brand-logo" src="Kinetic%20Logo.png" alt="Kinetic Hub" />
+            <span class="brand-copy">
+              <strong>Kinetic Hub</strong>
+              <small>Run your next challenge</small>
+            </span>
+          </a>
+          <p>Plataforma para descubrir carreras, eventos y experiencias deportivas.</p>
+        </div>
+
+        <div>
+          <h3>Navegación</h3>
+          <a href="eventos.html">Explorar eventos</a>
+          <a href="series.html">Series</a>
+          <a href="beneficios.html">Beneficios</a>
+          <a href="blog.html">Blog</a>
+        </div>
+
+        <div>
+          <h3>Comunidad</h3>
+          <a href="nosotros.html">Nosotros</a>
+          <a href="contacto.html">Contacto</a>
+          <a href="index.html#future">Módulos futuros</a>
+          <a href="#">Instagram</a>
+        </div>
+
+        <div>
+          <h3>Newsletter</h3>
+          <p>Recibe lanzamientos, promociones y contenido semanal.</p>
+          <form class="footer-newsletter" action="#" method="post">
+            <label for="footerMail" class="sr-only">Correo</label>
+            <input id="footerMail" type="email" placeholder="Correo" required />
+            <button class="btn btn-small" type="submit">Suscribirme</button>
+          </form>
+        </div>
+      </div>
+
+      <div class="footer-bottom">
+        <div class="container footer-bottom-shell">
+          <small>© <span id="yearNow"></span> Kinetic Hub. Todos los derechos reservados.</small>
+          <div class="footer-links">
+            <a href="#">Privacidad</a>
+            <a href="#">Términos</a>
+            <a href="#">Cookies</a>
+          </div>
+        </div>
+      </div>
+    </footer>
+
+    <script src="script.js"></script>
+  </body>
+</html>
