@@ -75,7 +75,142 @@ function setupEventFilters() {
   applyFilters();
 }
 
+function setupHeroPosterSizing() {
+  const heroGrid = document.querySelector(".hero-grid");
+  if (!heroGrid) return;
+
+  const leftContent = heroGrid.querySelector(".hero-copy");
+  const poster = heroGrid.querySelector(".event-poster");
+  if (!leftContent || !poster) return;
+
+  const applySize = () => {
+    if (window.matchMedia("(max-width: 1100px)").matches) {
+      poster.style.removeProperty("--hero-max-h");
+      return;
+    }
+
+    const leftHeight = Math.floor(leftContent.getBoundingClientRect().height);
+    if (leftHeight > 0) {
+      poster.style.setProperty("--hero-max-h", `${leftHeight}px`);
+    }
+  };
+
+  const resizeObserver = new ResizeObserver(() => applySize());
+  resizeObserver.observe(leftContent);
+
+  window.addEventListener("resize", applySize);
+  applySize();
+}
+
+function setupRegisterScrollLed() {
+  const heroTarget = document.getElementById("registro");
+  const formTarget = document.getElementById("raceRegisterBar");
+  if (!heroTarget || !formTarget) return;
+
+  let indicatorTimeout;
+  const normalizeText = (text) =>
+    text
+      .toLowerCase()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .trim();
+
+  const triggerFormIndicator = () => {
+    formTarget.classList.remove("form-focus-indicator");
+    void formTarget.offsetWidth;
+    formTarget.classList.add("form-focus-indicator");
+
+    if (indicatorTimeout) {
+      clearTimeout(indicatorTimeout);
+    }
+    indicatorTimeout = setTimeout(() => {
+      formTarget.classList.remove("form-focus-indicator");
+    }, 2200);
+  };
+
+  const isRegisterAction = (node) => {
+    const label = normalizeText(node.textContent || "");
+    return label === "registrarse" || label === "registrate" || label === "regitrate";
+  };
+
+  const candidates = document.querySelectorAll("a, button");
+  candidates.forEach((node) => {
+    if (!isRegisterAction(node)) return;
+
+    node.addEventListener("click", (event) => {
+      event.preventDefault();
+      heroTarget.scrollIntoView({ behavior: "smooth", block: "start" });
+      setTimeout(triggerFormIndicator, 480);
+    });
+  });
+}
+
+function setupEventModals() {
+  const overlays = Array.from(document.querySelectorAll(".modal-overlay"));
+  if (!overlays.length) return;
+
+  const openModal = (id) => {
+    const modal = document.getElementById(id);
+    if (!modal) return;
+    modal.hidden = false;
+    modal.style.display = "grid";
+    document.body.style.overflow = "hidden";
+  };
+
+  const closeModal = (modal) => {
+    modal.hidden = true;
+    modal.style.display = "none";
+    if (overlays.every((item) => item.hidden)) {
+      document.body.style.overflow = "";
+    }
+  };
+
+  const closeAll = () => {
+    overlays.forEach((modal) => {
+      modal.hidden = true;
+      modal.style.display = "none";
+    });
+    document.body.style.overflow = "";
+  };
+
+  document.addEventListener("click", (event) => {
+    const openTrigger = event.target.closest("[data-modal-open]");
+    if (openTrigger) {
+      const targetId = openTrigger.getAttribute("data-modal-open");
+      if (targetId) {
+        event.preventDefault();
+        openModal(targetId);
+      }
+      return;
+    }
+
+    const closeTrigger = event.target.closest("[data-modal-close]");
+    if (closeTrigger) {
+      const overlay = closeTrigger.closest(".modal-overlay");
+      if (overlay) {
+        event.preventDefault();
+        closeModal(overlay);
+      }
+      return;
+    }
+
+    const overlay = event.target.closest(".modal-overlay");
+    if (overlay && event.target === overlay) {
+      closeModal(overlay);
+    }
+  });
+
+  document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape") {
+      closeAll();
+    }
+  });
+}
+
 setupMenuToggle();
 setupRevealOnScroll();
 setupCurrentYear();
 setupEventFilters();
+setupHeroPosterSizing();
+setupRegisterScrollLed();
+setupEventModals();
