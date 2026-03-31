@@ -15,6 +15,7 @@
       rel="stylesheet"
     />
     <link rel="stylesheet" href="styles.css" />
+      <link rel="icon" type="image/png" href="icon.png" />
   </head>
   <body>
     <div class="page-glow page-glow-a"></div>
@@ -23,7 +24,7 @@
     <header class="site-header">
       <div class="container nav-shell">
         <a href="index.html" class="brand" aria-label="Ir al inicio de Kinetic Hub">
-          <img class="brand-mascot" src="ajolote.png" alt="Ajolote Kinetic Hub" />
+          <img class="brand-mascot" src="logo.png" alt="Ajolote Kinetic Hub" />
           <span class="brand-copy">
             <strong>Kinetic Hub</strong>
             <small>Run your next challenge</small>
@@ -44,80 +45,169 @@
         </nav>
 
         <div class="nav-actions">
-          <a class="ghost-link" href="#future">Mi perfil (próximamente)</a>
-          <a class="btn btn-primary" href="eventos.html">Descubrir eventos</a>
+          <a class="ghost-link" href="#future">Mi Perfil (Iniciar Sesión)</a>
+          <a class="btn btn-primary" href="index.html#raceRegisterBar">Registrarse</a>
         </div>
       </div>
     </header>
 
     <main>
-      <section class="hero">
-        <div class="container hero-grid">
-          <div class="hero-copy reveal">
-            <p class="eyebrow">Plataforma de eventos deportivos</p>
-            <h1>Encuentra tu próximo reto, inscríbete y vive el movimiento.</h1>
-            <p>
-              Kinetic Hub conecta carreras y experiencias deportivas con una navegación
-              simple, confiable y lista para crecer contigo.
+      <section class="hero hero-sport" id="registro">
+        <div class="container hero-banner-shell reveal">
+          <h1 class="hero-banner-title">Regístrate a la siguiente carrera</h1>
+
+          <form class="race-register-bar" id="raceRegisterBar" action="#" method="post">
+            <div class="race-meta" data-race-block>
+              <strong>Axolote Night Run</strong>
+              <small>el 31 de octubre 8hrs</small>
+            </div>
+
+            <span class="race-divider" aria-hidden="true"></span>
+
+            <label class="sr-only" for="heroRunnerName">Nombre</label>
+            <input
+              class="race-bar-input"
+              id="heroRunnerName"
+              name="heroRunnerName"
+              type="text"
+              placeholder="Escribe Tu Nombre"
+              required
+            />
+
+            <span class="race-divider" aria-hidden="true"></span>
+
+            <label class="sr-only" for="heroRunnerEmail">Correo</label>
+            <input
+              class="race-bar-input"
+              id="heroRunnerEmail"
+              name="heroRunnerEmail"
+              type="email"
+              placeholder="Correo"
+              required
+            />
+
+            <span class="race-divider" aria-hidden="true"></span>
+
+            <button class="race-register-cta" type="submit">Registrarse</button>
+
+            <span class="race-or-separator" aria-hidden="true">ó</span>
+
+            <button class="race-google-btn" type="button" aria-label="Continuar con Google">
+              <img src="G.png" alt="Google" />
+            </button>
+          </form>
+        </div>
+      </section>
+
+      <section class="neon-event-section">
+        <div class="neon-event-container">
+          <div class="neon-header">
+            <p class="neon-kicker">AXOLOTE NIGHT RUN</p>
+            <h2>Datos clave del evento</h2>
+            <p class="neon-subtitle">
+              Toda la información importante de la carrera en un formato claro, visual y editable.
             </p>
-            <div class="hero-actions">
-              <a class="btn btn-primary" href="eventos.html">Buscar eventos</a>
-              <a class="btn btn-secondary" href="#proximos">Ver próximos eventos</a>
+          </div>
+
+          <div class="neon-grid">
+            <div class="neon-card">
+              <span class="neon-label">Fecha</span>
+              <h3>31 OCT 2026</h3>
+            </div>
+
+            <div class="neon-card">
+              <span class="neon-label">Ubicación</span>
+              <h3>Pista de Canotaje, CDMX</h3>
+              <button class="neon-inline-action" type="button" data-modal-open="mapModal">
+                Ver mapa
+              </button>
             </div>
           </div>
 
-          <form class="event-search reveal" id="homeSearch" action="eventos.html" method="get">
-            <h2>Buscador principal</h2>
-            <label>
-              Tipo de deporte
-              <select name="deporte">
-                <option value="">Todos</option>
-                <option value="running">Running</option>
-                <option value="trail">Trail</option>
-                <option value="ciclismo">Ciclismo</option>
-                <option value="triatlon">Triatlón</option>
-              </select>
-            </label>
-            <label>
-              Ciudad o ubicación
-              <select name="ciudad">
-                <option value="">Todas</option>
-                <option value="cdmx">CDMX</option>
-                <option value="guadalajara">Guadalajara</option>
-                <option value="queretaro">Querétaro</option>
-                <option value="monterrey">Monterrey</option>
-              </select>
-            </label>
-            <label>
-              Fecha
-              <input type="date" name="fecha" />
-            </label>
-            <label>
-              Categoría
-              <select name="categoria">
-                <option value="">Todas</option>
-                <option value="familiar">Familiar</option>
-                <option value="infantil">Infantil</option>
-                <option value="competitiva">Competitiva</option>
-                <option value="experiencia">Experiencia</option>
-              </select>
-            </label>
-            <button class="btn btn-primary" type="submit">Encontrar eventos</button>
-          </form>
-        </div>
-
-        <div class="container mascot-spotlight reveal">
-          <div class="mascot-copy">
-            <p class="eyebrow">Mascota oficial</p>
-            <h3>Ajolote Kinetic: energía, constancia y comunidad.</h3>
-            <p>
-              Este personaje acompaña la identidad de marca y se usará en campañas,
-              señalética y piezas de comunidad.
-            </p>
+          <div class="neon-section-title">
+            <h3>Horarios del evento</h3>
           </div>
-          <img class="mascot-image" src="ajolote.png" alt="Mascota ajolote de Kinetic Hub" />
+
+          <div class="neon-grid">
+            <div class="neon-card">
+              <span class="neon-label">Entrega de kits</span>
+              <h3>16:00 - 17:30 H.</h3>
+            </div>
+
+            <div class="neon-card">
+              <span class="neon-label">Arranque carrera</span>
+              <h3>18:00 H.</h3>
+            </div>
+          </div>
+
+          <div class="neon-category">
+            <span>Distancias disponibles</span>
+            <strong>3K y 5K</strong>
+            <p class="neon-note">Costo de inscripción: $600 MXN · Incluye 1 playera y 1 medalla.</p>
+          </div>
+
+          <div class="neon-legal">
+            <div class="neon-legal-layout">
+              <div class="neon-legal-content">
+                <h4>Políticas de inscripción y cancelación (Aviso legal)</h4>
+                <ol>
+                  <li>Inscripción individual e intransferible.</li>
+                  <li>No reembolsable por cancelación del participante.</li>
+                  <li>
+                    En caso de fuerza mayor, la organización se reserva el derecho de reprogramar o
+                    entregar el kit.
+                  </li>
+                  <li>
+                    Uso de luz frontal obligatorio para Night Run y firma de exoneración al recoger el
+                    kit.
+                  </li>
+                </ol>
+                <button class="neon-inline-action" type="button" data-modal-open="legalModal">
+                  Leer más
+                </button>
+              </div>
+
+              <div class="neon-legal-media">
+                <img src="ajolote1.png" alt="Ajolote oficial del evento" />
+              </div>
+            </div>
+          </div>
+
+          <div class="neon-cta-wrap">
+            <a href="#registro" class="neon-cta">Regístrate</a>
+          </div>
         </div>
       </section>
+
+      <div class="modal-overlay" id="mapModal" hidden>
+        <div class="modal-dialog" role="dialog" aria-modal="true" aria-labelledby="mapModalTitle">
+          <button class="modal-close" type="button" aria-label="Cerrar" data-modal-close>&times;</button>
+          <h3 id="mapModalTitle">Ubicación del evento</h3>
+          <p>Pista de Canotaje Virgilio Uribe, CDMX</p>
+          <div class="modal-map-wrap">
+            <iframe
+              title="Mapa de ubicación del evento"
+              loading="lazy"
+              referrerpolicy="no-referrer-when-downgrade"
+              src="https://www.google.com/maps?q=Pista%20de%20Canotaje%20Virgilio%20Uribe%20CDMX&output=embed"
+            ></iframe>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-overlay" id="legalModal" hidden>
+        <div class="modal-dialog modal-dialog-gallery" role="dialog" aria-modal="true" aria-labelledby="legalModalTitle">
+          <button class="modal-close" type="button" aria-label="Cerrar" data-modal-close>&times;</button>
+          <h3 id="legalModalTitle">Información legal extendida</h3>
+          <div class="modal-gallery">
+            <img src="exo.jpeg" alt="Documento legal del evento, página 1" />
+            <img src="exo1.jpeg" alt="Documento legal del evento, página 2" />
+          </div>
+          <div class="modal-actions">
+            <button class="modal-close-secondary" type="button" data-modal-close>Cerrar</button>
+          </div>
+        </div>
+      </div>
 
       <section class="section" id="proximos">
         <div class="container">
@@ -322,13 +412,9 @@
       <div class="container footer-grid">
         <div>
           <a href="index.html" class="brand footer-brand" aria-label="Inicio Kinetic Hub">
-            <img class="brand-logo" src="Kinetic%20Logo.png" alt="Kinetic Hub" />
-            <span class="brand-copy">
-              <strong>Kinetic Hub</strong>
-              <small>Run your next challenge</small>
-            </span>
+            <img class="brand-logo" src="KineticHUB.png" alt="Kinetic Hub" />
+            
           </a>
-          <p>Plataforma para descubrir carreras, eventos y experiencias deportivas.</p>
         </div>
 
         <div>
@@ -344,7 +430,9 @@
           <a href="nosotros.html">Nosotros</a>
           <a href="contacto.html">Contacto</a>
           <a href="#future">Módulos futuros</a>
-          <a href="#">Instagram</a>
+          <a href="https://www.instagram.com/kinetic.hub" target="_blank" rel="noopener noreferrer">Instagram</a>
+          <a href="https://www.facebook.com/profile.php?id=100065314880446&mibextid=wwXIfr&rdid=KDtMnE3lJn9aQZkB&share_url=https%3A%2F%2Fwww.facebook.com%2Fshare%2F18ER76xC2i%2F%3Fmibextid%3DwwXIfr#" target="_blank" rel="noopener noreferrer">Facebook</a>
+          <a href="https://x.com/kinetichubmx?s=21" target="_blank" rel="noopener noreferrer">X (Twitter)</a>
         </div>
 
         <div>
