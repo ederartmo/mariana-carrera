@@ -2272,7 +2272,7 @@ body.theme-light .hero-white-bridge {
 
 .auth-page .site-header::before {
   height: 46px;
-  background: linear-gradient(90deg, #ff7a00, #ff6a00 60%, #d95f00);
+  background: linear-gradient(90deg, #0dc785, #0aa86e 60%, #088f5c);
   opacity: 1;
   animation: none;
 }
@@ -2312,9 +2312,9 @@ body.theme-light .hero-white-bridge {
 }
 
 .auth-tab.is-active {
-  border-color: #ff7a00;
-  background: rgba(255, 122, 0, 0.12);
-  color: #ae4e00;
+  border-color: #0dc785;
+  background: rgba(13, 199, 133, 0.12);
+  color: #076e47;
 }
 
 .auth-panel {
@@ -2388,7 +2388,7 @@ body.theme-light .hero-white-bridge {
 
 .auth-password-toggle {
   width: 44px;
-  border: 1px solid #ff7a00;
+  border: 1px solid #0dc785;
   background: #ffffff;
   color: #1f2937;
   cursor: pointer;
@@ -2455,8 +2455,8 @@ body.theme-light .hero-white-bridge {
   min-height: 44px;
   border: 0;
   border-radius: 4px;
-  background: linear-gradient(130deg, #ff7a00, #ff6700);
-  color: #ffffff;
+  background: linear-gradient(130deg, #0dc785, #0da56f);
+  color: #04110d;
   font-size: 1rem;
   font-weight: 800;
   cursor: pointer;
@@ -2493,7 +2493,7 @@ body.theme-light .hero-white-bridge {
 .auth-link-btn {
   border: 0;
   background: transparent;
-  color: #ff6800;
+  color: #0a9e6a;
   font-weight: 800;
   cursor: pointer;
 }
