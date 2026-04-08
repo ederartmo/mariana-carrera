@@ -401,7 +401,7 @@ img {
     url("banner.png"),
     url("banner foto.png");
   background-size: cover;
-  background-position: center 52%;
+  background-position: center 12%;
   border-bottom: 3px solid rgba(52, 74, 69, 0.55);
 }
 
@@ -2474,7 +2474,7 @@ img {
   }
 
   .hero-sport {
-    background-position: center 58%;
+    background-position: center 8%;
   }
 
   .event-spotlight-card {
