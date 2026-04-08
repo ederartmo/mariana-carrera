@@ -459,6 +459,11 @@ img {
 }
 
 .hero-white-bridge {
+  display: none;
+}
+
+body.theme-light .hero-white-bridge {
+  display: block;
   min-height: 138px;
   background: linear-gradient(180deg, #f8fafc 0%, #f0f3f8 100%);
 }
@@ -2330,7 +2335,7 @@ img {
     font-size: 1.45rem;
   }
 
-  .hero-white-bridge {
+  body.theme-light .hero-white-bridge {
     min-height: 120px;
   }
 
@@ -2531,7 +2536,7 @@ img {
     min-height: 46px;
   }
 
-  .hero-white-bridge {
+  body.theme-light .hero-white-bridge {
     min-height: 90px;
   }
 
