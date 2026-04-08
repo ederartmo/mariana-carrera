@@ -272,7 +272,7 @@ function setupAuthPage() {
 
   const tabs = Array.from(document.querySelectorAll("[data-auth-tab]"));
   const panels = Array.from(document.querySelectorAll("[data-auth-panel]"));
-  if (!tabs.length || !panels.length) return;
+  if (!panels.length) return;
 
   const activateMode = (mode) => {
     tabs.forEach((tab) => {
@@ -507,6 +507,49 @@ function setupWhatsAppButton() {
   document.body.appendChild(wrapper);
 }
 
+function setupProfilePage() {
+  if (!document.querySelector("[data-profile-page]")) return;
+
+  // Cover photo preview
+  const coverUpload = document.getElementById("coverUpload");
+  const profileCover = document.getElementById("profileCover");
+  if (coverUpload && profileCover) {
+    coverUpload.addEventListener("change", (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+      profileCover.style.backgroundImage = `url("${URL.createObjectURL(file)}")`;
+    });
+  }
+
+  // Avatar photo preview
+  const avatarUpload = document.getElementById("avatarUpload");
+  const avatarInner = document.getElementById("profileAvatarInner");
+  if (avatarUpload && avatarInner) {
+    avatarUpload.addEventListener("change", (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+      const url = URL.createObjectURL(file);
+      avatarInner.style.backgroundImage = `url("${url}")`;
+      avatarInner.style.backgroundSize = "cover";
+      avatarInner.style.backgroundPosition = "center";
+      avatarInner.innerHTML = "";
+    });
+  }
+
+  // Sidebar section switching
+  const navItems = Array.from(document.querySelectorAll(".profile-nav-item[data-section]"));
+  const panels = Array.from(document.querySelectorAll(".profile-panel[data-section]"));
+
+  navItems.forEach((item) => {
+    item.addEventListener("click", (e) => {
+      e.preventDefault();
+      const section = item.getAttribute("data-section");
+      navItems.forEach((n) => n.classList.toggle("is-active", n === item));
+      panels.forEach((p) => p.classList.toggle("is-active", p.getAttribute("data-section") === section));
+    });
+  });
+}
+
 setupMenuToggle();
 setupActiveNavLink();
 setupHeaderScrollState();
@@ -520,3 +563,4 @@ setupEventModals();
 setupNeonCardGlow();
 setupWhatsAppButton();
 setupAuthPage();
+setupProfilePage();
