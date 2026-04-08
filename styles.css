@@ -19,6 +19,7 @@
   --brand-green: #00d084;
   --brand-green-bright: #00ff9c;
   --brand-dark: #080f15;
+  --sticky-banner-offset: 90px;
 }
 
 * {
@@ -589,6 +590,116 @@ img {
   box-shadow:
     0 18px 34px rgba(0, 208, 132, 0.44),
     0 0 30px rgba(0, 255, 156, 0.34);
+}
+
+.event-sticky-banner {
+  position: fixed;
+  top: var(--sticky-banner-offset);
+  left: 50%;
+  width: min(1150px, 92vw);
+  z-index: 22;
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transform: translate(-50%, -12px);
+  transition: opacity 260ms ease, transform 260ms ease, visibility 260ms ease;
+}
+
+.event-sticky-banner.is-visible {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+  transform: translate(-50%, 0);
+}
+
+.event-sticky-inner {
+  min-height: 62px;
+  border-radius: 14px;
+  padding: 10px 12px;
+  display: grid;
+  grid-template-columns: 52px minmax(260px, 1fr) auto auto;
+  gap: 12px;
+  align-items: center;
+  background: linear-gradient(140deg, rgba(9, 14, 22, 0.94), rgba(12, 20, 31, 0.9));
+  border: 1px solid rgba(0, 208, 132, 0.26);
+  box-shadow:
+    0 16px 28px rgba(3, 8, 14, 0.42),
+    0 0 0 1px rgba(255, 255, 255, 0.04) inset,
+    0 0 18px rgba(0, 255, 156, 0.12);
+  backdrop-filter: blur(8px);
+}
+
+.event-sticky-thumb {
+  width: 52px;
+  height: 52px;
+  border-radius: 10px;
+  border: 1px solid rgba(0, 255, 156, 0.32);
+  background:
+    linear-gradient(160deg, rgba(0, 255, 156, 0.2), rgba(8, 18, 26, 0.34)),
+    url("banner foto.png");
+  background-size: cover;
+  background-position: center;
+}
+
+.event-sticky-main {
+  min-width: 0;
+}
+
+.event-sticky-name {
+  margin: 0;
+  font-size: 0.96rem;
+  font-weight: 750;
+  color: #f4f9ff;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.event-sticky-distance,
+.event-sticky-meta {
+  margin: 2px 0 0;
+  color: #b3c8de;
+  font-size: 0.8rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.event-sticky-distance {
+  color: #caf7e3;
+  font-weight: 650;
+}
+
+.event-sticky-price {
+  margin: 0;
+  color: #f2fbff;
+  font-size: 0.92rem;
+  font-weight: 760;
+  white-space: nowrap;
+}
+
+.event-sticky-cta {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 42px;
+  border-radius: 11px;
+  padding: 0 16px;
+  background: linear-gradient(130deg, var(--brand-green-bright), var(--brand-green));
+  color: #04110d;
+  text-decoration: none;
+  font-size: 0.9rem;
+  font-weight: 800;
+  white-space: nowrap;
+  box-shadow:
+    0 10px 20px rgba(0, 208, 132, 0.34),
+    0 0 16px rgba(0, 255, 156, 0.2);
+}
+
+.event-sticky-cta:hover {
+  box-shadow:
+    0 14px 28px rgba(0, 208, 132, 0.4),
+    0 0 24px rgba(0, 255, 156, 0.28);
 }
 
 .race-register-bar {
@@ -2098,6 +2209,15 @@ img {
     font-size: 1.45rem;
   }
 
+  .event-sticky-inner {
+    grid-template-columns: 48px minmax(220px, 1fr) auto auto;
+    gap: 10px;
+  }
+
+  .event-sticky-price {
+    font-size: 0.86rem;
+  }
+
   .highlight-grid {
     grid-template-columns: 1fr;
   }
@@ -2265,6 +2385,48 @@ img {
   .event-spotlight-cta {
     width: 100%;
     min-height: 46px;
+  }
+
+  .event-sticky-banner {
+    width: min(96vw, 560px);
+  }
+
+  .event-sticky-inner {
+    grid-template-columns: 1fr auto;
+    grid-template-areas:
+      "main cta"
+      "meta cta";
+    min-height: 56px;
+    padding: 10px;
+    gap: 4px 10px;
+  }
+
+  .event-sticky-thumb,
+  .event-sticky-distance,
+  .event-sticky-price {
+    display: none;
+  }
+
+  .event-sticky-main {
+    grid-area: main;
+  }
+
+  .event-sticky-name {
+    font-size: 0.88rem;
+  }
+
+  .event-sticky-meta {
+    grid-area: meta;
+    margin-top: 1px;
+    font-size: 0.75rem;
+    color: #c1d4e6;
+  }
+
+  .event-sticky-cta {
+    grid-area: cta;
+    min-height: 40px;
+    padding: 0 12px;
+    font-size: 0.82rem;
   }
 
   .mascot-spotlight {
