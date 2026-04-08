@@ -2939,9 +2939,22 @@ body.theme-light .hero-white-bridge {
 .profile-cover {
   position: relative;
   width: 100%;
-  height: 200px;
+  height: 280px;
   background: url("banner.png") center 12% / cover no-repeat;
   overflow: hidden;
+}
+
+.profile-cover::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    to bottom,
+    transparent 30%,
+    rgba(0, 0, 0, 0.55) 70%,
+    rgba(0, 0, 0, 0.78) 100%
+  );
+  pointer-events: none;
 }
 
 .profile-cover-btn {
@@ -2985,7 +2998,7 @@ body.theme-light .hero-white-bridge {
 .profile-shell {
   width: min(1100px, 94vw);
   margin: 0 auto;
-  padding-bottom: 72px;
+  padding: 28px 0 72px;
 }
 
 /* --- Identity row (avatar + info) --- */
@@ -2993,9 +3006,11 @@ body.theme-light .hero-white-bridge {
   display: flex;
   align-items: flex-end;
   gap: 18px;
-  padding: 0 0 20px 4px;
-  margin-top: -48px;
-  position: relative;
+  padding: 16px 20px 20px;
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
   z-index: 2;
 }
 
@@ -3009,7 +3024,7 @@ body.theme-light .hero-white-bridge {
   height: 96px;
   border-radius: 50%;
   background: #c4c9d4 center / cover no-repeat;
-  border: 4px solid #e9ecf0;
+  border: 3px solid rgba(255,255,255,0.6);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -3034,7 +3049,7 @@ body.theme-light .hero-white-bridge {
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  border: 2px solid #e9ecf0;
+  border: 2px solid #ffffff;
 }
 
 .profile-avatar-edit-btn svg {
@@ -3051,14 +3066,16 @@ body.theme-light .hero-white-bridge {
 }
 
 .profile-username {
-  font-size: 1rem;
+  font-size: 1.1rem;
   font-weight: 800;
-  color: #0f172a;
+  color: #ffffff;
+  text-shadow: 0 1px 4px rgba(0,0,0,0.5);
 }
 
 .profile-ident-meta {
   font-size: 0.84rem;
-  color: #4b5563;
+  color: rgba(255,255,255,0.85);
+  text-shadow: 0 1px 3px rgba(0,0,0,0.5);
 }
 
 /* --- Two-column layout --- */
@@ -3253,7 +3270,7 @@ body.theme-light .hero-white-bridge {
 
 @media (max-width: 768px) {
   .profile-cover {
-    height: 130px;
+    height: 220px;
   }
   .profile-layout {
     grid-template-columns: 1fr;
@@ -3270,12 +3287,12 @@ body.theme-light .hero-white-bridge {
   }
   .profile-nav-item.is-active {
     border-left-color: transparent;
-    border-bottom-color: #ff7a00;
+    border-bottom-color: #0dc785;
   }
   .profile-form-grid {
     grid-template-columns: 1fr;
   }
   .profile-identity {
-    margin-top: -38px;
+    padding: 12px 14px 14px;
   }
 }
