@@ -63,7 +63,7 @@ function setupActiveNavLink() {
 
   if (!nav.querySelector(".nav-mobile-cta")) {
     const cta = document.createElement("a");
-    cta.href = "index.html#raceRegisterBar";
+    cta.href = "auth.html?mode=register";
     cta.className = "nav-mobile-cta";
     cta.textContent = "Registrarse";
     nav.appendChild(cta);
@@ -253,11 +253,141 @@ function setupRegisterScrollLed() {
     if (!isRegisterAction(node)) return;
 
     node.addEventListener("click", (event) => {
+      if (node.tagName === "A") {
+        const href = node.getAttribute("href") || "";
+        if (!href.startsWith("#")) {
+          return;
+        }
+      }
       event.preventDefault();
       heroTarget.scrollIntoView({ behavior: "smooth", block: "start" });
       setTimeout(triggerFormIndicator, 480);
     });
   });
+}
+
+function setupAuthPage() {
+  const authRoot = document.querySelector("[data-auth-page]");
+  if (!authRoot) return;
+
+  const tabs = Array.from(document.querySelectorAll("[data-auth-tab]"));
+  const panels = Array.from(document.querySelectorAll("[data-auth-panel]"));
+  if (!tabs.length || !panels.length) return;
+
+  const activateMode = (mode) => {
+    tabs.forEach((tab) => {
+      const isActive = tab.getAttribute("data-auth-tab") === mode;
+      tab.classList.toggle("is-active", isActive);
+      tab.setAttribute("aria-selected", String(isActive));
+    });
+
+    panels.forEach((panel) => {
+      const isActive = panel.getAttribute("data-auth-panel") === mode;
+      panel.classList.toggle("is-active", isActive);
+    });
+
+    const url = new URL(window.location.href);
+    url.searchParams.set("mode", mode);
+    window.history.replaceState({}, "", url);
+  };
+
+  const modeParam = new URLSearchParams(window.location.search).get("mode");
+  const initialMode = modeParam === "register" ? "register" : "login";
+  activateMode(initialMode);
+
+  tabs.forEach((tab) => {
+    tab.addEventListener("click", () => {
+      const mode = tab.getAttribute("data-auth-tab") || "login";
+      activateMode(mode);
+      if (mode === "login") {
+        const stepEmailNode = document.querySelector('[data-login-step="email"]');
+        const stepPasswordNode = document.querySelector('[data-login-step="password"]');
+        if (stepEmailNode && stepPasswordNode) {
+          stepEmailNode.classList.add("is-active");
+          stepPasswordNode.classList.remove("is-active");
+        }
+      }
+    });
+  });
+
+  document.querySelectorAll("[data-auth-tab-target]").forEach((button) => {
+    button.addEventListener("click", () => {
+      const mode = button.getAttribute("data-auth-tab-target") || "login";
+      activateMode(mode);
+    });
+  });
+
+  const googleLoginBtn = document.getElementById("googleLoginBtn");
+  const googleRegisterBtn = document.getElementById("googleRegisterBtn");
+  const loginUrl = authRoot.getAttribute("data-google-login-url") || "#";
+  const registerUrl = authRoot.getAttribute("data-google-register-url") || "#";
+
+  if (googleLoginBtn) googleLoginBtn.setAttribute("href", loginUrl);
+  if (googleRegisterBtn) googleRegisterBtn.setAttribute("href", registerUrl);
+
+  const loginForm = document.getElementById("loginForm");
+  const stepEmail = loginForm?.querySelector('[data-login-step="email"]');
+  const stepPassword = loginForm?.querySelector('[data-login-step="password"]');
+  const loginContinueBtn = document.getElementById("loginContinueBtn");
+  const loginEmailInput = document.getElementById("loginEmail");
+  const loginPasswordInput = document.getElementById("loginPassword");
+  const authEmailLock = document.getElementById("authEmailLock");
+  const authChangeEmailBtn = document.getElementById("authChangeEmailBtn");
+  const toggleLoginPassword = document.getElementById("toggleLoginPassword");
+
+  const showEmailStep = () => {
+    if (!stepEmail || !stepPassword) return;
+    stepEmail.classList.add("is-active");
+    stepPassword.classList.remove("is-active");
+    if (loginEmailInput) {
+      loginEmailInput.focus();
+    }
+  };
+
+  const showPasswordStep = () => {
+    if (!stepEmail || !stepPassword || !loginEmailInput) return;
+    const email = loginEmailInput.value.trim();
+    if (!email || !loginEmailInput.checkValidity()) {
+      loginEmailInput.reportValidity();
+      return;
+    }
+
+    if (authEmailLock) {
+      authEmailLock.textContent = email;
+    }
+
+    stepEmail.classList.remove("is-active");
+    stepPassword.classList.add("is-active");
+    if (loginPasswordInput) {
+      loginPasswordInput.focus();
+    }
+  };
+
+  if (loginContinueBtn) {
+    loginContinueBtn.addEventListener("click", showPasswordStep);
+  }
+
+  if (authChangeEmailBtn) {
+    authChangeEmailBtn.addEventListener("click", showEmailStep);
+  }
+
+  if (loginEmailInput) {
+    loginEmailInput.addEventListener("keydown", (event) => {
+      if (event.key === "Enter") {
+        event.preventDefault();
+        showPasswordStep();
+      }
+    });
+  }
+
+  if (toggleLoginPassword && loginPasswordInput) {
+    toggleLoginPassword.addEventListener("click", () => {
+      const nextType = loginPasswordInput.type === "password" ? "text" : "password";
+      loginPasswordInput.type = nextType;
+    });
+  }
+
+  showEmailStep();
 }
 
 function setupEventModals() {
@@ -359,10 +489,7 @@ function setupWhatsAppButton() {
       <div class="whatsapp-panel-top">
         <p>Necesitas ayuda?</p>
         <a class="whatsapp-panel-link" href="${href}" target="_blank" rel="noopener noreferrer" aria-label="Escribenos por WhatsApp">
-          <svg viewBox="0 0 32 32" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
-            <path d="M19.11 17.27c-.3-.15-1.77-.87-2.04-.97-.27-.1-.47-.15-.67.15-.2.3-.77.97-.94 1.16-.17.2-.35.22-.65.08-.3-.15-1.28-.47-2.44-1.5-.9-.8-1.5-1.8-1.68-2.1-.18-.3-.02-.46.13-.61.13-.13.3-.35.45-.52.15-.17.2-.3.3-.5.1-.2.05-.37-.02-.52-.07-.15-.67-1.62-.92-2.22-.24-.58-.49-.5-.67-.51h-.57c-.2 0-.52.07-.8.37-.27.3-1.04 1.02-1.04 2.5s1.07 2.9 1.22 3.1c.15.2 2.1 3.2 5.1 4.5.71.31 1.27.49 1.7.63.72.23 1.38.2 1.9.12.58-.09 1.77-.72 2.02-1.4.25-.69.25-1.27.17-1.4-.07-.12-.27-.2-.57-.35Z"/>
-            <path d="M16.27 3.2c-6.98 0-12.65 5.68-12.65 12.66 0 2.23.58 4.41 1.68 6.33L3.2 28.8l6.77-2.05a12.6 12.6 0 0 0 6.3 1.7h.01c6.98 0 12.66-5.68 12.66-12.66A12.65 12.65 0 0 0 16.27 3.2Zm0 22.99h-.01a10.3 10.3 0 0 1-5.26-1.45l-.38-.22-4.02 1.22 1.23-3.92-.24-.4a10.3 10.3 0 1 1 8.68 4.77Z"/>
-          </svg>
+          <img src="whatsapp_logo2.png" alt="WhatsApp" />
           Escribenos por Whatsapp
         </a>
       </div>
@@ -373,10 +500,7 @@ function setupWhatsAppButton() {
       </div>
     </div>
     <a class="whatsapp-button" href="${href}" target="_blank" rel="noopener noreferrer" aria-label="Abrir chat de WhatsApp">
-      <svg viewBox="0 0 32 32" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
-        <path d="M19.11 17.27c-.3-.15-1.77-.87-2.04-.97-.27-.1-.47-.15-.67.15-.2.3-.77.97-.94 1.16-.17.2-.35.22-.65.08-.3-.15-1.28-.47-2.44-1.5-.9-.8-1.5-1.8-1.68-2.1-.18-.3-.02-.46.13-.61.13-.13.3-.35.45-.52.15-.17.2-.3.3-.5.1-.2.05-.37-.02-.52-.07-.15-.67-1.62-.92-2.22-.24-.58-.49-.5-.67-.51h-.57c-.2 0-.52.07-.8.37-.27.3-1.04 1.02-1.04 2.5s1.07 2.9 1.22 3.1c.15.2 2.1 3.2 5.1 4.5.71.31 1.27.49 1.7.63.72.23 1.38.2 1.9.12.58-.09 1.77-.72 2.02-1.4.25-.69.25-1.27.17-1.4-.07-.12-.27-.2-.57-.35Z"/>
-        <path d="M16.27 3.2c-6.98 0-12.65 5.68-12.65 12.66 0 2.23.58 4.41 1.68 6.33L3.2 28.8l6.77-2.05a12.6 12.6 0 0 0 6.3 1.7h.01c6.98 0 12.66-5.68 12.66-12.66A12.65 12.65 0 0 0 16.27 3.2Zm0 22.99h-.01a10.3 10.3 0 0 1-5.26-1.45l-.38-.22-4.02 1.22 1.23-3.92-.24-.4a10.3 10.3 0 1 1 8.68 4.77Z"/>
-      </svg>
+      <img src="whatsapp_logo2.png" alt="WhatsApp" />
     </a>
   `;
 
@@ -395,3 +519,4 @@ setupRegisterScrollLed();
 setupEventModals();
 setupNeonCardGlow();
 setupWhatsAppButton();
+setupAuthPage();
