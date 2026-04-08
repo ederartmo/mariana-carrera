@@ -82,6 +82,44 @@ function setupHeaderScrollState() {
   updateState();
 }
 
+function setupEventStickyBanner() {
+  const summaryCard = document.getElementById("raceRegisterBar");
+  const stickyBanner = document.getElementById("eventStickyBanner");
+  const header = document.querySelector(".site-header");
+  if (!summaryCard || !stickyBanner) return;
+
+  const setVisible = (isVisible) => {
+    stickyBanner.classList.toggle("is-visible", isVisible);
+    stickyBanner.setAttribute("aria-hidden", String(!isVisible));
+  };
+
+  const applyBannerOffset = () => {
+    const headerHeight = header ? Math.ceil(header.getBoundingClientRect().height) : 76;
+    document.documentElement.style.setProperty("--sticky-banner-offset", `${headerHeight + 8}px`);
+  };
+
+  const observer = new IntersectionObserver(
+    (entries) => {
+      const entry = entries[0];
+      if (!entry) return;
+
+      const leftViewport = entry.boundingClientRect.bottom <= 0 && !entry.isIntersecting;
+      setVisible(leftViewport);
+    },
+    { threshold: 0 }
+  );
+
+  observer.observe(summaryCard);
+
+  if (header && typeof ResizeObserver !== "undefined") {
+    const headerResizeObserver = new ResizeObserver(() => applyBannerOffset());
+    headerResizeObserver.observe(header);
+  }
+
+  window.addEventListener("resize", applyBannerOffset);
+  applyBannerOffset();
+}
+
 function setupRevealOnScroll() {
   const items = document.querySelectorAll(".reveal");
   if (!items.length) return;
@@ -310,6 +348,7 @@ function setupNeonCardGlow() {
 setupMenuToggle();
 setupActiveNavLink();
 setupHeaderScrollState();
+setupEventStickyBanner();
 setupRevealOnScroll();
 setupCurrentYear();
 setupEventFilters();
