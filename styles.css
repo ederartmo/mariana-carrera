@@ -2885,6 +2885,25 @@ body.theme-light .hero-white-bridge {
     padding: 22px;
   }
 
+
+  .home-blog-tabs {
+    overflow-x: auto;
+    white-space: nowrap;
+  }
+
+  .home-blog-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .home-blog-card {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .home-blog-card-media {
+    width: 100%;
+    height: 180px;
+  }
   .contact-row-two {
     grid-template-columns: 1fr;
     gap: 9px;
