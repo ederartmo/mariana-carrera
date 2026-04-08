@@ -202,7 +202,12 @@ function setupRegisterScrollLed() {
 
   const isRegisterAction = (node) => {
     const label = normalizeText(node.textContent || "");
-    return label === "registrarse" || label === "registrate" || label === "regitrate";
+    return (
+      label === "registrarse" ||
+      label === "registrate" ||
+      label === "regitrate" ||
+      label === "inscribirme"
+    );
   };
 
   const candidates = document.querySelectorAll("a, button");
