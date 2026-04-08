@@ -2930,7 +2930,7 @@ body.theme-light .hero-white-bridge {
 
 .profile-page .site-header::before {
   height: 46px;
-  background: linear-gradient(90deg, #ff7a00, #ff6a00 60%, #d95f00);
+  background: linear-gradient(90deg, #0dc785, #0aa86e 60%, #088f5c);
   opacity: 1;
   animation: none;
 }
@@ -3029,7 +3029,7 @@ body.theme-light .hero-white-bridge {
   width: 28px;
   height: 28px;
   border-radius: 50%;
-  background: #ff7a00;
+  background: #0dc785;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -3098,7 +3098,7 @@ body.theme-light .hero-white-bridge {
 .profile-nav-item.is-active {
   background: rgba(255, 255, 255, 0.1);
   color: #ffffff;
-  border-left-color: #ff7a00;
+  border-left-color: #0dc785;
   font-weight: 800;
 }
 
@@ -3179,8 +3179,8 @@ body.theme-light .hero-white-bridge {
 .profile-field input:focus,
 .profile-field select:focus {
   outline: none;
-  border-color: #ff7a00;
-  box-shadow: 0 0 0 3px rgba(255, 122, 0, 0.12);
+  border-color: #0dc785;
+  box-shadow: 0 0 0 3px rgba(13, 199, 133, 0.15);
 }
 
 .profile-input-suffix {
@@ -3217,8 +3217,8 @@ body.theme-light .hero-white-bridge {
   padding: 0 28px;
   border: 0;
   border-radius: 6px;
-  background: linear-gradient(130deg, #ff7a00, #ff6700);
-  color: #ffffff;
+  background: linear-gradient(130deg, #0dc785, #0da56f);
+  color: #04110d;
   font-size: 0.95rem;
   font-weight: 800;
   cursor: pointer;
