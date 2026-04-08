@@ -396,6 +396,9 @@ img {
 }
 
 .hero-sport {
+  position: relative;
+  z-index: 4;
+  overflow: visible;
   background-image:
     linear-gradient(110deg, rgba(8, 12, 19, 0.7), rgba(8, 12, 19, 0.4)),
     url("banner.png"),
@@ -983,12 +986,13 @@ body.theme-light .hero-white-bridge {
 
 .neon-event-section {
   position: relative;
+  z-index: 1;
   overflow: hidden;
   background:
     radial-gradient(circle at 20% 20%, rgba(0, 195, 255, 0.12), transparent 25%),
     radial-gradient(circle at 80% 30%, rgba(255, 0, 170, 0.14), transparent 25%),
     linear-gradient(180deg, #07101c 0%, #0a1222 100%);
-  padding: 72px 20px;
+  padding: 120px 20px 72px;
 }
 
 .neon-event-container {
@@ -1383,7 +1387,7 @@ body.theme-light .hero-white-bridge {
 
 @media (max-width: 768px) {
   .neon-event-section {
-    padding: 56px 16px;
+    padding: 102px 16px 56px;
   }
 
   .neon-grid {
