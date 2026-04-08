@@ -653,9 +653,11 @@ body.theme-light .hero-white-bridge {
   font-weight: 700;
 }
 
-.whatsapp-panel-link svg {
+.whatsapp-panel-link svg,
+.whatsapp-panel-link img {
   width: 17px;
   height: 17px;
+  object-fit: contain;
 }
 
 .whatsapp-panel-bottom {
@@ -704,6 +706,12 @@ body.theme-light .hero-white-bridge {
 .whatsapp-button svg {
   width: 34px;
   height: 34px;
+}
+
+.whatsapp-button img {
+  width: 34px;
+  height: 34px;
+  object-fit: contain;
 }
 
 .whatsapp-float:hover .whatsapp-panel,
@@ -2252,6 +2260,244 @@ body.theme-light .hero-white-bridge {
   gap: 10px;
 }
 
+.auth-page {
+  background: #dedfe2;
+  min-height: 100vh;
+}
+
+.auth-page .site-header {
+  background: #111827;
+  border-bottom: 0;
+}
+
+.auth-page .site-header::before {
+  height: 46px;
+  background: linear-gradient(90deg, #ff7a00, #ff6a00 60%, #d95f00);
+  opacity: 1;
+  animation: none;
+}
+
+.auth-main {
+  padding: 52px 0 74px;
+}
+
+.auth-shell {
+  width: min(700px, 92vw);
+  margin: 0 auto;
+}
+
+.auth-card {
+  background: #f7f7f8;
+  border-radius: 14px;
+  border: 1px solid #d7d9de;
+  box-shadow: 0 16px 32px rgba(0, 0, 0, 0.12);
+  padding: 18px;
+}
+
+.auth-tabs {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.auth-tab {
+  min-height: 42px;
+  border-radius: 10px;
+  border: 1px solid #ced4de;
+  background: #ffffff;
+  color: #1e293b;
+  font-weight: 750;
+  cursor: pointer;
+}
+
+.auth-tab.is-active {
+  border-color: #ff7a00;
+  background: rgba(255, 122, 0, 0.12);
+  color: #ae4e00;
+}
+
+.auth-panel {
+  display: none;
+  padding: 4px 8px;
+}
+
+.auth-panel.is-active {
+  display: block;
+}
+
+.auth-panel h1 {
+  margin: 4px 0 2px;
+  font-size: clamp(1.7rem, 3vw, 2.1rem);
+  font-family: "Inter", "Sora", sans-serif;
+  color: #0f172a;
+}
+
+.auth-panel p {
+  margin: 0;
+  color: #4b5563;
+}
+
+.auth-form {
+  display: grid;
+  gap: 10px;
+  margin-top: 16px;
+}
+
+.auth-login-step {
+  display: none;
+  gap: 10px;
+}
+
+.auth-login-step.is-active {
+  display: grid;
+}
+
+.auth-email-lock {
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  border: 1px solid #8c919b;
+  border-radius: 2px;
+  background: #ffffff;
+  padding: 0 10px;
+  font-weight: 700;
+  color: #111827;
+}
+
+.auth-link-inline {
+  justify-self: end;
+  margin-top: -2px;
+  border: 0;
+  background: transparent;
+  color: #374151;
+  text-decoration: underline;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.auth-password-wrap {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: stretch;
+}
+
+.auth-password-wrap input {
+  border-right: 0;
+}
+
+.auth-password-toggle {
+  width: 44px;
+  border: 1px solid #ff7a00;
+  background: #ffffff;
+  color: #1f2937;
+  cursor: pointer;
+}
+
+.auth-password-toggle svg {
+  width: 22px;
+  height: 22px;
+}
+
+.auth-login-row {
+  margin-top: 4px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+
+.auth-check {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: #1f2937;
+  font-weight: 600;
+}
+
+.auth-inline-link {
+  color: #1f2937;
+  font-weight: 700;
+  text-decoration: underline;
+}
+
+.auth-form label {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #1f2937;
+}
+
+.auth-form input,
+.auth-form select {
+  width: 100%;
+  min-height: 44px;
+  border-radius: 2px;
+  border: 1px solid #8c919b;
+  background: #ffffff;
+  padding: 10px 12px;
+  font-size: 0.92rem;
+  font-family: "Inter", "Manrope", sans-serif;
+}
+
+.auth-grid-2 {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.auth-terms {
+  margin: 6px 0 0;
+  font-size: 0.84rem;
+  color: #556070;
+}
+
+.auth-submit {
+  min-height: 44px;
+  border: 0;
+  border-radius: 4px;
+  background: linear-gradient(130deg, #ff7a00, #ff6700);
+  color: #ffffff;
+  font-size: 1rem;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.auth-google {
+  margin-top: 12px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  min-height: 44px;
+  width: 100%;
+  border-radius: 4px;
+  border: 1px solid #cfd5df;
+  background: #ffffff;
+  text-decoration: none;
+  color: #1f2937;
+  font-weight: 700;
+}
+
+.auth-google img {
+  width: 18px;
+  height: 18px;
+}
+
+.auth-switch-copy {
+  margin-top: 14px;
+  text-align: center;
+  font-size: 0.95rem;
+  color: #374151;
+}
+
+.auth-link-btn {
+  border: 0;
+  background: transparent;
+  color: #ff6800;
+  font-weight: 800;
+  cursor: pointer;
+}
+
 .contact-form textarea {
   min-height: 130px;
   resize: vertical;
@@ -2559,6 +2805,11 @@ body.theme-light .hero-white-bridge {
     height: 30px;
   }
 
+  .whatsapp-button img {
+    width: 30px;
+    height: 30px;
+  }
+
   .event-sticky-banner {
     width: min(96vw, 560px);
   }
@@ -2592,6 +2843,24 @@ body.theme-light .hero-white-bridge {
     margin-top: 1px;
     font-size: 0.75rem;
     color: #c1d4e6;
+  }
+
+  .auth-main {
+    padding: 26px 0 46px;
+  }
+
+  .auth-card {
+    padding: 14px;
+  }
+
+  .auth-grid-2 {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+
+  .auth-login-row {
+    flex-direction: column;
+    align-items: flex-start;
   }
 
   .event-sticky-cta {
