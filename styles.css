@@ -167,30 +167,48 @@ img {
   display: inline-flex;
   align-items: center;
   min-height: 36px;
-  padding: 8px 12px;
-  border-radius: 999px;
+  padding: 8px 2px;
   text-decoration: none;
   font-size: 0.88rem;
   font-weight: 700;
-  color: #f9fcff;
-  border: 1px solid transparent;
-  background: rgba(255, 255, 255, 0.03);
+  color: #e8eef8;
+  border: 0;
+  background: transparent;
   text-shadow: 0 1px 6px rgba(0, 0, 0, 0.26);
-  transition: background 180ms ease, border-color 180ms ease, color 180ms ease;
+  position: relative;
+  transition: color 180ms ease;
+}
+
+.site-nav a::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  bottom: 2px;
+  width: 100%;
+  height: 2px;
+  border-radius: 3px;
+  background: linear-gradient(90deg, #ff9f40, #ffd25f);
+  transform: scaleX(0);
+  transform-origin: left;
+  opacity: 0;
+  transition: transform 180ms ease, opacity 180ms ease;
 }
 
 .site-nav a:hover,
 .inline-link:hover {
-  color: #ffcf98;
-  border-color: rgba(255, 255, 255, 0.22);
-  background: rgba(255, 255, 255, 0.09);
+  color: #ffd98a;
+}
+
+.site-nav a:hover::after,
+.site-nav a:focus-visible::after,
+.site-nav a.is-active::after {
+  transform: scaleX(1);
+  opacity: 1;
 }
 
 .site-nav a.is-active {
-  color: #ffffff;
-  border-color: rgba(255, 255, 255, 0.32);
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.18), rgba(120, 168, 147, 0.2));
-  box-shadow: 0 8px 18px rgba(10, 16, 27, 0.25);
+  color: #ffd98a;
+  text-shadow: 0 0 10px rgba(255, 159, 64, 0.34);
 }
 
 .site-nav .nav-mobile-cta {
@@ -1982,20 +2000,18 @@ img {
   }
 
   .site-nav a {
-    width: 100%;
-    min-height: 44px;
+    width: fit-content;
+    min-height: 40px;
     color: #f3f8ff;
-    background: rgba(255, 255, 255, 0.08);
-    border: 1px solid rgba(255, 255, 255, 0.18);
-    border-radius: 9px;
-    padding: 10px 12px;
+    background: transparent;
+    border: 0;
+    border-radius: 0;
+    padding: 8px 0;
     text-shadow: none;
   }
 
   .site-nav a.is-active {
-    border-color: rgba(255, 207, 152, 0.68);
-    background: rgba(255, 207, 152, 0.16);
-    box-shadow: none;
+    color: #ffd98a;
   }
 
   .nav-actions {
