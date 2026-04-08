@@ -585,10 +585,12 @@ img {
   border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 18px;
   padding: 24px;
+  cursor: pointer;
   box-shadow:
     0 0 0 1px rgba(255, 255, 255, 0.03) inset,
     0 0 24px rgba(0, 195, 255, 0.08),
     0 0 36px rgba(255, 0, 170, 0.08);
+  transition: transform 220ms ease, box-shadow 220ms ease, border-color 220ms ease;
 }
 
 .neon-card::before {
@@ -605,6 +607,35 @@ img {
   mask-composite: exclude;
   opacity: 0.95;
   pointer-events: none;
+  transition: opacity 220ms ease;
+}
+
+.neon-card:hover,
+.neon-card:focus-visible,
+.neon-card.is-selected {
+  transform: translateY(-2px);
+  border-color: rgba(67, 224, 255, 0.52);
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.08) inset,
+    0 0 24px rgba(0, 195, 255, 0.26),
+    0 0 44px rgba(255, 0, 170, 0.2),
+    0 0 68px rgba(67, 224, 255, 0.2);
+}
+
+.neon-card:hover::before,
+.neon-card:focus-visible::before,
+.neon-card.is-selected::before {
+  opacity: 1;
+  filter: drop-shadow(0 0 9px rgba(67, 224, 255, 0.46));
+}
+
+.neon-card:active {
+  transform: translateY(0);
+}
+
+.neon-card:focus-visible {
+  outline: 2px solid rgba(255, 255, 255, 0.54);
+  outline-offset: 2px;
 }
 
 .neon-label {
