@@ -4,10 +4,82 @@ function setupMenuToggle() {
 
   if (!menuToggle || !nav) return;
 
+  const closeMenu = () => {
+    nav.classList.remove("open");
+    menuToggle.setAttribute("aria-expanded", "false");
+  };
+
   menuToggle.addEventListener("click", () => {
     const isOpen = nav.classList.toggle("open");
     menuToggle.setAttribute("aria-expanded", String(isOpen));
   });
+
+  nav.addEventListener("click", (event) => {
+    const clickedLink = event.target.closest("a");
+    if (clickedLink && window.matchMedia("(max-width: 760px)").matches) {
+      closeMenu();
+    }
+  });
+
+  document.addEventListener("click", (event) => {
+    if (!window.matchMedia("(max-width: 760px)").matches) return;
+    const clickedInsideNav = event.target.closest("#siteNav, #menuToggle");
+    if (!clickedInsideNav) {
+      closeMenu();
+    }
+  });
+
+  document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape") {
+      closeMenu();
+    }
+  });
+
+  window.addEventListener("resize", () => {
+    if (!window.matchMedia("(max-width: 760px)").matches) {
+      closeMenu();
+    }
+  });
+}
+
+function setupActiveNavLink() {
+  const nav = document.getElementById("siteNav");
+  if (!nav) return;
+
+  const links = Array.from(nav.querySelectorAll("a[href]"));
+  if (!links.length) return;
+
+  const currentPath = window.location.pathname.split("/").pop() || "index.html";
+  links.forEach((link) => {
+    const linkPath = (link.getAttribute("href") || "").split("#")[0];
+    const isHome = currentPath === "" || currentPath === "index.html";
+    const shouldActivate = linkPath === currentPath || (isHome && linkPath === "index.html");
+
+    if (shouldActivate) {
+      link.classList.add("is-active");
+      link.setAttribute("aria-current", "page");
+    }
+  });
+
+  if (!nav.querySelector(".nav-mobile-cta")) {
+    const cta = document.createElement("a");
+    cta.href = "index.html#raceRegisterBar";
+    cta.className = "nav-mobile-cta";
+    cta.textContent = "Registrarse";
+    nav.appendChild(cta);
+  }
+}
+
+function setupHeaderScrollState() {
+  const header = document.querySelector(".site-header");
+  if (!header) return;
+
+  const updateState = () => {
+    header.classList.toggle("is-scrolled", window.scrollY > 16);
+  };
+
+  window.addEventListener("scroll", updateState, { passive: true });
+  updateState();
 }
 
 function setupRevealOnScroll() {
@@ -208,6 +280,8 @@ function setupEventModals() {
 }
 
 setupMenuToggle();
+setupActiveNavLink();
+setupHeaderScrollState();
 setupRevealOnScroll();
 setupCurrentYear();
 setupEventFilters();
