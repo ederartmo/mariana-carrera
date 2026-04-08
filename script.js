@@ -550,6 +550,144 @@ function setupProfilePage() {
   });
 }
 
+function setupSupabase() {
+  if (typeof window.supabase === "undefined") return;
+
+  const SUPABASE_URL = "https://anwkqhxcarzfvfufhbyk.supabase.co";
+  const SUPABASE_KEY = "sb_publishable_ARbEx2T-RYfWgIJEBj1NkQ_5i7wVzQP";
+  const SITE = "https://cuddly-guacamole-r966wq79w462x95j-8080.app.github.dev";
+
+  const client = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+  // ── AUTH PAGE ──────────────────────────────────────
+  const authRoot = document.querySelector("[data-auth-page]");
+  if (authRoot) {
+    // Si ya hay sesión activa → ir directo al perfil
+    client.auth.getSession().then(({ data: { session } }) => {
+      if (session) window.location.replace("perfil.html");
+    });
+
+    // Botones "Continuar con Google"
+    ["googleLoginBtn", "googleRegisterBtn"].forEach((id) => {
+      const btn = document.getElementById(id);
+      if (!btn) return;
+      btn.addEventListener("click", async (e) => {
+        e.preventDefault();
+        const { error } = await client.auth.signInWithOAuth({
+          provider: "google",
+          options: { redirectTo: `${SITE}/perfil.html` },
+        });
+        if (error) alert(error.message);
+      });
+    });
+
+    // Login con email + contraseña
+    const loginForm = document.getElementById("loginForm");
+    if (loginForm) {
+      loginForm.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const email = document.getElementById("loginEmail")?.value.trim();
+        const password = document.getElementById("loginPassword")?.value;
+        if (!email || !password) return;
+        const { error } = await client.auth.signInWithPassword({ email, password });
+        if (error) {
+          alert(error.message);
+        } else {
+          window.location.href = "perfil.html";
+        }
+      });
+    }
+
+    // Registro con email
+    const registerForm = document.querySelector('[data-auth-panel="register"] form');
+    if (registerForm) {
+      registerForm.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const email = document.getElementById("registerEmail")?.value.trim();
+        const password = document.getElementById("registerPassword")?.value;
+        const confirm = document.getElementById("registerConfirmPassword")?.value;
+        const nombre = document.getElementById("registerName")?.value.trim();
+        const apellido = document.getElementById("registerLastName")?.value.trim();
+
+        if (password !== confirm) {
+          alert("Las contraseñas no coinciden.");
+          return;
+        }
+
+        const { error } = await client.auth.signUp({
+          email,
+          password,
+          options: {
+            data: { full_name: `${nombre} ${apellido}`.trim() },
+            emailRedirectTo: `${SITE}/auth.html?mode=login`,
+          },
+        });
+
+        if (error) {
+          alert(error.message);
+        } else {
+          alert("¡Revisa tu correo para confirmar tu cuenta y poder iniciar sesión!");
+        }
+      });
+    }
+  }
+
+  // ── PERFIL PAGE ────────────────────────────────────
+  const profileRoot = document.querySelector("[data-profile-page]");
+  if (profileRoot) {
+    client.auth.getSession().then(({ data: { session } }) => {
+      if (!session) {
+        window.location.replace("auth.html?mode=login");
+        return;
+      }
+
+      const user = session.user;
+      const meta = user.user_metadata || {};
+      const displayName = meta.full_name || meta.name || "Atleta";
+
+      // Datos en la cabecera de perfil
+      const usernameEl = document.querySelector(".profile-username");
+      const emailEl = document.querySelector(".profile-ident-meta");
+      if (usernameEl) usernameEl.textContent = displayName;
+      if (emailEl) emailEl.textContent = user.email;
+
+      // Avatar de Google
+      if (meta.avatar_url) {
+        const avatarEl = document.getElementById("profileAvatarInner");
+        if (avatarEl) {
+          avatarEl.style.backgroundImage = `url("${meta.avatar_url}")`;
+          avatarEl.style.backgroundSize = "cover";
+          avatarEl.style.backgroundPosition = "center";
+          avatarEl.innerHTML = "";
+        }
+      }
+
+      // Nav: reemplazar botones por email + cerrar sesión
+      const navActions = document.querySelector(".nav-actions");
+      if (navActions) {
+        navActions.innerHTML = `
+          <span class="ghost-link" style="cursor:default;font-size:0.85rem;">${user.email}</span>
+          <button class="btn btn-primary" id="navLogoutBtn" type="button">Cerrar sesión</button>
+        `;
+        document.getElementById("navLogoutBtn")?.addEventListener("click", async () => {
+          await client.auth.signOut();
+          window.location.href = "index.html";
+        });
+      }
+    });
+
+    // Logout desde el sidebar
+    const sidebarLogout = document.getElementById("sidebarLogout");
+    if (sidebarLogout) {
+      sidebarLogout.addEventListener("click", async (e) => {
+        e.preventDefault();
+        await client.auth.signOut();
+        window.location.href = "index.html";
+      });
+    }
+  }
+}
+
 setupMenuToggle();
 setupActiveNavLink();
 setupHeaderScrollState();
@@ -564,3 +702,4 @@ setupNeonCardGlow();
 setupWhatsAppButton();
 setupAuthPage();
 setupProfilePage();
+setupSupabase();
