@@ -559,6 +559,38 @@ function setupSupabase() {
 
   const client = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
+  const renderSessionNav = (session) => {
+    const navActions = document.querySelector(".nav-actions");
+    if (!navActions) return;
+
+    if (!session) {
+      navActions.innerHTML = `
+        <a class="ghost-link" href="auth.html?mode=login">Iniciar Sesion</a>
+        <a class="btn btn-primary" href="auth.html?mode=register">Registrarse</a>
+      `;
+      return;
+    }
+
+    const user = session.user;
+    navActions.innerHTML = `
+      <a class="ghost-link" href="perfil.html">Mi perfil</a>
+      <button class="btn btn-primary" id="navLogoutBtn" type="button">Cerrar sesion</button>
+    `;
+
+    document.getElementById("navLogoutBtn")?.addEventListener("click", async () => {
+      await client.auth.signOut();
+      window.location.href = "index.html";
+    });
+  };
+
+  client.auth.getSession().then(({ data: { session } }) => {
+    renderSessionNav(session);
+  });
+
+  client.auth.onAuthStateChange((_event, session) => {
+    renderSessionNav(session);
+  });
+
   // ── AUTH PAGE ──────────────────────────────────────
   const authRoot = document.querySelector("[data-auth-page]");
   if (authRoot) {
