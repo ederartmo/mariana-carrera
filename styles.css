@@ -3089,7 +3089,7 @@ body.theme-light .hero-white-bridge {
 /* --- Sidebar --- */
 .profile-sidebar {
   background: #111827;
-  border-radius: 12px;
+  border-radius: 0;
   overflow: hidden;
   position: sticky;
   top: 90px;
