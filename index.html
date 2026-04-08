@@ -56,46 +56,67 @@
         <div class="container hero-banner-shell reveal">
           <h1 class="hero-banner-title">Regístrate a la siguiente carrera</h1>
 
-          <form class="race-register-bar" id="raceRegisterBar" action="#" method="post">
-            <div class="race-meta" data-race-block>
-              <strong>Axolote Night Run</strong>
-              <small>el 31 de octubre 8hrs</small>
+          <article class="event-spotlight-card" id="raceRegisterBar">
+            <div class="event-spotlight-main">
+              <div class="event-spotlight-thumb" aria-hidden="true"></div>
+              <div class="event-spotlight-copy">
+                <h2>Axolote Night Run</h2>
+                <p class="event-spotlight-location">CDMX · 2026</p>
+                <p class="event-spotlight-category">Running nocturno</p>
+                <p class="event-spotlight-distance">Distancias: 3K · 5K</p>
+              </div>
             </div>
 
-            <span class="race-divider" aria-hidden="true"></span>
+            <div class="event-spotlight-divider" aria-hidden="true"></div>
 
-            <label class="sr-only" for="heroRunnerName">Nombre</label>
-            <input
-              class="race-bar-input"
-              id="heroRunnerName"
-              name="heroRunnerName"
-              type="text"
-              placeholder="Escribe Tu Nombre"
-              required
-            />
+            <div class="event-spotlight-details">
+              <div class="event-detail-item">
+                <span class="event-detail-icon" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <rect x="3.5" y="4.5" width="17" height="16" rx="2.5" stroke="currentColor" stroke-width="1.6" />
+                    <path d="M8 2.8V6.2M16 2.8V6.2M3.5 9.2H20.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" />
+                  </svg>
+                </span>
+                <div>
+                  <strong>31 OCT 2026</strong>
+                  <a href="#">Agregar a calendario</a>
+                </div>
+              </div>
 
-            <span class="race-divider" aria-hidden="true"></span>
+              <div class="event-detail-item">
+                <span class="event-detail-icon" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M12 21s6-5.2 6-10a6 6 0 1 0-12 0c0 4.8 6 10 6 10Z" stroke="currentColor" stroke-width="1.6" />
+                    <circle cx="12" cy="11" r="2.3" stroke="currentColor" stroke-width="1.6" />
+                  </svg>
+                </span>
+                <div>
+                  <strong>Pista de Canotaje, CDMX</strong>
+                  <a href="#" data-modal-open="mapModal">¿Cómo llegar?</a>
+                </div>
+              </div>
 
-            <label class="sr-only" for="heroRunnerEmail">Correo</label>
-            <input
-              class="race-bar-input"
-              id="heroRunnerEmail"
-              name="heroRunnerEmail"
-              type="email"
-              placeholder="Correo"
-              required
-            />
+              <div class="event-detail-item">
+                <span class="event-detail-icon" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <circle cx="12" cy="12" r="8.4" stroke="currentColor" stroke-width="1.6" />
+                    <path d="M12 7.4V12.2L15 14" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" />
+                  </svg>
+                </span>
+                <div>
+                  <strong>18:00 H</strong>
+                </div>
+              </div>
+            </div>
 
-            <span class="race-divider" aria-hidden="true"></span>
+            <div class="event-spotlight-divider" aria-hidden="true"></div>
 
-            <button class="race-register-cta" type="submit">Registrarse</button>
-
-            <span class="race-or-separator" aria-hidden="true">ó</span>
-
-            <button class="race-google-btn" type="button" aria-label="Continuar con Google">
-              <img src="G.png" alt="Google" />
-            </button>
-          </form>
+            <div class="event-spotlight-pricing">
+              <p class="event-spotlight-price-label">Precio</p>
+              <p class="event-spotlight-price">Desde $600 MXN</p>
+              <a class="event-spotlight-cta" href="#registro">Inscribirme</a>
+            </div>
+          </article>
         </div>
       </section>
 
