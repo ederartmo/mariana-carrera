@@ -21,11 +21,26 @@
     <header class="site-header">
       <div class="container nav-shell">
         <a href="index.html" class="brand" aria-label="Ir al inicio de Kinetic Hub">
-          <img class="brand-mascot" src="logo.png" alt="Ajolote Kinetic Hub" />
-          <span class="brand-copy">
-            <strong>Kinetic Hub</strong>
-            <small>Run your next challenge</small>
-          </span>
+            <article class="sidebar-panel reveal" id="registro-panel" data-panel-state="loading">
+              <div id="not-logged-panel" style="display: none;">
+                <h2 class="content-title">Registro rápido</h2>
+                <p class="page-lead">Reserva tu lugar y asegura tarifa vigente.</p>
+                <a class="btn btn-primary" href="auth.html?mode=register">Ir al registro</a>
+              </div>
+              <div id="logged-panel" style="display: none;">
+                <h2 class="content-title">Continuar registro</h2>
+                <p class="page-lead">Selecciona tu distancia y completa el pago.</p>
+                <div class="payment-section">
+                  <label for="distance-select">Distancia:</label>
+                  <select id="distance-select">
+                    <option value="">Selecciona distancia</option>
+                    <option value="5k">5K Recreativo · $480 MXN</option>
+                    <option value="10k">10K Competitivo · $560 MXN</option>
+                  </select>
+                </div>
+                <a class="btn btn-primary" id="payment-btn" href="#" target="_blank">Pagar</a>
+              </div>
+            </article>
         </a>
 
         <button class="menu-toggle" id="menuToggle" aria-expanded="false" aria-controls="siteNav">
@@ -243,4 +258,4 @@
 
     <script src="script.js"></script>
   </body>
-</html>
+    <body data-event-page>
