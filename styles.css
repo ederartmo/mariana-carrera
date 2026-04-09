@@ -1864,7 +1864,7 @@ body.theme-light .hero-white-bridge {
 
 .site-footer {
   margin-top: 28px;
-  background: #090d14;
+  background: linear-gradient(108deg, #090d14 0 63%, #0dc785 63% 100%);
   color: #ebf1fb;
   overflow: hidden;
 }
@@ -1874,7 +1874,6 @@ body.theme-light .hero-white-bridge {
   display: grid;
   grid-template-columns: 1.2fr 1fr 1fr 1.1fr;
   gap: 20px;
-  background: linear-gradient(112deg, #090d14 0 52%, #353d4a 52% 64%, #0dc785 64% 100%);
 }
 
 .footer-grid > div:last-child h3 {
