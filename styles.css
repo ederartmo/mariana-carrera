@@ -615,20 +615,32 @@ body.theme-light .hero-white-bridge {
   right: 18px;
   bottom: 18px;
   z-index: 45;
-  display: grid;
-  justify-items: end;
-  gap: 8px;
+  width: 56px;
+  height: 56px;
 }
 
 .whatsapp-panel {
+  position: absolute;
+  right: 0;
+  bottom: 64px;
   width: min(255px, 84vw);
   border-radius: 12px;
   overflow: hidden;
   box-shadow: 0 14px 32px rgba(0, 0, 0, 0.26);
   opacity: 0;
   visibility: hidden;
+  pointer-events: none;
   transform: translateY(6px) scale(0.98);
   transition: opacity 180ms ease, transform 180ms ease, visibility 180ms ease;
+}
+
+.whatsapp-panel::after {
+  content: "";
+  position: absolute;
+  right: 0;
+  bottom: -10px;
+  width: 82px;
+  height: 10px;
 }
 
 .whatsapp-panel-top {
@@ -718,6 +730,7 @@ body.theme-light .hero-white-bridge {
 .whatsapp-float:focus-within .whatsapp-panel {
   opacity: 1;
   visibility: visible;
+  pointer-events: auto;
   transform: translateY(0) scale(1);
 }
 
