@@ -106,8 +106,6 @@ function setupEventStickyBanner() {
       const leftViewport = entry.boundingClientRect.bottom <= 0 && !entry.isIntersecting;
       setVisible(leftViewport);
     },
-    { threshold: 0 }
-  );
 
   observer.observe(summaryCard);
 
@@ -655,7 +653,7 @@ function setupSupabase() {
         if (error) {
           alert(error.message);
         } else {
-          window.location.href = "perfil.html";
+           window.location.href = "evento.html";
         }
       });
     }

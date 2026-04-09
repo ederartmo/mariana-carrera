@@ -3538,3 +3538,44 @@ body[data-page="series"] .page-hero .container {
     padding: 12px 14px 14px;
   }
 }
+
+  /* Payment & Distance Selection */
+  .payment-section {
+    margin: 16px 0;
+    padding: 12px 0;
+  }
+
+  .payment-section label {
+    display: block;
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: var(--ink);
+    margin-bottom: 8px;
+  }
+
+  .payment-section select {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    font-size: 0.95rem;
+    background-color: #fff;
+    color: var(--ink);
+    cursor: pointer;
+  }
+
+  .payment-section select:hover {
+    border-color: var(--brand-green);
+  }
+
+  .payment-section select:focus {
+    outline: none;
+    border-color: var(--brand-green);
+    box-shadow: 0 0 0 3px rgba(13, 199, 133, 0.1);
+  }
+
+  #payment-btn {
+    width: 100%;
+    text-align: center;
+    margin-top: 8px;
+  }
