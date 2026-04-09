@@ -1864,8 +1864,9 @@ body.theme-light .hero-white-bridge {
 
 .site-footer {
   margin-top: 28px;
-  background: #0d1118;
+  background: #090d14;
   color: #ebf1fb;
+  overflow: hidden;
 }
 
 .footer-grid {
@@ -1873,6 +1874,34 @@ body.theme-light .hero-white-bridge {
   display: grid;
   grid-template-columns: 1.2fr 1fr 1fr 1.1fr;
   gap: 20px;
+  background: linear-gradient(112deg, #090d14 0 52%, #353d4a 52% 64%, #0dc785 64% 100%);
+}
+
+.footer-grid > div:last-child h3 {
+  color: #05251a;
+}
+
+.footer-grid > div:last-child p {
+  color: rgba(5, 37, 26, 0.8);
+  font-weight: 600;
+}
+
+.footer-grid > div:last-child .footer-newsletter {
+  grid-template-columns: 1fr auto;
+  gap: 0;
+  align-items: center;
+}
+
+.footer-grid > div:last-child .footer-newsletter input {
+  border-radius: 4px 0 0 4px;
+  border-right: 0;
+  background: rgba(255, 255, 255, 0.92);
+}
+
+.footer-grid > div:last-child .footer-newsletter .btn {
+  border-radius: 0 4px 4px 0;
+  min-height: 42px;
+  padding-inline: 16px;
 }
 
 .footer-brand {
@@ -1917,7 +1946,8 @@ body.theme-light .hero-white-bridge {
 }
 
 .footer-bottom {
-  border-top: 1px solid rgba(52, 74, 69, 0.3);
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  background: #060a10;
 }
 
 .footer-bottom-shell {
@@ -2284,8 +2314,8 @@ body.theme-light .hero-white-bridge {
 }
 
 .auth-page .site-header::before {
-  height: 46px;
-  background: linear-gradient(90deg, #0dc785, #0aa86e 60%, #088f5c);
+  height: 100%;
+  background: linear-gradient(to bottom, #19c88b 0 72%, #0a1422 72% 100%);
   opacity: 1;
   animation: none;
 }
@@ -2961,8 +2991,8 @@ body.theme-light .hero-white-bridge {
 }
 
 .profile-page .site-header::before {
-  height: 46px;
-  background: linear-gradient(90deg, #0dc785, #0aa86e 60%, #088f5c);
+  height: 100%;
+  background: linear-gradient(to bottom, #19c88b 0 72%, #0a1422 72% 100%);
   opacity: 1;
   animation: none;
 }
