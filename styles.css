@@ -1902,8 +1902,9 @@ body.theme-light .hero-white-bridge {
 }
 
 .home-blog-tab.is-active {
-  color: #ff6a00;
-  border-bottom-color: #ff6a00;
+  color: #0dc785;
+  border-bottom-color: #0dc785;
+  font-weight: 800;
 }
 
 .home-blog-grid {
@@ -2122,7 +2123,7 @@ body.theme-light .hero-white-bridge {
 
 .page-hero .container {
   background-image:
-    linear-gradient(120deg, rgba(245, 238, 230, 0.9), rgba(236, 243, 249, 0.83)),
+    linear-gradient(135deg, rgba(52, 74, 69, 0.8), rgba(52, 74, 69, 0.5)),
     url("correr2.jpg");
   background-size: cover;
   background-position: center;
@@ -2130,6 +2131,31 @@ body.theme-light .hero-white-bridge {
   border: 1px solid rgba(178, 192, 206, 0.7);
   box-shadow: 0 14px 28px rgba(13, 17, 24, 0.12);
   padding: 18px 12px 12px;
+}
+
+/* Page-specific banner images */
+body[data-page="blog"] .page-hero .container {
+  background-image:
+    linear-gradient(135deg, rgba(52, 74, 69, 0.8), rgba(52, 74, 69, 0.5)),
+    url("correr.jpg");
+}
+
+body[data-page="beneficios"] .page-hero .container {
+  background-image:
+    linear-gradient(135deg, rgba(52, 74, 69, 0.8), rgba(52, 74, 69, 0.5)),
+    url("correr1.jpg");
+}
+
+body[data-page="nosotros"] .page-hero .container {
+  background-image:
+    linear-gradient(135deg, rgba(52, 74, 69, 0.8), rgba(52, 74, 69, 0.5)),
+    url("correr2.jpg");
+}
+
+body[data-page="series"] .page-hero .container {
+  background-image:
+    linear-gradient(135deg, rgba(52, 74, 69, 0.8), rgba(52, 74, 69, 0.5)),
+    url("banner foto.png");
 }
 
 .page-hero .filter-bar {
