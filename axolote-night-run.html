@@ -1,0 +1,371 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Kinetic Hub | Axolote Night Run 2026</title>
+    <meta
+      name="description"
+      content="Axolote Night Run – primera edición oficial de Kinetic Hub. Running nocturno 3K y 5K en CDMX, 31 octubre 2026."
+    />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Sora:wght@500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="styles.css" />
+    <link rel="icon" type="image/png" href="icon.png" />
+    <style>
+      .axolote-hero {
+        background-image:
+          linear-gradient(135deg, rgba(6, 10, 18, 0.82), rgba(6, 10, 18, 0.52)),
+          url("banner.png");
+        background-position: center top;
+      }
+
+      .axolote-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        background: rgba(13, 199, 133, 0.15);
+        border: 1px solid rgba(13, 199, 133, 0.4);
+        color: #0dc785;
+        font-size: 0.78rem;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        padding: 4px 10px;
+        border-radius: 20px;
+        margin-bottom: 10px;
+      }
+
+      .axolote-badge::before {
+        content: "";
+        width: 7px;
+        height: 7px;
+        border-radius: 50%;
+        background: #0dc785;
+        animation: pulse-dot 1.8s ease-in-out infinite;
+      }
+
+      @keyframes pulse-dot {
+        0%, 100% { opacity: 1; transform: scale(1); }
+        50% { opacity: 0.5; transform: scale(0.7); }
+      }
+
+      .info-banner {
+        background: linear-gradient(135deg, rgba(13, 199, 133, 0.08), rgba(13, 199, 133, 0.03));
+        border: 1px solid rgba(13, 199, 133, 0.25);
+        border-radius: 12px;
+        padding: 16px 20px;
+        margin-bottom: 24px;
+      }
+
+      .info-banner p {
+        margin: 0;
+        font-size: 0.95rem;
+        color: var(--muted);
+      }
+
+      .info-banner strong {
+        color: #0dc785;
+      }
+    </style>
+  </head>
+  <body data-event-page>
+    <header class="site-header">
+      <div class="container nav-shell">
+        <a href="index.html" class="brand" aria-label="Ir al inicio de Kinetic Hub">
+          <img class="brand-mascot" src="logo.png" alt="Ajolote Kinetic Hub" />
+          <span class="brand-copy">
+            <strong>Kinetic Hub</strong>
+            <small>Run your next challenge</small>
+          </span>
+        </a>
+
+        <button class="menu-toggle" id="menuToggle" aria-expanded="false" aria-controls="siteNav">
+          Menú
+        </button>
+
+        <nav class="site-nav" id="siteNav" aria-label="Navegación principal">
+          <a href="eventos.html">Explorar eventos</a>
+          <a href="series.html">Series</a>
+          <a href="blog.html">Blog</a>
+          <a href="beneficios.html">Beneficios</a>
+          <a href="nosotros.html">Nosotros</a>
+          <a href="contacto.html">Contacto</a>
+        </nav>
+
+        <div class="nav-actions">
+          <a class="ghost-link" href="auth.html?mode=login">Iniciar Sesión</a>
+          <a class="btn btn-primary" href="auth.html?mode=register">Registrarse</a>
+        </div>
+      </div>
+    </header>
+
+    <main>
+      <section class="container">
+        <header class="event-detail-hero axolote-hero reveal">
+          <div class="axolote-badge">Edición inaugural</div>
+          <p class="eyebrow">Running nocturno · Evento oficial Kinetic Hub</p>
+          <h1>Axolote Night Run 2026</h1>
+          <p>31 octubre 2026 · Pista de Canotaje, CDMX</p>
+          <div class="quick-stats">
+            <span>3K / 5K</span>
+            <span>Nivel: Todos los niveles</span>
+            <span>Cupo limitado</span>
+            <span>Nocturno</span>
+          </div>
+        </header>
+      </section>
+
+      <section class="section">
+        <div class="container event-layout">
+          <div>
+
+            <div class="info-banner">
+              <p><strong>Primera edición oficial de Kinetic Hub.</strong> Axolote Night Run abre con operación enfocada en una experiencia ordenada, segura y memorable bajo las estrellas.</p>
+            </div>
+
+            <article class="event-panel reveal">
+              <h2 class="content-title">Sobre el evento</h2>
+              <p class="page-lead">
+                Axolote Night Run es la primera carrera oficial organizada por Kinetic Hub. Una experiencia nocturna única diseñada para corredores de todos los niveles: desde quienes corren su primer 3K hasta los que buscan su mejor tiempo en 5K.
+              </p>
+              <p style="margin-top: 12px; color: var(--muted);">
+                La carrera se celebra el 31 de octubre de 2026 en la Pista de Canotaje de la Ciudad de México, con un recorrido luminoso, ambiente festivo y todo lo que necesitas para vivir una noche inolvidable corriendo.
+              </p>
+            </article>
+
+            <article class="event-panel reveal">
+              <h2 class="content-title">Distancias y modalidades</h2>
+              <ul class="info-list">
+                <li>3K recreativo — para principiantes, familias y quienes quieren disfrutar el ambiente nocturno sin presión de tiempo.</li>
+                <li>5K competitivo — rama varonil y femenil con cronometraje oficial.</li>
+                <li>Modalidad presencial únicamente.</li>
+                <li>Salida en oleadas para garantizar orden y seguridad.</li>
+              </ul>
+            </article>
+
+            <article class="event-panel reveal">
+              <h2 class="content-title">Costos e inscripción</h2>
+              <div class="pricing-grid">
+                <div class="pricing-card">
+                  <strong>Fase 1</strong>
+                  <p>$350 MXN</p>
+                  <small style="color:var(--muted); font-size: 0.78rem;">Cupo limitado</small>
+                </div>
+                <div class="pricing-card">
+                  <strong>Fase 2</strong>
+                  <p>$420 MXN</p>
+                </div>
+                <div class="pricing-card">
+                  <strong>Fase 3</strong>
+                  <p>$490 MXN</p>
+                  <small style="color:var(--muted); font-size: 0.78rem;">Hasta agotar</small>
+                </div>
+              </div>
+            </article>
+
+            <article class="event-panel reveal">
+              <h2 class="content-title">Qué incluye tu inscripción</h2>
+              <ul class="key-points">
+                <li>Número de corredor con chip de cronometraje oficial.</li>
+                <li>Playera técnica oficial Axolote Night Run 2026.</li>
+                <li>Medalla de finisher exclusiva edición inaugural.</li>
+                <li>Hidratación en ruta y zona de meta.</li>
+                <li>Comunicación previa por correo (indicaciones, logística, kit).</li>
+                <li>Acceso a resultados oficiales publicados post-evento.</li>
+              </ul>
+            </article>
+
+            <article class="event-panel reveal">
+              <h2 class="content-title">Resultados y seguimiento</h2>
+              <p style="color: var(--muted);">
+                Publicaremos los resultados oficiales dentro de las 24 horas posteriores al evento. Se compartirán en nuestros canales oficiales y estarán disponibles en tu perfil de Kinetic Hub si te registras con cuenta.
+              </p>
+              <p style="margin-top: 10px; color: var(--muted);">
+                La galería fotográfica del evento se compartirá en Instagram y Facebook en los días siguientes a la carrera.
+              </p>
+            </article>
+
+            <article class="event-panel reveal">
+              <h2 class="content-title">Horarios clave</h2>
+              <div class="timeline">
+                <div class="timeline-item">
+                  <strong>Sábado 30 oct</strong>
+                  <p>Entrega de kits · 10:00 a 18:00 h · Lugar por confirmar</p>
+                </div>
+                <div class="timeline-item">
+                  <strong>Viernes 31 oct · 16:00 h</strong>
+                  <p>Apertura de área de salida y registro en sitio.</p>
+                </div>
+                <div class="timeline-item">
+                  <strong>Viernes 31 oct · 18:00 h</strong>
+                  <p>Salida 5K competitivo (primera oleada).</p>
+                </div>
+                <div class="timeline-item">
+                  <strong>Viernes 31 oct · 18:20 h</strong>
+                  <p>Salida 3K recreativo.</p>
+                </div>
+                <div class="timeline-item">
+                  <strong>Viernes 31 oct · 20:30 h</strong>
+                  <p>Premiación y cierre del evento.</p>
+                </div>
+              </div>
+            </article>
+
+            <article class="event-panel reveal">
+              <h2 class="content-title">FAQs</h2>
+              <div class="faq-list">
+                <div class="faq-item">
+                  <strong>¿Es apta para principiantes?</strong>
+                  <p>Sí. La distancia de 3K está diseñada especialmente para quienes corren por primera vez o quieren disfrutar el recorrido sin ritmo competitivo.</p>
+                </div>
+                <div class="faq-item">
+                  <strong>¿Puedo cambiar de distancia después de inscribirme?</strong>
+                  <p>Sí, hasta 10 días antes del evento sujeto a disponibilidad. Contáctanos por correo.</p>
+                </div>
+                <div class="faq-item">
+                  <strong>¿Hay guardarropa?</strong>
+                  <p>Sí, con cupo limitado y etiqueta oficial incluida en tu kit.</p>
+                </div>
+                <div class="faq-item">
+                  <strong>¿Se requiere experiencia previa?</strong>
+                  <p>No. Cualquier persona en condición física básica puede participar en el 3K recreativo.</p>
+                </div>
+                <div class="faq-item">
+                  <strong>¿Dónde se publican los resultados?</strong>
+                  <p>En Kinetic Hub y nuestras redes sociales dentro de las 24 horas post-evento.</p>
+                </div>
+              </div>
+            </article>
+          </div>
+
+          <aside>
+            <article class="sidebar-panel reveal" id="registro" data-event-register-panel>
+              <h2 class="content-title" id="eventRegisterTitle">Registro rápido</h2>
+              <p class="page-lead" id="eventRegisterText">Reserva tu lugar y asegura tarifa vigente.</p>
+              <a class="btn btn-primary" id="eventRegisterCta" href="auth.html?mode=register">Ir al registro</a>
+              <a class="btn btn-ghost" id="eventPayBtn" href="https://buy.stripe.com/test_dRm6oG6Vr0ewd0S5Olak000" target="_blank" rel="noopener noreferrer" style="margin-top: 10px;">Pagar</a>
+            </article>
+
+            <article class="sidebar-panel reveal">
+              <h2 class="content-title">Fecha y lugar</h2>
+              <p><strong>31 octubre 2026</strong></p>
+              <p style="color: var(--muted);">Pista de Canotaje, Ciudad de México</p>
+              <div class="map-box" style="margin-top: 10px;">Mapa referencial del evento</div>
+            </article>
+
+            <article class="sidebar-panel reveal">
+              <h2 class="content-title">Organizador</h2>
+              <p><strong>Kinetic Hub Events</strong></p>
+              <p style="color: var(--muted);">contacto@kinetichub.mx</p>
+              <p style="color: var(--muted);">5530790944</p>
+            </article>
+
+            <article class="sidebar-panel reveal">
+              <h2 class="content-title">Comparte el evento</h2>
+              <p style="color: var(--muted); font-size: 0.9rem;">¿Corres con alguien? Comparte el link y comiencen juntos.</p>
+              <div style="display: flex; gap: 8px; margin-top: 12px;">
+                <a class="btn btn-small" href="https://www.instagram.com/kinetic.hub" target="_blank" rel="noopener noreferrer">Instagram</a>
+                <a class="btn btn-small" href="https://www.facebook.com/profile.php?id=100065314880446" target="_blank" rel="noopener noreferrer">Facebook</a>
+              </div>
+            </article>
+          </aside>
+        </div>
+      </section>
+
+      <section class="section alt">
+        <div class="container">
+          <div class="section-head">
+            <h2>Más eventos</h2>
+            <a class="inline-link" href="eventos.html">Ver todos</a>
+          </div>
+
+          <div class="related-grid">
+            <article class="event-card reveal">
+              <div class="event-media media-run"></div>
+              <div class="event-body">
+                <h3>Urban Pulse 10K</h3>
+                <p>CDMX · 14 junio 2026</p>
+                <a class="btn btn-small" href="evento.html">Ver detalle</a>
+              </div>
+            </article>
+
+            <article class="event-card reveal">
+              <div class="event-media media-tri"></div>
+              <div class="event-body">
+                <h3>Tri Experience City</h3>
+                <p>Monterrey · 19 julio 2026</p>
+                <a class="btn btn-small" href="evento.html">Ver detalle</a>
+              </div>
+            </article>
+
+            <article class="event-card reveal">
+              <div class="event-media media-trail"></div>
+              <div class="event-body">
+                <h3>Trail Desafío Norte</h3>
+                <p>Saltillo · 26 julio 2026</p>
+                <a class="btn btn-small" href="evento.html">Ver detalle</a>
+              </div>
+            </article>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <div class="container footer-grid">
+        <div>
+          <a href="index.html" class="footer-brand" aria-label="Inicio Kinetic Hub">
+            <img class="brand-logo" src="KineticHUB.png" alt="Kinetic Hub" />
+          </a>
+        </div>
+
+        <div>
+          <h3>Navegación</h3>
+          <a href="eventos.html">Explorar eventos</a>
+          <a href="series.html">Series</a>
+          <a href="beneficios.html">Beneficios</a>
+          <a href="blog.html">Blog</a>
+        </div>
+
+        <div>
+          <h3>Comunidad</h3>
+          <a href="nosotros.html">Nosotros</a>
+          <a href="contacto.html">Contacto</a>
+          <a href="index.html#future">Módulos futuros</a>
+          <a href="https://www.instagram.com/kinetic.hub" target="_blank" rel="noopener noreferrer">Instagram</a>
+          <a href="https://www.facebook.com/profile.php?id=100065314880446&mibextid=wwXIfr&rdid=KDtMnE3lJn9aQZkB&share_url=https%3A%2F%2Fwww.facebook.com%2Fshare%2F18ER76xC2i%2F%3Fmibextid%3DwwXIfr#" target="_blank" rel="noopener noreferrer">Facebook</a>
+          <a href="https://x.com/kinetichubmx?s=21" target="_blank" rel="noopener noreferrer">X (Twitter)</a>
+        </div>
+
+        <div>
+          <h3>Newsletter</h3>
+          <p>Recibe lanzamientos, promociones y contenido semanal.</p>
+          <form class="footer-newsletter" action="#" method="post">
+            <label for="footerMail" class="sr-only">Correo</label>
+            <input id="footerMail" type="email" placeholder="Correo" required />
+            <button class="btn btn-small" type="submit">Suscribirme</button>
+          </form>
+        </div>
+      </div>
+
+      <div class="footer-bottom">
+        <div class="container footer-bottom-shell">
+          <small>© <span id="yearNow"></span> Kinetic Hub. Todos los derechos reservados.</small>
+          <div class="footer-links">
+            <a href="privacidad.html">Privacidad</a>
+            <a href="terminos.html">Términos</a>
+            <a href="cookies.html">Cookies</a>
+          </div>
+        </div>
+      </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="script.js"></script>
+  </body>
+</html>
