@@ -489,7 +489,7 @@ function setupWhatsAppButton() {
       <div class="whatsapp-panel-top">
         <p>Necesitas ayuda?</p>
         <a class="whatsapp-panel-link" href="${href}" target="_blank" rel="noopener noreferrer" aria-label="Escribenos por WhatsApp">
-          <img src="whatsapp_logo2.png" alt="WhatsApp" />
+          <img src="whatsapp_icon.png" alt="WhatsApp" />
           Escribenos por Whatsapp
         </a>
       </div>
@@ -500,7 +500,7 @@ function setupWhatsAppButton() {
       </div>
     </div>
     <a class="whatsapp-button" href="${href}" target="_blank" rel="noopener noreferrer" aria-label="Abrir chat de WhatsApp">
-      <img src="whatsapp_logo2.png" alt="WhatsApp" />
+      <img src="whatsapp_icon.png" alt="WhatsApp" />
     </a>
   `;
 
