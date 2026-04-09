@@ -550,6 +550,36 @@ function setupProfilePage() {
   });
 }
 
+function setupBlogTabs() {
+  const tabs = document.querySelectorAll(".home-blog-tab");
+  const cards = document.querySelectorAll(".home-blog-card");
+
+  tabs.forEach((tab) => {
+    tab.addEventListener("click", () => {
+      // Remove active class from all tabs
+      tabs.forEach((t) => t.classList.remove("is-active"));
+      // Add active class to clicked tab
+      tab.classList.add("is-active");
+
+      // Get the tab type (default to "todos")
+      const tabText = tab.textContent.toLowerCase();
+      let filterType = "todos";
+      if (tabText.includes("video")) filterType = "video";
+      if (tabText.includes("podcast")) filterType = "podcast";
+
+      // Filter cards
+      cards.forEach((card) => {
+        const cardTypes = card.dataset.type || "todos";
+        if (filterType === "todos" || cardTypes.includes(filterType)) {
+          card.style.display = "";
+        } else {
+          card.style.display = "none";
+        }
+      });
+    });
+  });
+}
+
 function setupSupabase() {
   if (typeof window.supabase === "undefined") return;
 
@@ -734,4 +764,5 @@ setupNeonCardGlow();
 setupWhatsAppButton();
 setupAuthPage();
 setupProfilePage();
+setupBlogTabs();
 setupSupabase();
