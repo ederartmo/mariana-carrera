@@ -2130,6 +2130,8 @@ body.theme-light .hero-white-bridge {
   border: 1px solid rgba(178, 192, 206, 0.7);
   box-shadow: 0 14px 28px rgba(13, 17, 24, 0.12);
   padding: 18px 12px 12px;
+}
+
 .page-hero .filter-bar {
   background: rgba(245, 248, 252, 0.9);
   border-color: rgba(168, 182, 198, 0.95);
