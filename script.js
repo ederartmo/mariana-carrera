@@ -106,6 +106,8 @@ function setupEventStickyBanner() {
       const leftViewport = entry.boundingClientRect.bottom <= 0 && !entry.isIntersecting;
       setVisible(leftViewport);
     },
+    { threshold: 0 }
+  );
 
   observer.observe(summaryCard);
 
@@ -141,6 +143,124 @@ function setupCurrentYear() {
   if (yearNode) {
     yearNode.textContent = String(new Date().getFullYear());
   }
+}
+
+function setupFooterNewsletter() {
+  const forms = document.querySelectorAll(".footer-newsletter");
+  if (!forms.length) return;
+
+  const SUPABASE_URL = "https://anwkqhxcarzfvfufhbyk.supabase.co";
+  const SUPABASE_KEY = "sb_publishable_ARbEx2T-RYfWgIJEBj1NkQ_5i7wVzQP";
+
+  const ensureSupabaseClient = async () => {
+    if (typeof window.supabase !== "undefined") {
+      return window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    }
+
+    const existingSdk = document.querySelector('script[data-supabase-sdk="true"]');
+    if (!existingSdk) {
+      const sdkScript = document.createElement("script");
+      sdkScript.src = "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2";
+      sdkScript.dataset.supabaseSdk = "true";
+      document.head.appendChild(sdkScript);
+    }
+
+    await new Promise((resolve) => {
+      const scriptNode = document.querySelector('script[data-supabase-sdk="true"]');
+      if (!scriptNode) {
+        resolve();
+        return;
+      }
+
+      if (typeof window.supabase !== "undefined") {
+        resolve();
+        return;
+      }
+
+      scriptNode.addEventListener("load", () => resolve(), { once: true });
+      scriptNode.addEventListener("error", () => resolve(), { once: true });
+    });
+
+    if (typeof window.supabase === "undefined") return null;
+    return window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+  };
+
+  const saveLocalBackup = (email) => {
+    try {
+      const key = "kinetic_newsletter_subscribers";
+      const current = JSON.parse(localStorage.getItem(key) || "[]");
+      const normalized = email.toLowerCase();
+      if (!current.includes(normalized)) {
+        current.push(normalized);
+        localStorage.setItem(key, JSON.stringify(current));
+      }
+    } catch (_err) {
+      // ignore localStorage failures (private mode, quota, etc.)
+    }
+  };
+
+  const saveToSupabase = async (email) => {
+    try {
+      const client = await ensureSupabaseClient();
+      if (!client) return false;
+
+      const { error } = await client.from("newsletter_subscribers").upsert(
+        {
+          email: email.toLowerCase(),
+          source_page: window.location.pathname,
+          created_at: new Date().toISOString(),
+        },
+        { onConflict: "email" }
+      );
+
+      return !error;
+    } catch (_err) {
+      return false;
+    }
+  };
+
+  forms.forEach((form) => {
+    const input = form.querySelector('input[type="email"]');
+    const submitBtn = form.querySelector('button[type="submit"]');
+    if (!input || !submitBtn) return;
+
+    let status = form.querySelector(".footer-newsletter-status");
+    if (!status) {
+      status = document.createElement("p");
+      status.className = "footer-newsletter-status";
+      status.setAttribute("aria-live", "polite");
+      status.style.margin = "8px 0 0";
+      status.style.fontSize = "0.85rem";
+      form.appendChild(status);
+    }
+
+    form.addEventListener("submit", async (event) => {
+      event.preventDefault();
+
+      const email = input.value.trim();
+      if (!email || !input.checkValidity()) {
+        status.textContent = "Ingresa un correo valido para suscribirte.";
+        status.style.color = "#ff8a65";
+        return;
+      }
+
+      submitBtn.disabled = true;
+      const originalText = submitBtn.textContent;
+      submitBtn.textContent = "Enviando...";
+
+      const savedInSupabase = await saveToSupabase(email);
+      saveLocalBackup(email);
+
+      status.textContent = savedInSupabase
+        ? "Listo, te suscribimos al newsletter."
+        : "Listo, guardamos tu correo localmente. Terminamos de sincronizar en breve.";
+      status.style.color = "#0dc785";
+
+      form.reset();
+      submitBtn.disabled = false;
+      submitBtn.textContent = originalText;
+    });
+  });
 }
 
 function setupEventFilters() {
@@ -578,6 +698,56 @@ function setupBlogTabs() {
   });
 }
 
+function setupEventRegistrationPanel() {
+  const panel = document.querySelector("[data-event-register-panel]");
+  if (!panel) return;
+
+  const title = document.getElementById("eventRegisterTitle");
+  const text = document.getElementById("eventRegisterText");
+  const cta = document.getElementById("eventRegisterCta");
+  const payBtn = document.getElementById("eventPayBtn");
+
+  const stripeLink = "https://buy.stripe.com/test_dRm6oG6Vr0ewd0S5Olak000";
+  if (payBtn) {
+    payBtn.href = stripeLink;
+    payBtn.target = "_blank";
+    payBtn.rel = "noopener noreferrer";
+  }
+
+  const applyState = (isLoggedIn) => {
+    if (!title || !text || !cta) return;
+
+    if (isLoggedIn) {
+      title.textContent = "Continuar registro";
+      text.textContent = "Ya iniciaste sesión. Completa tu inscripción y realiza el pago.";
+      cta.textContent = "Completar inscripción";
+      cta.href = "#";
+      return;
+    }
+
+    title.textContent = "Registro rápido";
+    text.textContent = "Reserva tu lugar y asegura tarifa vigente.";
+    cta.textContent = "Ir al registro";
+    cta.href = "auth.html?mode=register";
+  };
+
+  applyState(false);
+
+  if (typeof window.supabase === "undefined") return;
+
+  const SUPABASE_URL = "https://anwkqhxcarzfvfufhbyk.supabase.co";
+  const SUPABASE_KEY = "sb_publishable_ARbEx2T-RYfWgIJEBj1NkQ_5i7wVzQP";
+  const client = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+  client.auth.getSession().then(({ data: { session } }) => {
+    applyState(Boolean(session));
+  });
+
+  client.auth.onAuthStateChange((_event, session) => {
+    applyState(Boolean(session));
+  });
+}
+
 function setupSupabase() {
   if (typeof window.supabase === "undefined") return;
 
@@ -754,12 +924,14 @@ setupHeaderScrollState();
 setupEventStickyBanner();
 setupRevealOnScroll();
 setupCurrentYear();
+setupFooterNewsletter();
 setupEventFilters();
 setupHeroPosterSizing();
 setupRegisterScrollLed();
 setupEventModals();
 setupNeonCardGlow();
 setupWhatsAppButton();
+setupEventRegistrationPanel();
 setupAuthPage();
 setupProfilePage();
 setupBlogTabs();
