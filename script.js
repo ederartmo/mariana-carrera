@@ -707,11 +707,10 @@ function setupEventRegistrationPanel() {
   const cta = document.getElementById("eventRegisterCta");
   const payBtn = document.getElementById("eventPayBtn");
 
-  const stripeLink = "https://buy.stripe.com/test_dRm6oG6Vr0ewd0S5Olak000";
   if (payBtn) {
-    payBtn.href = stripeLink;
-    payBtn.target = "_blank";
-    payBtn.rel = "noopener noreferrer";
+    payBtn.href = "checkout.html";
+    payBtn.target = "";
+    payBtn.rel = "";
   }
 
   const applyState = (isLoggedIn) => {

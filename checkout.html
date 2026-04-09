@@ -1,0 +1,616 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Kinetic Hub | Checkout</title>
+    <meta
+      name="description"
+      content="Completa tu inscripción a eventos de Kinetic Hub con nuestro proceso seguro de checkout."
+    />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Sora:wght@500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="styles.css" />
+    <link rel="icon" type="image/png" href="icon.png" />
+    <style>
+      .checkout-page {
+        background: #f8faf9;
+      }
+
+      .checkout-hero {
+        background: linear-gradient(160deg, #3a524c, #2d403b 70%);
+        padding: 28px 0;
+      }
+
+      .checkout-hero-shell {
+        text-align: center;
+        color: #f7f9fe;
+      }
+
+      .checkout-hero-shell h1 {
+        font-family: "Sora", sans-serif;
+        font-size: clamp(1.6rem, 3vw, 2.2rem);
+        margin: 0;
+      }
+
+      /* ─── Breadcrumb ─────────────────────────── */
+      .checkout-breadcrumb {
+        display: flex;
+        gap: 0;
+        margin-bottom: 36px;
+        border-radius: 8px;
+        overflow: hidden;
+        background: #fff;
+        border: 1px solid #e0e5e2;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+      }
+
+      .breadcrumb-step {
+        flex: 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        padding: 14px 16px;
+        text-align: center;
+        font-size: 0.9rem;
+        font-weight: 600;
+        color: #7d8885;
+        position: relative;
+        background: #fff;
+        transition: background 0.2s;
+      }
+
+      .breadcrumb-step.active {
+        background: linear-gradient(135deg, #e8f5ec, #f0faf7);
+        color: #0dc785;
+      }
+
+      .breadcrumb-step.completed {
+        background: rgba(13, 199, 133, 0.08);
+        color: #0dc785;
+      }
+
+      .breadcrumb-step::after {
+        content: "";
+        position: absolute;
+        right: -1px;
+        top: 0;
+        bottom: 0;
+        width: 1px;
+        background: #e0e5e2;
+      }
+
+      .breadcrumb-step:last-child::after {
+        display: none;
+      }
+
+      .breadcrumb-step strong {
+        display: block;
+        font-size: 1.6rem;
+        line-height: 1;
+        margin-bottom: 2px;
+      }
+
+      /* ─── Main Grid ──────────────────────────── */
+      .checkout-grid {
+        display: grid;
+        grid-template-columns: 1fr 340px;
+        gap: 28px;
+      }
+
+      @media (max-width: 900px) {
+        .checkout-grid {
+          grid-template-columns: 1fr;
+        }
+      }
+
+      /* ─── Form Section ──────────────────────── */
+      .checkout-form-shell {
+        background: #fff;
+        border-radius: 12px;
+        border: 1px solid #d1dbd5;
+        padding: 32px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+      }
+
+      .checkout-section {
+        margin-bottom: 32px;
+      }
+
+      .checkout-section:last-child {
+        margin-bottom: 0;
+      }
+
+      .checkout-section-title {
+        font-family: "Sora", sans-serif;
+        font-size: 1.1rem;
+        font-weight: 700;
+        color: var(--ink);
+        margin: 0 0 18px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .checkout-section-title strong {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 28px;
+        height: 28px;
+        border-radius: 50%;
+        background: rgba(13, 199, 133, 0.12);
+        color: #0dc785;
+        font-size: 0.9rem;
+      }
+
+      /* Event info card in step 1 */
+      .event-info-card {
+        background: linear-gradient(135deg, rgba(13, 199, 133, 0.08), rgba(13, 199, 133, 0.03));
+        border: 1px solid rgba(13, 199, 133, 0.2);
+        border-radius: 10px;
+        padding: 16px;
+        margin-bottom: 18px;
+        display: flex;
+        gap: 14px;
+      }
+
+      .event-info-card img {
+        width: 60px;
+        height: 60px;
+        border-radius: 8px;
+        object-fit: cover;
+      }
+
+      .event-info-content {
+        flex: 1;
+      }
+
+      .event-info-content h3 {
+        margin: 0 0 4px;
+        font-size: 0.95rem;
+        font-weight: 700;
+        color: var(--ink);
+      }
+
+      .event-info-content p {
+        margin: 2px 0;
+        font-size: 0.85rem;
+        color: #7d8885;
+      }
+
+      /* Form Grid */
+      .checkout-form-grid {
+        display: grid;
+        gap: 14px;
+      }
+
+      .form-row-two {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 14px;
+      }
+
+      .checkout-form-grid label {
+        display: block;
+        font-size: 0.85rem;
+        font-weight: 700;
+        color: var(--ink);
+        margin-bottom: 6px;
+      }
+
+      .required-mark {
+        color: var(--accent);
+      }
+
+      .checkout-form-grid input,
+      .checkout-form-grid select {
+        width: 100%;
+        min-height: 42px;
+        border-radius: 6px;
+        border: 1px solid #c8d3cd;
+        background: #f9faf8;
+        padding: 10px 12px;
+        font-size: 0.9rem;
+        font-family: "Manrope", sans-serif;
+        transition: border-color 0.2s;
+      }
+
+      .checkout-form-grid input:focus,
+      .checkout-form-grid select:focus {
+        outline: none;
+        border-color: #0dc785;
+        box-shadow: 0 0 0 3px rgba(13, 199, 133, 0.1);
+      }
+
+      /* ─── Sidebar ────────────────────────────── */
+      .checkout-sidebar {
+        background: #fff;
+        border-radius: 12px;
+        border: 1px solid #d1dbd5;
+        padding: 24px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+        height: fit-content;
+        position: sticky;
+        top: 20px;
+      }
+
+      .sidebar-title {
+        font-family: "Sora", sans-serif;
+        font-size: 1rem;
+        font-weight: 700;
+        color: var(--ink);
+        margin: 0 0 16px;
+        padding-bottom: 12px;
+        border-bottom: 1px solid #e0e5e2;
+      }
+
+      .summary-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 10px 0;
+        font-size: 0.9rem;
+        color: #7d8885;
+      }
+
+      .summary-item strong {
+        color: var(--ink);
+      }
+
+      .summary-item.total {
+        padding: 14px 0;
+        margin-top: 8px;
+        border-top: 1px solid #e0e5e2;
+        border-bottom: 1px solid #e0e5e2;
+        font-size: 1.1rem;
+        font-weight: 700;
+        color: var(--ink);
+      }
+
+      .summary-item.total strong {
+        font-size: 1.3rem;
+        color: var(--accent);
+      }
+
+      .sidebar-cta-group {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        margin-top: 18px;
+      }
+
+      .sidebar-cta-group .btn {
+        width: 100%;
+        text-align: center;
+        padding: 12px 16px;
+      }
+
+      .btn-checkout-submit {
+        background: var(--accent);
+        color: white;
+        border: none;
+        font-weight: 700;
+        cursor: pointer;
+        transition: all 0.2s;
+      }
+
+      .btn-checkout-submit:hover {
+        background: #0ba074;
+        transform: translateY(-1px);
+        box-shadow: 0 6px 16px rgba(13, 199, 133, 0.3);
+      }
+
+      .btn-continue-shopping {
+        background: transparent;
+        color: var(--ink);
+        border: 1px solid #d1dbd5;
+        cursor: pointer;
+        transition: all 0.2s;
+      }
+
+      .btn-continue-shopping:hover {
+        border-color: #0dc785;
+        color: #0dc785;
+      }
+
+      /* ─── Mobile Responsive ──────────────────── */
+      @media (max-width: 600px) {
+        .checkout-form-shell {
+          padding: 20px;
+        }
+
+        .checkout-breadcrumb {
+          flex-direction: column;
+        }
+
+        .breadcrumb-step {
+          padding: 12px 14px;
+          font-size: 0.85rem;
+        }
+
+        .breadcrumb-step::after {
+          display: none;
+        }
+
+        .form-row-two {
+          grid-template-columns: 1fr;
+        }
+
+        .checkout-sidebar {
+          position: static;
+          top: auto;
+        }
+      }
+    </style>
+  </head>
+  <body class="checkout-page">
+    <div class="page-glow page-glow-a"></div>
+    <div class="page-glow page-glow-b"></div>
+
+    <header class="site-header">
+      <div class="container nav-shell">
+        <a href="index.html" class="brand" aria-label="Ir al inicio de Kinetic Hub">
+          <img class="brand-mascot" src="logo.png" alt="Ajolote Kinetic Hub" />
+          <span class="brand-copy">
+            <strong>Kinetic Hub</strong>
+            <small>Run your next challenge</small>
+          </span>
+        </a>
+
+        <button class="menu-toggle" id="menuToggle" aria-expanded="false" aria-controls="siteNav">
+          Menú
+        </button>
+
+        <nav class="site-nav" id="siteNav" aria-label="Navegación principal">
+          <a href="eventos.html">Explorar eventos</a>
+          <a href="series.html">Series</a>
+          <a href="blog.html">Blog</a>
+          <a href="beneficios.html">Beneficios</a>
+          <a href="nosotros.html">Nosotros</a>
+          <a href="contacto.html">Contacto</a>
+        </nav>
+
+        <div class="nav-actions">
+          <a class="ghost-link" href="auth.html?mode=login">Iniciar Sesión</a>
+          <a class="btn btn-primary" href="auth.html?mode=register">Registrarse</a>
+        </div>
+      </div>
+    </header>
+
+    <main>
+      <section class="checkout-hero">
+        <div class="container checkout-hero-shell">
+          <h1>Confirmar inscripción</h1>
+        </div>
+      </section>
+
+      <section class="section">
+        <div class="container">
+          <div class="checkout-breadcrumb">
+            <div class="breadcrumb-step completed">
+              <strong>✓</strong>
+              <span>Carrito</span>
+            </div>
+            <div class="breadcrumb-step active">
+              <strong>2</strong>
+              <span>Datos de contacto</span>
+            </div>
+            <div class="breadcrumb-step">
+              <strong>3</strong>
+              <span>Confirmación</span>
+            </div>
+          </div>
+
+          <form class="checkout-grid" id="checkoutForm" method="post" action="#">
+            <div class="checkout-form-shell">
+              <!-- Step 1: Event & Contact Info -->
+              <div class="checkout-section">
+                <h2 class="checkout-section-title">
+                  <strong>1</strong> Tu evento
+                </h2>
+
+                <div class="event-info-card">
+                  <img src="banner.png" alt="Axolote Night Run" />
+                  <div class="event-info-content">
+                    <h3>Axolote Night Run</h3>
+                    <p>🏃 Distancia: 5K</p>
+                    <p>📅 31 OCT 2026 · 18:00 H</p>
+                    <p>📍 Pista de Canotaje, CDMX</p>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Step 2: Emergency Contact -->
+              <div class="checkout-section">
+                <h2 class="checkout-section-title">
+                  <strong>2</strong> Contacto de emergencia
+                </h2>
+
+                <p style="color: #7d8885; font-size: 0.9rem; margin: 0 0 14px;">
+                  Es obligatorio tener un contacto de emergencia registrado para participar.
+                </p>
+
+                <div class="checkout-form-grid">
+                  <label for="emergencyName">
+                    Nombre completo <span class="required-mark">*</span>
+                  </label>
+                  <input
+                    id="emergencyName"
+                    name="emergencyName"
+                    type="text"
+                    placeholder="Ej: Juan Pérez"
+                    required
+                  />
+
+                  <label for="emergencyPhone">
+                    Teléfono celular <span class="required-mark">*</span>
+                  </label>
+                  <input
+                    id="emergencyPhone"
+                    name="emergencyPhone"
+                    type="tel"
+                    placeholder="Ej: 5530790944"
+                    required
+                  />
+
+                  <label for="emergencyRelation">
+                    Relación <span class="required-mark">*</span>
+                  </label>
+                  <select id="emergencyRelation" name="emergencyRelation" required>
+                    <option value="">Selecciona relación</option>
+                    <option value="madre">Madre</option>
+                    <option value="padre">Padre</option>
+                    <option value="hermano">Hermano/a</option>
+                    <option value="pareja">Pareja</option>
+                    <option value="amigo">Amigo/a</option>
+                    <option value="otro">Otro</option>
+                  </select>
+
+                  <label for="emergencyEmail">
+                    Correo electrónico <span class="required-mark">*</span>
+                  </label>
+                  <input
+                    id="emergencyEmail"
+                    name="emergencyEmail"
+                    type="email"
+                    placeholder="correo@ejemplo.com"
+                    required
+                  />
+                </div>
+              </div>
+
+              <!-- Step 3: Terms -->
+              <div class="checkout-section" style="margin-top: 24px;">
+                <label style="display: flex; align-items: center; gap: 10px; cursor: pointer; font-weight: 500; color: var(--ink);">
+                  <input type="checkbox" id="termsCheck" name="termsCheck" required />
+                  Acepto <a href="terminos.html" target="_blank" style="color: var(--accent); text-decoration: none;">términos y condiciones</a> y <a href="privacidad.html" target="_blank" style="color: var(--accent); text-decoration: none;">política de privacidad</a>
+                </label>
+              </div>
+            </div>
+
+            <!-- Sidebar Summary -->
+            <aside class="checkout-sidebar">
+              <h3 class="sidebar-title">Resumen</h3>
+
+              <div>
+                <div class="summary-item">
+                  <span>Axolote Night Run</span>
+                  <strong>5K</strong>
+                </div>
+                <div class="summary-item">
+                  <span>Tarifa Fase 1</span>
+                  <strong>$350 MXN</strong>
+                </div>
+                <div class="summary-item">
+                  <span>Incluye</span>
+                  <strong style="font-size: 0.85rem;">Playera + Medalla</strong>
+                </div>
+              </div>
+
+              <div class="summary-item total">
+                <span>Total</span>
+                <strong>$350 MXN</strong>
+              </div>
+
+              <p style="font-size: 0.8rem; color: #999; margin: 12px 0 14px; line-height: 1.4;">
+                ✓ Inscripción individual e intransferible<br />
+                ✓ No hay reembolso por cancelación<br />
+                ✓ Uso de linterna obligatoria
+              </p>
+
+              <div class="sidebar-cta-group">
+                <button type="submit" class="btn-checkout-submit">
+                  Continuar al pago
+                </button>
+                <a href="axolote-night-run.html" class="btn-continue-shopping">
+                  Volver al evento
+                </a>
+              </div>
+            </aside>
+          </form>
+        </div>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <div class="container footer-grid">
+        <div>
+          <a href="index.html" class="footer-brand" aria-label="Inicio Kinetic Hub">
+            <img class="brand-logo" src="KineticHUB.png" alt="Kinetic Hub" />
+          </a>
+        </div>
+
+        <div>
+          <h3>Navegación</h3>
+          <a href="eventos.html">Explorar eventos</a>
+          <a href="series.html">Series</a>
+          <a href="beneficios.html">Beneficios</a>
+          <a href="blog.html">Blog</a>
+        </div>
+
+        <div>
+          <h3>Comunidad</h3>
+          <a href="nosotros.html">Nosotros</a>
+          <a href="contacto.html">Contacto</a>
+          <a href="index.html#future">FAQ del evento</a>
+          <a href="https://www.instagram.com/kinetic.hub" target="_blank" rel="noopener noreferrer">Instagram</a>
+          <a href="https://www.facebook.com/profile.php?id=100065314880446&mibextid=wwXIfr&rdid=KDtMnE3lJn9aQZkB&share_url=https%3A%2F%2Fwww.facebook.com%2Fshare%2F18ER76xC2i%2F%3Fmibextid%3DwwXIfr#" target="_blank" rel="noopener noreferrer">Facebook</a>
+          <a href="https://x.com/kinetichubmx?s=21" target="_blank" rel="noopener noreferrer">X (Twitter)</a>
+        </div>
+
+        <div>
+          <h3>Newsletter</h3>
+          <p>Te notificamos próxima carrera, resultados y tu posición oficial al cierre del evento.</p>
+          <form class="footer-newsletter" action="#" method="post">
+            <label for="footerCheckoutMail" class="sr-only">Correo</label>
+            <input id="footerCheckoutMail" type="email" placeholder="Correo para notificaciones" required />
+            <button class="btn btn-small" type="submit">Quiero avisos</button>
+          </form>
+        </div>
+      </div>
+
+      <div class="footer-bottom">
+        <div class="container footer-bottom-shell">
+          <small>© <span id="yearNow"></span> Kinetic Hub. Todos los derechos reservados.</small>
+          <div class="footer-links">
+            <a href="privacidad.html">Privacidad</a>
+            <a href="terminos.html">Términos</a>
+            <a href="cookies.html">Cookies</a>
+          </div>
+        </div>
+      </div>
+    </footer>
+
+    <script src="script.js"></script>
+    <script>
+      // Handle checkout form submission
+      const checkoutForm = document.getElementById("checkoutForm");
+      if (checkoutForm) {
+        checkoutForm.addEventListener("submit", (e) => {
+          e.preventDefault();
+
+          // Collect form data
+          const formData = {
+            emergencyName: document.getElementById("emergencyName").value,
+            emergencyPhone: document.getElementById("emergencyPhone").value,
+            emergencyRelation: document.getElementById("emergencyRelation").value,
+            emergencyEmail: document.getElementById("emergencyEmail").value,
+          };
+
+          // TODO: Send to backend or store in session/localStorage
+          console.log("Checkout data:", formData);
+
+          // Redirect to Stripe (or payment processor)
+          window.location.href =
+            "https://buy.stripe.com/test_dRm6oG6Vr0ewd0S5Olak000";
+        });
+      }
+    </script>
+  </body>
+</html>
