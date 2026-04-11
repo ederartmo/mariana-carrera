@@ -252,8 +252,8 @@ function setupFooterNewsletter() {
       saveLocalBackup(email);
 
       status.textContent = savedInSupabase
-        ? "Listo, te suscribimos al newsletter."
-        : "Listo, guardamos tu correo localmente. Terminamos de sincronizar en breve.";
+        ? "Gracias por registrarte. Te avisaremos por correo."
+        : "Gracias por registrarte. Guardamos tu correo y lo sincronizamos en breve.";
       status.style.color = "#0dc785";
 
       form.reset();
@@ -829,9 +829,16 @@ function setupSupabase() {
 
     // Registro con email
     const registerForm = document.querySelector('[data-auth-panel="register"] form');
+    const registerStatus = document.getElementById("registerStatus");
     if (registerForm) {
       registerForm.addEventListener("submit", async (e) => {
         e.preventDefault();
+
+        if (registerStatus) {
+          registerStatus.textContent = "";
+          registerStatus.classList.remove("is-error");
+        }
+
         const email = document.getElementById("registerEmail")?.value.trim();
         const password = document.getElementById("registerPassword")?.value;
         const confirm = document.getElementById("registerConfirmPassword")?.value;
@@ -839,8 +846,20 @@ function setupSupabase() {
         const apellido = document.getElementById("registerLastName")?.value.trim();
 
         if (password !== confirm) {
-          alert("Las contraseñas no coinciden.");
+          if (registerStatus) {
+            registerStatus.textContent = "Las contraseñas no coinciden.";
+            registerStatus.classList.add("is-error");
+          } else {
+            alert("Las contraseñas no coinciden.");
+          }
           return;
+        }
+
+        const submitBtn = registerForm.querySelector('button[type="submit"]');
+        const originalText = submitBtn?.textContent || "Registrarme";
+        if (submitBtn) {
+          submitBtn.disabled = true;
+          submitBtn.textContent = "Registrando...";
         }
 
         const { error } = await client.auth.signUp({
@@ -852,10 +871,26 @@ function setupSupabase() {
           },
         });
 
+        if (submitBtn) {
+          submitBtn.disabled = false;
+          submitBtn.textContent = originalText;
+        }
+
         if (error) {
-          alert(error.message);
+          if (registerStatus) {
+            registerStatus.textContent = error.message;
+            registerStatus.classList.add("is-error");
+          } else {
+            alert(error.message);
+          }
         } else {
-          alert("¡Revisa tu correo para confirmar tu cuenta y poder iniciar sesión!");
+          if (registerStatus) {
+            registerStatus.textContent = "Gracias por registrarte. Revisa tu correo para confirmar tu cuenta.";
+            registerStatus.classList.remove("is-error");
+          } else {
+            alert("¡Revisa tu correo para confirmar tu cuenta y poder iniciar sesión!");
+          }
+          registerForm.reset();
         }
       });
     }

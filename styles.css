@@ -2719,6 +2719,18 @@ body[data-page="series"] .page-hero .container {
   cursor: pointer;
 }
 
+.auth-form-status {
+  min-height: 20px;
+  margin: 6px 0 0;
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: #0a9e6a;
+}
+
+.auth-form-status.is-error {
+  color: #c2410c;
+}
+
 .auth-google {
   margin-top: 12px;
   display: inline-flex;
@@ -3615,160 +3627,551 @@ body[data-page="series"] .page-hero .container {
   }
 
 
-/* ─── Orbit Events Section ─────────────────────────────── */
+/* ─── Orbital Semicircle Section ───────────────────────── */
 .orbit-section {
-  padding: 80px 0 60px;
-  background: #fff;
+  padding: 84px 0;
+  background: linear-gradient(180deg, #f8fafb 0%, #f1f4f7 100%);
+}
+
+.orbit-stage {
+  position: relative;
+  width: min(1120px, 100%);
+  height: 640px;
+  margin: 0 auto;
+  border-radius: 36px;
+  background: #f8fafb;
+  border: 1px solid rgba(16, 24, 40, 0.05);
+  box-shadow: 0 20px 48px rgba(15, 23, 42, 0.08);
   overflow: hidden;
 }
 
-.orbit-section-copy {
+.orbit-center-copy {
+  position: absolute;
+  left: 50%;
+  top: 58%;
+  transform: translate(-50%, -50%);
   text-align: center;
-  max-width: 540px;
-  margin: 0 auto 52px;
+  width: min(700px, calc(100% - 40px));
+  z-index: 3;
 }
 
 .orbit-heading {
+  margin: 8px 0 12px;
   font-family: "Sora", sans-serif;
-  font-size: clamp(2rem, 5vw, 3.4rem);
-  color: var(--accent);
-  margin: 6px 0 14px;
-  letter-spacing: -0.02em;
+  font-size: clamp(1.7rem, 3.5vw, 3rem);
+  line-height: 1.05;
+  letter-spacing: -0.03em;
+  color: var(--primary);
+  text-transform: uppercase;
 }
 
-.orbit-section-copy p {
-  color: #555;
-  max-width: 40ch;
-  margin: 0 auto 22px;
-}
-
-/* ── Arena (viewport that clips the orbit) ── */
-.orbit-arena {
-  position: relative;
-  width: 520px;
-  height: 520px;
+.orbit-description {
   margin: 0 auto;
+  max-width: 52ch;
+  font-size: clamp(0.98rem, 1.5vw, 1.1rem);
+  line-height: 1.6;
+  color: #4e5f76;
 }
 
-/* ── Spinning ring (drives the orbit rotation) ── */
-.orbit-ring {
+.orbit-viewport {
   position: absolute;
-  top: 60px;
-  left: 60px;
-  right: 60px;
-  bottom: 60px;
-  animation: orbit-spin 22s linear infinite;
-  transform-origin: center;
+  inset: 0;
+  overflow: hidden;
+  z-index: 1;
+  clip-path: inset(0 0 50% 0);
+  mask-image: linear-gradient(to bottom, #000 0%, #000 44%, rgba(0, 0, 0, 0.28) 49%, transparent 54%, transparent 100%);
+}
+
+.orbit-viewport::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 50%;
+  height: 120px;
+  background: linear-gradient(to bottom, rgba(248, 250, 251, 0), #f8fafb 74%);
+  pointer-events: none;
+}
+
+.orbit-ring {
+  --orbit-radius: 340px;
+  --orbit-size: 860px;
+  position: absolute;
+  width: var(--orbit-size);
+  height: var(--orbit-size);
+  left: 50%;
+  top: 57%;
+  transform: translate(-50%, -50%);
+  animation: orbit-spin 44s linear infinite;
 }
 
 @keyframes orbit-spin {
-  to { transform: rotate(360deg); }
+  from { transform: translate(-50%, -50%) rotate(0deg); }
+  to { transform: translate(-50%, -50%) rotate(360deg); }
 }
 
-/* ── Each arm: static rotational offset per card ── */
 .orbit-arm {
   position: absolute;
   inset: 0;
-  transform: rotate(calc(var(--i) * 60deg));
+  transform: rotate(calc(var(--i) * 30deg));
 }
 
-/* ── Card: positioned at orbit edge, counter-rotates to stay upright ── */
 .orbit-card {
+  --base-rotation: calc((var(--i) * -30deg) + var(--tilt, 0deg));
   position: absolute;
-  top: -8px;
   left: 50%;
-  width: 112px;
-  padding: 14px 10px 12px;
-  background: #fff;
+  top: 50%;
+  width: 106px;
+  height: 106px;
+  transform: translate(-50%, calc(-1 * var(--orbit-radius))) rotate(var(--base-rotation));
+  animation: orbit-card-upright 44s linear infinite;
   border-radius: 22px;
-  box-shadow:
-    0 6px 28px rgba(0, 0, 0, 0.09),
-    0 1px 4px rgba(0, 0, 0, 0.06);
-  border: 1px solid rgba(0, 0, 0, 0.04);
+  border: 1px solid rgba(16, 24, 40, 0.08);
+  box-shadow: 0 8px 26px rgba(15, 23, 42, 0.12);
+  background: #fff;
   display: flex;
   flex-direction: column;
+  justify-content: center;
   align-items: center;
-  gap: 7px;
+  gap: 6px;
   text-decoration: none;
-  color: var(--ink);
-  --card-angle: calc(var(--i) * -60deg);
-  animation: orbit-card-upright 22s linear infinite;
-  transition: box-shadow 0.2s;
+  color: #152236;
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+}
+
+@keyframes orbit-card-upright {
+  from { transform: translate(-50%, calc(-1 * var(--orbit-radius))) rotate(var(--base-rotation)); }
+  to { transform: translate(-50%, calc(-1 * var(--orbit-radius))) rotate(calc(var(--base-rotation) - 360deg)); }
 }
 
 .orbit-card:hover {
-  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.16);
-}
-
-/* Counter-rotation to keep every card visually upright */
-@keyframes orbit-card-upright {
-  from { transform: translateX(-50%) rotate(var(--card-angle)); }
-  to   { transform: translateX(-50%) rotate(calc(var(--card-angle) - 360deg)); }
+  box-shadow: 0 14px 34px rgba(15, 23, 42, 0.16);
 }
 
 .orbit-card img {
-  width: 68px;
-  height: 68px;
+  width: 52px;
+  height: 52px;
   object-fit: contain;
-  border-radius: 12px;
+  border-radius: 10px;
 }
 
 .orbit-card span {
-  font-size: 0.67rem;
-  font-weight: 700;
+  font-size: 0.66rem;
+  font-weight: 800;
+  letter-spacing: 0.01em;
   text-align: center;
-  line-height: 1.3;
-  color: var(--ink);
+  color: #253750;
 }
 
-/* Accent card (emoji-only) */
-.orbit-card-accent {
-  background: linear-gradient(135deg, #e8f5ec, #d4edda);
-}
-
-.orbit-card-dark {
-  background: linear-gradient(135deg, #1a1f2e, #2b3045);
-}
-
-.orbit-card-dark span {
-  color: #e8eaf0;
-}
-
-.orbit-card-emoji {
-  font-size: 2.2rem;
-  line-height: 1;
-  display: block;
-}
-
-/* ── Responsive ── */
-@media (max-width: 620px) {
-  .orbit-arena {
-    width: 340px;
-    height: 340px;
+@media (max-width: 1024px) {
+  .orbit-stage {
+    height: 560px;
   }
 
   .orbit-ring {
-    top: 40px;
-    left: 40px;
-    right: 40px;
-    bottom: 40px;
+    --orbit-radius: 285px;
+    --orbit-size: 720px;
+    top: 58%;
+  }
+
+  .orbit-center-copy {
+    top: 60%;
   }
 
   .orbit-card {
-    width: 80px;
-    padding: 10px 8px;
+    width: 90px;
+    height: 90px;
+    border-radius: 18px;
   }
 
   .orbit-card img {
-    width: 46px;
-    height: 46px;
-  }
-
-  .orbit-card-emoji {
-    font-size: 1.6rem;
+    width: 44px;
+    height: 44px;
   }
 
   .orbit-card span {
     font-size: 0.58rem;
+  }
+}
+
+@media (max-width: 680px) {
+  .orbit-section {
+    padding: 56px 0;
+  }
+
+  .orbit-stage {
+    height: 480px;
+    border-radius: 26px;
+  }
+
+  .orbit-ring {
+    --orbit-radius: 205px;
+    --orbit-size: 520px;
+    top: 60%;
+  }
+
+  .orbit-center-copy {
+    top: 62%;
+    width: min(94%, 440px);
+  }
+
+  .orbit-heading {
+    font-size: clamp(1.3rem, 7vw, 2rem);
+    line-height: 1.1;
+  }
+
+  .orbit-description {
+    font-size: 0.92rem;
+    line-height: 1.5;
+  }
+
+  .orbit-card {
+    width: 74px;
+    height: 74px;
+    border-radius: 15px;
+    gap: 3px;
+  }
+
+  .orbit-card img {
+    width: 34px;
+    height: 34px;
+  }
+
+  .orbit-card span {
+    font-size: 0.5rem;
+  }
+}
+
+/* ╔════════════════════════════════════════════════════════════════╗ */
+/* ║  RESULTS DASHBOARD SECTION - Premium Sports Dashboard         ║ */
+/* ╚════════════════════════════════════════════════════════════════╝ */
+
+.results-dashboard-section {
+  background: linear-gradient(180deg, #f9fafb 0%, #f3f4f6 100%);
+  padding: 64px 0;
+  margin-bottom: 0;
+}
+
+.results-dashboard-section .container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 20px;
+}
+
+/* ── Header Row (Logo + Text + CTA) ── */
+.dashboard-header-row {
+  display: grid;
+  grid-template-columns: 100px minmax(360px, 1.45fr) minmax(240px, 1fr) auto;
+  gap: 22px;
+  align-items: center;
+  margin-bottom: 20px;
+  background: white;
+  border-radius: 24px;
+  padding: 30px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.06);
+  border: 1px solid rgba(0, 0, 0, 0.04);
+}
+
+/* Logo Block */
+.dashboard-logo-block {
+  width: 100px;
+  height: 100px;
+  border-radius: 20px;
+  background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.dashboard-logo-block svg {
+  width: 56px;
+  height: 56px;
+  color: white;
+}
+
+/* Text Main */
+.dashboard-text-main {
+  flex: 1;
+}
+
+.dashboard-title {
+  margin: 0;
+  font-size: 24px;
+  font-weight: 800;
+  line-height: 1.15;
+  color: var(--text);
+  font-family: 'Sora', sans-serif;
+  letter-spacing: -0.5px;
+}
+
+/* Text Secondary */
+.dashboard-text-secondary {
+  flex: 1;
+}
+
+.dashboard-subtitle {
+  margin: 0;
+  font-size: 14px;
+  color: var(--muted);
+  line-height: 1.6;
+  font-weight: 500;
+}
+
+/* CTA Block */
+.dashboard-cta-block {
+  flex-shrink: 0;
+}
+
+.dashboard-btn-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--accent);
+  color: white;
+  padding: 10px 18px;
+  border-radius: 14px;
+  text-decoration: none;
+  font-weight: 700;
+  font-size: 12px;
+  letter-spacing: 0.3px;
+  border: none;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 6px 18px rgba(222, 111, 32, 0.28);
+  white-space: nowrap;
+}
+
+.dashboard-btn-primary:hover {
+  background: var(--accent-dark);
+  box-shadow: 0 8px 24px rgba(222, 111, 32, 0.36);
+  transform: translateY(-2px);
+}
+
+/* ── Cards Grid ── */
+.dashboard-cards-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 18px;
+  margin-top: 10px;
+  align-items: stretch;
+}
+
+/* Base Card Styles */
+.dashboard-card {
+  background: white;
+  border-radius: 18px;
+  padding: 22px;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  border: 1px solid rgba(0, 0, 0, 0.04);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.05);
+  transition: all 0.3s ease;
+  gap: 10px;
+}
+
+.dashboard-card:hover {
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.1);
+  transform: translateY(-4px);
+}
+
+/* Card Header Label (for cards 2-5) */
+.dashboard-card-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.dashboard-card-label {
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 1.2px;
+  color: var(--primary);
+  text-transform: uppercase;
+}
+
+/* Card Icon Circle (for profile card) */
+.dashboard-card-icon-circle {
+  width: 62px;
+  height: 62px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, rgba(222, 111, 32, 0.12) 0%, rgba(52, 74, 69, 0.08) 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 4px auto;
+}
+
+.dashboard-card-icon-circle svg {
+  width: 34px;
+  height: 34px;
+  color: var(--primary);
+  stroke-width: 1.7;
+}
+
+/* Card Icon (for other cards) */
+.dashboard-card-icon {
+  width: 56px;
+  height: 56px;
+  border-radius: 16px;
+  background: linear-gradient(135deg, rgba(52, 74, 69, 0.08) 0%, rgba(222, 111, 32, 0.08) 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.dashboard-card-icon svg {
+  width: 30px;
+  height: 30px;
+  color: var(--primary);
+  stroke-width: 1.7;
+}
+
+/* Card Title */
+.dashboard-card-title {
+  font-size: 16px;
+  font-weight: 700;
+  margin: 0;
+  color: var(--text);
+  font-family: 'Sora', sans-serif;
+  text-align: center;
+}
+
+/* Card Subtitle */
+.dashboard-card-subtitle {
+  font-size: 14px;
+  font-weight: 700;
+  margin: 0;
+  color: var(--text);
+  font-family: 'Sora', sans-serif;
+}
+
+/* Card Text */
+.dashboard-card-text {
+  font-size: 12px;
+  color: var(--muted);
+  line-height: 1.45;
+  margin: 0;
+}
+
+/* Card Link/CTA */
+.dashboard-card-link {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--accent);
+  text-decoration: none;
+  letter-spacing: 0.2px;
+  transition: all 0.2s ease;
+  align-self: flex-start;
+  border-bottom: 2px solid transparent;
+}
+
+.dashboard-card-link:hover {
+  color: var(--accent-dark);
+  border-bottom-color: var(--accent);
+}
+
+/* Gallery Preview Grid */
+.dashboard-gallery-preview {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 5px;
+  padding: 8px 0;
+}
+
+.gallery-placeholder {
+  aspect-ratio: 1;
+  background: linear-gradient(135deg, #e5e7eb 0%, #d1d5db 100%);
+  border-radius: 8px;
+  transition: all 0.2s ease;
+}
+
+.dashboard-card:hover .gallery-placeholder {
+  background: linear-gradient(135deg, #d1d5db 0%, #9ca3af 100%);
+}
+
+/* ── Responsive Tablet ── */
+@media (max-width: 1024px) {
+  .dashboard-header-row {
+    grid-template-columns: 1fr;
+    gap: 24px;
+    padding: 32px;
+    margin-bottom: 22px;
+  }
+
+  .dashboard-logo-block {
+    margin: 0 auto;
+  }
+
+  .dashboard-title {
+    font-size: 24px;
+  }
+
+  .dashboard-cards-grid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
+  }
+}
+
+/* ── Responsive Mobile ── */
+@media (max-width: 640px) {
+  .results-dashboard-section {
+    padding: 48px 0;
+  }
+
+  .dashboard-header-row {
+    grid-template-columns: 1fr;
+    gap: 16px;
+    padding: 24px;
+    margin-bottom: 16px;
+    text-align: center;
+  }
+
+  .dashboard-logo-block {
+    width: 80px;
+    height: 80px;
+    margin: 0 auto;
+  }
+
+  .dashboard-logo-block svg {
+    width: 48px;
+    height: 48px;
+  }
+
+  .dashboard-title {
+    font-size: 20px;
+  }
+
+  .dashboard-subtitle {
+    font-size: 13px;
+  }
+
+  .dashboard-btn-primary {
+    width: 100%;
+    padding: 12px 24px;
+    font-size: 13px;
+  }
+
+  .dashboard-cards-grid {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+
+  .dashboard-card {
+    padding: 24px;
+    gap: 12px;
+  }
+
+  .dashboard-card-title {
+    font-size: 16px;
+  }
+
+  .dashboard-card-text {
+    font-size: 12px;
+  }
+
+  .dashboard-card-link {
+    font-size: 12px;
   }
 }
