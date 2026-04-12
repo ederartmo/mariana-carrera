@@ -886,8 +886,57 @@ function setupSupabase() {
     const hashParams = new URLSearchParams(window.location.hash.replace(/^#/, ""));
     const hasSignupCallback = hashParams.get("type") === "signup" && hashParams.has("access_token");
 
-    // Si ya hay sesión activa → ir directo al perfil
-    client.auth.getSession().then(({ data: { session } }) => {
+    const promptActiveSessionChoice = (email) =>
+      new Promise((resolve) => {
+        const overlay = document.createElement("div");
+        overlay.className = "auth-session-overlay";
+        overlay.innerHTML = `
+          <div class="auth-session-modal" role="dialog" aria-modal="true" aria-labelledby="authSessionTitle">
+            <h2 id="authSessionTitle">Sesión detectada</h2>
+            <p>Ya tienes una sesión activa con:</p>
+            <p class="auth-session-email">${email}</p>
+            <p>¿Cómo quieres continuar?</p>
+            <div class="auth-session-actions">
+              <button type="button" class="auth-session-btn auth-session-btn-primary" data-auth-session="continue">Continuar con esta cuenta</button>
+              <button type="button" class="auth-session-btn" data-auth-session="switch">Usar otro correo</button>
+            </div>
+          </div>
+        `;
+
+        const cleanup = () => {
+          document.removeEventListener("keydown", onEsc);
+          overlay.remove();
+        };
+
+        const onEsc = (event) => {
+          if (event.key !== "Escape") return;
+          cleanup();
+          resolve(false);
+        };
+
+        overlay.addEventListener("click", (event) => {
+          const target = event.target;
+          const actionBtn = target.closest("[data-auth-session]");
+
+          if (actionBtn) {
+            const action = actionBtn.getAttribute("data-auth-session");
+            cleanup();
+            resolve(action === "continue");
+            return;
+          }
+
+          if (target === overlay) {
+            cleanup();
+            resolve(false);
+          }
+        });
+
+        document.addEventListener("keydown", onEsc);
+        document.body.appendChild(overlay);
+      });
+
+    // Si ya hay sesión activa → preguntar si desea continuar con esa cuenta
+    client.auth.getSession().then(async ({ data: { session } }) => {
       if (!session) return;
 
       if (hasSignupCallback) {
@@ -906,7 +955,21 @@ function setupSupabase() {
         return;
       }
 
-      window.location.replace(consumeReturnTarget());
+      const activeEmail = session.user?.email || "tu cuenta";
+      const continueWithSession = await promptActiveSessionChoice(activeEmail);
+
+      if (continueWithSession) {
+        window.location.replace(consumeReturnTarget());
+        return;
+      }
+
+      client.auth.signOut().then(() => {
+        const loginEmailInput = document.getElementById("loginEmail");
+        if (loginEmailInput) {
+          loginEmailInput.value = "";
+          loginEmailInput.focus();
+        }
+      });
     });
 
     // Botones "Continuar con Google"
