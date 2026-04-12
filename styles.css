@@ -1680,11 +1680,51 @@ body.theme-light .hero-white-bridge {
   pointer-events: none;
 }
 
+.event-card.is-locked::after {
+  content: "Aún no está confirmada esta carrera.";
+  position: absolute;
+  left: 50%;
+  bottom: 12px;
+  transform: translateX(-50%) translateY(6px);
+  z-index: 4;
+  width: max-content;
+  max-width: calc(100% - 24px);
+  font-size: 0.74rem;
+  font-weight: 700;
+  color: #f8fafc;
+  background: rgba(15, 23, 42, 0.92);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 8px;
+  padding: 6px 8px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 160ms ease, transform 160ms ease;
+  text-align: center;
+}
+
+.event-card.is-locked:hover::after {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
 .event-media {
+  position: relative;
   height: 136px;
   border-radius: 16px 16px 0 0;
   background-size: cover;
   background-position: center;
+}
+
+.event-card.is-locked .event-media::after {
+  content: "🔒";
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  font-size: 2.1rem;
+  color: rgba(255, 255, 255, 0.85);
+  background: linear-gradient(180deg, rgba(4, 8, 16, 0.12), rgba(4, 8, 16, 0.34));
+  text-shadow: 0 4px 14px rgba(0, 0, 0, 0.45);
 }
 
 .media-run {
