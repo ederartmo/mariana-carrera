@@ -325,6 +325,11 @@ function setupContactFormSubmission() {
     const submitBtn = form.querySelector('button[type="submit"]');
     if (!submitBtn) return;
 
+    const resetSubmit = (label) => {
+      submitBtn.disabled = false;
+      submitBtn.textContent = label;
+    };
+
     const eventName = document.getElementById("eventName")?.value || "";
     const reason = document.getElementById("contactReason")?.value || "";
     const fullName = document.getElementById("fullName")?.value?.trim() || "";
@@ -348,8 +353,7 @@ function setupContactFormSubmission() {
     if (!client) {
       statusNode.textContent = "No se pudo conectar al servicio en este momento. Intenta de nuevo.";
       statusNode.style.color = "#ff8a65";
-      submitBtn.disabled = false;
-      submitBtn.textContent = originalText;
+      resetSubmit(originalText);
       return;
     }
 
@@ -363,10 +367,9 @@ function setupContactFormSubmission() {
         .upload(filePath, supportFile, { upsert: false });
 
       if (uploadError) {
-        statusNode.textContent = "No se pudo subir el archivo. Intenta de nuevo o envía sin adjunto.";
+        statusNode.textContent = `No se pudo subir el archivo: ${uploadError.message || "error desconocido"}`;
         statusNode.style.color = "#ff8a65";
-        submitBtn.disabled = false;
-        submitBtn.textContent = originalText;
+        resetSubmit(originalText);
         return;
       }
 
@@ -386,10 +389,10 @@ function setupContactFormSubmission() {
     });
 
     if (error) {
-      statusNode.textContent = "No se pudo enviar tu solicitud. Intenta nuevamente en unos minutos.";
+      console.error("Error insert contact_messages:", error);
+      statusNode.textContent = `No se pudo enviar tu solicitud: ${error.message || "error desconocido"}`;
       statusNode.style.color = "#ff8a65";
-      submitBtn.disabled = false;
-      submitBtn.textContent = originalText;
+      resetSubmit(originalText);
       return;
     }
 
@@ -1283,8 +1286,14 @@ function setupSupabase() {
 
       const pfNombre = document.getElementById("pfNombre");
       const pfApPat = document.getElementById("pfApPat");
+      const pfApMat = document.getElementById("pfApMat");
       const pfNacimiento = document.getElementById("pfNacimiento");
+      const pfGenero = document.getElementById("pfGenero");
       const pfTelefono = document.getElementById("pfTelefono");
+      const pfPeso = document.getElementById("pfPeso");
+      const pfEstatura = document.getElementById("pfEstatura");
+      const pfPais = document.getElementById("pfPais");
+      const pfEstado = document.getElementById("pfEstado");
 
       if (pfNombre) {
         pfNombre.value = meta.first_name || (displayName.split(" ")[0] || "");
@@ -1294,12 +1303,36 @@ function setupSupabase() {
         pfApPat.value = meta.last_name || "";
       }
 
+      if (pfApMat) {
+        pfApMat.value = meta.maternal_last_name || "";
+      }
+
       if (pfNacimiento && meta.birth_date) {
         pfNacimiento.value = meta.birth_date;
       }
 
+      if (pfGenero) {
+        pfGenero.value = meta.gender || "";
+      }
+
       if (pfTelefono) {
         pfTelefono.value = meta.phone || "";
+      }
+
+      if (pfPeso) {
+        pfPeso.value = meta.weight_kg || "";
+      }
+
+      if (pfEstatura) {
+        pfEstatura.value = meta.height_cm || "";
+      }
+
+      if (pfPais) {
+        pfPais.value = meta.country || "mx";
+      }
+
+      if (pfEstado) {
+        pfEstado.value = meta.state || "";
       }
 
       // Avatar de Google
@@ -1323,6 +1356,68 @@ function setupSupabase() {
         document.getElementById("navLogoutBtn")?.addEventListener("click", async () => {
           await client.auth.signOut();
           window.location.href = "index.html";
+        });
+      }
+
+      const profileForm = document.querySelector(".profile-form");
+      if (profileForm) {
+        profileForm.addEventListener("submit", async (event) => {
+          event.preventDefault();
+
+          const saveBtn = profileForm.querySelector(".profile-save-btn");
+          const originalBtnText = saveBtn?.textContent || "Actualizar perfil";
+          if (saveBtn) {
+            saveBtn.disabled = true;
+            saveBtn.textContent = "Guardando...";
+          }
+
+          const firstName = (pfNombre?.value || "").trim();
+          const paternalLastName = (pfApPat?.value || "").trim();
+          const maternalLastName = (pfApMat?.value || "").trim();
+          const fullName = [firstName, paternalLastName, maternalLastName].filter(Boolean).join(" ").trim();
+
+          const payload = {
+            full_name: fullName || displayName,
+            first_name: firstName,
+            last_name: paternalLastName,
+            maternal_last_name: maternalLastName,
+            birth_date: pfNacimiento?.value || "",
+            gender: pfGenero?.value || "",
+            phone: (pfTelefono?.value || "").trim(),
+            weight_kg: pfPeso?.value || "",
+            height_cm: pfEstatura?.value || "",
+            country: pfPais?.value || "mx",
+            state: pfEstado?.value || "",
+          };
+
+          const { data: updatedData, error: updateError } = await client.auth.updateUser({
+            data: payload,
+          });
+
+          if (saveBtn) {
+            saveBtn.disabled = false;
+            saveBtn.textContent = originalBtnText;
+          }
+
+          if (updateError) {
+            alert(updateError.message || "No se pudo actualizar el perfil");
+            return;
+          }
+
+          const updatedMeta = updatedData?.user?.user_metadata || payload;
+          if (usernameEl) {
+            usernameEl.textContent =
+              updatedMeta.full_name ||
+              [updatedMeta.first_name, updatedMeta.last_name, updatedMeta.maternal_last_name]
+                .filter(Boolean)
+                .join(" ") ||
+              "Atleta";
+          }
+          if (metaInfoEls[1]) {
+            metaInfoEls[1].textContent = updatedMeta.phone || "";
+          }
+
+          alert("Perfil actualizado correctamente");
         });
       }
       });
