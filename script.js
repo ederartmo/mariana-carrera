@@ -238,6 +238,137 @@ function setupFooterNewsletter() {
   });
 }
 
+function setupContactFormSubmission() {
+  const form = document.querySelector(".contact-form-shell");
+  if (!form) return;
+
+  const SUPABASE_URL = "https://uycwzhlcnfijjyzkgkem.supabase.co";
+  const SUPABASE_KEY = "sb_publishable_IKwD3YtQwWzzEtE8QkVagA_OJGdV2e4";
+
+  const ensureSupabaseClient = async () => {
+    if (typeof window.supabase !== "undefined") {
+      return window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    }
+
+    let sdkScript = document.querySelector('script[data-supabase-sdk="true"]');
+    if (!sdkScript) {
+      sdkScript = document.createElement("script");
+      sdkScript.src = "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2";
+      sdkScript.dataset.supabaseSdk = "true";
+      document.head.appendChild(sdkScript);
+    }
+
+    await new Promise((resolve) => {
+      if (typeof window.supabase !== "undefined") {
+        resolve();
+        return;
+      }
+
+      sdkScript.addEventListener("load", () => resolve(), { once: true });
+      sdkScript.addEventListener("error", () => resolve(), { once: true });
+    });
+
+    if (typeof window.supabase === "undefined") return null;
+    return window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+  };
+
+  let statusNode = form.querySelector(".contact-form-status");
+  if (!statusNode) {
+    statusNode = document.createElement("p");
+    statusNode.className = "contact-form-status";
+    statusNode.setAttribute("aria-live", "polite");
+    statusNode.style.margin = "10px 0 0";
+    statusNode.style.fontWeight = "700";
+    const submitBtn = form.querySelector('button[type="submit"]');
+    if (submitBtn && submitBtn.parentElement) {
+      submitBtn.parentElement.insertAdjacentElement("afterend", statusNode);
+    } else {
+      form.appendChild(statusNode);
+    }
+  }
+
+  form.addEventListener("submit", async (event) => {
+    event.preventDefault();
+
+    const submitBtn = form.querySelector('button[type="submit"]');
+    if (!submitBtn) return;
+
+    const eventName = document.getElementById("eventName")?.value || "";
+    const reason = document.getElementById("contactReason")?.value || "";
+    const fullName = document.getElementById("fullName")?.value?.trim() || "";
+    const email = document.getElementById("email")?.value?.trim().toLowerCase() || "";
+    const phone = document.getElementById("phone")?.value?.trim() || "";
+    const subject = document.getElementById("subject")?.value?.trim() || "";
+    const message = document.getElementById("requestDetails")?.value?.trim() || "";
+    const supportFile = document.getElementById("supportFile")?.files?.[0] || null;
+
+    if (!eventName || !reason || !fullName || !email || !phone || !subject || !message) {
+      statusNode.textContent = "Completa todos los campos obligatorios para enviar tu solicitud.";
+      statusNode.style.color = "#ff8a65";
+      return;
+    }
+
+    submitBtn.disabled = true;
+    const originalText = submitBtn.textContent;
+    submitBtn.textContent = "Enviando...";
+
+    const client = await ensureSupabaseClient();
+    if (!client) {
+      statusNode.textContent = "No se pudo conectar al servicio en este momento. Intenta de nuevo.";
+      statusNode.style.color = "#ff8a65";
+      submitBtn.disabled = false;
+      submitBtn.textContent = originalText;
+      return;
+    }
+
+    let attachmentUrl = null;
+    if (supportFile) {
+      const safeFileName = supportFile.name.replace(/[^a-zA-Z0-9._-]/g, "_");
+      const filePath = `contact/${Date.now()}-${safeFileName}`;
+
+      const { error: uploadError } = await client.storage
+        .from("contact-attachments")
+        .upload(filePath, supportFile, { upsert: false });
+
+      if (uploadError) {
+        statusNode.textContent = "No se pudo subir el archivo. Intenta de nuevo o envía sin adjunto.";
+        statusNode.style.color = "#ff8a65";
+        submitBtn.disabled = false;
+        submitBtn.textContent = originalText;
+        return;
+      }
+
+      const { data: fileData } = client.storage.from("contact-attachments").getPublicUrl(filePath);
+      attachmentUrl = fileData?.publicUrl || null;
+    }
+
+    const { error } = await client.from("contact_messages").insert({
+      event_slug: eventName,
+      reason,
+      full_name: fullName,
+      email,
+      phone,
+      subject,
+      message,
+      attachment_url: attachmentUrl,
+    });
+
+    if (error) {
+      statusNode.textContent = "No se pudo enviar tu solicitud. Intenta nuevamente en unos minutos.";
+      statusNode.style.color = "#ff8a65";
+      submitBtn.disabled = false;
+      submitBtn.textContent = originalText;
+      return;
+    }
+
+    form.reset();
+    statusNode.textContent = "Gracias. Recibimos tu solicitud y te responderemos por correo.";
+    statusNode.style.color = "#0dc785";
+    submitBtn.disabled = false;
+    submitBtn.textContent = originalText;
+  });
+}
+
 function setupEventFilters() {
   const filterForm = document.getElementById("eventFilters");
   if (!filterForm) return;
@@ -1185,6 +1316,7 @@ setupEventStickyBanner();
 setupRevealOnScroll();
 setupCurrentYear();
 setupFooterNewsletter();
+setupContactFormSubmission();
 setupEventFilters();
 setupHeroPosterSizing();
 setupRegisterScrollLed();
