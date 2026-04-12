@@ -239,12 +239,12 @@ function setupFooterNewsletter() {
 }
 
 function setupContactFormSubmission() {
-  const form = document.querySelector(".contact-form-shell");
+  const form = document.getElementById("contactForm") || document.querySelector(".contact-form-shell");
   if (!form) return;
 
   const SUPABASE_URL = "https://uycwzhlcnfijjyzkgkem.supabase.co";
   const SUPABASE_KEY = "sb_publishable_IKwD3YtQwWzzEtE8QkVagA_OJGdV2e4";
-  const CONTACT_CONFIRM_ENDPOINT = `${SUPABASE_URL}/functions/v1/contact-confirmation`;
+  const CONTACT_CONFIRM_ENDPOINT = `${SUPABASE_URL}/functions/v1/gracias-por-contactarnos`;
 
   const ensureSupabaseClient = async () => {
     if (typeof window.supabase !== "undefined") {
@@ -321,6 +321,7 @@ function setupContactFormSubmission() {
 
   form.addEventListener("submit", async (event) => {
     event.preventDefault();
+    event.stopPropagation();
 
     const submitBtn = form.querySelector('button[type="submit"]');
     if (!submitBtn) return;
@@ -341,6 +342,12 @@ function setupContactFormSubmission() {
 
     if (!eventName || !reason || !fullName || !email || !phone || !subject || !message) {
       statusNode.textContent = "Completa todos los campos obligatorios para enviar tu solicitud.";
+      statusNode.style.color = "#ff8a65";
+      return;
+    }
+
+    if (typeof form.reportValidity === "function" && !form.reportValidity()) {
+      statusNode.textContent = "Revisa el formulario. Hay campos con formato inválido.";
       statusNode.style.color = "#ff8a65";
       return;
     }
@@ -390,7 +397,10 @@ function setupContactFormSubmission() {
 
     if (error) {
       console.error("Error insert contact_messages:", error);
-      statusNode.textContent = `No se pudo enviar tu solicitud: ${error.message || "error desconocido"}`;
+      const isPolicyError = error.code === "42501" || /row-level security|permission denied/i.test(error.message || "");
+      statusNode.textContent = isPolicyError
+        ? "No hay permisos para guardar en contact_messages. Revisa las políticas RLS de Supabase."
+        : `No se pudo enviar tu solicitud: ${error.message || "error desconocido"}`;
       statusNode.style.color = "#ff8a65";
       resetSubmit(originalText);
       return;
@@ -411,12 +421,12 @@ function setupContactFormSubmission() {
           <circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.8" />
           <path d="M8 12.6 10.8 15.2 16 9.6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />
         </svg>
-        <p style="margin-top: 8px;"><strong>Gracias por contactarnos.</strong></p>
-        <p>Tu solicitud fue recibida correctamente y nuestro equipo la revisará en breve.</p>
+        <p style="margin-top: 8px;"><strong>Gracias por comunicarte con Kinetic Hub.</strong></p>
+        <p>Recibimos tu mensaje correctamente y ya está guardado en nuestro sistema.</p>
         <p style="margin-top: 4px; color: #6b7280; font-size: 0.9rem;">
           ${confirmationSent
             ? "Te enviamos un correo de confirmación al email que registraste."
-            : "Estamos procesando tu confirmación por correo."}
+            : "Tu solicitud se guardó, pero el correo de confirmación puede tardar unos minutos."}
         </p>
       </div>
     `;
@@ -1038,7 +1048,7 @@ function setupSupabase() {
       const currentPage = `${window.location.pathname}${window.location.search}${window.location.hash}`;
       const loginHref = `auth.html?mode=login&returnTo=${encodeURIComponent(currentPage)}`;
       navActions.innerHTML = `
-        <a class="ghost-link" href="${loginHref}">Iniciar Sesion</a>
+        <a class="ghost-link" href="${loginHref}">Iniciar sesión</a>
         <a class="btn btn-primary" href="auth.html?mode=register">Registrarse</a>
       `;
       return;
@@ -1047,7 +1057,7 @@ function setupSupabase() {
     const user = session.user;
     navActions.innerHTML = `
       <a class="ghost-link" href="perfil.html">Mi perfil</a>
-      <button class="btn btn-primary" id="navLogoutBtn" type="button">Cerrar sesion</button>
+      <button class="btn btn-primary" id="navLogoutBtn" type="button">Cerrar sesión</button>
     `;
 
     document.getElementById("navLogoutBtn")?.addEventListener("click", async () => {
@@ -1267,22 +1277,18 @@ function setupSupabase() {
     // ── PERFIL PAGE ────────────────────────────────────
     const profileRoot = document.querySelector("[data-profile-page]");
     if (profileRoot) {
-      client.auth.getSession().then(({ data: { session } }) => {
+      client.auth.getSession().then(async ({ data: { session } }) => {
         if (!session) {
           window.location.replace("auth.html?mode=login");
           return;
         }
 
+      const PROFILE_TABLE = "user_profiles";
       const user = session.user;
       const meta = user.user_metadata || {};
-      const displayName = meta.full_name || meta.name || "Atleta";
 
-      // Datos en la cabecera de perfil
       const usernameEl = document.querySelector(".profile-username");
       const metaInfoEls = Array.from(document.querySelectorAll(".profile-ident-meta"));
-      if (usernameEl) usernameEl.textContent = displayName;
-      if (metaInfoEls[0]) metaInfoEls[0].textContent = user.email || "";
-      if (metaInfoEls[1]) metaInfoEls[1].textContent = meta.phone || "";
 
       const pfNombre = document.getElementById("pfNombre");
       const pfApPat = document.getElementById("pfApPat");
@@ -1295,47 +1301,178 @@ function setupSupabase() {
       const pfPais = document.getElementById("pfPais");
       const pfEstado = document.getElementById("pfEstado");
 
-      if (pfNombre) {
-        pfNombre.value = meta.first_name || (displayName.split(" ")[0] || "");
+      const profileForm = document.querySelector(".profile-form");
+      const saveBtn = profileForm?.querySelector(".profile-save-btn");
+
+      const fields = [
+        { key: "first_name", node: pfNombre },
+        { key: "last_name", node: pfApPat },
+        { key: "maternal_last_name", node: pfApMat },
+        { key: "birth_date", node: pfNacimiento },
+        { key: "gender", node: pfGenero },
+        { key: "phone", node: pfTelefono },
+        { key: "weight_kg", node: pfPeso },
+        { key: "height_cm", node: pfEstatura },
+        { key: "country", node: pfPais },
+        { key: "state", node: pfEstado },
+      ].filter((field) => Boolean(field.node));
+
+      fields.forEach(({ node }) => {
+        if (node && node.tagName !== "SELECT") {
+          node.dataset.defaultPlaceholder = node.placeholder || "";
+        }
+      });
+
+      const composeFullName = (profile) =>
+        [profile.first_name, profile.last_name, profile.maternal_last_name]
+          .map((item) => (item || "").trim())
+          .filter(Boolean)
+          .join(" ")
+          .trim();
+
+      const normalizeProfile = (source) => ({
+        first_name: (source?.first_name || "").trim(),
+        last_name: (source?.last_name || "").trim(),
+        maternal_last_name: (source?.maternal_last_name || "").trim(),
+        birth_date: source?.birth_date || "",
+        gender: source?.gender || "",
+        phone: (source?.phone || "").trim(),
+        weight_kg: source?.weight_kg || "",
+        height_cm: source?.height_cm || "",
+        country: source?.country || "mx",
+        state: source?.state || "",
+        full_name: (source?.full_name || "").trim(),
+      });
+
+      const buildProfileFromForm = () => ({
+        first_name: (pfNombre?.value || "").trim(),
+        last_name: (pfApPat?.value || "").trim(),
+        maternal_last_name: (pfApMat?.value || "").trim(),
+        birth_date: pfNacimiento?.value || "",
+        gender: pfGenero?.value || "",
+        phone: (pfTelefono?.value || "").trim(),
+        weight_kg: pfPeso?.value || "",
+        height_cm: pfEstatura?.value || "",
+        country: pfPais?.value || "mx",
+        state: pfEstado?.value || "",
+      });
+
+      const applyHeader = (profile) => {
+        const fullName = profile.full_name || composeFullName(profile) || meta.name || "Atleta";
+        if (usernameEl) usernameEl.textContent = fullName;
+        if (metaInfoEls[0]) metaInfoEls[0].textContent = user.email || "";
+        if (metaInfoEls[1]) metaInfoEls[1].textContent = profile.phone || "";
+      };
+
+      const ensureStatusNode = () => {
+        if (!profileForm) return null;
+        let node = profileForm.querySelector(".profile-save-status");
+        if (node) return node;
+        node = document.createElement("p");
+        node.className = "profile-save-status";
+        node.setAttribute("aria-live", "polite");
+        node.style.margin = "8px 0 0";
+        node.style.fontWeight = "700";
+        const actions = profileForm.querySelector(".profile-form-actions");
+        if (actions) {
+          actions.insertAdjacentElement("afterend", node);
+        } else {
+          profileForm.appendChild(node);
+        }
+        return node;
+      };
+
+      const statusNode = ensureStatusNode();
+      const showStatus = (message, isError = false) => {
+        if (!statusNode) return;
+        statusNode.textContent = message;
+        statusNode.style.color = isError ? "#ff8a65" : "#34d399";
+      };
+
+      const setReadOnlyMode = (profile) => {
+        fields.forEach(({ key, node }) => {
+          const value = profile[key] || "";
+          if (!node) return;
+
+          if (node.tagName === "SELECT") {
+            node.value = value || (key === "country" ? "mx" : "");
+            node.disabled = true;
+            return;
+          }
+
+          node.value = "";
+          node.placeholder = value || node.dataset.defaultPlaceholder || "";
+          node.disabled = true;
+        });
+
+        if (saveBtn) {
+          saveBtn.textContent = "Editar información";
+          saveBtn.disabled = false;
+        }
+      };
+
+      const setEditMode = (profile) => {
+        fields.forEach(({ key, node }) => {
+          if (!node) return;
+          node.disabled = false;
+          if (node.tagName === "SELECT") {
+            node.value = profile[key] || (key === "country" ? "mx" : "");
+            return;
+          }
+          node.placeholder = node.dataset.defaultPlaceholder || "";
+          node.value = profile[key] || "";
+        });
+
+        if (saveBtn) {
+          saveBtn.textContent = "Guardar cambios";
+          saveBtn.disabled = false;
+        }
+      };
+
+      const readProfileFromTable = async () => {
+        const { data, error } = await client
+          .from(PROFILE_TABLE)
+          .select("first_name,last_name,maternal_last_name,birth_date,gender,phone,weight_kg,height_cm,country,state,full_name")
+          .eq("user_id", user.id)
+          .maybeSingle();
+
+        if (error) {
+          const expectedNoRow = error.code === "PGRST116";
+          if (!expectedNoRow) {
+            console.warn("No se pudo leer la tabla user_profiles:", error);
+          }
+          return null;
+        }
+
+        return data || null;
+      };
+
+      const saveProfileInTable = async (profile) => {
+        const row = {
+          user_id: user.id,
+          email: user.email || null,
+          ...profile,
+          full_name: profile.full_name || composeFullName(profile),
+          updated_at: new Date().toISOString(),
+        };
+
+        const { error } = await client.from(PROFILE_TABLE).upsert(row, { onConflict: "user_id" });
+        return error || null;
+      };
+
+      const profileFromMeta = normalizeProfile(meta);
+      const profileFromTable = await readProfileFromTable();
+      let currentProfile = {
+        ...profileFromMeta,
+        ...(profileFromTable ? normalizeProfile(profileFromTable) : {}),
+      };
+
+      if (!currentProfile.full_name) {
+        currentProfile.full_name = composeFullName(currentProfile);
       }
 
-      if (pfApPat) {
-        pfApPat.value = meta.last_name || "";
-      }
+      applyHeader(currentProfile);
 
-      if (pfApMat) {
-        pfApMat.value = meta.maternal_last_name || "";
-      }
-
-      if (pfNacimiento && meta.birth_date) {
-        pfNacimiento.value = meta.birth_date;
-      }
-
-      if (pfGenero) {
-        pfGenero.value = meta.gender || "";
-      }
-
-      if (pfTelefono) {
-        pfTelefono.value = meta.phone || "";
-      }
-
-      if (pfPeso) {
-        pfPeso.value = meta.weight_kg || "";
-      }
-
-      if (pfEstatura) {
-        pfEstatura.value = meta.height_cm || "";
-      }
-
-      if (pfPais) {
-        pfPais.value = meta.country || "mx";
-      }
-
-      if (pfEstado) {
-        pfEstado.value = meta.state || "";
-      }
-
-      // Avatar de Google
       if (meta.avatar_url) {
         const avatarEl = document.getElementById("profileAvatarInner");
         if (avatarEl) {
@@ -1346,7 +1483,6 @@ function setupSupabase() {
         }
       }
 
-      // Nav: reemplazar botones por email + cerrar sesión
       const navActions = document.querySelector(".nav-actions");
       if (navActions) {
         navActions.innerHTML = `
@@ -1359,65 +1495,61 @@ function setupSupabase() {
         });
       }
 
-      const profileForm = document.querySelector(".profile-form");
+      let isEditing = false;
+      setReadOnlyMode(currentProfile);
+
       if (profileForm) {
         profileForm.addEventListener("submit", async (event) => {
           event.preventDefault();
 
-          const saveBtn = profileForm.querySelector(".profile-save-btn");
-          const originalBtnText = saveBtn?.textContent || "Actualizar perfil";
+          if (!isEditing) {
+            isEditing = true;
+            showStatus("");
+            setEditMode(currentProfile);
+            return;
+          }
+
+          const originalBtnText = saveBtn?.textContent || "Guardar cambios";
           if (saveBtn) {
             saveBtn.disabled = true;
             saveBtn.textContent = "Guardando...";
           }
 
-          const firstName = (pfNombre?.value || "").trim();
-          const paternalLastName = (pfApPat?.value || "").trim();
-          const maternalLastName = (pfApMat?.value || "").trim();
-          const fullName = [firstName, paternalLastName, maternalLastName].filter(Boolean).join(" ").trim();
-
-          const payload = {
-            full_name: fullName || displayName,
-            first_name: firstName,
-            last_name: paternalLastName,
-            maternal_last_name: maternalLastName,
-            birth_date: pfNacimiento?.value || "",
-            gender: pfGenero?.value || "",
-            phone: (pfTelefono?.value || "").trim(),
-            weight_kg: pfPeso?.value || "",
-            height_cm: pfEstatura?.value || "",
-            country: pfPais?.value || "mx",
-            state: pfEstado?.value || "",
-          };
+          const nextProfile = normalizeProfile(buildProfileFromForm());
+          nextProfile.full_name = composeFullName(nextProfile);
 
           const { data: updatedData, error: updateError } = await client.auth.updateUser({
-            data: payload,
+            data: nextProfile,
           });
 
-          if (saveBtn) {
-            saveBtn.disabled = false;
-            saveBtn.textContent = originalBtnText;
-          }
-
           if (updateError) {
-            alert(updateError.message || "No se pudo actualizar el perfil");
+            if (saveBtn) {
+              saveBtn.disabled = false;
+              saveBtn.textContent = originalBtnText;
+            }
+            showStatus(updateError.message || "No se pudo actualizar el perfil.", true);
             return;
           }
 
-          const updatedMeta = updatedData?.user?.user_metadata || payload;
-          if (usernameEl) {
-            usernameEl.textContent =
-              updatedMeta.full_name ||
-              [updatedMeta.first_name, updatedMeta.last_name, updatedMeta.maternal_last_name]
-                .filter(Boolean)
-                .join(" ") ||
-              "Atleta";
-          }
-          if (metaInfoEls[1]) {
-            metaInfoEls[1].textContent = updatedMeta.phone || "";
+          const tableError = await saveProfileInTable(nextProfile);
+          if (tableError) {
+            showStatus(
+              "Se guardó en la cuenta, pero no en la tabla user_profiles. Revisa que exista la tabla y sus permisos.",
+              true
+            );
+            console.warn("No se pudo guardar en user_profiles:", tableError);
+          } else {
+            showStatus("Perfil actualizado correctamente.");
           }
 
-          alert("Perfil actualizado correctamente");
+          const updatedMeta = updatedData?.user?.user_metadata || nextProfile;
+          currentProfile = normalizeProfile({ ...nextProfile, ...updatedMeta });
+          currentProfile.full_name = currentProfile.full_name || composeFullName(currentProfile);
+
+          applyHeader(currentProfile);
+
+          isEditing = false;
+          setReadOnlyMode(currentProfile);
         });
       }
       });
