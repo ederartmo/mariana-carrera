@@ -70,6 +70,34 @@ function setupActiveNavLink() {
   }
 }
 
+function setupPageLoadIndicator() {
+  if (document.querySelector(".page-load-bar")) return;
+
+  const bar = document.createElement("div");
+  bar.className = "page-load-bar is-visible is-animating";
+  document.body.prepend(bar);
+
+  const complete = () => {
+    bar.classList.remove("is-animating");
+    bar.classList.add("is-complete");
+
+    window.setTimeout(() => {
+      bar.classList.add("is-hidden");
+    }, 180);
+
+    window.setTimeout(() => {
+      bar.remove();
+    }, 520);
+  };
+
+  if (document.readyState === "complete") {
+    complete();
+    return;
+  }
+
+  window.addEventListener("load", complete, { once: true });
+}
+
 function setupHeaderScrollState() {
   const header = document.querySelector(".site-header");
   if (!header) return;
@@ -416,18 +444,83 @@ function setupContactFormSubmission() {
     });
 
     form.innerHTML = `
-      <div class="profile-empty-state" style="padding: 16px 8px;">
-        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.8" />
-          <path d="M8 12.6 10.8 15.2 16 9.6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />
-        </svg>
-        <p style="margin-top: 8px;"><strong>Gracias por comunicarte con Kinetic Hub.</strong></p>
-        <p>Recibimos tu mensaje correctamente y ya está guardado en nuestro sistema.</p>
-        <p style="margin-top: 4px; color: #6b7280; font-size: 0.9rem;">
-          ${confirmationSent
+      <div style="
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+        padding: 52px 24px 56px;
+        gap: 0;
+        font-family: 'Manrope', sans-serif;
+      ">
+        <div style="
+          width: 68px;
+          height: 68px;
+          border-radius: 50%;
+          background: linear-gradient(135deg, #19c88b 0%, #0fa870 100%);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          margin-bottom: 24px;
+          box-shadow: 0 8px 24px rgba(25,200,139,0.35);
+        ">
+          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M5 12.5 9.5 17 19 8" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </div>
+
+        <p style="
+          font-size: 0.72rem;
+          font-weight: 800;
+          letter-spacing: 0.12em;
+          text-transform: uppercase;
+          color: #19c88b;
+          margin: 0 0 10px;
+        ">Mensaje recibido</p>
+
+        <h2 style="
+          font-family: 'Sora', sans-serif;
+          font-size: 1.55rem;
+          font-weight: 700;
+          color: #111827;
+          margin: 0 0 12px;
+          line-height: 1.25;
+        ">Gracias por comunicarte<br>con Kinetic Hub</h2>
+
+        <p style="
+          font-size: 0.95rem;
+          color: #374151;
+          max-width: 420px;
+          line-height: 1.65;
+          margin: 0 0 8px;
+        ">Tu solicitud quedó registrada correctamente y nuestro equipo la revisará a la brevedad.</p>
+
+        <p style="
+          font-size: 0.85rem;
+          color: #6b7280;
+          max-width: 380px;
+          line-height: 1.6;
+          margin: 0 0 32px;
+        ">${confirmationSent
             ? "Te enviamos un correo de confirmación al email que registraste."
-            : "Tu solicitud se guardó, pero el correo de confirmación puede tardar unos minutos."}
-        </p>
+            : "Tu solicitud se guardó. El correo de confirmación puede tardar unos minutos."
+          }</p>
+
+        <a href="index.html" style="
+          display: inline-flex;
+          align-items: center;
+          gap: 8px;
+          background: #19c88b;
+          color: #fff;
+          font-family: 'Sora', sans-serif;
+          font-weight: 700;
+          font-size: 0.9rem;
+          padding: 12px 28px;
+          border-radius: 999px;
+          text-decoration: none;
+          transition: background 0.2s;
+        ">Volver al inicio</a>
       </div>
     `;
   });
@@ -1587,6 +1680,7 @@ function setupSupabase() {
   sdkScript.addEventListener("load", initSupabase, { once: true });
 }
 
+setupPageLoadIndicator();
 setupMenuToggle();
 setupActiveNavLink();
 setupHeaderScrollState();
