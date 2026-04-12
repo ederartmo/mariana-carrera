@@ -153,39 +153,6 @@ function setupFooterNewsletter() {
   const SUPABASE_KEY = "sb_publishable_IKwD3YtQwWzzEtE8QkVagA_OJGdV2e4";
   const NEWSLETTER_CONFIRM_ENDPOINT = `${SUPABASE_URL}/functions/v1/newsletter-confirmation`;
 
-  const ensureSupabaseClient = async () => {
-    if (typeof window.supabase !== "undefined") {
-      return window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-    }
-
-    const existingSdk = document.querySelector('script[data-supabase-sdk="true"]');
-    if (!existingSdk) {
-      const sdkScript = document.createElement("script");
-      sdkScript.src = "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2";
-      sdkScript.dataset.supabaseSdk = "true";
-      document.head.appendChild(sdkScript);
-    }
-
-    await new Promise((resolve) => {
-      const scriptNode = document.querySelector('script[data-supabase-sdk="true"]');
-      if (!scriptNode) {
-        resolve();
-        return;
-      }
-
-      if (typeof window.supabase !== "undefined") {
-        resolve();
-        return;
-      }
-
-      scriptNode.addEventListener("load", () => resolve(), { once: true });
-      scriptNode.addEventListener("error", () => resolve(), { once: true });
-    });
-
-    if (typeof window.supabase === "undefined") return null;
-    return window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-  };
-
   const saveLocalBackup = (email) => {
     try {
       const key = "kinetic_newsletter_subscribers";
@@ -197,26 +164,6 @@ function setupFooterNewsletter() {
       }
     } catch (_err) {
       // ignore localStorage failures (private mode, quota, etc.)
-    }
-  };
-
-  const saveToSupabase = async (email) => {
-    try {
-      const client = await ensureSupabaseClient();
-      if (!client) return false;
-
-      const { error } = await client.from("newsletter_subscribers").upsert(
-        {
-          email: email.toLowerCase(),
-          source_page: window.location.pathname,
-          created_at: new Date().toISOString(),
-        },
-        { onConflict: "email" }
-      );
-
-      return !error;
-    } catch (_err) {
-      return false;
     }
   };
 
@@ -269,17 +216,18 @@ function setupFooterNewsletter() {
       const originalText = submitBtn.textContent;
       submitBtn.textContent = "Enviando...";
 
-      const savedInSupabase = await saveToSupabase(email);
       const confirmationSent = await sendNewsletterConfirmation(email);
 
       saveLocalBackup(email);
 
       if (confirmationSent) {
         status.textContent = "Gracias por registrarte. Te enviamos un correo de confirmacion.";
-      } else if (savedInSupabase) {
-        status.textContent = "Gracias por registrarte. Tu correo quedo guardado y la confirmacion se enviara en breve.";
       } else {
-        status.textContent = "Gracias por registrarte. Guardamos tu correo y lo sincronizamos en breve.";
+        status.textContent = "No pudimos completar tu registro en este momento. Intenta de nuevo en unos minutos.";
+        status.style.color = "#ff8a65";
+        submitBtn.disabled = false;
+        submitBtn.textContent = originalText;
+        return;
       }
       status.style.color = "#ffffff";
 
