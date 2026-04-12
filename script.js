@@ -227,7 +227,6 @@ function setupFooterNewsletter() {
         headers: {
           "Content-Type": "application/json",
           apikey: SUPABASE_KEY,
-          Authorization: `Bearer ${SUPABASE_KEY}`,
         },
         body: JSON.stringify({
           email: email.toLowerCase(),
@@ -271,15 +270,11 @@ function setupFooterNewsletter() {
       submitBtn.textContent = "Enviando...";
 
       const savedInSupabase = await saveToSupabase(email);
-      let confirmationSent = false;
-
-      if (savedInSupabase) {
-        confirmationSent = await sendNewsletterConfirmation(email);
-      }
+      const confirmationSent = await sendNewsletterConfirmation(email);
 
       saveLocalBackup(email);
 
-      if (savedInSupabase && confirmationSent) {
+      if (confirmationSent) {
         status.textContent = "Gracias por registrarte. Te enviamos un correo de confirmacion.";
       } else if (savedInSupabase) {
         status.textContent = "Gracias por registrarte. Tu correo quedo guardado y la confirmacion se enviara en breve.";
