@@ -149,8 +149,8 @@ function setupFooterNewsletter() {
   const forms = document.querySelectorAll(".footer-newsletter");
   if (!forms.length) return;
 
-  const SUPABASE_URL = "https://anwkqhxcarzfvfufhbyk.supabase.co";
-  const SUPABASE_KEY = "sb_publishable_ARbEx2T-RYfWgIJEBj1NkQ_5i7wVzQP";
+  const SUPABASE_URL = "https://uycwzhlcnfijjyzkgkem.supabase.co";
+  const SUPABASE_KEY = "sb_publishable_IKwD3YtQwWzzEtE8QkVagA_OJGdV2e4";
 
   const ensureSupabaseClient = async () => {
     if (typeof window.supabase !== "undefined") {
@@ -254,7 +254,7 @@ function setupFooterNewsletter() {
       status.textContent = savedInSupabase
         ? "Gracias por registrarte. Te avisaremos por correo."
         : "Gracias por registrarte. Guardamos tu correo y lo sincronizamos en breve.";
-      status.style.color = "#0dc785";
+      status.style.color = "#ffffff";
 
       form.reset();
       submitBtn.disabled = false;
@@ -388,6 +388,9 @@ function setupAuthPage() {
   const authRoot = document.querySelector("[data-auth-page]");
   if (!authRoot) return;
 
+  const AUTH_RETURN_KEY = "kinetic_auth_return_to";
+  const LAST_LOGIN_EMAIL_KEY = "kinetic_last_login_email";
+
   const tabs = Array.from(document.querySelectorAll("[data-auth-tab]"));
   const panels = Array.from(document.querySelectorAll("[data-auth-panel]"));
   if (!panels.length) return;
@@ -412,6 +415,48 @@ function setupAuthPage() {
   const modeParam = new URLSearchParams(window.location.search).get("mode");
   const initialMode = modeParam === "register" ? "register" : "login";
   activateMode(initialMode);
+
+  const searchParams = new URLSearchParams(window.location.search);
+  const isValidReturnPath = (value) =>
+    typeof value === "string" &&
+    value.startsWith("/") &&
+    !value.startsWith("//") &&
+    !value.includes("auth.html");
+
+  const returnToParam = searchParams.get("returnTo");
+  if (isValidReturnPath(returnToParam)) {
+    sessionStorage.setItem(AUTH_RETURN_KEY, returnToParam);
+  } else {
+    const referrer = document.referrer;
+    if (referrer) {
+      try {
+        const referrerUrl = new URL(referrer);
+        const sameOrigin = referrerUrl.origin === window.location.origin;
+        const referrerPath = `${referrerUrl.pathname}${referrerUrl.search}${referrerUrl.hash}`;
+        if (sameOrigin && isValidReturnPath(referrerPath)) {
+          sessionStorage.setItem(AUTH_RETURN_KEY, referrerPath);
+        }
+      } catch (_err) {
+        // ignore invalid referrer url
+      }
+    }
+  }
+
+  const authCard = document.querySelector(".auth-card");
+  const showGlobalStatus = (message, isError = false) => {
+    if (!authCard || !message) return;
+
+    let statusNode = document.getElementById("authGlobalStatus");
+    if (!statusNode) {
+      statusNode = document.createElement("p");
+      statusNode.id = "authGlobalStatus";
+      statusNode.className = "auth-global-status";
+      authCard.insertBefore(statusNode, authCard.firstChild);
+    }
+
+    statusNode.textContent = message;
+    statusNode.classList.toggle("is-error", isError);
+  };
 
   tabs.forEach((tab) => {
     tab.addEventListener("click", () => {
@@ -505,6 +550,33 @@ function setupAuthPage() {
     });
   }
 
+  const statusParam = searchParams.get("status");
+  const emailParam = searchParams.get("email");
+  if (statusParam === "check-email") {
+    activateMode("login");
+    showGlobalStatus("Gracias por registrarte. Revisa tu correo para confirmar tu cuenta y luego inicia sesión.");
+    if (emailParam && loginEmailInput) {
+      loginEmailInput.value = emailParam;
+    }
+  }
+
+  if (statusParam === "confirmed") {
+    activateMode("login");
+    showGlobalStatus("Correo confirmado correctamente. Te estamos enviando a tu perfil...");
+  }
+
+  const rememberedEmail = localStorage.getItem(LAST_LOGIN_EMAIL_KEY);
+  if (initialMode === "login" && rememberedEmail && loginEmailInput && !emailParam) {
+    window.setTimeout(() => {
+      const useRemembered = window.confirm(
+        `Detectamos una cuenta usada recientemente: ${rememberedEmail}.\n\n¿Quieres iniciar sesión con esta cuenta?`
+      );
+      if (!useRemembered) return;
+      loginEmailInput.value = rememberedEmail;
+      showPasswordStep();
+    }, 50);
+  }
+
   showEmailStep();
 }
 
@@ -596,7 +668,7 @@ function setupNeonCardGlow() {
 function setupWhatsAppButton() {
   if (document.querySelector(".whatsapp-float")) return;
 
-  const phone = "525512345678";
+  const phone = "525530790944";
   const message = encodeURIComponent("Hola, quiero informacion sobre Axolote Night Run.");
   const href = `https://wa.me/${phone}?text=${message}`;
 
@@ -732,37 +804,81 @@ function setupEventRegistrationPanel() {
 
   applyState(false);
 
-  if (typeof window.supabase === "undefined") return;
+  const SUPABASE_URL = "https://uycwzhlcnfijjyzkgkem.supabase.co";
+  const SUPABASE_KEY = "sb_publishable_IKwD3YtQwWzzEtE8QkVagA_OJGdV2e4";
 
-  const SUPABASE_URL = "https://anwkqhxcarzfvfufhbyk.supabase.co";
-  const SUPABASE_KEY = "sb_publishable_ARbEx2T-RYfWgIJEBj1NkQ_5i7wVzQP";
-  const client = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+  const initSessionState = () => {
+    if (typeof window.supabase === "undefined") return;
 
-  client.auth.getSession().then(({ data: { session } }) => {
-    applyState(Boolean(session));
-  });
+    const client = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-  client.auth.onAuthStateChange((_event, session) => {
-    applyState(Boolean(session));
-  });
+    client.auth.getSession().then(({ data: { session } }) => {
+      applyState(Boolean(session));
+    });
+
+    client.auth.onAuthStateChange((_event, session) => {
+      applyState(Boolean(session));
+    });
+  };
+
+  if (typeof window.supabase !== "undefined") {
+    initSessionState();
+    return;
+  }
+
+  let sdkScript = document.querySelector('script[data-supabase-sdk="true"]');
+  if (!sdkScript) {
+    sdkScript = document.createElement("script");
+    sdkScript.src = "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2";
+    sdkScript.dataset.supabaseSdk = "true";
+    document.head.appendChild(sdkScript);
+  }
+
+  if (typeof window.supabase !== "undefined") {
+    initSessionState();
+    return;
+  }
+
+  sdkScript.addEventListener("load", initSessionState, { once: true });
 }
 
 function setupSupabase() {
-  if (typeof window.supabase === "undefined") return;
+  const SUPABASE_URL = "https://uycwzhlcnfijjyzkgkem.supabase.co";
+  const SUPABASE_KEY = "sb_publishable_IKwD3YtQwWzzEtE8QkVagA_OJGdV2e4";
+  const SITE = window.location.origin;
 
-  const SUPABASE_URL = "https://anwkqhxcarzfvfufhbyk.supabase.co";
-  const SUPABASE_KEY = "sb_publishable_ARbEx2T-RYfWgIJEBj1NkQ_5i7wVzQP";
-  const SITE = "https://cuddly-guacamole-r966wq79w462x95j-8080.app.github.dev";
+  const initSupabase = () => {
+    if (typeof window.supabase === "undefined") return;
 
-  const client = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    const AUTH_RETURN_KEY = "kinetic_auth_return_to";
+    const LAST_LOGIN_EMAIL_KEY = "kinetic_last_login_email";
+
+    const isValidReturnPath = (value) =>
+      typeof value === "string" &&
+      value.startsWith("/") &&
+      !value.startsWith("//") &&
+      !value.includes("auth.html");
+
+    const consumeReturnTarget = () => {
+      const saved = sessionStorage.getItem(AUTH_RETURN_KEY);
+      if (isValidReturnPath(saved)) {
+        sessionStorage.removeItem(AUTH_RETURN_KEY);
+        return saved;
+      }
+      return "perfil.html";
+    };
+
+    const client = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
   const renderSessionNav = (session) => {
     const navActions = document.querySelector(".nav-actions");
     if (!navActions) return;
 
     if (!session) {
+      const currentPage = `${window.location.pathname}${window.location.search}${window.location.hash}`;
+      const loginHref = `auth.html?mode=login&returnTo=${encodeURIComponent(currentPage)}`;
       navActions.innerHTML = `
-        <a class="ghost-link" href="auth.html?mode=login">Iniciar Sesion</a>
+        <a class="ghost-link" href="${loginHref}">Iniciar Sesion</a>
         <a class="btn btn-primary" href="auth.html?mode=register">Registrarse</a>
       `;
       return;
@@ -780,20 +896,42 @@ function setupSupabase() {
     });
   };
 
-  client.auth.getSession().then(({ data: { session } }) => {
-    renderSessionNav(session);
-  });
+    client.auth.getSession().then(({ data: { session } }) => {
+      renderSessionNav(session);
+    });
 
-  client.auth.onAuthStateChange((_event, session) => {
-    renderSessionNav(session);
-  });
+    client.auth.onAuthStateChange((_event, session) => {
+      renderSessionNav(session);
+    });
 
   // ── AUTH PAGE ──────────────────────────────────────
-  const authRoot = document.querySelector("[data-auth-page]");
-  if (authRoot) {
+    const authRoot = document.querySelector("[data-auth-page]");
+    if (authRoot) {
+    const searchParams = new URLSearchParams(window.location.search);
+    const hashParams = new URLSearchParams(window.location.hash.replace(/^#/, ""));
+    const hasSignupCallback = hashParams.get("type") === "signup" && hashParams.has("access_token");
+
     // Si ya hay sesión activa → ir directo al perfil
     client.auth.getSession().then(({ data: { session } }) => {
-      if (session) window.location.replace("perfil.html");
+      if (!session) return;
+
+      if (hasSignupCallback) {
+        const url = new URL(window.location.href);
+        url.hash = "";
+        url.searchParams.set("mode", "login");
+        url.searchParams.set("status", "confirmed");
+        window.location.replace(url.toString());
+        return;
+      }
+
+      if (searchParams.get("status") === "confirmed") {
+        window.setTimeout(() => {
+          window.location.replace(consumeReturnTarget());
+        }, 1400);
+        return;
+      }
+
+      window.location.replace(consumeReturnTarget());
     });
 
     // Botones "Continuar con Google"
@@ -822,7 +960,8 @@ function setupSupabase() {
         if (error) {
           alert(error.message);
         } else {
-           window.location.href = "evento.html";
+          localStorage.setItem(LAST_LOGIN_EMAIL_KEY, email);
+          window.location.href = consumeReturnTarget();
         }
       });
     }
@@ -844,6 +983,8 @@ function setupSupabase() {
         const confirm = document.getElementById("registerConfirmPassword")?.value;
         const nombre = document.getElementById("registerName")?.value.trim();
         const apellido = document.getElementById("registerLastName")?.value.trim();
+        const telefono = document.getElementById("registerPhone")?.value.trim();
+        const nacimiento = document.getElementById("registerBirthDate")?.value;
 
         if (password !== confirm) {
           if (registerStatus) {
@@ -866,7 +1007,13 @@ function setupSupabase() {
           email,
           password,
           options: {
-            data: { full_name: `${nombre} ${apellido}`.trim() },
+            data: {
+              full_name: `${nombre} ${apellido}`.trim(),
+              first_name: nombre || "",
+              last_name: apellido || "",
+              phone: telefono || "",
+              birth_date: nacimiento || "",
+            },
             emailRedirectTo: `${SITE}/auth.html?mode=login`,
           },
         });
@@ -884,26 +1031,24 @@ function setupSupabase() {
             alert(error.message);
           }
         } else {
-          if (registerStatus) {
-            registerStatus.textContent = "Gracias por registrarte. Revisa tu correo para confirmar tu cuenta.";
-            registerStatus.classList.remove("is-error");
-          } else {
-            alert("¡Revisa tu correo para confirmar tu cuenta y poder iniciar sesión!");
-          }
-          registerForm.reset();
+          const redirectUrl = new URL(`${SITE}/auth.html`);
+          redirectUrl.searchParams.set("mode", "login");
+          redirectUrl.searchParams.set("status", "check-email");
+          redirectUrl.searchParams.set("email", email || "");
+          window.location.href = redirectUrl.toString();
         }
       });
     }
-  }
+    }
 
-  // ── PERFIL PAGE ────────────────────────────────────
-  const profileRoot = document.querySelector("[data-profile-page]");
-  if (profileRoot) {
-    client.auth.getSession().then(({ data: { session } }) => {
-      if (!session) {
-        window.location.replace("auth.html?mode=login");
-        return;
-      }
+    // ── PERFIL PAGE ────────────────────────────────────
+    const profileRoot = document.querySelector("[data-profile-page]");
+    if (profileRoot) {
+      client.auth.getSession().then(({ data: { session } }) => {
+        if (!session) {
+          window.location.replace("auth.html?mode=login");
+          return;
+        }
 
       const user = session.user;
       const meta = user.user_metadata || {};
@@ -911,9 +1056,31 @@ function setupSupabase() {
 
       // Datos en la cabecera de perfil
       const usernameEl = document.querySelector(".profile-username");
-      const emailEl = document.querySelector(".profile-ident-meta");
+      const metaInfoEls = Array.from(document.querySelectorAll(".profile-ident-meta"));
       if (usernameEl) usernameEl.textContent = displayName;
-      if (emailEl) emailEl.textContent = user.email;
+      if (metaInfoEls[0]) metaInfoEls[0].textContent = user.email || "";
+      if (metaInfoEls[1]) metaInfoEls[1].textContent = meta.phone || "";
+
+      const pfNombre = document.getElementById("pfNombre");
+      const pfApPat = document.getElementById("pfApPat");
+      const pfNacimiento = document.getElementById("pfNacimiento");
+      const pfTelefono = document.getElementById("pfTelefono");
+
+      if (pfNombre) {
+        pfNombre.value = meta.first_name || (displayName.split(" ")[0] || "");
+      }
+
+      if (pfApPat) {
+        pfApPat.value = meta.last_name || "";
+      }
+
+      if (pfNacimiento && meta.birth_date) {
+        pfNacimiento.value = meta.birth_date;
+      }
+
+      if (pfTelefono) {
+        pfTelefono.value = meta.phone || "";
+      }
 
       // Avatar de Google
       if (meta.avatar_url) {
@@ -938,18 +1105,39 @@ function setupSupabase() {
           window.location.href = "index.html";
         });
       }
-    });
-
-    // Logout desde el sidebar
-    const sidebarLogout = document.getElementById("sidebarLogout");
-    if (sidebarLogout) {
-      sidebarLogout.addEventListener("click", async (e) => {
-        e.preventDefault();
-        await client.auth.signOut();
-        window.location.href = "index.html";
       });
+
+      // Logout desde el sidebar
+      const sidebarLogout = document.getElementById("sidebarLogout");
+      if (sidebarLogout) {
+        sidebarLogout.addEventListener("click", async (e) => {
+          e.preventDefault();
+          await client.auth.signOut();
+          window.location.href = "index.html";
+        });
+      }
     }
+  };
+
+  if (typeof window.supabase !== "undefined") {
+    initSupabase();
+    return;
   }
+
+  let sdkScript = document.querySelector('script[data-supabase-sdk="true"]');
+  if (!sdkScript) {
+    sdkScript = document.createElement("script");
+    sdkScript.src = "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2";
+    sdkScript.dataset.supabaseSdk = "true";
+    document.head.appendChild(sdkScript);
+  }
+
+  if (typeof window.supabase !== "undefined") {
+    initSupabase();
+    return;
+  }
+
+  sdkScript.addEventListener("load", initSupabase, { once: true });
 }
 
 setupMenuToggle();

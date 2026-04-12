@@ -6,7 +6,7 @@
     <title>Kinetic Hub | Axolote Night Run 2026</title>
     <meta
       name="description"
-      content="Axolote Night Run – primera edición oficial de Kinetic Hub. Running nocturno 3K y 5K en CDMX, 31 octubre 2026."
+      content="Axolote Night Run – primera edición oficial de Kinetic Hub. Running nocturno 5K en CDMX, 31 octubre 2026."
     />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -71,6 +71,111 @@
       .info-banner strong {
         color: #0dc785;
       }
+
+      .ax-gallery-grid {
+        margin-top: 12px;
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 10px;
+      }
+
+      .ax-gallery-card {
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        overflow: hidden;
+        background: #fff;
+      }
+
+      .ax-gallery-card img {
+        display: block;
+        width: 100%;
+        height: auto;
+        object-fit: cover;
+      }
+
+      .ax-gallery-card small {
+        display: block;
+        padding: 8px 10px;
+        color: var(--muted);
+        font-weight: 700;
+      }
+
+      .ax-flyer-link {
+        display: block;
+        margin-top: 12px;
+        border-radius: 12px;
+        overflow: hidden;
+        border: 1px solid var(--line);
+      }
+
+      .ax-flyer-link img {
+        display: block;
+        width: 100%;
+        height: auto;
+      }
+
+      .ax-lightbox {
+        position: fixed;
+        inset: 0;
+        z-index: 70;
+        display: grid;
+        place-items: center;
+        padding: 16px;
+        opacity: 0;
+        visibility: hidden;
+        pointer-events: none;
+        transition: opacity 180ms ease, visibility 180ms ease;
+      }
+
+      .ax-lightbox:target {
+        opacity: 1;
+        visibility: visible;
+        pointer-events: auto;
+      }
+
+      .ax-lightbox-backdrop {
+        position: absolute;
+        inset: 0;
+        background: rgba(7, 12, 20, 0.8);
+      }
+
+      .ax-lightbox-content {
+        position: relative;
+        z-index: 1;
+        width: min(900px, 94vw);
+        max-height: 88vh;
+        overflow: hidden;
+        border-radius: 12px;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        background: #0e1622;
+      }
+
+      .ax-lightbox-content img {
+        display: block;
+        width: 100%;
+        height: auto;
+        max-height: 88vh;
+        object-fit: contain;
+      }
+
+      .ax-lightbox-close {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        text-decoration: none;
+        font-size: 0.82rem;
+        font-weight: 700;
+        color: #0f1722;
+        background: rgba(255, 255, 255, 0.92);
+        border-radius: 8px;
+        padding: 6px 10px;
+      }
+
+      @media (max-width: 800px) {
+        .ax-gallery-grid {
+          grid-template-columns: 1fr;
+        }
+      }
     </style>
   </head>
   <body data-event-page>
@@ -112,7 +217,7 @@
           <h1>Axolote Night Run 2026</h1>
           <p>31 octubre 2026 · Pista de Canotaje, CDMX</p>
           <div class="quick-stats">
-            <span>3K / 5K</span>
+            <span>Categoría única 5K</span>
             <span>Nivel: Todos los niveles</span>
             <span>Cupo limitado</span>
             <span>Nocturno</span>
@@ -131,7 +236,7 @@
             <article class="event-panel reveal">
               <h2 class="content-title">Sobre el evento</h2>
               <p class="page-lead">
-                Axolote Night Run es la primera carrera oficial organizada por Kinetic Hub. Una experiencia nocturna única diseñada para corredores de todos los niveles: desde quienes corren su primer 3K hasta los que buscan su mejor tiempo en 5K.
+                Axolote Night Run es la primera carrera oficial organizada por Kinetic Hub. Una experiencia nocturna única diseñada para corredores de todos los niveles en formato de categoría única 5K.
               </p>
               <p style="margin-top: 12px; color: var(--muted);">
                 La carrera se celebra el 31 de octubre de 2026 en la Pista de Canotaje de la Ciudad de México, con un recorrido luminoso, ambiente festivo y todo lo que necesitas para vivir una noche inolvidable corriendo.
@@ -141,8 +246,7 @@
             <article class="event-panel reveal">
               <h2 class="content-title">Distancias y modalidades</h2>
               <ul class="info-list">
-                <li>3K recreativo — para principiantes, familias y quienes quieren disfrutar el ambiente nocturno sin presión de tiempo.</li>
-                <li>5K competitivo — rama varonil y femenil con cronometraje oficial.</li>
+                <li>5K categoría única con cronometraje oficial.</li>
                 <li>Modalidad presencial únicamente.</li>
                 <li>Salida en oleadas para garantizar orden y seguridad.</li>
               </ul>
@@ -150,11 +254,41 @@
 
             <article class="event-panel reveal">
               <h2 class="content-title">Costos e inscripción</h2>
-              <div class="pricing-grid" style="justify-content:center;">
+              <div class="pricing-grid">
                 <div class="pricing-card">
-                  <strong>Precio único</strong>
+                  <strong>Early Bird</strong>
+                  <p>$480 MXN</p>
+                </div>
+                <div class="pricing-card">
+                  <strong>Etapa regular</strong>
+                  <p>$550 MXN</p>
+                </div>
+                <div class="pricing-card">
+                  <strong>Etapa extemporánea</strong>
                   <p>$600 MXN</p>
                 </div>
+              </div>
+            </article>
+
+            <article class="event-panel reveal">
+              <h2 class="content-title">Flyer oficial y visuales del evento</h2>
+              <p class="page-lead">Consulta el flyer oficial y el material visual de la edición Axolote Night Run 2026.</p>
+              <a class="ax-flyer-link" href="#ax-flyer-lightbox" aria-label="Ver flyer oficial en grande">
+                <img src="PosteroficialAxolote.jpeg" alt="Flyer oficial Axolote Night Run 2026" loading="lazy" />
+              </a>
+              <div class="ax-gallery-grid">
+                <figure class="ax-gallery-card">
+                  <img src="playeras.jpeg" alt="Playeras oficiales Axolote Night Run" loading="lazy" />
+                  <small>Playeras oficiales</small>
+                </figure>
+                <figure class="ax-gallery-card">
+                  <img src="axo_oficial.png" alt="Axolote oficial del evento" loading="lazy" />
+                  <small>Imagen oficial</small>
+                </figure>
+                <figure class="ax-gallery-card">
+                  <img src="axo3d_oficial.png" alt="Axolote 3D oficial del evento" loading="lazy" />
+                  <small>Axolote 3D oficial</small>
+                </figure>
               </div>
             </article>
 
@@ -211,19 +345,19 @@
               <div class="faq-list">
                 <div class="faq-item">
                   <strong>¿Es apta para principiantes?</strong>
-                  <p>Sí. La distancia de 3K está diseñada especialmente para quienes corren por primera vez o quieren disfrutar el recorrido sin ritmo competitivo.</p>
+                  <p>Sí. La categoría única 5K está abierta a todo corredor que pueda completar la distancia.</p>
                 </div>
                 <div class="faq-item">
-                  <strong>¿Puedo cambiar de distancia después de inscribirme?</strong>
-                  <p>Sí, hasta 10 días antes del evento sujeto a disponibilidad. Contáctanos por correo.</p>
+                  <strong>¿Hay cambio de distancia?</strong>
+                  <p>No aplica, ya que esta edición corre en categoría única 5K.</p>
                 </div>
                 <div class="faq-item">
                   <strong>¿Hay guardarropa?</strong>
-                  <p>Sí, con cupo limitado y etiqueta oficial incluida en tu kit.</p>
+                  <p>No habrá servicio de guardarropa en esta edición.</p>
                 </div>
                 <div class="faq-item">
-                  <strong>¿Se requiere experiencia previa?</strong>
-                  <p>No. Cualquier persona en condición física básica puede participar en el 3K recreativo.</p>
+                  <strong>¿Recibiré exoneración al pagar?</strong>
+                  <p>Sí. Al completar el pago, recibirás por correo tu exoneración automáticamente. Debes presentarla al recoger tu kit.</p>
                 </div>
                 <div class="faq-item">
                   <strong>¿Dónde se publican los resultados?</strong>
@@ -253,6 +387,7 @@
               <p><strong>Kinetic Hub Events</strong></p>
               <p style="color: var(--muted);">contacto@kinetichub.mx</p>
               <p style="color: var(--muted);">5530790944</p>
+              <p style="margin-top: 8px;"><a class="inline-link" href="https://wa.me/525530790944?text=Hola%2C%20quiero%20informacion%20de%20Axolote%20Night%20Run" target="_blank" rel="noopener noreferrer">Escribir por WhatsApp</a></p>
             </article>
 
             <article class="sidebar-panel reveal">
@@ -304,6 +439,14 @@
           </div>
         </div>
       </section>
+
+      <div class="ax-lightbox" id="ax-flyer-lightbox" aria-modal="true" role="dialog" aria-label="Flyer oficial Axolote Night Run">
+        <a class="ax-lightbox-backdrop" href="#" aria-label="Cerrar flyer"></a>
+        <div class="ax-lightbox-content">
+          <a class="ax-lightbox-close" href="#" aria-label="Cerrar">Cerrar</a>
+          <img src="PosteroficialAxolote.jpeg" alt="Flyer oficial Axolote Night Run en tamaño completo" loading="lazy" />
+        </div>
+      </div>
     </main>
 
     <footer class="site-footer">
