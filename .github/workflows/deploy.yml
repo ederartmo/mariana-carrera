@@ -5,6 +5,10 @@ on:
     branches:
       - main
 
+concurrency:
+  group: hostinger-deploy-main
+  cancel-in-progress: true
+
 jobs:
   deploy:
     name: Subir archivos via FTP
@@ -14,11 +18,33 @@ jobs:
       - name: Checkout del repositorio
         uses: actions/checkout@v4
 
-      - name: Desplegar a Hostinger via FTP
+      - name: Desplegar a Hostinger via FTPS (intento 1)
+        id: deploy_ftps
+        continue-on-error: true
         uses: SamKirkland/FTP-Deploy-Action@v4.3.5
         with:
           server: ${{ secrets.FTP_SERVER }}
           protocol: ftps
+          port: 21
+          username: ${{ secrets.FTP_USERNAME }}
+          password: ${{ secrets.FTP_PASSWORD }}
+          local-dir: ./
+          server-dir: /
+          exclude: |
+            **/.git*
+            **/.git*/**
+            **/node_modules/**
+            **/*.zip
+            **/.env*
+            **/README.md
+            **/.github/**
+
+      - name: Reintento via FTP (si FTPS falla)
+        if: steps.deploy_ftps.outcome == 'failure'
+        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
+        with:
+          server: ${{ secrets.FTP_SERVER }}
+          protocol: ftp
           port: 21
           username: ${{ secrets.FTP_USERNAME }}
           password: ${{ secrets.FTP_PASSWORD }}
