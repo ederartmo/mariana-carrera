@@ -244,6 +244,7 @@ function setupContactFormSubmission() {
 
   const SUPABASE_URL = "https://uycwzhlcnfijjyzkgkem.supabase.co";
   const SUPABASE_KEY = "sb_publishable_IKwD3YtQwWzzEtE8QkVagA_OJGdV2e4";
+  const CONTACT_CONFIRM_ENDPOINT = `${SUPABASE_URL}/functions/v1/contact-confirmation`;
 
   const ensureSupabaseClient = async () => {
     if (typeof window.supabase !== "undefined") {
@@ -286,6 +287,37 @@ function setupContactFormSubmission() {
       form.appendChild(statusNode);
     }
   }
+
+  const sendContactConfirmation = async ({
+    email,
+    fullName,
+    subject,
+    eventName,
+    reason,
+    message,
+  }) => {
+    try {
+      const response = await fetch(CONTACT_CONFIRM_ENDPOINT, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          apikey: SUPABASE_KEY,
+        },
+        body: JSON.stringify({
+          email,
+          full_name: fullName,
+          subject,
+          event_slug: eventName,
+          reason,
+          message,
+        }),
+      });
+
+      return response.ok;
+    } catch (_err) {
+      return false;
+    }
+  };
 
   form.addEventListener("submit", async (event) => {
     event.preventDefault();
@@ -361,11 +393,30 @@ function setupContactFormSubmission() {
       return;
     }
 
-    form.reset();
-    statusNode.textContent = "Gracias. Recibimos tu solicitud y te responderemos por correo.";
-    statusNode.style.color = "#0dc785";
-    submitBtn.disabled = false;
-    submitBtn.textContent = originalText;
+    const confirmationSent = await sendContactConfirmation({
+      email,
+      fullName,
+      subject,
+      eventName,
+      reason,
+      message,
+    });
+
+    form.innerHTML = `
+      <div class="profile-empty-state" style="padding: 16px 8px;">
+        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.8" />
+          <path d="M8 12.6 10.8 15.2 16 9.6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />
+        </svg>
+        <p style="margin-top: 8px;"><strong>Gracias por contactarnos.</strong></p>
+        <p>Tu solicitud fue recibida correctamente y nuestro equipo la revisará en breve.</p>
+        <p style="margin-top: 4px; color: #6b7280; font-size: 0.9rem;">
+          ${confirmationSent
+            ? "Te enviamos un correo de confirmación al email que registraste."
+            : "Estamos procesando tu confirmación por correo."}
+        </p>
+      </div>
+    `;
   });
 }
 
