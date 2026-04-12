@@ -2634,6 +2634,73 @@ body[data-page="series"] .page-hero .container {
   padding: 18px;
 }
 
+.auth-session-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(5, 9, 15, 0.62);
+  backdrop-filter: blur(4px);
+  display: grid;
+  place-items: center;
+  padding: 18px;
+  z-index: 120;
+}
+
+.auth-session-modal {
+  width: min(460px, 94vw);
+  background: #ffffff;
+  border: 1px solid #d7d9de;
+  border-radius: 14px;
+  box-shadow: 0 20px 42px rgba(6, 14, 24, 0.35);
+  padding: 18px;
+}
+
+.auth-session-modal h2 {
+  margin: 0;
+  color: #0f172a;
+  font-size: 1.2rem;
+  font-family: "Sora", sans-serif;
+}
+
+.auth-session-modal p {
+  margin: 10px 0 0;
+  color: #4b5563;
+}
+
+.auth-session-email {
+  display: inline-flex;
+  margin-top: 10px;
+  background: rgba(13, 199, 133, 0.12);
+  border: 1px solid rgba(13, 199, 133, 0.35);
+  border-radius: 999px;
+  padding: 5px 10px;
+  color: #0a6e48;
+  font-weight: 700;
+}
+
+.auth-session-actions {
+  margin-top: 16px;
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.auth-session-btn {
+  min-height: 40px;
+  border-radius: 9px;
+  border: 1px solid #d0d5dd;
+  background: #ffffff;
+  color: #111827;
+  font-weight: 700;
+  padding: 0 12px;
+  cursor: pointer;
+}
+
+.auth-session-btn-primary {
+  border-color: #0dc785;
+  background: rgba(13, 199, 133, 0.14);
+  color: #075f3e;
+}
+
 .auth-tabs {
   display: grid;
   grid-template-columns: 1fr 1fr;
