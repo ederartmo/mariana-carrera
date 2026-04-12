@@ -151,6 +151,7 @@ function setupFooterNewsletter() {
 
   const SUPABASE_URL = "https://uycwzhlcnfijjyzkgkem.supabase.co";
   const SUPABASE_KEY = "sb_publishable_IKwD3YtQwWzzEtE8QkVagA_OJGdV2e4";
+  const NEWSLETTER_CONFIRM_ENDPOINT = `${SUPABASE_URL}/functions/v1/newsletter-confirmation`;
 
   const ensureSupabaseClient = async () => {
     if (typeof window.supabase !== "undefined") {
@@ -219,6 +220,27 @@ function setupFooterNewsletter() {
     }
   };
 
+  const sendNewsletterConfirmation = async (email) => {
+    try {
+      const response = await fetch(NEWSLETTER_CONFIRM_ENDPOINT, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          apikey: SUPABASE_KEY,
+          Authorization: `Bearer ${SUPABASE_KEY}`,
+        },
+        body: JSON.stringify({
+          email: email.toLowerCase(),
+          source_page: window.location.pathname,
+        }),
+      });
+
+      return response.ok;
+    } catch (_err) {
+      return false;
+    }
+  };
+
   forms.forEach((form) => {
     const input = form.querySelector('input[type="email"]');
     const submitBtn = form.querySelector('button[type="submit"]');
@@ -249,11 +271,21 @@ function setupFooterNewsletter() {
       submitBtn.textContent = "Enviando...";
 
       const savedInSupabase = await saveToSupabase(email);
+      let confirmationSent = false;
+
+      if (savedInSupabase) {
+        confirmationSent = await sendNewsletterConfirmation(email);
+      }
+
       saveLocalBackup(email);
 
-      status.textContent = savedInSupabase
-        ? "Gracias por registrarte. Te avisaremos por correo."
-        : "Gracias por registrarte. Guardamos tu correo y lo sincronizamos en breve.";
+      if (savedInSupabase && confirmationSent) {
+        status.textContent = "Gracias por registrarte. Te enviamos un correo de confirmacion.";
+      } else if (savedInSupabase) {
+        status.textContent = "Gracias por registrarte. Tu correo quedo guardado y la confirmacion se enviara en breve.";
+      } else {
+        status.textContent = "Gracias por registrarte. Guardamos tu correo y lo sincronizamos en breve.";
+      }
       status.style.color = "#ffffff";
 
       form.reset();
