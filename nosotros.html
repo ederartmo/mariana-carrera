@@ -14,7 +14,7 @@
       href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Sora:wght@500;600;700;800&display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="styles.css" />
+    <link rel="stylesheet" href="styles.css?v=__ASSET_VERSION__" />
       <link rel="icon" type="image/png" href="icon.png" />
   </head>
   <body data-page="nosotros">
@@ -48,122 +48,130 @@
     </header>
 
     <main>
-      <section class="about-hero-v2">
-        <div class="container about-hero-v2-inner reveal">
-          <div class="about-hero-decor about-hero-decor-a" aria-hidden="true"></div>
-          <div class="about-hero-decor about-hero-decor-b" aria-hidden="true"></div>
-          <div class="about-hero-decor about-hero-decor-c" aria-hidden="true"></div>
-
-          <p class="eyebrow">Nuestra visión</p>
-          <h1>Nosotros</h1>
-          <p class="about-hero-subtitle">
-            Construimos experiencias deportivas más claras, memorables y útiles para atletas,
-            marcas y eventos que quieren crecer con una identidad propia.
-          </p>
-
-          <div class="about-hero-gallery" aria-label="Momentos del equipo y la marca">
-            <div class="about-hero-gallery-card about-hero-gallery-card-a"></div>
-            <div class="about-hero-gallery-card about-hero-gallery-card-b"></div>
-            <div class="about-hero-gallery-card about-hero-gallery-card-c"></div>
-            <div class="about-hero-gallery-card about-hero-gallery-card-d"></div>
-          </div>
-        </div>
-      </section>
-
-      <section class="section about-value-section-v2">
-        <div class="container about-value-grid-v2 reveal">
-          <div class="about-value-heading-v2">
-            <span class="about-kicker-v2">Propuesta de valor</span>
-            <h2>Nos aseguramos de que cada experiencia se ejecute con claridad y confianza.</h2>
-          </div>
-
-          <div class="about-value-copy-v2">
+      <section class="about-hero">
+        <div class="container reveal">
+          <div class="contact-hero-panel">
+            <p class="eyebrow">Nuestra visión</p>
+            <h1>Diseñamos plataformas deportivas que sí ayudan a convertir interés en registro.</h1>
             <p>
-              Kinetic Hub nace para ordenar el recorrido completo del atleta: descubrir eventos,
-              entender qué recibe, registrarse sin fricción y mantenerse conectado antes y después de la carrera.
-            </p>
-            <p>
-              Nuestro enfoque mezcla producto, diseño y comunicación para que la marca se vea sólida,
-              el sitio se sienta actual y cada interacción tenga una intención clara.
+              Kinetic Hub une diseño, claridad operativa y una identidad fuerte para que atletas,
+              eventos y marcas tengan una experiencia más útil desde el primer clic.
             </p>
           </div>
         </div>
       </section>
 
-      <section class="section about-impact-section-v2">
-        <div class="container about-impact-grid-v2">
-          <div class="about-impact-media-v2 reveal">
-            <div class="about-impact-photo-v2">
-              <button class="about-play-badge" type="button" aria-label="Reproducir historia visual">
-                <svg viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M8 6.5v11l9-5.5-9-5.5z" />
-                </svg>
-              </button>
+      <section class="about-shell-section">
+        <div class="container">
+          <div class="about-overview-card reveal">
+            <div class="about-mosaic" aria-label="Momentos de Kinetic Hub">
+              <div class="about-mosaic-item about-mosaic-item-a"></div>
+              <div class="about-mosaic-item about-mosaic-item-b"></div>
+              <div class="about-mosaic-item about-mosaic-item-c"></div>
+              <div class="about-mosaic-item about-mosaic-item-d"></div>
             </div>
-            <div class="about-impact-media-note">
-              <strong>“Hacemos que una plataforma deportiva se sienta premium y cercana a la vez.”</strong>
+
+            <div class="about-overview-copy">
+              <span class="about-kicker">Qué hacemos</span>
+              <h2>Ordenamos la experiencia completa del atleta y la comunicación del evento.</h2>
+
+              <div class="about-copy-columns">
+                <p>
+                  No nos interesa solo que una página se vea bonita. Nos interesa que el usuario
+                  entienda rápido qué es el evento, qué recibe, cuánto cuesta y qué sigue después.
+                </p>
+                <p>
+                  Por eso trabajamos producto, contenido y diseño como una sola pieza: menos fricción,
+                  más claridad y una marca que se siente seria, actual y confiable.
+                </p>
+              </div>
+
+              <div class="about-stat-row">
+                <article class="about-stat-card">
+                  <strong>Claridad primero</strong>
+                  <span>Interfaces pensadas para que el atleta no se pierda ni dude al registrarse.</span>
+                </article>
+                <article class="about-stat-card">
+                  <strong>Marca con criterio</strong>
+                  <span>Visuales consistentes para que cada evento se perciba premium y confiable.</span>
+                </article>
+                <article class="about-stat-card">
+                  <strong>Operación más simple</strong>
+                  <span>Menos pasos innecesarios y mejor estructura para comunicar y vender.</span>
+                </article>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="section about-story-section">
+        <div class="container about-story-grid">
+          <div class="about-story-media reveal">
+            <div class="about-story-photo"></div>
+            <div class="about-story-quote">
+              <strong>Hacemos que una plataforma deportiva se sienta premium, clara y lista para crecer.</strong>
               <span>Equipo Kinetic Hub</span>
             </div>
           </div>
 
-          <div class="about-impact-copy-v2 reveal">
-            <span class="about-kicker-v2">Historia e impacto</span>
-            <h2>Empoderamos a nuestros clientes con una presencia digital más útil.</h2>
+          <div class="about-story-copy reveal">
+            <span class="about-kicker">Cómo trabajamos</span>
+            <h2>Convertimos una presencia digital confusa en una experiencia con dirección.</h2>
             <p>
-              Trabajamos para que organizadores, aliados y atletas encuentren una plataforma que no solo se vea bien,
-              sino que también resuelva acciones reales con menos fricción y más confianza.
+              Partimos de una idea simple: si el recorrido digital es desordenado, el usuario lo percibe
+              y abandona. Si el mensaje, la navegación y el registro están alineados, la confianza sube.
             </p>
-            <blockquote class="about-impact-quote-v2">
-              Diseñamos cada punto de contacto para convertir visitas en registros, dudas en confianza
-              y experiencias aisladas en una marca que la gente quiere volver a vivir.
-            </blockquote>
+            <p>
+              Kinetic Hub existe para darle a cada evento una base sólida: páginas claras, llamadas a la acción
+              bien ubicadas y una narrativa visual que no estorba, sino que empuja a avanzar.
+            </p>
+
+            <div class="about-principles">
+              <article class="about-principle-card">
+                <h3>Diseño con intención</h3>
+                <p>Cada bloque debe explicar, orientar o ayudar a tomar una decisión.</p>
+              </article>
+              <article class="about-principle-card">
+                <h3>Menos fricción</h3>
+                <p>Quitamos pasos innecesarios para que registro, contacto y consulta de resultados fluyan.</p>
+              </article>
+              <article class="about-principle-card">
+                <h3>Confianza visible</h3>
+                <p>Una marca se siente seria cuando el sitio comunica orden, detalle y consistencia.</p>
+              </article>
+            </div>
           </div>
         </div>
       </section>
 
-      <section class="section alt about-benefits-section-v2">
+      <section class="section alt about-values-section">
         <div class="container">
-          <div class="about-benefits-head-v2 reveal">
-            <span class="about-kicker-v2">Nuestra filosofía</span>
-            <h2>Ayudamos a crecer experiencias deportivas más rápido y con más claridad.</h2>
+          <div class="section-head reveal">
+            <span class="about-kicker">Nuestros pilares</span>
+            <h2>Construimos experiencias deportivas que avanzan con claridad.</h2>
             <p>
-              Combinamos estructura, identidad y ejecución para que la marca se vea confiable desde el primer vistazo.
+              Estos principios guían cómo diseñamos cada página, cada flujo y cada punto de contacto de la marca.
             </p>
           </div>
 
-          <div class="about-benefits-grid-v2">
-            <article class="about-benefit-card-v2 reveal">
-              <div class="about-benefit-icon-v2" aria-hidden="true">
-                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <circle cx="12" cy="8" r="3.5" stroke="currentColor" stroke-width="1.8" />
-                  <path d="M5 19c0-3.3 3-5.8 7-5.8s7 2.5 7 5.8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" />
-                </svg>
-              </div>
-              <h3>Equipo profesional</h3>
-              <p>Unimos diseño, producto y comunicación para que cada detalle tenga una intención concreta.</p>
+          <div class="about-value-grid">
+            <article class="about-value-card reveal">
+              <div class="about-value-icon" aria-hidden="true">01</div>
+              <h3>Utilidad real</h3>
+              <p>Diseñamos para resolver tareas reales: descubrir, registrarse, pagar, volver y confiar.</p>
             </article>
 
-            <article class="about-benefit-card-v2 reveal">
-              <div class="about-benefit-icon-v2" aria-hidden="true">
-                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <circle cx="12" cy="12" r="7.5" stroke="currentColor" stroke-width="1.8" />
-                  <circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="1.8" />
-                  <path d="M12 4v2.2M20 12h-2.2M12 20v-2.2M4 12h2.2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" />
-                </svg>
-              </div>
-              <h3>Enfoque a resultados</h3>
-              <p>Cada sección está pensada para ayudar al usuario a avanzar, entender y tomar acción.</p>
+            <article class="about-value-card reveal">
+              <div class="about-value-icon" aria-hidden="true">02</div>
+              <h3>Identidad propia</h3>
+              <p>Evitar plantillas genéricas también es parte del trabajo: la marca debe tener presencia.</p>
             </article>
 
-            <article class="about-benefit-card-v2 reveal">
-              <div class="about-benefit-icon-v2" aria-hidden="true">
-                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M12 3l7 3v5c0 4.2-2.7 8.1-7 10-4.3-1.9-7-5.8-7-10V6l7-3z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" />
-                  <path d="m9.4 12 1.7 1.8 3.7-4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />
-                </svg>
-              </div>
-              <h3>Garantía y confianza</h3>
-              <p>Diseñamos una experiencia que transmite orden, credibilidad y una marca lista para crecer.</p>
+            <article class="about-value-card reveal">
+              <div class="about-value-icon" aria-hidden="true">03</div>
+              <h3>Ejecución clara</h3>
+              <p>El objetivo no es adornar; es comunicar bien y mover al usuario al siguiente paso correcto.</p>
             </article>
           </div>
         </div>
@@ -219,6 +227,6 @@
       </div>
     </footer>
 
-    <script src="script.js"></script>
+    <script src="script.js?v=__ASSET_VERSION__"></script>
   </body>
 </html>
