@@ -18,6 +18,11 @@ jobs:
       - name: Checkout del repositorio
         uses: actions/checkout@v4
 
+      - name: Inyectar version de assets en HTML
+        run: |
+          VERSION="${GITHUB_SHA::7}"
+          find . -maxdepth 1 -name '*.html' -print0 | xargs -0 sed -i "s/__ASSET_VERSION__/${VERSION}/g"
+
       - name: Desplegar a Hostinger via FTPS (intento 1)
         id: deploy_ftps
         continue-on-error: true
