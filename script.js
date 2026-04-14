@@ -218,7 +218,6 @@ function setupUnifiedFooter() {
       <div>
         <h3>Navegacion</h3>
         <a href="eventos.html">Explorar eventos</a>
-        <a href="beneficios.html">Beneficios</a>
         <a href="blog.html">Blog</a>
       </div>
       <div>

@@ -2441,13 +2441,6 @@ body[data-page="blog"] .page-hero .container {
   background-position: center 30%;
 }
 
-body[data-page="beneficios"] .page-hero .container {
-  background-image:
-    linear-gradient(to bottom, rgba(6, 10, 18, 0.08) 0%, rgba(6, 10, 18, 0.75) 100%),
-    url("correr1.jpg");
-  background-position: center 40%;
-}
-
 body[data-page="nosotros"] .page-hero .container {
   background-image:
     linear-gradient(to bottom, rgba(6, 10, 18, 0.08) 0%, rgba(6, 10, 18, 0.75) 100%),
