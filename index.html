@@ -113,7 +113,18 @@
             <div class="event-spotlight-pricing">
               <p class="event-spotlight-price-label">Precio desde</p>
               <p class="event-spotlight-price">$480 MXN</p>
-              <a class="event-spotlight-cta" href="axolote-night-run.html">Ver evento</a>
+              <div class="event-spotlight-actions">
+                <a class="event-spotlight-cta" href="axolote-night-run.html">Ver evento</a>
+                <button
+                  class="event-spotlight-more"
+                  type="button"
+                  data-neon-toggle
+                  aria-expanded="false"
+                  aria-controls="neonEventDetails"
+                >
+                  Ver más
+                </button>
+              </div>
             </div>
           </article>
 
@@ -145,6 +156,7 @@
             </p>
           </div>
 
+          <div class="neon-collapsible" id="neonEventDetails" hidden>
           <div class="neon-grid">
             <div class="neon-card" tabindex="0" role="button" aria-pressed="false" aria-label="Ver fecha del evento">
               <span class="neon-label">Fecha</span>
@@ -207,6 +219,7 @@
                 <img src="axo3d_oficial.png" alt="Ajolote 3D oficial del evento" />
               </div>
             </div>
+          </div>
           </div>
 
           <div class="neon-cta-wrap">

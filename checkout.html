@@ -435,6 +435,8 @@
                   Es obligatorio tener un contacto de emergencia registrado para participar.
                 </p>
 
+                <div id="checkoutSavedEmergency" hidden></div>
+
                 <div class="checkout-form-grid">
                   <label for="emergencyName">
                     Nombre completo <span class="required-mark">*</span>
@@ -591,29 +593,5 @@
     </footer>
 
     <script src="script.js?v=__ASSET_VERSION__"></script>
-    <script>
-      // Handle checkout form submission
-      const checkoutForm = document.getElementById("checkoutForm");
-      if (checkoutForm) {
-        checkoutForm.addEventListener("submit", (e) => {
-          e.preventDefault();
-
-          // Collect form data
-          const formData = {
-            emergencyName: document.getElementById("emergencyName").value,
-            emergencyPhone: document.getElementById("emergencyPhone").value,
-            emergencyRelation: document.getElementById("emergencyRelation").value,
-            emergencyEmail: document.getElementById("emergencyEmail").value,
-          };
-
-          // TODO: Send to backend or store in session/localStorage
-          console.log("Checkout data:", formData);
-
-          // Redirect to Stripe (or payment processor)
-          window.location.href =
-            "https://buy.stripe.com/test_dRm6oG6Vr0ewd0S5Olak000";
-        });
-      }
-    </script>
   </body>
 </html>
