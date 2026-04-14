@@ -1024,6 +1024,93 @@ function setupEventModals() {
   });
 }
 
+function setupEventDetailAccordions() {
+  const detailRoot = document.querySelector(".event-layout");
+  if (!detailRoot) return;
+
+  const keepExpanded = new Set([
+    "sobre el evento",
+    "distancias y modalidades",
+    "costos e inscripcion",
+  ]);
+
+  const normalize = (text) =>
+    (text || "")
+      .toLowerCase()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .trim();
+
+  const panels = Array.from(document.querySelectorAll(".event-layout > div > .event-panel"));
+
+  panels.forEach((panel) => {
+    const title = panel.querySelector(":scope > .content-title");
+    if (!title) return;
+
+    const panelName = normalize(title.textContent);
+    const shouldStayOpen = keepExpanded.has(panelName);
+    const contentNodes = Array.from(panel.children).filter((node) => node !== title);
+
+    panel.classList.add("is-collapsible");
+    panel.classList.toggle("is-open", shouldStayOpen);
+
+    title.setAttribute("role", "button");
+    title.setAttribute("tabindex", "0");
+    title.setAttribute("aria-expanded", String(shouldStayOpen));
+
+    contentNodes.forEach((node) => {
+      node.hidden = !shouldStayOpen;
+    });
+
+    const togglePanel = () => {
+      const nextOpen = !panel.classList.contains("is-open");
+      panel.classList.toggle("is-open", nextOpen);
+      title.setAttribute("aria-expanded", String(nextOpen));
+      contentNodes.forEach((node) => {
+        node.hidden = !nextOpen;
+      });
+    };
+
+    title.addEventListener("click", togglePanel);
+    title.addEventListener("keydown", (event) => {
+      if (event.key === "Enter" || event.key === " ") {
+        event.preventDefault();
+        togglePanel();
+      }
+    });
+  });
+
+  const faqItems = Array.from(document.querySelectorAll(".event-layout > div > .event-panel .faq-item"));
+  faqItems.forEach((item) => {
+    const question = item.querySelector(":scope > strong");
+    const answer = item.querySelector(":scope > p");
+    if (!question || !answer) return;
+
+    item.classList.add("is-collapsible");
+    item.classList.remove("is-open");
+
+    question.setAttribute("role", "button");
+    question.setAttribute("tabindex", "0");
+    question.setAttribute("aria-expanded", "false");
+    answer.hidden = true;
+
+    const toggleFaq = () => {
+      const nextOpen = !item.classList.contains("is-open");
+      item.classList.toggle("is-open", nextOpen);
+      question.setAttribute("aria-expanded", String(nextOpen));
+      answer.hidden = !nextOpen;
+    };
+
+    question.addEventListener("click", toggleFaq);
+    question.addEventListener("keydown", (event) => {
+      if (event.key === "Enter" || event.key === " ") {
+        event.preventDefault();
+        toggleFaq();
+      }
+    });
+  });
+}
+
 function setupNeonCardGlow() {
   const cards = Array.from(document.querySelectorAll(".neon-card"));
   if (!cards.length) return;
@@ -2764,6 +2851,186 @@ function setupSupabase() {
   sdkScript.addEventListener("load", initSupabase, { once: true });
 }
 
+function setupTipsCarousel() {
+  const section = document.querySelector(".tips-section");
+  if (!section) return;
+
+  const track = document.getElementById("tipsTrack");
+  const prevBtn = section.querySelector(".tips-arrow-prev");
+  const nextBtn = section.querySelector(".tips-arrow-next");
+  const cards = Array.from(section.querySelectorAll(".tips-card"));
+  const modal = document.getElementById("tipsModal");
+  const modalClose = document.getElementById("tipsModalClose");
+  const modalVideoShell = document.getElementById("tipsModalVideoShell");
+  const modalUsername = document.getElementById("tipsModalUsername");
+  const modalBio = document.getElementById("tipsModalBio");
+  const modalAvatarRing = document.getElementById("tipsModalAvatarRing");
+  const modalAvatarPlaceholder = document.getElementById("tipsModalAvatarPlaceholder");
+
+  if (!track || !prevBtn || !nextBtn || !modal) return;
+
+  // ── Carousel navigation ───────────────────────────────
+  let currentIndex = 0;
+
+  const getCardStep = () => {
+    const card = cards[0];
+    if (!card) return 224;
+    const style = window.getComputedStyle(track);
+    const gap = parseFloat(style.gap) || 14;
+    return card.getBoundingClientRect().width + gap;
+  };
+
+  const getVisibleCount = () => {
+    const vw = window.innerWidth;
+    if (vw < 520) return 2;
+    if (vw < 780) return 3;
+    if (vw < 1060) return 4;
+    return 5;
+  };
+
+  const getMaxIndex = () => Math.max(0, cards.length - getVisibleCount());
+
+  const updateArrows = () => {
+    prevBtn.disabled = currentIndex <= 0;
+    nextBtn.disabled = currentIndex >= getMaxIndex();
+  };
+
+  const goTo = (index) => {
+    currentIndex = Math.max(0, Math.min(index, getMaxIndex()));
+    track.style.transform = `translateX(-${currentIndex * getCardStep()}px)`;
+    updateArrows();
+  };
+
+  prevBtn.addEventListener("click", () => goTo(currentIndex - 1));
+  nextBtn.addEventListener("click", () => goTo(currentIndex + 1));
+  window.addEventListener("resize", () => goTo(Math.min(currentIndex, getMaxIndex())));
+
+  updateArrows();
+
+  // ── Hover preview (muted Cloudflare iframe) ───────────
+  const isPlaceholderId = (id) =>
+    !id || id.startsWith("CLOUDFLARE_VIDEO_ID") || id.startsWith("PLACEHOLDER");
+
+  const buildPreviewSrc = (cfId) =>
+    `https://iframe.videodelivery.net/${encodeURIComponent(cfId)}?autoplay=true&muted=true&controls=false&loop=true&preload=true`;
+
+  const buildModalSrc = (cfId) =>
+    `https://iframe.videodelivery.net/${encodeURIComponent(cfId)}?autoplay=true&muted=false&controls=true&preload=true`;
+
+  cards.forEach((card) => {
+    const cfId = card.dataset.cfId || "";
+    if (isPlaceholderId(cfId)) return;
+
+    const previewWrap = card.querySelector(".tips-card-preview-wrap");
+    if (!previewWrap) return;
+
+    let hoverTimer = null;
+
+    card.addEventListener("mouseenter", () => {
+      hoverTimer = setTimeout(() => {
+        if (!previewWrap.querySelector("iframe")) {
+          const iframe = document.createElement("iframe");
+          iframe.src = buildPreviewSrc(cfId);
+          iframe.setAttribute("allow", "autoplay; encrypted-media");
+          iframe.setAttribute("loading", "lazy");
+          iframe.title = "Vista previa del video";
+          previewWrap.appendChild(iframe);
+        }
+      }, 220);
+    });
+
+    card.addEventListener("mouseleave", () => {
+      clearTimeout(hoverTimer);
+      const iframe = previewWrap.querySelector("iframe");
+      if (iframe) previewWrap.removeChild(iframe);
+    });
+  });
+
+  // ── Open / close modal ────────────────────────────────
+  const openModal = (card) => {
+    const cfId = card.dataset.cfId || "";
+    const username = card.dataset.username || "";
+    const bio = card.dataset.bio || "";
+    const avatar = card.dataset.avatar || "";
+    const initials = username.replace("@", "").slice(0, 2).toLowerCase();
+
+    if (modalUsername) modalUsername.textContent = username;
+    if (modalBio) modalBio.textContent = bio;
+
+    // Avatar
+    if (modalAvatarRing) {
+      const existingImg = modalAvatarRing.querySelector("img");
+      if (existingImg) existingImg.remove();
+      if (avatar) {
+        const img = document.createElement("img");
+        img.src = avatar;
+        img.alt = username;
+        if (modalAvatarPlaceholder) modalAvatarPlaceholder.style.display = "none";
+        modalAvatarRing.prepend(img);
+      } else {
+        if (modalAvatarPlaceholder) {
+          modalAvatarPlaceholder.textContent = initials;
+          modalAvatarPlaceholder.style.display = "";
+        }
+      }
+    }
+
+    // Video
+    if (modalVideoShell) {
+      modalVideoShell.innerHTML = "";
+      if (!isPlaceholderId(cfId)) {
+        const iframe = document.createElement("iframe");
+        iframe.src = buildModalSrc(cfId);
+        iframe.setAttribute(
+          "allow",
+          "autoplay; fullscreen; encrypted-media; picture-in-picture"
+        );
+        iframe.setAttribute("allowfullscreen", "");
+        iframe.title = `Video de ${username}`;
+        modalVideoShell.appendChild(iframe);
+      } else {
+        // Demo placeholder while IDs are not yet set
+        const placeholder = document.createElement("div");
+        placeholder.style.cssText =
+          "display:flex;align-items:center;justify-content:center;height:100%;background:#111;color:rgba(255,255,255,0.4);font-size:0.82rem;text-align:center;padding:24px;";
+        placeholder.textContent =
+          "Asigna el ID de Cloudflare Stream en el atributo data-cf-id de la tarjeta.";
+        modalVideoShell.appendChild(placeholder);
+      }
+    }
+
+    modal.hidden = false;
+    document.body.style.overflow = "hidden";
+    if (modalClose) modalClose.focus();
+  };
+
+  const closeModal = () => {
+    modal.hidden = true;
+    document.body.style.overflow = "";
+    if (modalVideoShell) modalVideoShell.innerHTML = "";
+  };
+
+  cards.forEach((card) => {
+    card.addEventListener("click", () => openModal(card));
+    card.addEventListener("keydown", (e) => {
+      if (e.key === "Enter" || e.key === " ") {
+        e.preventDefault();
+        openModal(card);
+      }
+    });
+  });
+
+  if (modalClose) modalClose.addEventListener("click", closeModal);
+
+  modal.addEventListener("click", (e) => {
+    if (e.target === modal) closeModal();
+  });
+
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape" && !modal.hidden) closeModal();
+  });
+}
+
 setupPageLoadIndicator();
 setupMenuToggle();
 setupActiveNavLink();
@@ -2778,6 +3045,7 @@ setupEventFilters();
 setupHeroPosterSizing();
 setupRegisterScrollLed();
 setupEventModals();
+setupEventDetailAccordions();
 setupNeonCardGlow();
 setupNeonEventToggle();
 setupWhatsAppButton();
@@ -2785,4 +3053,5 @@ setupEventRegistrationPanel();
 setupAuthPage();
 setupProfilePage();
 setupBlogTabs();
+setupTipsCarousel();
 setupSupabase();
