@@ -49,6 +49,16 @@
       </div>
     </header>
 
+    <section class="profile-reminder-shell" id="profileRaceReminder" hidden aria-live="polite">
+      <div class="container profile-reminder-inner">
+        <div>
+          <p class="profile-reminder-title">Carrera pendiente de pago</p>
+          <p class="profile-reminder-copy">Axolote Night Run 2026 · Categoría única 5K · 31 OCT 2026</p>
+        </div>
+        <a class="profile-reminder-cta" id="profileRaceReminderPay" href="checkout.html">Pagar ahora</a>
+      </div>
+    </section>
+
     <!-- COVER BANNER con identidad integrada -->
     <div class="profile-cover" id="profileCover">
       <label class="profile-cover-btn" for="coverUpload">
@@ -63,6 +73,9 @@
         </svg>
         Personalizar cover
       </label>
+      <button class="profile-cover-adjust-btn" id="coverAdjustToggle" type="button" hidden>
+        Ajustar portada
+      </button>
       <input type="file" id="coverUpload" accept="image/*" class="profile-file-hidden" />
 
       <!-- IDENTITY dentro del banner -->
@@ -220,21 +233,7 @@
           <!-- ── INSCRIPCIONES ── -->
           <section class="profile-panel" data-section="inscripciones">
             <h2 class="profile-section-title">Mis carreras</h2>
-            <div class="profile-card">
-              <div class="profile-empty-state">
-                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <rect x="3" y="4" width="18" height="18" rx="2" stroke="currentColor" stroke-width="1.7" />
-                  <line x1="16" y1="2" x2="16" y2="6" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" />
-                  <line x1="8" y1="2" x2="8" y2="6" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" />
-                  <line x1="3" y1="10" x2="21" y2="10" stroke="currentColor" stroke-width="1.7" />
-                </svg>
-                <p>
-                  Aún no tienes inscripciones.
-                  <a href="index.html" class="auth-link-btn">Explora eventos</a>
-                  y regístrate en tu próxima carrera.
-                </p>
-              </div>
-            </div>
+            <div id="profileRacesContainer"></div>
           </section>
 
           <!-- ── RESULTADOS ── -->
@@ -279,23 +278,55 @@
           <section class="profile-panel" data-section="emergencia">
             <h2 class="profile-section-title">Contacto de emergencia</h2>
             <div class="profile-card">
-              <div class="profile-empty-state">
-                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path
-                    d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12a19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 3.6 1.2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L7.91 8.91a16 16 0 0 0 6 6l1.27-.95a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"
-                    stroke="currentColor"
-                    stroke-width="1.7"
-                    stroke-linejoin="round"
-                  />
-                </svg>
+              <div class="profile-emergency-intro">
                 <p>
-                  Para mayor seguridad, agrega un contacto de emergencia que será notificado en caso de algún
-                  percance durante una competencia.
+                  Agrega tu contacto de emergencia.
                 </p>
               </div>
-              <div class="profile-form-actions">
-                <button class="profile-save-btn" type="button">+ Agregar contacto</button>
+
+              <div id="profileEmergencySavedCard" hidden></div>
+
+              <div class="profile-emergency-saved-actions" id="profileEmergencySavedActions" hidden>
+                <button class="profile-secondary-btn" id="emergencyEditBtn" type="button">Editar contacto</button>
               </div>
+
+              <form class="profile-form" id="emergencyContactForm" action="#" method="post" novalidate>
+                <div class="profile-form-grid">
+                  <div class="profile-field">
+                    <label for="emergencyContactName">Nombre completo</label>
+                    <input id="emergencyContactName" name="emergencyContactName" type="text" placeholder="Nombre y apellidos" />
+                  </div>
+                  <div class="profile-field">
+                    <label for="emergencyContactPhone">Teléfono celular</label>
+                    <input id="emergencyContactPhone" name="emergencyContactPhone" type="tel" placeholder="55 0000 0000" />
+                  </div>
+                </div>
+
+                <div class="profile-form-grid">
+                  <div class="profile-field">
+                    <label for="emergencyContactRelation">Relación</label>
+                    <select id="emergencyContactRelation" name="emergencyContactRelation">
+                      <option value="">Selecciona</option>
+                      <option value="madre">Madre</option>
+                      <option value="padre">Padre</option>
+                      <option value="hermano">Hermano/a</option>
+                      <option value="pareja">Pareja</option>
+                      <option value="amigo">Amigo/a</option>
+                      <option value="otro">Otro</option>
+                    </select>
+                  </div>
+                  <div class="profile-field">
+                    <label for="emergencyContactEmail">Correo electrónico</label>
+                    <input id="emergencyContactEmail" name="emergencyContactEmail" type="email" placeholder="correo@ejemplo.com" />
+                  </div>
+                </div>
+
+                <div class="profile-form-actions">
+                  <button class="profile-secondary-btn" id="emergencyCancelBtn" type="button" hidden>Cancelar</button>
+                  <button class="profile-save-btn" id="emergencyContactSaveBtn" type="submit">Guardar contacto</button>
+                </div>
+                <p class="profile-save-status" id="emergencyContactStatus" aria-live="polite"></p>
+              </form>
             </div>
           </section>
 

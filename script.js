@@ -173,6 +173,126 @@ function setupCurrentYear() {
   }
 }
 
+function setupUnifiedFooter() {
+  const footer = document.querySelector(".site-footer");
+  if (!footer) return;
+
+  const grid = footer.querySelector(".footer-grid");
+  const links = footer.querySelector(".footer-links");
+
+  if (grid) {
+    grid.innerHTML = `
+      <div>
+        <div class="footer-brand-block">
+          <a href="index.html" class="footer-brand" aria-label="Inicio Kinetic Hub">
+            <img class="brand-logo" src="KineticHUB.png" alt="Kinetic Hub" />
+          </a>
+          <p class="footer-legend">Kinetic Hub conecta carreras, comunidad y experiencias que se viven antes, durante y despues de cada meta.</p>
+          <div class="footer-social" aria-label="Redes sociales de Kinetic Hub">
+            <a class="footer-social-link" href="https://wa.me/525530790944?text=Hola%2C%20quiero%20informacion%20de%20Kinetic%20Hub" target="_blank" rel="noopener noreferrer" aria-label="WhatsApp">
+              <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                <path d="M12 21a8.9 8.9 0 0 1-4.28-1.1L3.5 21l1.16-4.05A8.95 8.95 0 1 1 12 21Z" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>
+                <path d="M9.3 8.8c.25-.56.52-.58.78-.58.2 0 .43 0 .65.01.21 0 .5-.08.77.56.27.64.91 2.2.99 2.36.08.16.13.35.02.57-.1.22-.15.35-.3.53-.15.17-.31.39-.44.52-.15.15-.31.31-.13.62.17.3.78 1.28 1.67 2.08 1.15 1.02 2.1 1.34 2.4 1.49.3.15.48.13.66-.08.17-.2.73-.84.92-1.12.19-.29.39-.24.66-.14.27.1 1.69.8 1.98.95.29.15.48.22.55.35.07.13.07.77-.18 1.5-.25.73-1.47 1.4-2.05 1.49-.53.08-1.21.12-3.9-1.06-3.26-1.43-5.35-4.92-5.52-5.16-.17-.24-1.32-1.76-1.32-3.35 0-1.6.84-2.38 1.14-2.72Z" fill="currentColor"/>
+              </svg>
+            </a>
+            <a class="footer-social-link" href="https://www.instagram.com/kinetic.hub" target="_blank" rel="noopener noreferrer" aria-label="Instagram">
+              <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                <rect x="4" y="4" width="16" height="16" rx="5" stroke="currentColor" stroke-width="1.8"/>
+                <circle cx="12" cy="12" r="3.6" stroke="currentColor" stroke-width="1.8"/>
+                <circle cx="17.2" cy="6.8" r="1.1" fill="currentColor"/>
+              </svg>
+            </a>
+            <a class="footer-social-link" href="https://www.facebook.com/profile.php?id=100065314880446&mibextid=wwXIfr&rdid=KDtMnE3lJn9aQZkB&share_url=https%3A%2F%2Fwww.facebook.com%2Fshare%2F18ER76xC2i%2F%3Fmibextid%3DwwXIfr#" target="_blank" rel="noopener noreferrer" aria-label="Facebook">
+              <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                <path d="M13.4 20v-6.1h2.3l.35-2.7H13.4V9.48c0-.79.22-1.32 1.35-1.32h1.44V5.75c-.25-.03-1.1-.1-2.08-.1-2.06 0-3.47 1.26-3.47 3.57v2h-2.33v2.7h2.33V20h2.72Z" fill="currentColor"/>
+              </svg>
+            </a>
+            <a class="footer-social-link" href="https://www.tiktok.com/@kinetic.hub" target="_blank" rel="noopener noreferrer" aria-label="TikTok">
+              <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                <path d="M14.55 4.5c.58 1.65 1.76 2.86 3.42 3.46v2.66a6.3 6.3 0 0 1-3.14-.88v5.1a4.84 4.84 0 1 1-4.84-4.84c.24 0 .47.02.7.06v2.74a2.35 2.35 0 1 0 1.43 2.16V4.5h2.43Z" fill="currentColor"/>
+              </svg>
+            </a>
+          </div>
+        </div>
+      </div>
+      <div>
+        <h3>Navegacion</h3>
+        <a href="eventos.html">Explorar eventos</a>
+        <a href="beneficios.html">Beneficios</a>
+        <a href="blog.html">Blog</a>
+      </div>
+      <div>
+        <h3>Comunidad</h3>
+        <a href="nosotros.html">Nosotros</a>
+        <a href="contacto.html">Contacto</a>
+        <a href="index.html#future">FAQ del evento</a>
+      </div>
+      <div>
+        <h3>Newsletter</h3>
+        <p>Te notificamos proximas carreras, aperturas, resultados y novedades de la comunidad.</p>
+        <form class="footer-newsletter" action="#" method="post">
+          <label for="footerMail" class="sr-only">Correo</label>
+          <input id="footerMail" type="email" placeholder="Correo para notificaciones" required />
+          <button class="btn btn-small" type="submit">Quiero avisos</button>
+        </form>
+      </div>
+    `;
+  }
+
+  if (links) {
+    links.innerHTML = `
+      <a href="privacidad.html">Privacidad</a>
+      <a href="terminos.html">Terminos</a>
+      <a href="cookies.html">Cookies</a>
+    `;
+  }
+}
+
+function normalizeEmergencyContact(source = {}) {
+  return {
+    name: (source.name || "").trim(),
+    phone: (source.phone || "").trim(),
+    relation: (source.relation || "").trim(),
+    email: (source.email || "").trim(),
+  };
+}
+
+function hasCompleteEmergencyContact(contact) {
+  return Boolean(contact.name && contact.phone && contact.relation && contact.email);
+}
+
+function emergencyContactFromProfile(profile = {}) {
+  return normalizeEmergencyContact({
+    name: profile.emergency_name,
+    phone: profile.emergency_phone,
+    relation: profile.emergency_relation,
+    email: profile.emergency_email,
+  });
+}
+
+function emergencyContactToProfileFields(contact = {}) {
+  const normalized = normalizeEmergencyContact(contact);
+  return {
+    emergency_name: normalized.name,
+    emergency_phone: normalized.phone,
+    emergency_relation: normalized.relation,
+    emergency_email: normalized.email,
+  };
+}
+
+function formatEmergencyRelation(value) {
+  const labels = {
+    madre: "Madre",
+    padre: "Padre",
+    hermano: "Hermano/a",
+    pareja: "Pareja",
+    amigo: "Amigo/a",
+    otro: "Otro",
+  };
+
+  return labels[value] || value || "Sin relación";
+}
+
 function setupFooterNewsletter() {
   const forms = document.querySelectorAll(".footer-newsletter");
   if (!forms.length) return;
@@ -928,6 +1048,111 @@ function setupNeonCardGlow() {
   });
 }
 
+function setupNeonEventToggle() {
+  const toggleBtn = document.querySelector("[data-neon-toggle]");
+  const details = document.getElementById("neonEventDetails");
+
+  if (!toggleBtn || !details) return;
+
+  const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  let isAnimating = false;
+
+  const setCollapsed = () => {
+    details.classList.remove("is-expanded");
+    details.style.maxHeight = "0px";
+    details.style.opacity = "0";
+    details.style.transform = "translateY(-10px)";
+    details.hidden = true;
+    toggleBtn.setAttribute("aria-expanded", "false");
+    toggleBtn.textContent = "Ver más";
+  };
+
+  const setExpanded = () => {
+    details.hidden = false;
+    details.classList.add("is-expanded");
+    details.style.maxHeight = "none";
+    details.style.opacity = "1";
+    details.style.transform = "translateY(0)";
+    toggleBtn.setAttribute("aria-expanded", "true");
+    toggleBtn.textContent = "Ver menos";
+  };
+
+  const expandAnimated = () => {
+    details.hidden = false;
+    details.classList.add("is-expanded");
+    details.style.maxHeight = "0px";
+    details.style.opacity = "0";
+    details.style.transform = "translateY(-10px)";
+    toggleBtn.setAttribute("aria-expanded", "true");
+    toggleBtn.textContent = "Ver menos";
+
+    window.requestAnimationFrame(() => {
+      details.style.maxHeight = `${details.scrollHeight}px`;
+      details.style.opacity = "1";
+      details.style.transform = "translateY(0)";
+    });
+
+    const onEnd = (event) => {
+      if (event.propertyName !== "max-height") return;
+      details.style.maxHeight = "none";
+      details.removeEventListener("transitionend", onEnd);
+      isAnimating = false;
+    };
+
+    details.addEventListener("transitionend", onEnd);
+  };
+
+  const collapseAnimated = () => {
+    details.style.maxHeight = `${details.scrollHeight}px`;
+    details.style.opacity = "1";
+    details.style.transform = "translateY(0)";
+
+    // Force reflow so the browser can animate from current height to 0.
+    void details.offsetHeight;
+
+    details.classList.remove("is-expanded");
+    details.style.maxHeight = "0px";
+    details.style.opacity = "0";
+    details.style.transform = "translateY(-10px)";
+    toggleBtn.setAttribute("aria-expanded", "false");
+    toggleBtn.textContent = "Ver más";
+
+    const onEnd = (event) => {
+      if (event.propertyName !== "max-height") return;
+      details.hidden = true;
+      details.removeEventListener("transitionend", onEnd);
+      isAnimating = false;
+    };
+
+    details.addEventListener("transitionend", onEnd);
+  };
+
+  setCollapsed();
+
+  toggleBtn.addEventListener("click", () => {
+    if (isAnimating) return;
+
+    const shouldExpand = details.hidden;
+
+    if (reduceMotion) {
+      if (shouldExpand) {
+        setExpanded();
+      } else {
+        setCollapsed();
+      }
+      return;
+    }
+
+    isAnimating = true;
+    if (shouldExpand) {
+      expandAnimated();
+      return;
+    }
+
+    collapseAnimated();
+  });
+}
+
 function setupWhatsAppButton() {
   if (document.querySelector(".whatsapp-float")) return;
 
@@ -962,32 +1187,6 @@ function setupWhatsAppButton() {
 
 function setupProfilePage() {
   if (!document.querySelector("[data-profile-page]")) return;
-
-  // Cover photo preview
-  const coverUpload = document.getElementById("coverUpload");
-  const profileCover = document.getElementById("profileCover");
-  if (coverUpload && profileCover) {
-    coverUpload.addEventListener("change", (e) => {
-      const file = e.target.files[0];
-      if (!file) return;
-      profileCover.style.backgroundImage = `url("${URL.createObjectURL(file)}")`;
-    });
-  }
-
-  // Avatar photo preview
-  const avatarUpload = document.getElementById("avatarUpload");
-  const avatarInner = document.getElementById("profileAvatarInner");
-  if (avatarUpload && avatarInner) {
-    avatarUpload.addEventListener("change", (e) => {
-      const file = e.target.files[0];
-      if (!file) return;
-      const url = URL.createObjectURL(file);
-      avatarInner.style.backgroundImage = `url("${url}")`;
-      avatarInner.style.backgroundSize = "cover";
-      avatarInner.style.backgroundPosition = "center";
-      avatarInner.innerHTML = "";
-    });
-  }
 
   // Sidebar section switching
   const navItems = Array.from(document.querySelectorAll(".profile-nav-item[data-section]"));
@@ -1040,29 +1239,24 @@ function setupEventRegistrationPanel() {
   const title = document.getElementById("eventRegisterTitle");
   const text = document.getElementById("eventRegisterText");
   const cta = document.getElementById("eventRegisterCta");
-  const payBtn = document.getElementById("eventPayBtn");
-
-  if (payBtn) {
-    payBtn.href = "checkout.html";
-    payBtn.target = "";
-    payBtn.rel = "";
-  }
+  const checkoutHref = "checkout.html";
+  const authHref = `auth.html?mode=register&returnTo=${encodeURIComponent(`/${checkoutHref}`)}`;
 
   const applyState = (isLoggedIn) => {
     if (!title || !text || !cta) return;
 
     if (isLoggedIn) {
       title.textContent = "Continuar registro";
-      text.textContent = "Ya iniciaste sesión. Completa tu inscripción y realiza el pago.";
+      text.textContent = "Ya iniciaste sesión. Continúa al checkout para asegurar tu lugar en Axolote Night Run.";
       cta.textContent = "Completar inscripción";
-      cta.href = "#";
+      cta.href = checkoutHref;
       return;
     }
 
-    title.textContent = "Registro rápido";
-    text.textContent = "Reserva tu lugar y asegura tarifa vigente.";
-    cta.textContent = "Ir al registro";
-    cta.href = "auth.html?mode=register";
+    title.textContent = "Regístrate para asegurar tu lugar";
+    text.textContent = "Crea tu cuenta o inicia sesión para continuar con tu inscripción y pago.";
+    cta.textContent = "Iniciar sesión o registrarme";
+    cta.href = authHref;
   };
 
   applyState(false);
@@ -1109,6 +1303,11 @@ function setupSupabase() {
   const SUPABASE_URL = "https://uycwzhlcnfijjyzkgkem.supabase.co";
   const SUPABASE_KEY = "sb_publishable_IKwD3YtQwWzzEtE8QkVagA_OJGdV2e4";
   const SITE = window.location.origin;
+  const PROFILE_TABLE = "user_profiles";
+  const AXOLOTE_PAYMENT_URL = "checkout.html";
+  const AXOLOTE_EVENT_URL = "axolote-night-run.html";
+  const AXOLOTE_PAYMENT_STATE_KEY = "kinetic_axolote_payment_state";
+  const AXOLOTE_POST_VERIFY_PROMPT_KEY = "kinetic_axolote_post_verify_prompt";
 
   const initSupabase = () => {
     if (typeof window.supabase === "undefined") return;
@@ -1132,6 +1331,140 @@ function setupSupabase() {
     };
 
     const client = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+    const readEmergencyContactForUser = async (userId) => {
+      if (!userId) return null;
+
+      const { data, error } = await client
+        .from(PROFILE_TABLE)
+        .select("emergency_name,emergency_phone,emergency_relation,emergency_email")
+        .eq("user_id", userId)
+        .maybeSingle();
+
+      if (error) {
+        const expectedNoRow = error.code === "PGRST116";
+        if (!expectedNoRow) {
+          console.warn("No se pudo leer el contacto de emergencia:", error);
+        }
+        return null;
+      }
+
+      const contact = emergencyContactFromProfile(data || {});
+      return hasCompleteEmergencyContact(contact) ? contact : null;
+    };
+
+    const saveEmergencyContactForUser = async ({ userId, email }, contact) => {
+      if (!userId) return { error: new Error("Usuario no autenticado") };
+
+      const row = {
+        user_id: userId,
+        email: email || null,
+        ...emergencyContactToProfileFields(contact),
+        updated_at: new Date().toISOString(),
+      };
+
+      const { error } = await client.from(PROFILE_TABLE).upsert(row, { onConflict: "user_id" });
+      return { error: error || null };
+    };
+
+    const setupCheckoutEmergencyContact = async () => {
+      const checkoutForm = document.getElementById("checkoutForm");
+      const savedContainer = document.getElementById("checkoutSavedEmergency");
+      const nameInput = document.getElementById("emergencyName");
+      const phoneInput = document.getElementById("emergencyPhone");
+      const relationInput = document.getElementById("emergencyRelation");
+      const emailInput = document.getElementById("emergencyEmail");
+
+      if (!checkoutForm || !nameInput || !phoneInput || !relationInput || !emailInput) return;
+      if (checkoutForm.dataset.emergencyInitialized === "true") return;
+
+      checkoutForm.dataset.emergencyInitialized = "true";
+
+      const { data: { session } } = await client.auth.getSession();
+      const userId = session?.user?.id;
+      const userEmail = session?.user?.email || "";
+      const storedContact = await readEmergencyContactForUser(userId);
+
+      const setInputsDisabled = (disabled) => {
+        [nameInput, phoneInput, relationInput, emailInput].forEach((input) => {
+          input.disabled = disabled;
+        });
+      };
+
+      const fillInputs = (contact) => {
+        const normalized = normalizeEmergencyContact(contact);
+        nameInput.value = normalized.name;
+        phoneInput.value = normalized.phone;
+        relationInput.value = normalized.relation;
+        emailInput.value = normalized.email;
+      };
+
+      if (savedContainer && hasCompleteEmergencyContact(storedContact || {})) {
+        savedContainer.hidden = false;
+        savedContainer.innerHTML = `
+          <div class="checkout-saved-emergency">
+            <p class="checkout-saved-emergency-title">Ya tienes un contacto guardado en tu perfil</p>
+            <p class="checkout-saved-emergency-copy">
+              <strong>${storedContact.name}</strong><br />
+              ${formatEmergencyRelation(storedContact.relation)} · ${storedContact.phone}<br />
+              ${storedContact.email}
+            </p>
+            <label class="checkout-saved-emergency-toggle">
+              <input type="checkbox" id="useSavedEmergencyContact" checked />
+              <span>Usar este contacto guardado para esta inscripción</span>
+            </label>
+          </div>
+        `;
+
+        const useSavedToggle = document.getElementById("useSavedEmergencyContact");
+        const applyToggleState = () => {
+          const shouldUseSaved = Boolean(useSavedToggle?.checked);
+          if (shouldUseSaved) {
+            fillInputs(storedContact);
+          }
+          setInputsDisabled(shouldUseSaved);
+        };
+
+        useSavedToggle?.addEventListener("change", applyToggleState);
+        applyToggleState();
+      }
+
+      checkoutForm.addEventListener("submit", (event) => {
+        event.preventDefault();
+        if (!checkoutForm.reportValidity()) return;
+
+        const payload = normalizeEmergencyContact({
+          name: nameInput.value,
+          phone: phoneInput.value,
+          relation: relationInput.value,
+          email: emailInput.value,
+        });
+
+        const normalizedUserEmail = (userEmail || "").trim().toLowerCase();
+        const normalizedEmergencyEmail = (payload.email || "").trim().toLowerCase();
+        if (normalizedUserEmail && normalizedEmergencyEmail === normalizedUserEmail) {
+          alert("El correo del contacto de emergencia debe ser diferente al de tu cuenta.");
+          emailInput.focus();
+          return;
+        }
+
+        const redirectToStripe = () => {
+          window.location.href = "https://buy.stripe.com/test_dRm6oG6Vr0ewd0S5Olak000";
+        };
+
+        if (!userId) {
+          redirectToStripe();
+          return;
+        }
+
+        saveEmergencyContactForUser({ userId, email: userEmail }, payload).then(({ error }) => {
+          if (error) {
+            console.warn("No se pudo guardar contacto de emergencia desde checkout:", error);
+          }
+          redirectToStripe();
+        });
+      });
+    };
 
   const renderSessionNav = (session) => {
     const navActions = document.querySelector(".nav-actions");
@@ -1166,6 +1499,8 @@ function setupSupabase() {
     client.auth.onAuthStateChange((_event, session) => {
       renderSessionNav(session);
     });
+
+    setupCheckoutEmergencyContact();
 
   // ── AUTH PAGE ──────────────────────────────────────
     const authRoot = document.querySelector("[data-auth-page]");
@@ -1237,6 +1572,7 @@ function setupSupabase() {
       }
 
       if (searchParams.get("status") === "confirmed") {
+        localStorage.setItem(AXOLOTE_POST_VERIFY_PROMPT_KEY, "1");
         window.setTimeout(() => {
           window.location.replace(consumeReturnTarget());
         }, 1400);
@@ -1329,7 +1665,7 @@ function setupSupabase() {
           submitBtn.textContent = "Registrando...";
         }
 
-        const { error } = await client.auth.signUp({
+        const { data, error } = await client.auth.signUp({
           email,
           password,
           options: {
@@ -1350,13 +1686,36 @@ function setupSupabase() {
         }
 
         if (error) {
+          const isAlreadyRegistered = /already registered|already exists|user already/i.test(
+            error.message || ""
+          );
+
           if (registerStatus) {
-            registerStatus.textContent = error.message;
+            registerStatus.textContent = isAlreadyRegistered
+              ? "Este correo ya está registrado. Inicia sesión para continuar."
+              : error.message;
             registerStatus.classList.add("is-error");
           } else {
-            alert(error.message);
+            alert(
+              isAlreadyRegistered
+                ? "Este correo ya está registrado. Inicia sesión para continuar."
+                : error.message
+            );
           }
         } else {
+          const identities = Array.isArray(data?.user?.identities) ? data.user.identities : null;
+          const maskedExistingUser = identities && identities.length === 0;
+
+          if (maskedExistingUser) {
+            if (registerStatus) {
+              registerStatus.textContent = "Este correo ya está registrado. Inicia sesión para continuar.";
+              registerStatus.classList.add("is-error");
+            } else {
+              alert("Este correo ya está registrado. Inicia sesión para continuar.");
+            }
+            return;
+          }
+
           const redirectUrl = new URL(`${SITE}/auth.html`);
           redirectUrl.searchParams.set("mode", "login");
           redirectUrl.searchParams.set("status", "check-email");
@@ -1376,7 +1735,6 @@ function setupSupabase() {
           return;
         }
 
-      const PROFILE_TABLE = "user_profiles";
       const user = session.user;
       const meta = user.user_metadata || {};
 
@@ -1393,9 +1751,25 @@ function setupSupabase() {
       const pfEstatura = document.getElementById("pfEstatura");
       const pfPais = document.getElementById("pfPais");
       const pfEstado = document.getElementById("pfEstado");
+      const coverUpload = document.getElementById("coverUpload");
+      const profileCover = document.getElementById("profileCover");
+      const coverAdjustToggle = document.getElementById("coverAdjustToggle");
+      const avatarUpload = document.getElementById("avatarUpload");
+      const avatarInner = document.getElementById("profileAvatarInner");
 
       const profileForm = document.querySelector(".profile-form");
       const saveBtn = profileForm?.querySelector(".profile-save-btn");
+      const emergencyForm = document.getElementById("emergencyContactForm");
+      const emergencyStatus = document.getElementById("emergencyContactStatus");
+      const emergencyName = document.getElementById("emergencyContactName");
+      const emergencyPhone = document.getElementById("emergencyContactPhone");
+      const emergencyRelation = document.getElementById("emergencyContactRelation");
+      const emergencyEmail = document.getElementById("emergencyContactEmail");
+      const emergencySaveBtn = document.getElementById("emergencyContactSaveBtn");
+      const emergencySavedCard = document.getElementById("profileEmergencySavedCard");
+      const emergencySavedActions = document.getElementById("profileEmergencySavedActions");
+      const emergencyEditBtn = document.getElementById("emergencyEditBtn");
+      const emergencyCancelBtn = document.getElementById("emergencyCancelBtn");
 
       const fields = [
         { key: "first_name", node: pfNombre },
@@ -1435,7 +1809,181 @@ function setupSupabase() {
         country: source?.country || "mx",
         state: source?.state || "",
         full_name: (source?.full_name || "").trim(),
+        avatar_url: (source?.avatar_url || "").trim() || null,
+        cover_url: (source?.cover_url || "").trim() || null,
+        emergency_name: (source?.emergency_name || "").trim() || null,
+        emergency_phone: (source?.emergency_phone || "").trim() || null,
+        emergency_relation: (source?.emergency_relation || "").trim() || null,
+        emergency_email: (source?.emergency_email || "").trim() || null,
       });
+
+      const PROFILE_MEDIA_BUCKET = "contact-attachments";
+      const PROFILE_ALLOWED_MIME_TYPES = ["image/jpeg", "image/png", "image/webp"];
+      const PROFILE_MEDIA_LIMITS = {
+        avatar: 2 * 1024 * 1024,
+        cover: 4 * 1024 * 1024,
+      };
+      const PROFILE_MEDIA_OPTIMIZATION = {
+        avatar: { maxWidth: 600, maxHeight: 600, quality: 0.86 },
+        cover: { maxWidth: 1600, maxHeight: 900, quality: 0.82 },
+      };
+
+      const getSafeExtension = (fileName) => {
+        const raw = (fileName || "").split(".").pop() || "jpg";
+        const normalized = raw.toLowerCase().replace(/[^a-z0-9]/g, "");
+        return normalized || "jpg";
+      };
+
+      const mimeToExtension = (mimeType) => {
+        if (mimeType === "image/png") return "png";
+        if (mimeType === "image/webp") return "webp";
+        return "jpg";
+      };
+
+      const validateProfileMediaFile = ({ file, type }) => {
+        if (!file) {
+          return "No se detectó archivo.";
+        }
+
+        if (!PROFILE_ALLOWED_MIME_TYPES.includes(file.type)) {
+          return "Formato no permitido. Usa JPG, PNG o WEBP.";
+        }
+
+        const maxBytes = PROFILE_MEDIA_LIMITS[type] || PROFILE_MEDIA_LIMITS.avatar;
+        if (file.size > maxBytes) {
+          const maxMb = Math.round(maxBytes / (1024 * 1024));
+          return `El archivo supera el límite de ${maxMb} MB.`;
+        }
+
+        return "";
+      };
+
+      const optimizeProfileMediaFile = async ({ file, type }) => {
+        const config = PROFILE_MEDIA_OPTIMIZATION[type] || PROFILE_MEDIA_OPTIMIZATION.avatar;
+        const objectUrl = URL.createObjectURL(file);
+
+        try {
+          const image = await new Promise((resolve, reject) => {
+            const img = new Image();
+            img.onload = () => resolve(img);
+            img.onerror = () => reject(new Error("No se pudo procesar la imagen."));
+            img.src = objectUrl;
+          });
+
+          const sourceWidth = image.naturalWidth || image.width;
+          const sourceHeight = image.naturalHeight || image.height;
+          const scale = Math.min(
+            1,
+            config.maxWidth / Math.max(sourceWidth, 1),
+            config.maxHeight / Math.max(sourceHeight, 1)
+          );
+
+          const targetWidth = Math.max(1, Math.round(sourceWidth * scale));
+          const targetHeight = Math.max(1, Math.round(sourceHeight * scale));
+
+          const canvas = document.createElement("canvas");
+          canvas.width = targetWidth;
+          canvas.height = targetHeight;
+
+          const context = canvas.getContext("2d");
+          if (!context) {
+            return file;
+          }
+
+          context.drawImage(image, 0, 0, targetWidth, targetHeight);
+
+          const blob = await new Promise((resolve) => {
+            canvas.toBlob(resolve, "image/webp", config.quality);
+          });
+
+          if (!blob) {
+            return file;
+          }
+
+          const baseName = (file.name || "imagen").replace(/\.[^.]+$/, "");
+          return new File([blob], `${baseName}.webp`, {
+            type: "image/webp",
+            lastModified: Date.now(),
+          });
+        } finally {
+          URL.revokeObjectURL(objectUrl);
+        }
+      };
+
+      const uploadProfileMedia = async ({ file, type }) => {
+        if (!file) return null;
+
+        const ext = mimeToExtension(file.type) || getSafeExtension(file.name);
+        const objectPath = `${type}s/${user.id}/${type}.${ext}`;
+
+        const { error: uploadError } = await client.storage
+          .from(PROFILE_MEDIA_BUCKET)
+          .upload(objectPath, file, {
+            upsert: true,
+            contentType: file.type || "image/jpeg",
+          });
+
+        if (uploadError) {
+          return { error: uploadError };
+        }
+
+        const { data } = client.storage.from(PROFILE_MEDIA_BUCKET).getPublicUrl(objectPath);
+        return { publicUrl: data?.publicUrl || null };
+      };
+
+      const coverPositionStorageKey = `kinetic_cover_position:${user.id}`;
+
+      const readCoverPosition = () => {
+        const raw = localStorage.getItem(coverPositionStorageKey);
+        if (!raw) return null;
+        const numeric = Number(raw);
+        if (!Number.isFinite(numeric)) return null;
+        return Math.max(0, Math.min(100, numeric));
+      };
+
+      const writeCoverPosition = (value) => {
+        localStorage.setItem(coverPositionStorageKey, String(value));
+      };
+
+      const saveProfileMediaUrls = async (updates) => {
+        const row = {
+          user_id: user.id,
+          email: user.email || null,
+          ...updates,
+          updated_at: new Date().toISOString(),
+        };
+
+        const { error } = await client.from(PROFILE_TABLE).upsert(row, { onConflict: "user_id" });
+        return error || null;
+      };
+
+      const readCoverPositionFromTable = async () => {
+        const { data, error } = await client
+          .from(PROFILE_TABLE)
+          .select("cover_position_y")
+          .eq("user_id", user.id)
+          .maybeSingle();
+
+        if (error) {
+          return null;
+        }
+
+        const value = Number(data?.cover_position_y);
+        if (!Number.isFinite(value)) return null;
+        return Math.max(0, Math.min(100, value));
+      };
+
+      const saveCoverPositionToTable = async (positionY) => {
+        const payload = {
+          user_id: user.id,
+          email: user.email || null,
+          cover_position_y: positionY,
+          updated_at: new Date().toISOString(),
+        };
+
+        const { error } = await client.from(PROFILE_TABLE).upsert(payload, { onConflict: "user_id" });
+        return error || null;
+      };
 
       const buildProfileFromForm = () => ({
         first_name: (pfNombre?.value || "").trim(),
@@ -1482,6 +2030,65 @@ function setupSupabase() {
         statusNode.style.color = isError ? "#ff8a65" : "#34d399";
       };
 
+      const showEmergencyStatus = (message, isError = false) => {
+        if (!emergencyStatus) return;
+        emergencyStatus.textContent = message;
+        emergencyStatus.classList.toggle("is-error", isError);
+        emergencyStatus.classList.toggle("is-success", !isError && Boolean(message));
+      };
+
+      const populateEmergencyForm = (contact) => {
+        if (!emergencyName || !emergencyPhone || !emergencyRelation || !emergencyEmail) return;
+        const normalized = normalizeEmergencyContact(contact || {});
+        emergencyName.value = normalized.name;
+        emergencyPhone.value = normalized.phone;
+        emergencyRelation.value = normalized.relation;
+        emergencyEmail.value = normalized.email;
+      };
+
+      const clearEmergencyForm = () => {
+        populateEmergencyForm({});
+      };
+
+      const renderSavedEmergencyCard = (contact) => {
+        if (!emergencySavedCard) return;
+        emergencySavedCard.innerHTML = `
+          <div class="checkout-saved-emergency">
+            <p class="checkout-saved-emergency-title">Contacto de emergencia guardado</p>
+            <p class="checkout-saved-emergency-copy">
+              <strong>${contact.name}</strong><br />
+              ${formatEmergencyRelation(contact.relation)} · ${contact.phone}<br />
+              ${contact.email}
+            </p>
+          </div>
+        `;
+      };
+
+      const toggleEmergencyMode = ({ showForm, contact = null }) => {
+        if (!emergencyForm) return;
+
+        emergencyForm.hidden = !showForm;
+
+        if (emergencySavedActions) {
+          emergencySavedActions.hidden = showForm || !hasCompleteEmergencyContact(contact || {});
+        }
+
+        if (emergencySavedCard) {
+          emergencySavedCard.hidden = showForm || !hasCompleteEmergencyContact(contact || {});
+          if (!emergencySavedCard.hidden && contact) {
+            renderSavedEmergencyCard(contact);
+          }
+        }
+
+        if (emergencyCancelBtn) {
+          emergencyCancelBtn.hidden = !showForm || !hasCompleteEmergencyContact(contact || {});
+        }
+
+        if (!showForm) {
+          showEmergencyStatus("");
+        }
+      };
+
       const setReadOnlyMode = (profile) => {
         fields.forEach(({ key, node }) => {
           const value = profile[key] || "";
@@ -1525,7 +2132,7 @@ function setupSupabase() {
       const readProfileFromTable = async () => {
         const { data, error } = await client
           .from(PROFILE_TABLE)
-          .select("first_name,last_name,maternal_last_name,birth_date,gender,phone,weight_kg,height_cm,country,state,full_name")
+          .select("first_name,last_name,maternal_last_name,birth_date,gender,phone,weight_kg,height_cm,country,state,full_name,avatar_url,cover_url,emergency_name,emergency_phone,emergency_relation,emergency_email")
           .eq("user_id", user.id)
           .maybeSingle();
 
@@ -1560,20 +2167,314 @@ function setupSupabase() {
         ...(profileFromTable ? normalizeProfile(profileFromTable) : {}),
       };
 
+      if (!profileFromTable) {
+        const bootstrapError = await saveProfileInTable(currentProfile);
+        if (bootstrapError) {
+          console.warn("No se pudo crear el registro inicial en user_profiles:", bootstrapError);
+        }
+      }
+
       if (!currentProfile.full_name) {
         currentProfile.full_name = composeFullName(currentProfile);
       }
 
       applyHeader(currentProfile);
 
-      if (meta.avatar_url) {
-        const avatarEl = document.getElementById("profileAvatarInner");
-        if (avatarEl) {
-          avatarEl.style.backgroundImage = `url("${meta.avatar_url}")`;
-          avatarEl.style.backgroundSize = "cover";
-          avatarEl.style.backgroundPosition = "center";
-          avatarEl.innerHTML = "";
+      let currentCoverPosition = readCoverPosition();
+      const coverPositionFromTable = await readCoverPositionFromTable();
+      if (coverPositionFromTable !== null) {
+        currentCoverPosition = coverPositionFromTable;
+      }
+      if (currentCoverPosition === null) {
+        currentCoverPosition = 12;
+      }
+
+      const applyAvatarVisual = (avatarUrl) => {
+        if (!avatarInner || !avatarUrl) return;
+        avatarInner.style.backgroundImage = `url("${avatarUrl}")`;
+        avatarInner.style.backgroundSize = "cover";
+        avatarInner.style.backgroundPosition = "center";
+        avatarInner.innerHTML = "";
+      };
+
+      const applyCoverPositionVisual = (positionY) => {
+        if (!profileCover) return;
+        profileCover.style.backgroundPosition = `center ${positionY}%`;
+      };
+
+      const applyCoverVisual = (coverUrl) => {
+        if (!profileCover || !coverUrl) return;
+        profileCover.style.backgroundImage = `url("${coverUrl}")`;
+        profileCover.style.backgroundSize = "cover";
+        applyCoverPositionVisual(currentCoverPosition);
+      };
+
+      if (currentProfile.avatar_url) {
+        applyAvatarVisual(currentProfile.avatar_url);
+      } else if (meta.avatar_url) {
+        applyAvatarVisual(meta.avatar_url);
+      }
+
+      if (currentProfile.cover_url) {
+        applyCoverVisual(currentProfile.cover_url);
+      }
+
+      if (coverAdjustToggle) {
+        coverAdjustToggle.hidden = !Boolean(currentProfile.cover_url);
+      }
+
+      let isCoverAdjustMode = false;
+      const setCoverAdjustMode = (active) => {
+        isCoverAdjustMode = active;
+        if (!profileCover || !coverAdjustToggle) return;
+        profileCover.classList.toggle("is-adjusting", active);
+        coverAdjustToggle.textContent = active ? "Listo" : "Ajustar portada";
+      };
+
+      coverAdjustToggle?.addEventListener("click", () => {
+        setCoverAdjustMode(!isCoverAdjustMode);
+      });
+
+      if (profileCover) {
+        let dragStartY = 0;
+        let dragStartPos = currentCoverPosition;
+        let isDraggingCover = false;
+
+        const stopCoverDrag = () => {
+          if (!isDraggingCover) return;
+          isDraggingCover = false;
+          writeCoverPosition(currentCoverPosition);
+          saveCoverPositionToTable(currentCoverPosition).then((error) => {
+            if (error) {
+              console.warn("No se pudo guardar posición de portada en user_profiles:", error);
+            }
+          });
+        };
+
+        profileCover.addEventListener("pointerdown", (event) => {
+          if (!isCoverAdjustMode) return;
+          if (event.target.closest(".profile-cover-btn, .profile-cover-adjust-btn, .profile-identity")) {
+            return;
+          }
+
+          isDraggingCover = true;
+          dragStartY = event.clientY;
+          dragStartPos = currentCoverPosition;
+          profileCover.setPointerCapture(event.pointerId);
+          event.preventDefault();
+        });
+
+        profileCover.addEventListener("pointermove", (event) => {
+          if (!isDraggingCover) return;
+
+          const deltaY = event.clientY - dragStartY;
+          const height = Math.max(profileCover.clientHeight || 1, 1);
+          const deltaPercent = (deltaY / height) * 100;
+          currentCoverPosition = Math.max(0, Math.min(100, dragStartPos + deltaPercent));
+          applyCoverPositionVisual(currentCoverPosition);
+        });
+
+        profileCover.addEventListener("pointerup", (event) => {
+          if (profileCover.hasPointerCapture(event.pointerId)) {
+            profileCover.releasePointerCapture(event.pointerId);
+          }
+          stopCoverDrag();
+        });
+
+        profileCover.addEventListener("pointercancel", stopCoverDrag);
+      }
+
+      if (avatarUpload) {
+        avatarUpload.addEventListener("change", async (event) => {
+          const file = event.target?.files?.[0];
+          if (!file) return;
+
+          const initialValidationError = validateProfileMediaFile({ file, type: "avatar" });
+          if (initialValidationError) {
+            showStatus(`Foto de perfil: ${initialValidationError}`, true);
+            avatarUpload.value = "";
+            return;
+          }
+
+          const optimizedFile = await optimizeProfileMediaFile({ file, type: "avatar" });
+          const validationError = validateProfileMediaFile({ file: optimizedFile, type: "avatar" });
+          if (validationError) {
+            showStatus(`Foto de perfil: ${validationError}`, true);
+            avatarUpload.value = "";
+            return;
+          }
+
+          const preview = URL.createObjectURL(optimizedFile);
+          applyAvatarVisual(preview);
+
+          const { publicUrl, error: uploadError } = await uploadProfileMedia({
+            file: optimizedFile,
+            type: "avatar",
+          });
+
+          URL.revokeObjectURL(preview);
+
+          if (uploadError || !publicUrl) {
+            showStatus("No se pudo subir la foto de perfil.", true);
+            return;
+          }
+
+          const persistError = await saveProfileMediaUrls({ avatar_url: publicUrl });
+          if (persistError) {
+            showStatus("La foto se subió, pero no se pudo guardar en perfil.", true);
+            return;
+          }
+
+          currentProfile.avatar_url = publicUrl;
+          applyAvatarVisual(publicUrl);
+          showStatus("Foto de perfil actualizada.");
+        });
+      }
+
+      if (coverUpload) {
+        coverUpload.addEventListener("change", async (event) => {
+          const file = event.target?.files?.[0];
+          if (!file) return;
+
+          const initialValidationError = validateProfileMediaFile({ file, type: "cover" });
+          if (initialValidationError) {
+            showStatus(`Portada: ${initialValidationError}`, true);
+            coverUpload.value = "";
+            return;
+          }
+
+          const optimizedFile = await optimizeProfileMediaFile({ file, type: "cover" });
+          const validationError = validateProfileMediaFile({ file: optimizedFile, type: "cover" });
+          if (validationError) {
+            showStatus(`Portada: ${validationError}`, true);
+            coverUpload.value = "";
+            return;
+          }
+
+          const preview = URL.createObjectURL(optimizedFile);
+          currentCoverPosition = 50;
+          applyCoverVisual(preview);
+
+          const { publicUrl, error: uploadError } = await uploadProfileMedia({
+            file: optimizedFile,
+            type: "cover",
+          });
+
+          URL.revokeObjectURL(preview);
+
+          if (uploadError || !publicUrl) {
+            showStatus("No se pudo subir la portada.", true);
+            return;
+          }
+
+          const persistError = await saveProfileMediaUrls({ cover_url: publicUrl });
+          if (persistError) {
+            showStatus("La portada se subió, pero no se pudo guardar en perfil.", true);
+            return;
+          }
+
+          currentProfile.cover_url = publicUrl;
+          applyCoverVisual(publicUrl);
+          writeCoverPosition(currentCoverPosition);
+          const coverPosError = await saveCoverPositionToTable(currentCoverPosition);
+          if (coverPosError) {
+            console.warn("No se pudo guardar cover_position_y en user_profiles:", coverPosError);
+          }
+          if (coverAdjustToggle) {
+            coverAdjustToggle.hidden = false;
+          }
+          setCoverAdjustMode(true);
+          showStatus("Portada actualizada.");
+        });
+      }
+
+      if (emergencyForm && emergencyName && emergencyPhone && emergencyRelation && emergencyEmail) {
+        const emergencyContact = emergencyContactFromProfile(currentProfile);
+
+        if (hasCompleteEmergencyContact(emergencyContact)) {
+          populateEmergencyForm(emergencyContact);
+          if (emergencySaveBtn) emergencySaveBtn.textContent = "Actualizar contacto";
+          toggleEmergencyMode({ showForm: false, contact: emergencyContact });
+        } else {
+          clearEmergencyForm();
+          if (emergencySaveBtn) emergencySaveBtn.textContent = "Guardar contacto";
+          toggleEmergencyMode({ showForm: true });
         }
+
+        emergencyEditBtn?.addEventListener("click", () => {
+          const savedContact = emergencyContactFromProfile(currentProfile);
+          populateEmergencyForm(savedContact);
+          if (emergencySaveBtn) emergencySaveBtn.textContent = "Actualizar contacto";
+          toggleEmergencyMode({ showForm: true, contact: savedContact });
+          emergencyName?.focus();
+        });
+
+        emergencyCancelBtn?.addEventListener("click", () => {
+          const savedContact = emergencyContactFromProfile(currentProfile);
+          if (!hasCompleteEmergencyContact(savedContact)) {
+            toggleEmergencyMode({ showForm: true });
+            return;
+          }
+          populateEmergencyForm(savedContact);
+          if (emergencySaveBtn) emergencySaveBtn.textContent = "Actualizar contacto";
+          toggleEmergencyMode({ showForm: false, contact: savedContact });
+        });
+
+        emergencyForm.addEventListener("submit", async (event) => {
+          event.preventDefault();
+
+          const payload = normalizeEmergencyContact({
+            name: emergencyName.value,
+            phone: emergencyPhone.value,
+            relation: emergencyRelation.value,
+            email: emergencyEmail.value,
+          });
+
+          if (!hasCompleteEmergencyContact(payload)) {
+            showEmergencyStatus("Completa nombre, teléfono, relación y correo del contacto.", true);
+            return;
+          }
+
+          const normalizedUserEmail = (user.email || "").trim().toLowerCase();
+          const normalizedEmergencyEmail = (payload.email || "").trim().toLowerCase();
+          if (normalizedEmergencyEmail && normalizedEmergencyEmail === normalizedUserEmail) {
+            showEmergencyStatus(
+              "El correo del contacto de emergencia debe ser diferente al de tu cuenta.",
+              true
+            );
+            emergencyEmail?.focus();
+            return;
+          }
+
+          if (emergencySaveBtn) {
+            emergencySaveBtn.disabled = true;
+            emergencySaveBtn.textContent = "Guardando...";
+          }
+
+          const { error } = await saveEmergencyContactForUser(
+            { userId: user.id, email: user.email || "" },
+            payload
+          );
+
+          if (emergencySaveBtn) {
+            emergencySaveBtn.disabled = false;
+            emergencySaveBtn.textContent = "Actualizar contacto";
+          }
+
+          if (error) {
+            showEmergencyStatus("No se pudo guardar el contacto. Intenta de nuevo.", true);
+            return;
+          }
+
+          currentProfile = {
+            ...currentProfile,
+            ...emergencyContactToProfileFields(payload),
+          };
+
+          showEmergencyStatus("Contacto de emergencia guardado correctamente.");
+          populateEmergencyForm(payload);
+          toggleEmergencyMode({ showForm: false, contact: payload });
+        });
       }
 
       const navActions = document.querySelector(".nav-actions");
@@ -1586,6 +2487,189 @@ function setupSupabase() {
           await client.auth.signOut();
           window.location.href = "index.html";
         });
+      }
+
+      const racesContainer = document.getElementById("profileRacesContainer");
+      const reminder = document.getElementById("profileRaceReminder");
+      const reminderPay = document.getElementById("profileRaceReminderPay");
+      if (reminderPay) {
+        reminderPay.href = AXOLOTE_PAYMENT_URL;
+      }
+
+      const profileUrl = new URL(window.location.href);
+      const raceParam = profileUrl.searchParams.get("race");
+      const paidParam = profileUrl.searchParams.get("paid");
+
+      const readPaymentState = () => localStorage.getItem(AXOLOTE_PAYMENT_STATE_KEY) || "";
+      const writePaymentState = (value) => {
+        if (!value) {
+          localStorage.removeItem(AXOLOTE_PAYMENT_STATE_KEY);
+          return;
+        }
+        localStorage.setItem(AXOLOTE_PAYMENT_STATE_KEY, value);
+      };
+
+      if (raceParam === "axolote" && paidParam === "1") {
+        writePaymentState("paid");
+        localStorage.removeItem(AXOLOTE_POST_VERIFY_PROMPT_KEY);
+        profileUrl.searchParams.delete("race");
+        profileUrl.searchParams.delete("paid");
+        window.history.replaceState({}, "", profileUrl.pathname + profileUrl.search + profileUrl.hash);
+      }
+
+      if (raceParam === "axolote" && paidParam === "0") {
+        writePaymentState("pending");
+        profileUrl.searchParams.delete("race");
+        profileUrl.searchParams.delete("paid");
+        window.history.replaceState({}, "", profileUrl.pathname + profileUrl.search + profileUrl.hash);
+      }
+
+      const renderRaces = (state) => {
+        if (!racesContainer) return;
+
+        if (state === "pending") {
+          racesContainer.innerHTML = `
+            <div class="profile-race-card">
+              <article class="profile-race-item">
+                <div class="profile-race-top">
+                  <h3 class="profile-race-name">Axolote Night Run 2026</h3>
+                  <span class="profile-race-status is-pending">Pendiente de pago</span>
+                </div>
+                <p class="profile-race-meta">31 OCT 2026 · Pista de Canotaje, CDMX · Categoría única 5K</p>
+                <p class="profile-race-meta">Tu lugar está apartado. Completa el pago para asegurar tu inscripción.</p>
+                <div class="profile-race-actions">
+                  <a class="profile-race-pay-btn" href="${AXOLOTE_PAYMENT_URL}">Pagar para asegurar lugar</a>
+                  <a class="profile-race-detail-btn" href="${AXOLOTE_EVENT_URL}">Ver detalle del evento</a>
+                </div>
+              </article>
+            </div>
+          `;
+          return;
+        }
+
+        if (state === "paid") {
+          racesContainer.innerHTML = `
+            <div class="profile-race-card">
+              <article class="profile-race-item">
+                <div class="profile-race-top">
+                  <h3 class="profile-race-name">Axolote Night Run 2026</h3>
+                  <span class="profile-race-status is-paid">Inscripción pagada</span>
+                </div>
+                <p class="profile-race-meta">31 OCT 2026 · Pista de Canotaje, CDMX · Categoría única 5K</p>
+                <p class="profile-race-meta">Incluye playera técnica oficial Axolote Night Run 2026 y medalla de finisher exclusiva.</p>
+                <div class="profile-race-actions">
+                  <a class="profile-race-detail-btn" href="${AXOLOTE_EVENT_URL}">Ver detalle del evento</a>
+                </div>
+              </article>
+            </div>
+          `;
+          return;
+        }
+
+        racesContainer.innerHTML = `
+          <div class="profile-card">
+            <div class="profile-empty-state">
+              <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <rect x="3" y="4" width="18" height="18" rx="2" stroke="currentColor" stroke-width="1.7" />
+                <line x1="16" y1="2" x2="16" y2="6" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" />
+                <line x1="8" y1="2" x2="8" y2="6" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" />
+                <line x1="3" y1="10" x2="21" y2="10" stroke="currentColor" stroke-width="1.7" />
+              </svg>
+              <p>
+                Aún no tienes inscripciones.
+                <a href="index.html" class="auth-link-btn">Explora eventos</a>
+                y regístrate en tu próxima carrera.
+              </p>
+            </div>
+          </div>
+        `;
+      };
+
+      const syncReminder = (state) => {
+        if (!reminder) return;
+        reminder.hidden = state !== "pending";
+      };
+
+      const openRegisterModal = () => {
+        const overlay = document.createElement("div");
+        overlay.className = "profile-race-register-overlay";
+        overlay.id = "profileRaceRegisterOverlay";
+        overlay.innerHTML = `
+          <div class="profile-race-register-modal" role="dialog" aria-modal="true" aria-labelledby="profileRaceRegisterTitle">
+            <button class="profile-race-register-close" type="button" aria-label="Cerrar">&times;</button>
+            <h3 id="profileRaceRegisterTitle">Registro confirmado para Axolote Night Run 2026</h3>
+            <ul class="profile-race-register-copy">
+              <li>Tu cuenta ya fue verificada.</li>
+              <li>Tu lugar quedó apartado para la primera edición oficial de Kinetic Hub.</li>
+              <li>Completa tu pago para asegurar tu inscripción en la categoría única 5K del 31 OCT 2026 en Pista de Canotaje, CDMX.</li>
+            </ul>
+            <div class="profile-race-register-highlights">
+              <span>Incluye playera técnica oficial Axolote Night Run 2026.</span>
+              <span>Incluye medalla de finisher exclusiva.</span>
+            </div>
+            <div class="profile-race-register-actions">
+              <a class="profile-race-detail-btn" href="${AXOLOTE_EVENT_URL}">Ver detalle</a>
+              <a class="profile-race-register-pay" href="${AXOLOTE_PAYMENT_URL}">Pagar para asegurar mi lugar</a>
+            </div>
+          </div>
+        `;
+
+        const closeModal = () => {
+          overlay.remove();
+          writePaymentState("pending");
+          renderRaces("pending");
+          syncReminder("pending");
+        };
+
+        overlay.addEventListener("click", (event) => {
+          if (event.target === overlay) {
+            closeModal();
+          }
+        });
+
+        overlay.querySelector(".profile-race-register-close")?.addEventListener("click", closeModal);
+        document.addEventListener(
+          "keydown",
+          (event) => {
+            if (event.key === "Escape" && document.getElementById("profileRaceRegisterOverlay")) {
+              closeModal();
+            }
+          },
+          { once: true }
+        );
+
+        document.body.appendChild(overlay);
+      };
+
+      let paymentState = readPaymentState();
+      const shouldPromptAfterVerify = localStorage.getItem(AXOLOTE_POST_VERIFY_PROMPT_KEY) === "1";
+
+      if (shouldPromptAfterVerify && paymentState !== "paid") {
+        writePaymentState("pending");
+        localStorage.removeItem(AXOLOTE_POST_VERIFY_PROMPT_KEY);
+        paymentState = "pending";
+      }
+
+      if (!paymentState && shouldPromptAfterVerify) {
+        paymentState = "pending";
+      }
+
+      // For existing accounts without a confirmed payment, default to pending state.
+      if (!paymentState) {
+        writePaymentState("pending");
+        paymentState = "pending";
+      }
+
+      if (paymentState === "pending") {
+        renderRaces("pending");
+        syncReminder("pending");
+        openRegisterModal();
+      } else if (paymentState === "paid") {
+        renderRaces("paid");
+        syncReminder("paid");
+      } else {
+        renderRaces("");
+        syncReminder("");
       }
 
       let isEditing = false;
@@ -1626,8 +2710,9 @@ function setupSupabase() {
 
           const tableError = await saveProfileInTable(nextProfile);
           if (tableError) {
+            const reason = [tableError.code, tableError.message].filter(Boolean).join(" - ");
             showStatus(
-              "Se guardó en la cuenta, pero no en la tabla user_profiles. Revisa que exista la tabla y sus permisos.",
+              `Se guardó en la cuenta, pero falló user_profiles${reason ? `: ${reason}` : "."}`,
               true
             );
             console.warn("No se pudo guardar en user_profiles:", tableError);
@@ -1686,6 +2771,7 @@ setupActiveNavLink();
 setupHeaderScrollState();
 setupEventStickyBanner();
 setupRevealOnScroll();
+setupUnifiedFooter();
 setupCurrentYear();
 setupFooterNewsletter();
 setupContactFormSubmission();
@@ -1694,6 +2780,7 @@ setupHeroPosterSizing();
 setupRegisterScrollLed();
 setupEventModals();
 setupNeonCardGlow();
+setupNeonEventToggle();
 setupWhatsAppButton();
 setupEventRegistrationPanel();
 setupAuthPage();
