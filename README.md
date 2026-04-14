@@ -10,7 +10,6 @@ con una dirección visual minimalista, moderna y escalable.
 - Detalle de evento: `evento.html`
 - Series y categorías: `series.html`
 - Blog y noticias: `blog.html`
-- Beneficios: `beneficios.html`
 - Nosotros: `nosotros.html`
 - Contacto: `contacto.html`
 
