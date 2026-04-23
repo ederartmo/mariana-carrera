@@ -8,28 +8,18 @@ module.exports = async (req, res) => {
     return res.status(405).json({ message: 'Método no permitido' });
   }
 
-  // --- VALIDACIÓN DE STRIPE WEBHOOK COMENTADA PARA PRUEBAS ---
-  // const sig = req.headers['stripe-signature'];
-  // let event;
-  // try {
-  //   event = stripe.webhooks.constructEvent(
-  //     req.body,
-  //     sig,
-  //     process.env.STRIPE_WEBHOOK_SECRET
-  //   );
-  // } catch (err) {
-  //   return res.status(400).send(`Webhook Error: ${err.message}`);
-  // }
-
-  // Simulación de evento para pruebas
-  const event = {
-    type: 'checkout.session.completed',
-    data: {
-      object: {
-        customer_email: 'prueba@correo.com'
-      }
-    }
-  };
+  // --- VALIDACIÓN DE STRIPE WEBHOOK ---
+  const sig = req.headers['stripe-signature'];
+  let event;
+  try {
+    event = stripe.webhooks.constructEvent(
+      req.body,
+      sig,
+      process.env.STRIPE_WEBHOOK_SECRET
+    );
+  } catch (err) {
+    return res.status(400).send(`Webhook Error: ${err.message}`);
+  }
 
   if (event.type === 'checkout.session.completed') {
     const session = event.data.object;
