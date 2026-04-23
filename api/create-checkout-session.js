@@ -12,13 +12,7 @@ export default async function handler(req, res) {
       mode: 'payment',
       line_items: [
         {
-          price_data: {
-            currency: 'mxn',
-            product_data: {
-              name: 'Inscripción Axolote Night Run',
-            },
-            unit_amount: 60000, // $600.00 MXN en centavos
-          },
+          price: 'price_1TMJT7IXKIIcpa3QGMfn9Ww4',
           quantity: 1,
         },
       ],
