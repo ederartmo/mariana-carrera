@@ -356,7 +356,7 @@
     <header class="site-header">
       <div class="container nav-shell">
         <a href="index.html" class="brand" aria-label="Ir al inicio de Kinetic Hub">
-          <img class="brand-mascot" src="logo.png" alt="Ajolote Kinetic Hub" />
+          <img class="brand-mascot" src="Logo_kinect.png" alt="Ajolote Kinetic Hub" />
           <span class="brand-copy">
             <strong>Kinetic Hub</strong>
             <small>Run your next challenge</small>
@@ -376,7 +376,7 @@
 
         <div class="nav-actions">
           <a class="ghost-link" href="auth.html?mode=login">Iniciar Sesión</a>
-          <a class="btn btn-primary" href="auth.html?mode=register">Registrarse</a>
+          <a class="btn btn-primary" href="checkout.html">Pagar inscripción</a>
         </div>
       </div>
     </header>
@@ -407,12 +407,10 @@
 
           <form class="checkout-grid" id="checkoutForm" method="post" action="#">
             <div class="checkout-form-shell">
-              <!-- Step 1: Event & Contact Info -->
               <div class="checkout-section">
                 <h2 class="checkout-section-title">
                   <strong>1</strong> Tu evento
                 </h2>
-
                 <div class="event-info-card">
                   <img src="banner.png" alt="Axolote Night Run" />
                   <div class="event-info-content">
@@ -423,69 +421,23 @@
                   </div>
                 </div>
               </div>
-
-              <!-- Step 2: Emergency Contact -->
               <div class="checkout-section">
                 <h2 class="checkout-section-title">
-                  <strong>2</strong> Contacto de emergencia
+                  <strong>2</strong> Correo de contacto
                 </h2>
-
-                <p style="color: #7d8885; font-size: 0.9rem; margin: 0 0 14px;">
-                  Es obligatorio tener un contacto de emergencia registrado para participar.
-                </p>
-
-                <div id="checkoutSavedEmergency" hidden></div>
-
                 <div class="checkout-form-grid">
-                  <label for="emergencyName">
-                    Nombre completo <span class="required-mark">*</span>
-                  </label>
-                  <input
-                    id="emergencyName"
-                    name="emergencyName"
-                    type="text"
-                    placeholder="Ej: Juan Pérez"
-                    required
-                  />
-
-                  <label for="emergencyPhone">
-                    Teléfono celular <span class="required-mark">*</span>
-                  </label>
-                  <input
-                    id="emergencyPhone"
-                    name="emergencyPhone"
-                    type="tel"
-                    placeholder="Ej: 5530790944"
-                    required
-                  />
-
-                  <label for="emergencyRelation">
-                    Relación <span class="required-mark">*</span>
-                  </label>
-                  <select id="emergencyRelation" name="emergencyRelation" required>
-                    <option value="">Selecciona relación</option>
-                    <option value="madre">Madre</option>
-                    <option value="padre">Padre</option>
-                    <option value="hermano">Hermano/a</option>
-                    <option value="pareja">Pareja</option>
-                    <option value="amigo">Amigo/a</option>
-                    <option value="otro">Otro</option>
-                  </select>
-
-                  <label for="emergencyEmail">
+                  <label for="userEmail">
                     Correo electrónico <span class="required-mark">*</span>
                   </label>
                   <input
-                    id="emergencyEmail"
-                    name="emergencyEmail"
+                    id="userEmail"
+                    name="userEmail"
                     type="email"
                     placeholder="correo@ejemplo.com"
                     required
                   />
                 </div>
               </div>
-
-              <!-- Step 3: Terms -->
               <div class="checkout-section" style="margin-top: 24px;">
                 <label style="display: flex; align-items: center; gap: 10px; cursor: pointer; font-weight: 500; color: var(--ink);">
                   <input type="checkbox" id="termsCheck" name="termsCheck" required />
