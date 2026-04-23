@@ -3219,7 +3219,10 @@ body[data-page="series"] .page-hero .container {
   display: block;
   width: 100%;
   height: auto;
-  object-fit: cover;
+  object-fit: contain;
+  background: #fff;
+  aspect-ratio: 1/1;
+  max-height: 300px;
 }
 
 .convocatoria-trigger {
