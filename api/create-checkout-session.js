@@ -16,8 +16,8 @@ export default async function handler(req, res) {
           quantity: 1,
         },
       ],
-      success_url: 'https://kinetichub.com.mx/gracias',
-      cancel_url: 'https://kinetichub.com.mx/cancelado',
+      success_url: process.env.STRIPE_SUCCESS_URL,
+      cancel_url: process.env.STRIPE_CANCEL_URL,
     });
     res.status(200).json({ url: session.url });
   } catch (error) {
