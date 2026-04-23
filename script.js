@@ -3031,6 +3031,41 @@ function setupTipsCarousel() {
   });
 }
 
+function setupCheckoutForm() {
+  const form = document.getElementById("checkoutForm");
+  if (!form) return;
+
+  form.addEventListener("submit", async (e) => {
+    e.preventDefault();
+
+    const email = document.getElementById("userEmail")?.value;
+    const termsCheck = document.getElementById("termsCheck")?.checked;
+
+    if (!email || !termsCheck) {
+      alert("Por favor completa todos los campos y acepta los términos");
+      return;
+    }
+
+    try {
+      const response = await fetch("/api/create-checkout-session", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Error al crear la sesión de pago");
+      }
+
+      const { url } = await response.json();
+      window.location.href = url;
+    } catch (error) {
+      console.error("Error al iniciar checkout:", error);
+      alert("Hubo un error al procesar tu solicitud. Intenta de nuevo.");
+    }
+  });
+}
+
 setupPageLoadIndicator();
 setupMenuToggle();
 setupActiveNavLink();
@@ -3055,3 +3090,4 @@ setupProfilePage();
 setupBlogTabs();
 setupTipsCarousel();
 setupSupabase();
+setupCheckoutForm();
