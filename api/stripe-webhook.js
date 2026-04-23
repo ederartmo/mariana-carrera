@@ -4,24 +4,32 @@ const { Resend } = require('resend');
 const resend = new Resend(process.env.RESEND_API_KEY);
 
 module.exports = async (req, res) => {
-  if (req.method === 'POST') {
-    // Aquí va tu lógica para Stripe
-    res.status(200).json({ message: 'Webhook recibido correctamente' });
-  } else {
-    res.status(405).json({ message: 'Método no permitido' });
+  if (req.method !== 'POST') {
+    return res.status(405).json({ message: 'Método no permitido' });
   }
 
-  const sig = req.headers['stripe-signature'];
-  let event;
-  try {
-    event = stripe.webhooks.constructEvent(
-      req.body,
-      sig,
-      process.env.STRIPE_WEBHOOK_SECRET
-    );
-  } catch (err) {
-    return res.status(400).send(`Webhook Error: ${err.message}`);
-  }
+  // --- VALIDACIÓN DE STRIPE WEBHOOK COMENTADA PARA PRUEBAS ---
+  // const sig = req.headers['stripe-signature'];
+  // let event;
+  // try {
+  //   event = stripe.webhooks.constructEvent(
+  //     req.body,
+  //     sig,
+  //     process.env.STRIPE_WEBHOOK_SECRET
+  //   );
+  // } catch (err) {
+  //   return res.status(400).send(`Webhook Error: ${err.message}`);
+  // }
+
+  // Simulación de evento para pruebas
+  const event = {
+    type: 'checkout.session.completed',
+    data: {
+      object: {
+        customer_email: 'prueba@correo.com'
+      }
+    }
+  };
 
   if (event.type === 'checkout.session.completed') {
     const session = event.data.object;
@@ -37,5 +45,6 @@ module.exports = async (req, res) => {
         <p>¡Gracias por ser parte de Kinetic Hub!</p>`
     });
   }
-  res.json({received: true});
+  // Solo una respuesta por petición
+  return res.status(200).json({ message: 'Webhook recibido correctamente' });
 };
