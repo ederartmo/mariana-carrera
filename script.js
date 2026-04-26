@@ -611,9 +611,9 @@ function setupContactFormSubmission() {
           line-height: 1.6;
           margin: 0 0 32px;
         ">${confirmationSent
-            ? "Te enviamos un correo de confirmación al email que registraste."
-            : "Tu solicitud se guardó. El correo de confirmación puede tardar unos minutos."
-          }</p>
+        ? "Te enviamos un correo de confirmación al email que registraste."
+        : "Tu solicitud se guardó. El correo de confirmación puede tardar unos minutos."
+      }</p>
 
         <a href="index.html" style="
           display: inline-flex;
@@ -1541,31 +1541,31 @@ function setupSupabase() {
       });
     };
 
-  const renderSessionNav = (session) => {
-    const navActions = document.querySelector(".nav-actions");
-    if (!navActions) return;
+    const renderSessionNav = (session) => {
+      const navActions = document.querySelector(".nav-actions");
+      if (!navActions) return;
 
-    if (!session) {
-      const currentPage = `${window.location.pathname}${window.location.search}${window.location.hash}`;
-      const loginHref = `auth.html?mode=login&returnTo=${encodeURIComponent(currentPage)}`;
-      navActions.innerHTML = `
+      if (!session) {
+        const currentPage = `${window.location.pathname}${window.location.search}${window.location.hash}`;
+        const loginHref = `auth.html?mode=login&returnTo=${encodeURIComponent(currentPage)}`;
+        navActions.innerHTML = `
         <a class="ghost-link" href="${loginHref}">Iniciar sesión</a>
         <a class="btn btn-primary" href="auth.html?mode=register">Registrarse</a>
       `;
-      return;
-    }
+        return;
+      }
 
-    const user = session.user;
-    navActions.innerHTML = `
+      const user = session.user;
+      navActions.innerHTML = `
       <a class="ghost-link" href="perfil.html">Mi perfil</a>
       <button class="btn btn-primary" id="navLogoutBtn" type="button">Cerrar sesión</button>
     `;
 
-    document.getElementById("navLogoutBtn")?.addEventListener("click", async () => {
-      await client.auth.signOut();
-      window.location.href = "index.html";
-    });
-  };
+      document.getElementById("navLogoutBtn")?.addEventListener("click", async () => {
+        await client.auth.signOut();
+        window.location.href = "index.html";
+      });
+    };
 
     client.auth.getSession().then(({ data: { session } }) => {
       renderSessionNav(session);
@@ -1577,18 +1577,18 @@ function setupSupabase() {
 
     setupCheckoutEmergencyContact();
 
-  // ── AUTH PAGE ──────────────────────────────────────
+    // ── AUTH PAGE ──────────────────────────────────────
     const authRoot = document.querySelector("[data-auth-page]");
     if (authRoot) {
-    const searchParams = new URLSearchParams(window.location.search);
-    const hashParams = new URLSearchParams(window.location.hash.replace(/^#/, ""));
-    const hasSignupCallback = hashParams.get("type") === "signup" && hashParams.has("access_token");
+      const searchParams = new URLSearchParams(window.location.search);
+      const hashParams = new URLSearchParams(window.location.hash.replace(/^#/, ""));
+      const hasSignupCallback = hashParams.get("type") === "signup" && hashParams.has("access_token");
 
-    const promptActiveSessionChoice = (email) =>
-      new Promise((resolve) => {
-        const overlay = document.createElement("div");
-        overlay.className = "auth-session-overlay";
-        overlay.innerHTML = `
+      const promptActiveSessionChoice = (email) =>
+        new Promise((resolve) => {
+          const overlay = document.createElement("div");
+          overlay.className = "auth-session-overlay";
+          overlay.innerHTML = `
           <div class="auth-session-modal" role="dialog" aria-modal="true" aria-labelledby="authSessionTitle">
             <h2 id="authSessionTitle">Sesión detectada</h2>
             <p>Ya tienes una sesión activa con:</p>
@@ -1601,204 +1601,313 @@ function setupSupabase() {
           </div>
         `;
 
-        const cleanup = () => {
-          document.removeEventListener("keydown", onEsc);
-          overlay.remove();
-        };
+          const cleanup = () => {
+            document.removeEventListener("keydown", onEsc);
+            overlay.remove();
+          };
 
-        const onEsc = (event) => {
-          if (event.key !== "Escape") return;
-          cleanup();
-          resolve(false);
-        };
-
-        overlay.addEventListener("click", (event) => {
-          const target = event.target;
-          const actionBtn = target.closest("[data-auth-session]");
-
-          if (actionBtn) {
-            const action = actionBtn.getAttribute("data-auth-session");
-            cleanup();
-            resolve(action === "continue");
-            return;
-          }
-
-          if (target === overlay) {
+          const onEsc = (event) => {
+            if (event.key !== "Escape") return;
             cleanup();
             resolve(false);
-          }
+          };
+
+          overlay.addEventListener("click", (event) => {
+            const target = event.target;
+            const actionBtn = target.closest("[data-auth-session]");
+
+            if (actionBtn) {
+              const action = actionBtn.getAttribute("data-auth-session");
+              cleanup();
+              resolve(action === "continue");
+              return;
+            }
+
+            if (target === overlay) {
+              cleanup();
+              resolve(false);
+            }
+          });
+
+          document.addEventListener("keydown", onEsc);
+          document.body.appendChild(overlay);
         });
 
-        document.addEventListener("keydown", onEsc);
-        document.body.appendChild(overlay);
-      });
+      // Si ya hay sesión activa → preguntar si desea continuar con esa cuenta
+      client.auth.getSession().then(async ({ data: { session } }) => {
+        if (!session) return;
 
-    // Si ya hay sesión activa → preguntar si desea continuar con esa cuenta
-    client.auth.getSession().then(async ({ data: { session } }) => {
-      if (!session) return;
-
-      if (hasSignupCallback) {
-        const url = new URL(window.location.href);
-        url.hash = "";
-        url.searchParams.set("mode", "login");
-        url.searchParams.set("status", "confirmed");
-        window.location.replace(url.toString());
-        return;
-      }
-
-      if (searchParams.get("status") === "confirmed") {
-        localStorage.setItem(AXOLOTE_POST_VERIFY_PROMPT_KEY, "1");
-        window.setTimeout(() => {
-          window.location.replace(consumeReturnTarget());
-        }, 1400);
-        return;
-      }
-
-      const activeEmail = session.user?.email || "tu cuenta";
-      const continueWithSession = await promptActiveSessionChoice(activeEmail);
-
-      if (continueWithSession) {
-        window.location.replace(consumeReturnTarget());
-        return;
-      }
-
-      client.auth.signOut().then(() => {
-        const loginEmailInput = document.getElementById("loginEmail");
-        if (loginEmailInput) {
-          loginEmailInput.value = "";
-          loginEmailInput.focus();
-        }
-      });
-    });
-
-    // Botones "Continuar con Google"
-    ["googleLoginBtn", "googleRegisterBtn"].forEach((id) => {
-      const btn = document.getElementById(id);
-      if (!btn) return;
-      btn.addEventListener("click", async (e) => {
-        e.preventDefault();
-        const { error } = await client.auth.signInWithOAuth({
-          provider: "google",
-          options: { redirectTo: `${SITE}/perfil.html` },
-        });
-        if (error) alert(error.message);
-      });
-    });
-
-    // Login con email + contraseña
-    const loginForm = document.getElementById("loginForm");
-    if (loginForm) {
-      loginForm.addEventListener("submit", async (e) => {
-        e.preventDefault();
-        const email = document.getElementById("loginEmail")?.value.trim();
-        const password = document.getElementById("loginPassword")?.value;
-        if (!email || !password) return;
-        const { error } = await client.auth.signInWithPassword({ email, password });
-        if (error) {
-          alert(error.message);
-        } else {
-          localStorage.setItem(LAST_LOGIN_EMAIL_KEY, email);
-          window.location.href = consumeReturnTarget();
-        }
-      });
-    }
-
-    // Registro con email
-    const registerForm = document.querySelector('[data-auth-panel="register"] form');
-    const registerStatus = document.getElementById("registerStatus");
-    if (registerForm) {
-      registerForm.addEventListener("submit", async (e) => {
-        e.preventDefault();
-
-        if (registerStatus) {
-          registerStatus.textContent = "";
-          registerStatus.classList.remove("is-error");
-        }
-
-        const email = document.getElementById("registerEmail")?.value.trim();
-        const password = document.getElementById("registerPassword")?.value;
-        const confirm = document.getElementById("registerConfirmPassword")?.value;
-        const nombre = document.getElementById("registerName")?.value.trim();
-        const apellido = document.getElementById("registerLastName")?.value.trim();
-        const telefono = document.getElementById("registerPhone")?.value.trim();
-        const nacimiento = document.getElementById("registerBirthDate")?.value;
-
-        if (password !== confirm) {
-          if (registerStatus) {
-            registerStatus.textContent = "Las contraseñas no coinciden.";
-            registerStatus.classList.add("is-error");
-          } else {
-            alert("Las contraseñas no coinciden.");
-          }
+        if (hasSignupCallback) {
+          const url = new URL(window.location.href);
+          url.hash = "";
+          url.searchParams.set("mode", "login");
+          url.searchParams.set("status", "confirmed");
+          window.location.replace(url.toString());
           return;
         }
 
-        const submitBtn = registerForm.querySelector('button[type="submit"]');
-        const originalText = submitBtn?.textContent || "Registrarme";
-        if (submitBtn) {
-          submitBtn.disabled = true;
-          submitBtn.textContent = "Registrando...";
+        if (searchParams.get("status") === "confirmed") {
+          localStorage.setItem(AXOLOTE_POST_VERIFY_PROMPT_KEY, "1");
+          window.setTimeout(() => {
+            window.location.replace(consumeReturnTarget());
+          }, 1400);
+          return;
         }
 
-        const { data, error } = await client.auth.signUp({
-          email,
-          password,
-          options: {
-            data: {
-              full_name: `${nombre} ${apellido}`.trim(),
-              first_name: nombre || "",
-              last_name: apellido || "",
-              phone: telefono || "",
-              birth_date: nacimiento || "",
-            },
-            emailRedirectTo: `${SITE}/auth.html?mode=login`,
-          },
+        const activeEmail = session.user?.email || "tu cuenta";
+        const continueWithSession = await promptActiveSessionChoice(activeEmail);
+
+        if (continueWithSession) {
+          window.location.replace(consumeReturnTarget());
+          return;
+        }
+
+        client.auth.signOut().then(() => {
+          const loginEmailInput = document.getElementById("loginEmail");
+          if (loginEmailInput) {
+            loginEmailInput.value = "";
+            loginEmailInput.focus();
+          }
         });
+      });
 
-        if (submitBtn) {
-          submitBtn.disabled = false;
-          submitBtn.textContent = originalText;
+      // Botones "Continuar con Google"
+      ["googleLoginBtn", "googleRegisterBtn"].forEach((id) => {
+        const btn = document.getElementById(id);
+        if (!btn) return;
+        btn.addEventListener("click", async (e) => {
+          e.preventDefault();
+          const { error } = await client.auth.signInWithOAuth({
+            provider: "google",
+            options: { redirectTo: `${SITE}/perfil.html` },
+          });
+          if (error) alert(error.message);
+        });
+      });
+
+      // Login con email + contraseña
+      const loginForm = document.getElementById("loginForm");
+      if (loginForm) {
+        loginForm.addEventListener("submit", async (e) => {
+          e.preventDefault();
+          const email = document.getElementById("loginEmail")?.value.trim();
+          const password = document.getElementById("loginPassword")?.value;
+          if (!email || !password) return;
+          const { error } = await client.auth.signInWithPassword({ email, password });
+          if (error) {
+            alert(error.message);
+          } else {
+            localStorage.setItem(LAST_LOGIN_EMAIL_KEY, email);
+            window.location.href = consumeReturnTarget();
+          }
+        });
+      }
+      const registerForm = document.querySelector('[data-auth-panel="register"] form');
+      const registerStatus = document.getElementById("registerStatus");
+
+      if (registerForm) {
+        const phoneInput = document.getElementById("registerPhone");
+        const phoneError = document.getElementById("phoneError");
+
+        // Función para validar número de teléfono colombiano o internacional
+        const isValidPhone = (phone) => {
+          if (!phone) return false;
+
+          // Limpiar el número (quitar espacios, paréntesis, guiones, +)
+          let cleaned = phone.replace(/[\s\-\(\)\+]/g, "");
+
+          // Validaciones comunes:
+          // 1. Solo números
+          if (!/^\d+$/.test(cleaned)) return false;
+
+          // 2. Longitud razonable (Colombia: 10 dígitos, internacional: 8-15)
+          if (cleaned.length < 8 || cleaned.length > 15) return false;
+
+          // 3. Colombia (prefijos comunes)
+          if (cleaned.startsWith("3") && cleaned.length === 10) return true;           // 300, 310, 320...
+          if (cleaned.startsWith("57") && cleaned.length === 12) return true;         // +57 300...
+          if (cleaned.startsWith("0057") && cleaned.length === 14) return true;
+
+          // Internacional genérico (aceptamos la mayoría)
+          return cleaned.length >= 9 && cleaned.length <= 15;
+        };
+
+        // Validación en tiempo real
+        if (phoneInput) {
+          phoneInput.addEventListener("input", () => {
+            if (phoneError) {
+              if (phoneInput.value.trim() === "") {
+                phoneError.textContent = "";
+                phoneError.classList.remove("show");
+              } else if (!isValidPhone(phoneInput.value)) {
+                phoneError.textContent = "Ingresa un número de teléfono válido (ej: 3001234567 o +573001234567)";
+                phoneError.classList.add("show");
+              } else {
+                phoneError.textContent = "";
+                phoneError.classList.remove("show");
+              }
+            }
+          });
         }
 
-        if (error) {
-          const isAlreadyRegistered = /already registered|already exists|user already/i.test(
-            error.message || ""
-          );
+        registerForm.addEventListener("submit", async (e) => {
+          e.preventDefault();
 
           if (registerStatus) {
-            registerStatus.textContent = isAlreadyRegistered
-              ? "Este correo ya está registrado. Inicia sesión para continuar."
-              : error.message;
-            registerStatus.classList.add("is-error");
-          } else {
-            alert(
-              isAlreadyRegistered
-                ? "Este correo ya está registrado. Inicia sesión para continuar."
-                : error.message
-            );
+            registerStatus.textContent = "";
+            registerStatus.classList.remove("is-error");
           }
-        } else {
-          const identities = Array.isArray(data?.user?.identities) ? data.user.identities : null;
-          const maskedExistingUser = identities && identities.length === 0;
 
-          if (maskedExistingUser) {
+          const email = document.getElementById("registerEmail")?.value.trim();
+          const password = document.getElementById("registerPassword")?.value;
+          const confirm = document.getElementById("registerConfirmPassword")?.value;
+          const nombre = document.getElementById("registerName")?.value.trim();
+          const apellido = document.getElementById("registerLastName")?.value.trim();
+          const telefono = document.getElementById("registerPhone")?.value.trim();
+          const nacimiento = document.getElementById("registerBirthDate")?.value;
+
+          // === VALIDACIÓN DE TELÉFONO ===
+          if (!telefono || !isValidPhone(telefono)) {
+            if (phoneError) {
+              phoneError.textContent = "Ingresa un número de teléfono válido (ej: 3001234567 o +573001234567)";
+              phoneError.classList.add("show");
+            }
             if (registerStatus) {
-              registerStatus.textContent = "Este correo ya está registrado. Inicia sesión para continuar.";
+              registerStatus.textContent = "Por favor ingresa un número de teléfono válido.";
               registerStatus.classList.add("is-error");
-            } else {
-              alert("Este correo ya está registrado. Inicia sesión para continuar.");
+            }
+            phoneInput?.focus();
+            return;
+          }
+
+          if (password !== confirm) {
+            if (registerStatus) {
+              registerStatus.textContent = "Las contraseñas no coinciden.";
+              registerStatus.classList.add("is-error");
             }
             return;
           }
 
-          const redirectUrl = new URL(`${SITE}/auth.html`);
-          redirectUrl.searchParams.set("mode", "login");
-          redirectUrl.searchParams.set("status", "check-email");
-          redirectUrl.searchParams.set("email", email || "");
-          window.location.href = redirectUrl.toString();
-        }
-      });
-    }
+          // ... (el resto del código de registro se mantiene igual)
+          const submitBtn = registerForm.querySelector('button[type="submit"]');
+          const originalText = submitBtn?.textContent || "Registrarme";
+
+          if (submitBtn) {
+            submitBtn.disabled = true;
+            submitBtn.textContent = "Registrando...";
+          }
+
+          const { data, error } = await client.auth.signUp({
+            email,
+            password,
+            options: {
+              data: {
+                full_name: `${nombre} ${apellido}`.trim(),
+                first_name: nombre || "",
+                last_name: apellido || "",
+                phone: telefono,
+                birth_date: nacimiento || "",
+              },
+              emailRedirectTo: `${SITE}/auth.html?mode=login`,
+            },
+          });
+
+          // Registro con email
+          // const registerForm = document.querySelector('[data-auth-panel="register"] form');
+          // const registerStatus = document.getElementById("registerStatus");
+          // if (registerForm) {
+          //   registerForm.addEventListener("submit", async (e) => {
+          //     e.preventDefault();
+
+          //     if (registerStatus) {
+          //       registerStatus.textContent = "";
+          //       registerStatus.classList.remove("is-error");
+          //     }
+
+          //     const email = document.getElementById("registerEmail")?.value.trim();
+          //     const password = document.getElementById("registerPassword")?.value;
+          //     const confirm = document.getElementById("registerConfirmPassword")?.value;
+          //     const nombre = document.getElementById("registerName")?.value.trim();
+          //     const apellido = document.getElementById("registerLastName")?.value.trim();
+          //     const telefono = document.getElementById("registerPhone")?.value.trim();
+          //     const nacimiento = document.getElementById("registerBirthDate")?.value;
+
+          //     if (password !== confirm) {
+          //       if (registerStatus) {
+          //         registerStatus.textContent = "Las contraseñas no coinciden.";
+          //         registerStatus.classList.add("is-error");
+          //       } else {
+          //         alert("Las contraseñas no coinciden.");
+          //       }
+          //       return;
+          //     }
+
+          //     const submitBtn = registerForm.querySelector('button[type="submit"]');
+          //     const originalText = submitBtn?.textContent || "Registrarme";
+          //     if (submitBtn) {
+          //       submitBtn.disabled = true;
+          //       submitBtn.textContent = "Registrando...";
+          //     }
+
+          //     const { data, error } = await client.auth.signUp({
+          //       email,
+          //       password,
+          //       options: {
+          //         data: {
+          //           full_name: `${nombre} ${apellido}`.trim(),
+          //           first_name: nombre || "",
+          //           last_name: apellido || "",
+          //           phone: telefono || "",
+          //           birth_date: nacimiento || "",
+          //         },
+          //         emailRedirectTo: `${SITE}/auth.html?mode=login`,
+          //       },
+          //     });
+
+          if (submitBtn) {
+            submitBtn.disabled = false;
+            submitBtn.textContent = originalText;
+          }
+
+          if (error) {
+            const isAlreadyRegistered = /already registered|already exists|user already/i.test(
+              error.message || ""
+            );
+
+            if (registerStatus) {
+              registerStatus.textContent = isAlreadyRegistered
+                ? "Este correo ya está registrado. Inicia sesión para continuar."
+                : error.message;
+              registerStatus.classList.add("is-error");
+            } else {
+              alert(
+                isAlreadyRegistered
+                  ? "Este correo ya está registrado. Inicia sesión para continuar."
+                  : error.message
+              );
+            }
+          } else {
+            const identities = Array.isArray(data?.user?.identities) ? data.user.identities : null;
+            const maskedExistingUser = identities && identities.length === 0;
+
+            if (maskedExistingUser) {
+              if (registerStatus) {
+                registerStatus.textContent = "Este correo ya está registrado. Inicia sesión para continuar.";
+                registerStatus.classList.add("is-error");
+              } else {
+                alert("Este correo ya está registrado. Inicia sesión para continuar.");
+              }
+              return;
+            }
+
+            const redirectUrl = new URL(`${SITE}/auth.html`);
+            redirectUrl.searchParams.set("mode", "login");
+            redirectUrl.searchParams.set("status", "check-email");
+            redirectUrl.searchParams.set("email", email || "");
+            window.location.href = redirectUrl.toString();
+          }
+        });
+      }
     }
 
     // ── PERFIL PAGE ────────────────────────────────────
@@ -1810,324 +1919,324 @@ function setupSupabase() {
           return;
         }
 
-      const user = session.user;
-      const meta = user.user_metadata || {};
+        const user = session.user;
+        const meta = user.user_metadata || {};
 
-      const usernameEl = document.querySelector(".profile-username");
-      const metaInfoEls = Array.from(document.querySelectorAll(".profile-ident-meta"));
+        const usernameEl = document.querySelector(".profile-username");
+        const metaInfoEls = Array.from(document.querySelectorAll(".profile-ident-meta"));
 
-      const pfNombre = document.getElementById("pfNombre");
-      const pfApPat = document.getElementById("pfApPat");
-      const pfApMat = document.getElementById("pfApMat");
-      const pfNacimiento = document.getElementById("pfNacimiento");
-      const pfGenero = document.getElementById("pfGenero");
-      const pfTelefono = document.getElementById("pfTelefono");
-      const pfPeso = document.getElementById("pfPeso");
-      const pfEstatura = document.getElementById("pfEstatura");
-      const pfPais = document.getElementById("pfPais");
-      const pfEstado = document.getElementById("pfEstado");
-      const coverUpload = document.getElementById("coverUpload");
-      const profileCover = document.getElementById("profileCover");
-      const coverAdjustToggle = document.getElementById("coverAdjustToggle");
-      const avatarUpload = document.getElementById("avatarUpload");
-      const avatarInner = document.getElementById("profileAvatarInner");
+        const pfNombre = document.getElementById("pfNombre");
+        const pfApPat = document.getElementById("pfApPat");
+        const pfApMat = document.getElementById("pfApMat");
+        const pfNacimiento = document.getElementById("pfNacimiento");
+        const pfGenero = document.getElementById("pfGenero");
+        const pfTelefono = document.getElementById("pfTelefono");
+        const pfPeso = document.getElementById("pfPeso");
+        const pfEstatura = document.getElementById("pfEstatura");
+        const pfPais = document.getElementById("pfPais");
+        const pfEstado = document.getElementById("pfEstado");
+        const coverUpload = document.getElementById("coverUpload");
+        const profileCover = document.getElementById("profileCover");
+        const coverAdjustToggle = document.getElementById("coverAdjustToggle");
+        const avatarUpload = document.getElementById("avatarUpload");
+        const avatarInner = document.getElementById("profileAvatarInner");
 
-      const profileForm = document.querySelector(".profile-form");
-      const saveBtn = profileForm?.querySelector(".profile-save-btn");
-      const emergencyForm = document.getElementById("emergencyContactForm");
-      const emergencyStatus = document.getElementById("emergencyContactStatus");
-      const emergencyName = document.getElementById("emergencyContactName");
-      const emergencyPhone = document.getElementById("emergencyContactPhone");
-      const emergencyRelation = document.getElementById("emergencyContactRelation");
-      const emergencyEmail = document.getElementById("emergencyContactEmail");
-      const emergencySaveBtn = document.getElementById("emergencyContactSaveBtn");
-      const emergencySavedCard = document.getElementById("profileEmergencySavedCard");
-      const emergencySavedActions = document.getElementById("profileEmergencySavedActions");
-      const emergencyEditBtn = document.getElementById("emergencyEditBtn");
-      const emergencyCancelBtn = document.getElementById("emergencyCancelBtn");
+        const profileForm = document.querySelector(".profile-form");
+        const saveBtn = profileForm?.querySelector(".profile-save-btn");
+        const emergencyForm = document.getElementById("emergencyContactForm");
+        const emergencyStatus = document.getElementById("emergencyContactStatus");
+        const emergencyName = document.getElementById("emergencyContactName");
+        const emergencyPhone = document.getElementById("emergencyContactPhone");
+        const emergencyRelation = document.getElementById("emergencyContactRelation");
+        const emergencyEmail = document.getElementById("emergencyContactEmail");
+        const emergencySaveBtn = document.getElementById("emergencyContactSaveBtn");
+        const emergencySavedCard = document.getElementById("profileEmergencySavedCard");
+        const emergencySavedActions = document.getElementById("profileEmergencySavedActions");
+        const emergencyEditBtn = document.getElementById("emergencyEditBtn");
+        const emergencyCancelBtn = document.getElementById("emergencyCancelBtn");
 
-      const fields = [
-        { key: "first_name", node: pfNombre },
-        { key: "last_name", node: pfApPat },
-        { key: "maternal_last_name", node: pfApMat },
-        { key: "birth_date", node: pfNacimiento },
-        { key: "gender", node: pfGenero },
-        { key: "phone", node: pfTelefono },
-        { key: "weight_kg", node: pfPeso },
-        { key: "height_cm", node: pfEstatura },
-        { key: "country", node: pfPais },
-        { key: "state", node: pfEstado },
-      ].filter((field) => Boolean(field.node));
+        const fields = [
+          { key: "first_name", node: pfNombre },
+          { key: "last_name", node: pfApPat },
+          { key: "maternal_last_name", node: pfApMat },
+          { key: "birth_date", node: pfNacimiento },
+          { key: "gender", node: pfGenero },
+          { key: "phone", node: pfTelefono },
+          { key: "weight_kg", node: pfPeso },
+          { key: "height_cm", node: pfEstatura },
+          { key: "country", node: pfPais },
+          { key: "state", node: pfEstado },
+        ].filter((field) => Boolean(field.node));
 
-      fields.forEach(({ node }) => {
-        if (node && node.tagName !== "SELECT") {
-          node.dataset.defaultPlaceholder = node.placeholder || "";
-        }
-      });
-
-      const composeFullName = (profile) =>
-        [profile.first_name, profile.last_name, profile.maternal_last_name]
-          .map((item) => (item || "").trim())
-          .filter(Boolean)
-          .join(" ")
-          .trim();
-
-      const normalizeProfile = (source) => ({
-        first_name: (source?.first_name || "").trim(),
-        last_name: (source?.last_name || "").trim(),
-        maternal_last_name: (source?.maternal_last_name || "").trim(),
-        birth_date: source?.birth_date || "",
-        gender: source?.gender || "",
-        phone: (source?.phone || "").trim(),
-        weight_kg: source?.weight_kg || "",
-        height_cm: source?.height_cm || "",
-        country: source?.country || "mx",
-        state: source?.state || "",
-        full_name: (source?.full_name || "").trim(),
-        avatar_url: (source?.avatar_url || "").trim() || null,
-        cover_url: (source?.cover_url || "").trim() || null,
-        emergency_name: (source?.emergency_name || "").trim() || null,
-        emergency_phone: (source?.emergency_phone || "").trim() || null,
-        emergency_relation: (source?.emergency_relation || "").trim() || null,
-        emergency_email: (source?.emergency_email || "").trim() || null,
-      });
-
-      const PROFILE_MEDIA_BUCKET = "contact-attachments";
-      const PROFILE_ALLOWED_MIME_TYPES = ["image/jpeg", "image/png", "image/webp"];
-      const PROFILE_MEDIA_LIMITS = {
-        avatar: 2 * 1024 * 1024,
-        cover: 4 * 1024 * 1024,
-      };
-      const PROFILE_MEDIA_OPTIMIZATION = {
-        avatar: { maxWidth: 600, maxHeight: 600, quality: 0.86 },
-        cover: { maxWidth: 1600, maxHeight: 900, quality: 0.82 },
-      };
-
-      const getSafeExtension = (fileName) => {
-        const raw = (fileName || "").split(".").pop() || "jpg";
-        const normalized = raw.toLowerCase().replace(/[^a-z0-9]/g, "");
-        return normalized || "jpg";
-      };
-
-      const mimeToExtension = (mimeType) => {
-        if (mimeType === "image/png") return "png";
-        if (mimeType === "image/webp") return "webp";
-        return "jpg";
-      };
-
-      const validateProfileMediaFile = ({ file, type }) => {
-        if (!file) {
-          return "No se detectó archivo.";
-        }
-
-        if (!PROFILE_ALLOWED_MIME_TYPES.includes(file.type)) {
-          return "Formato no permitido. Usa JPG, PNG o WEBP.";
-        }
-
-        const maxBytes = PROFILE_MEDIA_LIMITS[type] || PROFILE_MEDIA_LIMITS.avatar;
-        if (file.size > maxBytes) {
-          const maxMb = Math.round(maxBytes / (1024 * 1024));
-          return `El archivo supera el límite de ${maxMb} MB.`;
-        }
-
-        return "";
-      };
-
-      const optimizeProfileMediaFile = async ({ file, type }) => {
-        const config = PROFILE_MEDIA_OPTIMIZATION[type] || PROFILE_MEDIA_OPTIMIZATION.avatar;
-        const objectUrl = URL.createObjectURL(file);
-
-        try {
-          const image = await new Promise((resolve, reject) => {
-            const img = new Image();
-            img.onload = () => resolve(img);
-            img.onerror = () => reject(new Error("No se pudo procesar la imagen."));
-            img.src = objectUrl;
-          });
-
-          const sourceWidth = image.naturalWidth || image.width;
-          const sourceHeight = image.naturalHeight || image.height;
-          const scale = Math.min(
-            1,
-            config.maxWidth / Math.max(sourceWidth, 1),
-            config.maxHeight / Math.max(sourceHeight, 1)
-          );
-
-          const targetWidth = Math.max(1, Math.round(sourceWidth * scale));
-          const targetHeight = Math.max(1, Math.round(sourceHeight * scale));
-
-          const canvas = document.createElement("canvas");
-          canvas.width = targetWidth;
-          canvas.height = targetHeight;
-
-          const context = canvas.getContext("2d");
-          if (!context) {
-            return file;
+        fields.forEach(({ node }) => {
+          if (node && node.tagName !== "SELECT") {
+            node.dataset.defaultPlaceholder = node.placeholder || "";
           }
+        });
 
-          context.drawImage(image, 0, 0, targetWidth, targetHeight);
+        const composeFullName = (profile) =>
+          [profile.first_name, profile.last_name, profile.maternal_last_name]
+            .map((item) => (item || "").trim())
+            .filter(Boolean)
+            .join(" ")
+            .trim();
 
-          const blob = await new Promise((resolve) => {
-            canvas.toBlob(resolve, "image/webp", config.quality);
-          });
+        const normalizeProfile = (source) => ({
+          first_name: (source?.first_name || "").trim(),
+          last_name: (source?.last_name || "").trim(),
+          maternal_last_name: (source?.maternal_last_name || "").trim(),
+          birth_date: source?.birth_date || "",
+          gender: source?.gender || "",
+          phone: (source?.phone || "").trim(),
+          weight_kg: source?.weight_kg || "",
+          height_cm: source?.height_cm || "",
+          country: source?.country || "mx",
+          state: source?.state || "",
+          full_name: (source?.full_name || "").trim(),
+          avatar_url: (source?.avatar_url || "").trim() || null,
+          cover_url: (source?.cover_url || "").trim() || null,
+          emergency_name: (source?.emergency_name || "").trim() || null,
+          emergency_phone: (source?.emergency_phone || "").trim() || null,
+          emergency_relation: (source?.emergency_relation || "").trim() || null,
+          emergency_email: (source?.emergency_email || "").trim() || null,
+        });
 
-          if (!blob) {
-            return file;
-          }
-
-          const baseName = (file.name || "imagen").replace(/\.[^.]+$/, "");
-          return new File([blob], `${baseName}.webp`, {
-            type: "image/webp",
-            lastModified: Date.now(),
-          });
-        } finally {
-          URL.revokeObjectURL(objectUrl);
-        }
-      };
-
-      const uploadProfileMedia = async ({ file, type }) => {
-        if (!file) return null;
-
-        const ext = mimeToExtension(file.type) || getSafeExtension(file.name);
-        const objectPath = `${type}s/${user.id}/${type}.${ext}`;
-
-        const { error: uploadError } = await client.storage
-          .from(PROFILE_MEDIA_BUCKET)
-          .upload(objectPath, file, {
-            upsert: true,
-            contentType: file.type || "image/jpeg",
-          });
-
-        if (uploadError) {
-          return { error: uploadError };
-        }
-
-        const { data } = client.storage.from(PROFILE_MEDIA_BUCKET).getPublicUrl(objectPath);
-        return { publicUrl: data?.publicUrl || null };
-      };
-
-      const coverPositionStorageKey = `kinetic_cover_position:${user.id}`;
-
-      const readCoverPosition = () => {
-        const raw = localStorage.getItem(coverPositionStorageKey);
-        if (!raw) return null;
-        const numeric = Number(raw);
-        if (!Number.isFinite(numeric)) return null;
-        return Math.max(0, Math.min(100, numeric));
-      };
-
-      const writeCoverPosition = (value) => {
-        localStorage.setItem(coverPositionStorageKey, String(value));
-      };
-
-      const saveProfileMediaUrls = async (updates) => {
-        const row = {
-          user_id: user.id,
-          email: user.email || null,
-          ...updates,
-          updated_at: new Date().toISOString(),
+        const PROFILE_MEDIA_BUCKET = "contact-attachments";
+        const PROFILE_ALLOWED_MIME_TYPES = ["image/jpeg", "image/png", "image/webp"];
+        const PROFILE_MEDIA_LIMITS = {
+          avatar: 2 * 1024 * 1024,
+          cover: 4 * 1024 * 1024,
+        };
+        const PROFILE_MEDIA_OPTIMIZATION = {
+          avatar: { maxWidth: 600, maxHeight: 600, quality: 0.86 },
+          cover: { maxWidth: 1600, maxHeight: 900, quality: 0.82 },
         };
 
-        const { error } = await client.from(PROFILE_TABLE).upsert(row, { onConflict: "user_id" });
-        return error || null;
-      };
-
-      const readCoverPositionFromTable = async () => {
-        const { data, error } = await client
-          .from(PROFILE_TABLE)
-          .select("cover_position_y")
-          .eq("user_id", user.id)
-          .maybeSingle();
-
-        if (error) {
-          return null;
-        }
-
-        const value = Number(data?.cover_position_y);
-        if (!Number.isFinite(value)) return null;
-        return Math.max(0, Math.min(100, value));
-      };
-
-      const saveCoverPositionToTable = async (positionY) => {
-        const payload = {
-          user_id: user.id,
-          email: user.email || null,
-          cover_position_y: positionY,
-          updated_at: new Date().toISOString(),
+        const getSafeExtension = (fileName) => {
+          const raw = (fileName || "").split(".").pop() || "jpg";
+          const normalized = raw.toLowerCase().replace(/[^a-z0-9]/g, "");
+          return normalized || "jpg";
         };
 
-        const { error } = await client.from(PROFILE_TABLE).upsert(payload, { onConflict: "user_id" });
-        return error || null;
-      };
+        const mimeToExtension = (mimeType) => {
+          if (mimeType === "image/png") return "png";
+          if (mimeType === "image/webp") return "webp";
+          return "jpg";
+        };
 
-      const buildProfileFromForm = () => ({
-        first_name: (pfNombre?.value || "").trim(),
-        last_name: (pfApPat?.value || "").trim(),
-        maternal_last_name: (pfApMat?.value || "").trim(),
-        birth_date: pfNacimiento?.value || "",
-        gender: pfGenero?.value || "",
-        phone: (pfTelefono?.value || "").trim(),
-        weight_kg: pfPeso?.value || "",
-        height_cm: pfEstatura?.value || "",
-        country: pfPais?.value || "mx",
-        state: pfEstado?.value || "",
-      });
+        const validateProfileMediaFile = ({ file, type }) => {
+          if (!file) {
+            return "No se detectó archivo.";
+          }
 
-      const applyHeader = (profile) => {
-        const fullName = profile.full_name || composeFullName(profile) || meta.name || "Atleta";
-        if (usernameEl) usernameEl.textContent = fullName;
-        if (metaInfoEls[0]) metaInfoEls[0].textContent = user.email || "";
-        if (metaInfoEls[1]) metaInfoEls[1].textContent = profile.phone || "";
-      };
+          if (!PROFILE_ALLOWED_MIME_TYPES.includes(file.type)) {
+            return "Formato no permitido. Usa JPG, PNG o WEBP.";
+          }
 
-      const ensureStatusNode = () => {
-        if (!profileForm) return null;
-        let node = profileForm.querySelector(".profile-save-status");
-        if (node) return node;
-        node = document.createElement("p");
-        node.className = "profile-save-status";
-        node.setAttribute("aria-live", "polite");
-        node.style.margin = "8px 0 0";
-        node.style.fontWeight = "700";
-        const actions = profileForm.querySelector(".profile-form-actions");
-        if (actions) {
-          actions.insertAdjacentElement("afterend", node);
-        } else {
-          profileForm.appendChild(node);
-        }
-        return node;
-      };
+          const maxBytes = PROFILE_MEDIA_LIMITS[type] || PROFILE_MEDIA_LIMITS.avatar;
+          if (file.size > maxBytes) {
+            const maxMb = Math.round(maxBytes / (1024 * 1024));
+            return `El archivo supera el límite de ${maxMb} MB.`;
+          }
 
-      const statusNode = ensureStatusNode();
-      const showStatus = (message, isError = false) => {
-        if (!statusNode) return;
-        statusNode.textContent = message;
-        statusNode.style.color = isError ? "#ff8a65" : "#34d399";
-      };
+          return "";
+        };
 
-      const showEmergencyStatus = (message, isError = false) => {
-        if (!emergencyStatus) return;
-        emergencyStatus.textContent = message;
-        emergencyStatus.classList.toggle("is-error", isError);
-        emergencyStatus.classList.toggle("is-success", !isError && Boolean(message));
-      };
+        const optimizeProfileMediaFile = async ({ file, type }) => {
+          const config = PROFILE_MEDIA_OPTIMIZATION[type] || PROFILE_MEDIA_OPTIMIZATION.avatar;
+          const objectUrl = URL.createObjectURL(file);
 
-      const populateEmergencyForm = (contact) => {
-        if (!emergencyName || !emergencyPhone || !emergencyRelation || !emergencyEmail) return;
-        const normalized = normalizeEmergencyContact(contact || {});
-        emergencyName.value = normalized.name;
-        emergencyPhone.value = normalized.phone;
-        emergencyRelation.value = normalized.relation;
-        emergencyEmail.value = normalized.email;
-      };
+          try {
+            const image = await new Promise((resolve, reject) => {
+              const img = new Image();
+              img.onload = () => resolve(img);
+              img.onerror = () => reject(new Error("No se pudo procesar la imagen."));
+              img.src = objectUrl;
+            });
 
-      const clearEmergencyForm = () => {
-        populateEmergencyForm({});
-      };
+            const sourceWidth = image.naturalWidth || image.width;
+            const sourceHeight = image.naturalHeight || image.height;
+            const scale = Math.min(
+              1,
+              config.maxWidth / Math.max(sourceWidth, 1),
+              config.maxHeight / Math.max(sourceHeight, 1)
+            );
 
-      const renderSavedEmergencyCard = (contact) => {
-        if (!emergencySavedCard) return;
-        emergencySavedCard.innerHTML = `
+            const targetWidth = Math.max(1, Math.round(sourceWidth * scale));
+            const targetHeight = Math.max(1, Math.round(sourceHeight * scale));
+
+            const canvas = document.createElement("canvas");
+            canvas.width = targetWidth;
+            canvas.height = targetHeight;
+
+            const context = canvas.getContext("2d");
+            if (!context) {
+              return file;
+            }
+
+            context.drawImage(image, 0, 0, targetWidth, targetHeight);
+
+            const blob = await new Promise((resolve) => {
+              canvas.toBlob(resolve, "image/webp", config.quality);
+            });
+
+            if (!blob) {
+              return file;
+            }
+
+            const baseName = (file.name || "imagen").replace(/\.[^.]+$/, "");
+            return new File([blob], `${baseName}.webp`, {
+              type: "image/webp",
+              lastModified: Date.now(),
+            });
+          } finally {
+            URL.revokeObjectURL(objectUrl);
+          }
+        };
+
+        const uploadProfileMedia = async ({ file, type }) => {
+          if (!file) return null;
+
+          const ext = mimeToExtension(file.type) || getSafeExtension(file.name);
+          const objectPath = `${type}s/${user.id}/${type}.${ext}`;
+
+          const { error: uploadError } = await client.storage
+            .from(PROFILE_MEDIA_BUCKET)
+            .upload(objectPath, file, {
+              upsert: true,
+              contentType: file.type || "image/jpeg",
+            });
+
+          if (uploadError) {
+            return { error: uploadError };
+          }
+
+          const { data } = client.storage.from(PROFILE_MEDIA_BUCKET).getPublicUrl(objectPath);
+          return { publicUrl: data?.publicUrl || null };
+        };
+
+        const coverPositionStorageKey = `kinetic_cover_position:${user.id}`;
+
+        const readCoverPosition = () => {
+          const raw = localStorage.getItem(coverPositionStorageKey);
+          if (!raw) return null;
+          const numeric = Number(raw);
+          if (!Number.isFinite(numeric)) return null;
+          return Math.max(0, Math.min(100, numeric));
+        };
+
+        const writeCoverPosition = (value) => {
+          localStorage.setItem(coverPositionStorageKey, String(value));
+        };
+
+        const saveProfileMediaUrls = async (updates) => {
+          const row = {
+            user_id: user.id,
+            email: user.email || null,
+            ...updates,
+            updated_at: new Date().toISOString(),
+          };
+
+          const { error } = await client.from(PROFILE_TABLE).upsert(row, { onConflict: "user_id" });
+          return error || null;
+        };
+
+        const readCoverPositionFromTable = async () => {
+          const { data, error } = await client
+            .from(PROFILE_TABLE)
+            .select("cover_position_y")
+            .eq("user_id", user.id)
+            .maybeSingle();
+
+          if (error) {
+            return null;
+          }
+
+          const value = Number(data?.cover_position_y);
+          if (!Number.isFinite(value)) return null;
+          return Math.max(0, Math.min(100, value));
+        };
+
+        const saveCoverPositionToTable = async (positionY) => {
+          const payload = {
+            user_id: user.id,
+            email: user.email || null,
+            cover_position_y: positionY,
+            updated_at: new Date().toISOString(),
+          };
+
+          const { error } = await client.from(PROFILE_TABLE).upsert(payload, { onConflict: "user_id" });
+          return error || null;
+        };
+
+        const buildProfileFromForm = () => ({
+          first_name: (pfNombre?.value || "").trim(),
+          last_name: (pfApPat?.value || "").trim(),
+          maternal_last_name: (pfApMat?.value || "").trim(),
+          birth_date: pfNacimiento?.value || "",
+          gender: pfGenero?.value || "",
+          phone: (pfTelefono?.value || "").trim(),
+          weight_kg: pfPeso?.value || "",
+          height_cm: pfEstatura?.value || "",
+          country: pfPais?.value || "mx",
+          state: pfEstado?.value || "",
+        });
+
+        const applyHeader = (profile) => {
+          const fullName = profile.full_name || composeFullName(profile) || meta.name || "Atleta";
+          if (usernameEl) usernameEl.textContent = fullName;
+          if (metaInfoEls[0]) metaInfoEls[0].textContent = user.email || "";
+          if (metaInfoEls[1]) metaInfoEls[1].textContent = profile.phone || "";
+        };
+
+        const ensureStatusNode = () => {
+          if (!profileForm) return null;
+          let node = profileForm.querySelector(".profile-save-status");
+          if (node) return node;
+          node = document.createElement("p");
+          node.className = "profile-save-status";
+          node.setAttribute("aria-live", "polite");
+          node.style.margin = "8px 0 0";
+          node.style.fontWeight = "700";
+          const actions = profileForm.querySelector(".profile-form-actions");
+          if (actions) {
+            actions.insertAdjacentElement("afterend", node);
+          } else {
+            profileForm.appendChild(node);
+          }
+          return node;
+        };
+
+        const statusNode = ensureStatusNode();
+        const showStatus = (message, isError = false) => {
+          if (!statusNode) return;
+          statusNode.textContent = message;
+          statusNode.style.color = isError ? "#ff8a65" : "#34d399";
+        };
+
+        const showEmergencyStatus = (message, isError = false) => {
+          if (!emergencyStatus) return;
+          emergencyStatus.textContent = message;
+          emergencyStatus.classList.toggle("is-error", isError);
+          emergencyStatus.classList.toggle("is-success", !isError && Boolean(message));
+        };
+
+        const populateEmergencyForm = (contact) => {
+          if (!emergencyName || !emergencyPhone || !emergencyRelation || !emergencyEmail) return;
+          const normalized = normalizeEmergencyContact(contact || {});
+          emergencyName.value = normalized.name;
+          emergencyPhone.value = normalized.phone;
+          emergencyRelation.value = normalized.relation;
+          emergencyEmail.value = normalized.email;
+        };
+
+        const clearEmergencyForm = () => {
+          populateEmergencyForm({});
+        };
+
+        const renderSavedEmergencyCard = (contact) => {
+          if (!emergencySavedCard) return;
+          emergencySavedCard.innerHTML = `
           <div class="checkout-saved-emergency">
             <p class="checkout-saved-emergency-title">Contacto de emergencia guardado</p>
             <p class="checkout-saved-emergency-copy">
@@ -2137,473 +2246,473 @@ function setupSupabase() {
             </p>
           </div>
         `;
-      };
-
-      const toggleEmergencyMode = ({ showForm, contact = null }) => {
-        if (!emergencyForm) return;
-
-        emergencyForm.hidden = !showForm;
-
-        if (emergencySavedActions) {
-          emergencySavedActions.hidden = showForm || !hasCompleteEmergencyContact(contact || {});
-        }
-
-        if (emergencySavedCard) {
-          emergencySavedCard.hidden = showForm || !hasCompleteEmergencyContact(contact || {});
-          if (!emergencySavedCard.hidden && contact) {
-            renderSavedEmergencyCard(contact);
-          }
-        }
-
-        if (emergencyCancelBtn) {
-          emergencyCancelBtn.hidden = !showForm || !hasCompleteEmergencyContact(contact || {});
-        }
-
-        if (!showForm) {
-          showEmergencyStatus("");
-        }
-      };
-
-      const setReadOnlyMode = (profile) => {
-        fields.forEach(({ key, node }) => {
-          const value = profile[key] || "";
-          if (!node) return;
-
-          if (node.tagName === "SELECT") {
-            node.value = value || (key === "country" ? "mx" : "");
-            node.disabled = true;
-            return;
-          }
-
-          node.value = "";
-          node.placeholder = value || node.dataset.defaultPlaceholder || "";
-          node.disabled = true;
-        });
-
-        if (saveBtn) {
-          saveBtn.textContent = "Editar información";
-          saveBtn.disabled = false;
-        }
-      };
-
-      const setEditMode = (profile) => {
-        fields.forEach(({ key, node }) => {
-          if (!node) return;
-          node.disabled = false;
-          if (node.tagName === "SELECT") {
-            node.value = profile[key] || (key === "country" ? "mx" : "");
-            return;
-          }
-          node.placeholder = node.dataset.defaultPlaceholder || "";
-          node.value = profile[key] || "";
-        });
-
-        if (saveBtn) {
-          saveBtn.textContent = "Guardar cambios";
-          saveBtn.disabled = false;
-        }
-      };
-
-      const readProfileFromTable = async () => {
-        const { data, error } = await client
-          .from(PROFILE_TABLE)
-          .select("first_name,last_name,maternal_last_name,birth_date,gender,phone,weight_kg,height_cm,country,state,full_name,avatar_url,cover_url,emergency_name,emergency_phone,emergency_relation,emergency_email")
-          .eq("user_id", user.id)
-          .maybeSingle();
-
-        if (error) {
-          const expectedNoRow = error.code === "PGRST116";
-          if (!expectedNoRow) {
-            console.warn("No se pudo leer la tabla user_profiles:", error);
-          }
-          return null;
-        }
-
-        return data || null;
-      };
-
-      const saveProfileInTable = async (profile) => {
-        const row = {
-          user_id: user.id,
-          email: user.email || null,
-          ...profile,
-          full_name: profile.full_name || composeFullName(profile),
-          updated_at: new Date().toISOString(),
         };
 
-        const { error } = await client.from(PROFILE_TABLE).upsert(row, { onConflict: "user_id" });
-        return error || null;
-      };
+        const toggleEmergencyMode = ({ showForm, contact = null }) => {
+          if (!emergencyForm) return;
 
-      const profileFromMeta = normalizeProfile(meta);
-      const profileFromTable = await readProfileFromTable();
-      let currentProfile = {
-        ...profileFromMeta,
-        ...(profileFromTable ? normalizeProfile(profileFromTable) : {}),
-      };
+          emergencyForm.hidden = !showForm;
 
-      if (!profileFromTable) {
-        const bootstrapError = await saveProfileInTable(currentProfile);
-        if (bootstrapError) {
-          console.warn("No se pudo crear el registro inicial en user_profiles:", bootstrapError);
-        }
-      }
+          if (emergencySavedActions) {
+            emergencySavedActions.hidden = showForm || !hasCompleteEmergencyContact(contact || {});
+          }
 
-      if (!currentProfile.full_name) {
-        currentProfile.full_name = composeFullName(currentProfile);
-      }
-
-      applyHeader(currentProfile);
-
-      let currentCoverPosition = readCoverPosition();
-      const coverPositionFromTable = await readCoverPositionFromTable();
-      if (coverPositionFromTable !== null) {
-        currentCoverPosition = coverPositionFromTable;
-      }
-      if (currentCoverPosition === null) {
-        currentCoverPosition = 12;
-      }
-
-      const applyAvatarVisual = (avatarUrl) => {
-        if (!avatarInner || !avatarUrl) return;
-        avatarInner.style.backgroundImage = `url("${avatarUrl}")`;
-        avatarInner.style.backgroundSize = "cover";
-        avatarInner.style.backgroundPosition = "center";
-        avatarInner.innerHTML = "";
-      };
-
-      const applyCoverPositionVisual = (positionY) => {
-        if (!profileCover) return;
-        profileCover.style.backgroundPosition = `center ${positionY}%`;
-      };
-
-      const applyCoverVisual = (coverUrl) => {
-        if (!profileCover || !coverUrl) return;
-        profileCover.style.backgroundImage = `url("${coverUrl}")`;
-        profileCover.style.backgroundSize = "cover";
-        applyCoverPositionVisual(currentCoverPosition);
-      };
-
-      if (currentProfile.avatar_url) {
-        applyAvatarVisual(currentProfile.avatar_url);
-      } else if (meta.avatar_url) {
-        applyAvatarVisual(meta.avatar_url);
-      }
-
-      if (currentProfile.cover_url) {
-        applyCoverVisual(currentProfile.cover_url);
-      }
-
-      if (coverAdjustToggle) {
-        coverAdjustToggle.hidden = !Boolean(currentProfile.cover_url);
-      }
-
-      let isCoverAdjustMode = false;
-      const setCoverAdjustMode = (active) => {
-        isCoverAdjustMode = active;
-        if (!profileCover || !coverAdjustToggle) return;
-        profileCover.classList.toggle("is-adjusting", active);
-        coverAdjustToggle.textContent = active ? "Listo" : "Ajustar portada";
-      };
-
-      coverAdjustToggle?.addEventListener("click", () => {
-        setCoverAdjustMode(!isCoverAdjustMode);
-      });
-
-      if (profileCover) {
-        let dragStartY = 0;
-        let dragStartPos = currentCoverPosition;
-        let isDraggingCover = false;
-
-        const stopCoverDrag = () => {
-          if (!isDraggingCover) return;
-          isDraggingCover = false;
-          writeCoverPosition(currentCoverPosition);
-          saveCoverPositionToTable(currentCoverPosition).then((error) => {
-            if (error) {
-              console.warn("No se pudo guardar posición de portada en user_profiles:", error);
+          if (emergencySavedCard) {
+            emergencySavedCard.hidden = showForm || !hasCompleteEmergencyContact(contact || {});
+            if (!emergencySavedCard.hidden && contact) {
+              renderSavedEmergencyCard(contact);
             }
-          });
+          }
+
+          if (emergencyCancelBtn) {
+            emergencyCancelBtn.hidden = !showForm || !hasCompleteEmergencyContact(contact || {});
+          }
+
+          if (!showForm) {
+            showEmergencyStatus("");
+          }
         };
 
-        profileCover.addEventListener("pointerdown", (event) => {
-          if (!isCoverAdjustMode) return;
-          if (event.target.closest(".profile-cover-btn, .profile-cover-adjust-btn, .profile-identity")) {
-            return;
-          }
+        const setReadOnlyMode = (profile) => {
+          fields.forEach(({ key, node }) => {
+            const value = profile[key] || "";
+            if (!node) return;
 
-          isDraggingCover = true;
-          dragStartY = event.clientY;
-          dragStartPos = currentCoverPosition;
-          profileCover.setPointerCapture(event.pointerId);
-          event.preventDefault();
-        });
+            if (node.tagName === "SELECT") {
+              node.value = value || (key === "country" ? "mx" : "");
+              node.disabled = true;
+              return;
+            }
 
-        profileCover.addEventListener("pointermove", (event) => {
-          if (!isDraggingCover) return;
-
-          const deltaY = event.clientY - dragStartY;
-          const height = Math.max(profileCover.clientHeight || 1, 1);
-          const deltaPercent = (deltaY / height) * 100;
-          currentCoverPosition = Math.max(0, Math.min(100, dragStartPos + deltaPercent));
-          applyCoverPositionVisual(currentCoverPosition);
-        });
-
-        profileCover.addEventListener("pointerup", (event) => {
-          if (profileCover.hasPointerCapture(event.pointerId)) {
-            profileCover.releasePointerCapture(event.pointerId);
-          }
-          stopCoverDrag();
-        });
-
-        profileCover.addEventListener("pointercancel", stopCoverDrag);
-      }
-
-      if (avatarUpload) {
-        avatarUpload.addEventListener("change", async (event) => {
-          const file = event.target?.files?.[0];
-          if (!file) return;
-
-          const initialValidationError = validateProfileMediaFile({ file, type: "avatar" });
-          if (initialValidationError) {
-            showStatus(`Foto de perfil: ${initialValidationError}`, true);
-            avatarUpload.value = "";
-            return;
-          }
-
-          const optimizedFile = await optimizeProfileMediaFile({ file, type: "avatar" });
-          const validationError = validateProfileMediaFile({ file: optimizedFile, type: "avatar" });
-          if (validationError) {
-            showStatus(`Foto de perfil: ${validationError}`, true);
-            avatarUpload.value = "";
-            return;
-          }
-
-          const preview = URL.createObjectURL(optimizedFile);
-          applyAvatarVisual(preview);
-
-          const { publicUrl, error: uploadError } = await uploadProfileMedia({
-            file: optimizedFile,
-            type: "avatar",
+            node.value = "";
+            node.placeholder = value || node.dataset.defaultPlaceholder || "";
+            node.disabled = true;
           });
 
-          URL.revokeObjectURL(preview);
-
-          if (uploadError || !publicUrl) {
-            showStatus("No se pudo subir la foto de perfil.", true);
-            return;
+          if (saveBtn) {
+            saveBtn.textContent = "Editar información";
+            saveBtn.disabled = false;
           }
+        };
 
-          const persistError = await saveProfileMediaUrls({ avatar_url: publicUrl });
-          if (persistError) {
-            showStatus("La foto se subió, pero no se pudo guardar en perfil.", true);
-            return;
-          }
-
-          currentProfile.avatar_url = publicUrl;
-          applyAvatarVisual(publicUrl);
-          showStatus("Foto de perfil actualizada.");
-        });
-      }
-
-      if (coverUpload) {
-        coverUpload.addEventListener("change", async (event) => {
-          const file = event.target?.files?.[0];
-          if (!file) return;
-
-          const initialValidationError = validateProfileMediaFile({ file, type: "cover" });
-          if (initialValidationError) {
-            showStatus(`Portada: ${initialValidationError}`, true);
-            coverUpload.value = "";
-            return;
-          }
-
-          const optimizedFile = await optimizeProfileMediaFile({ file, type: "cover" });
-          const validationError = validateProfileMediaFile({ file: optimizedFile, type: "cover" });
-          if (validationError) {
-            showStatus(`Portada: ${validationError}`, true);
-            coverUpload.value = "";
-            return;
-          }
-
-          const preview = URL.createObjectURL(optimizedFile);
-          currentCoverPosition = 50;
-          applyCoverVisual(preview);
-
-          const { publicUrl, error: uploadError } = await uploadProfileMedia({
-            file: optimizedFile,
-            type: "cover",
+        const setEditMode = (profile) => {
+          fields.forEach(({ key, node }) => {
+            if (!node) return;
+            node.disabled = false;
+            if (node.tagName === "SELECT") {
+              node.value = profile[key] || (key === "country" ? "mx" : "");
+              return;
+            }
+            node.placeholder = node.dataset.defaultPlaceholder || "";
+            node.value = profile[key] || "";
           });
 
-          URL.revokeObjectURL(preview);
-
-          if (uploadError || !publicUrl) {
-            showStatus("No se pudo subir la portada.", true);
-            return;
+          if (saveBtn) {
+            saveBtn.textContent = "Guardar cambios";
+            saveBtn.disabled = false;
           }
+        };
 
-          const persistError = await saveProfileMediaUrls({ cover_url: publicUrl });
-          if (persistError) {
-            showStatus("La portada se subió, pero no se pudo guardar en perfil.", true);
-            return;
-          }
-
-          currentProfile.cover_url = publicUrl;
-          applyCoverVisual(publicUrl);
-          writeCoverPosition(currentCoverPosition);
-          const coverPosError = await saveCoverPositionToTable(currentCoverPosition);
-          if (coverPosError) {
-            console.warn("No se pudo guardar cover_position_y en user_profiles:", coverPosError);
-          }
-          if (coverAdjustToggle) {
-            coverAdjustToggle.hidden = false;
-          }
-          setCoverAdjustMode(true);
-          showStatus("Portada actualizada.");
-        });
-      }
-
-      if (emergencyForm && emergencyName && emergencyPhone && emergencyRelation && emergencyEmail) {
-        const emergencyContact = emergencyContactFromProfile(currentProfile);
-
-        if (hasCompleteEmergencyContact(emergencyContact)) {
-          populateEmergencyForm(emergencyContact);
-          if (emergencySaveBtn) emergencySaveBtn.textContent = "Actualizar contacto";
-          toggleEmergencyMode({ showForm: false, contact: emergencyContact });
-        } else {
-          clearEmergencyForm();
-          if (emergencySaveBtn) emergencySaveBtn.textContent = "Guardar contacto";
-          toggleEmergencyMode({ showForm: true });
-        }
-
-        emergencyEditBtn?.addEventListener("click", () => {
-          const savedContact = emergencyContactFromProfile(currentProfile);
-          populateEmergencyForm(savedContact);
-          if (emergencySaveBtn) emergencySaveBtn.textContent = "Actualizar contacto";
-          toggleEmergencyMode({ showForm: true, contact: savedContact });
-          emergencyName?.focus();
-        });
-
-        emergencyCancelBtn?.addEventListener("click", () => {
-          const savedContact = emergencyContactFromProfile(currentProfile);
-          if (!hasCompleteEmergencyContact(savedContact)) {
-            toggleEmergencyMode({ showForm: true });
-            return;
-          }
-          populateEmergencyForm(savedContact);
-          if (emergencySaveBtn) emergencySaveBtn.textContent = "Actualizar contacto";
-          toggleEmergencyMode({ showForm: false, contact: savedContact });
-        });
-
-        emergencyForm.addEventListener("submit", async (event) => {
-          event.preventDefault();
-
-          const payload = normalizeEmergencyContact({
-            name: emergencyName.value,
-            phone: emergencyPhone.value,
-            relation: emergencyRelation.value,
-            email: emergencyEmail.value,
-          });
-
-          if (!hasCompleteEmergencyContact(payload)) {
-            showEmergencyStatus("Completa nombre, teléfono, relación y correo del contacto.", true);
-            return;
-          }
-
-          const normalizedUserEmail = (user.email || "").trim().toLowerCase();
-          const normalizedEmergencyEmail = (payload.email || "").trim().toLowerCase();
-          if (normalizedEmergencyEmail && normalizedEmergencyEmail === normalizedUserEmail) {
-            showEmergencyStatus(
-              "El correo del contacto de emergencia debe ser diferente al de tu cuenta.",
-              true
-            );
-            emergencyEmail?.focus();
-            return;
-          }
-
-          if (emergencySaveBtn) {
-            emergencySaveBtn.disabled = true;
-            emergencySaveBtn.textContent = "Guardando...";
-          }
-
-          const { error } = await saveEmergencyContactForUser(
-            { userId: user.id, email: user.email || "" },
-            payload
-          );
-
-          if (emergencySaveBtn) {
-            emergencySaveBtn.disabled = false;
-            emergencySaveBtn.textContent = "Actualizar contacto";
-          }
+        const readProfileFromTable = async () => {
+          const { data, error } = await client
+            .from(PROFILE_TABLE)
+            .select("first_name,last_name,maternal_last_name,birth_date,gender,phone,weight_kg,height_cm,country,state,full_name,avatar_url,cover_url,emergency_name,emergency_phone,emergency_relation,emergency_email")
+            .eq("user_id", user.id)
+            .maybeSingle();
 
           if (error) {
-            showEmergencyStatus("No se pudo guardar el contacto. Intenta de nuevo.", true);
-            return;
+            const expectedNoRow = error.code === "PGRST116";
+            if (!expectedNoRow) {
+              console.warn("No se pudo leer la tabla user_profiles:", error);
+            }
+            return null;
           }
 
-          currentProfile = {
-            ...currentProfile,
-            ...emergencyContactToProfileFields(payload),
+          return data || null;
+        };
+
+        const saveProfileInTable = async (profile) => {
+          const row = {
+            user_id: user.id,
+            email: user.email || null,
+            ...profile,
+            full_name: profile.full_name || composeFullName(profile),
+            updated_at: new Date().toISOString(),
           };
 
-          showEmergencyStatus("Contacto de emergencia guardado correctamente.");
-          populateEmergencyForm(payload);
-          toggleEmergencyMode({ showForm: false, contact: payload });
-        });
-      }
+          const { error } = await client.from(PROFILE_TABLE).upsert(row, { onConflict: "user_id" });
+          return error || null;
+        };
 
-      const navActions = document.querySelector(".nav-actions");
-      if (navActions) {
-        navActions.innerHTML = `
+        const profileFromMeta = normalizeProfile(meta);
+        const profileFromTable = await readProfileFromTable();
+        let currentProfile = {
+          ...profileFromMeta,
+          ...(profileFromTable ? normalizeProfile(profileFromTable) : {}),
+        };
+
+        if (!profileFromTable) {
+          const bootstrapError = await saveProfileInTable(currentProfile);
+          if (bootstrapError) {
+            console.warn("No se pudo crear el registro inicial en user_profiles:", bootstrapError);
+          }
+        }
+
+        if (!currentProfile.full_name) {
+          currentProfile.full_name = composeFullName(currentProfile);
+        }
+
+        applyHeader(currentProfile);
+
+        let currentCoverPosition = readCoverPosition();
+        const coverPositionFromTable = await readCoverPositionFromTable();
+        if (coverPositionFromTable !== null) {
+          currentCoverPosition = coverPositionFromTable;
+        }
+        if (currentCoverPosition === null) {
+          currentCoverPosition = 12;
+        }
+
+        const applyAvatarVisual = (avatarUrl) => {
+          if (!avatarInner || !avatarUrl) return;
+          avatarInner.style.backgroundImage = `url("${avatarUrl}")`;
+          avatarInner.style.backgroundSize = "cover";
+          avatarInner.style.backgroundPosition = "center";
+          avatarInner.innerHTML = "";
+        };
+
+        const applyCoverPositionVisual = (positionY) => {
+          if (!profileCover) return;
+          profileCover.style.backgroundPosition = `center ${positionY}%`;
+        };
+
+        const applyCoverVisual = (coverUrl) => {
+          if (!profileCover || !coverUrl) return;
+          profileCover.style.backgroundImage = `url("${coverUrl}")`;
+          profileCover.style.backgroundSize = "cover";
+          applyCoverPositionVisual(currentCoverPosition);
+        };
+
+        if (currentProfile.avatar_url) {
+          applyAvatarVisual(currentProfile.avatar_url);
+        } else if (meta.avatar_url) {
+          applyAvatarVisual(meta.avatar_url);
+        }
+
+        if (currentProfile.cover_url) {
+          applyCoverVisual(currentProfile.cover_url);
+        }
+
+        if (coverAdjustToggle) {
+          coverAdjustToggle.hidden = !Boolean(currentProfile.cover_url);
+        }
+
+        let isCoverAdjustMode = false;
+        const setCoverAdjustMode = (active) => {
+          isCoverAdjustMode = active;
+          if (!profileCover || !coverAdjustToggle) return;
+          profileCover.classList.toggle("is-adjusting", active);
+          coverAdjustToggle.textContent = active ? "Listo" : "Ajustar portada";
+        };
+
+        coverAdjustToggle?.addEventListener("click", () => {
+          setCoverAdjustMode(!isCoverAdjustMode);
+        });
+
+        if (profileCover) {
+          let dragStartY = 0;
+          let dragStartPos = currentCoverPosition;
+          let isDraggingCover = false;
+
+          const stopCoverDrag = () => {
+            if (!isDraggingCover) return;
+            isDraggingCover = false;
+            writeCoverPosition(currentCoverPosition);
+            saveCoverPositionToTable(currentCoverPosition).then((error) => {
+              if (error) {
+                console.warn("No se pudo guardar posición de portada en user_profiles:", error);
+              }
+            });
+          };
+
+          profileCover.addEventListener("pointerdown", (event) => {
+            if (!isCoverAdjustMode) return;
+            if (event.target.closest(".profile-cover-btn, .profile-cover-adjust-btn, .profile-identity")) {
+              return;
+            }
+
+            isDraggingCover = true;
+            dragStartY = event.clientY;
+            dragStartPos = currentCoverPosition;
+            profileCover.setPointerCapture(event.pointerId);
+            event.preventDefault();
+          });
+
+          profileCover.addEventListener("pointermove", (event) => {
+            if (!isDraggingCover) return;
+
+            const deltaY = event.clientY - dragStartY;
+            const height = Math.max(profileCover.clientHeight || 1, 1);
+            const deltaPercent = (deltaY / height) * 100;
+            currentCoverPosition = Math.max(0, Math.min(100, dragStartPos + deltaPercent));
+            applyCoverPositionVisual(currentCoverPosition);
+          });
+
+          profileCover.addEventListener("pointerup", (event) => {
+            if (profileCover.hasPointerCapture(event.pointerId)) {
+              profileCover.releasePointerCapture(event.pointerId);
+            }
+            stopCoverDrag();
+          });
+
+          profileCover.addEventListener("pointercancel", stopCoverDrag);
+        }
+
+        if (avatarUpload) {
+          avatarUpload.addEventListener("change", async (event) => {
+            const file = event.target?.files?.[0];
+            if (!file) return;
+
+            const initialValidationError = validateProfileMediaFile({ file, type: "avatar" });
+            if (initialValidationError) {
+              showStatus(`Foto de perfil: ${initialValidationError}`, true);
+              avatarUpload.value = "";
+              return;
+            }
+
+            const optimizedFile = await optimizeProfileMediaFile({ file, type: "avatar" });
+            const validationError = validateProfileMediaFile({ file: optimizedFile, type: "avatar" });
+            if (validationError) {
+              showStatus(`Foto de perfil: ${validationError}`, true);
+              avatarUpload.value = "";
+              return;
+            }
+
+            const preview = URL.createObjectURL(optimizedFile);
+            applyAvatarVisual(preview);
+
+            const { publicUrl, error: uploadError } = await uploadProfileMedia({
+              file: optimizedFile,
+              type: "avatar",
+            });
+
+            URL.revokeObjectURL(preview);
+
+            if (uploadError || !publicUrl) {
+              showStatus("No se pudo subir la foto de perfil.", true);
+              return;
+            }
+
+            const persistError = await saveProfileMediaUrls({ avatar_url: publicUrl });
+            if (persistError) {
+              showStatus("La foto se subió, pero no se pudo guardar en perfil.", true);
+              return;
+            }
+
+            currentProfile.avatar_url = publicUrl;
+            applyAvatarVisual(publicUrl);
+            showStatus("Foto de perfil actualizada.");
+          });
+        }
+
+        if (coverUpload) {
+          coverUpload.addEventListener("change", async (event) => {
+            const file = event.target?.files?.[0];
+            if (!file) return;
+
+            const initialValidationError = validateProfileMediaFile({ file, type: "cover" });
+            if (initialValidationError) {
+              showStatus(`Portada: ${initialValidationError}`, true);
+              coverUpload.value = "";
+              return;
+            }
+
+            const optimizedFile = await optimizeProfileMediaFile({ file, type: "cover" });
+            const validationError = validateProfileMediaFile({ file: optimizedFile, type: "cover" });
+            if (validationError) {
+              showStatus(`Portada: ${validationError}`, true);
+              coverUpload.value = "";
+              return;
+            }
+
+            const preview = URL.createObjectURL(optimizedFile);
+            currentCoverPosition = 50;
+            applyCoverVisual(preview);
+
+            const { publicUrl, error: uploadError } = await uploadProfileMedia({
+              file: optimizedFile,
+              type: "cover",
+            });
+
+            URL.revokeObjectURL(preview);
+
+            if (uploadError || !publicUrl) {
+              showStatus("No se pudo subir la portada.", true);
+              return;
+            }
+
+            const persistError = await saveProfileMediaUrls({ cover_url: publicUrl });
+            if (persistError) {
+              showStatus("La portada se subió, pero no se pudo guardar en perfil.", true);
+              return;
+            }
+
+            currentProfile.cover_url = publicUrl;
+            applyCoverVisual(publicUrl);
+            writeCoverPosition(currentCoverPosition);
+            const coverPosError = await saveCoverPositionToTable(currentCoverPosition);
+            if (coverPosError) {
+              console.warn("No se pudo guardar cover_position_y en user_profiles:", coverPosError);
+            }
+            if (coverAdjustToggle) {
+              coverAdjustToggle.hidden = false;
+            }
+            setCoverAdjustMode(true);
+            showStatus("Portada actualizada.");
+          });
+        }
+
+        if (emergencyForm && emergencyName && emergencyPhone && emergencyRelation && emergencyEmail) {
+          const emergencyContact = emergencyContactFromProfile(currentProfile);
+
+          if (hasCompleteEmergencyContact(emergencyContact)) {
+            populateEmergencyForm(emergencyContact);
+            if (emergencySaveBtn) emergencySaveBtn.textContent = "Actualizar contacto";
+            toggleEmergencyMode({ showForm: false, contact: emergencyContact });
+          } else {
+            clearEmergencyForm();
+            if (emergencySaveBtn) emergencySaveBtn.textContent = "Guardar contacto";
+            toggleEmergencyMode({ showForm: true });
+          }
+
+          emergencyEditBtn?.addEventListener("click", () => {
+            const savedContact = emergencyContactFromProfile(currentProfile);
+            populateEmergencyForm(savedContact);
+            if (emergencySaveBtn) emergencySaveBtn.textContent = "Actualizar contacto";
+            toggleEmergencyMode({ showForm: true, contact: savedContact });
+            emergencyName?.focus();
+          });
+
+          emergencyCancelBtn?.addEventListener("click", () => {
+            const savedContact = emergencyContactFromProfile(currentProfile);
+            if (!hasCompleteEmergencyContact(savedContact)) {
+              toggleEmergencyMode({ showForm: true });
+              return;
+            }
+            populateEmergencyForm(savedContact);
+            if (emergencySaveBtn) emergencySaveBtn.textContent = "Actualizar contacto";
+            toggleEmergencyMode({ showForm: false, contact: savedContact });
+          });
+
+          emergencyForm.addEventListener("submit", async (event) => {
+            event.preventDefault();
+
+            const payload = normalizeEmergencyContact({
+              name: emergencyName.value,
+              phone: emergencyPhone.value,
+              relation: emergencyRelation.value,
+              email: emergencyEmail.value,
+            });
+
+            if (!hasCompleteEmergencyContact(payload)) {
+              showEmergencyStatus("Completa nombre, teléfono, relación y correo del contacto.", true);
+              return;
+            }
+
+            const normalizedUserEmail = (user.email || "").trim().toLowerCase();
+            const normalizedEmergencyEmail = (payload.email || "").trim().toLowerCase();
+            if (normalizedEmergencyEmail && normalizedEmergencyEmail === normalizedUserEmail) {
+              showEmergencyStatus(
+                "El correo del contacto de emergencia debe ser diferente al de tu cuenta.",
+                true
+              );
+              emergencyEmail?.focus();
+              return;
+            }
+
+            if (emergencySaveBtn) {
+              emergencySaveBtn.disabled = true;
+              emergencySaveBtn.textContent = "Guardando...";
+            }
+
+            const { error } = await saveEmergencyContactForUser(
+              { userId: user.id, email: user.email || "" },
+              payload
+            );
+
+            if (emergencySaveBtn) {
+              emergencySaveBtn.disabled = false;
+              emergencySaveBtn.textContent = "Actualizar contacto";
+            }
+
+            if (error) {
+              showEmergencyStatus("No se pudo guardar el contacto. Intenta de nuevo.", true);
+              return;
+            }
+
+            currentProfile = {
+              ...currentProfile,
+              ...emergencyContactToProfileFields(payload),
+            };
+
+            showEmergencyStatus("Contacto de emergencia guardado correctamente.");
+            populateEmergencyForm(payload);
+            toggleEmergencyMode({ showForm: false, contact: payload });
+          });
+        }
+
+        const navActions = document.querySelector(".nav-actions");
+        if (navActions) {
+          navActions.innerHTML = `
           <span class="ghost-link" style="cursor:default;font-size:0.85rem;">${user.email}</span>
           <button class="btn btn-primary" id="navLogoutBtn" type="button">Cerrar sesión</button>
         `;
-        document.getElementById("navLogoutBtn")?.addEventListener("click", async () => {
-          await client.auth.signOut();
-          window.location.href = "index.html";
-        });
-      }
-
-      const racesContainer = document.getElementById("profileRacesContainer");
-      const reminder = document.getElementById("profileRaceReminder");
-      const reminderPay = document.getElementById("profileRaceReminderPay");
-      if (reminderPay) {
-        reminderPay.href = AXOLOTE_PAYMENT_URL;
-      }
-
-      const profileUrl = new URL(window.location.href);
-      const raceParam = profileUrl.searchParams.get("race");
-      const paidParam = profileUrl.searchParams.get("paid");
-
-      const readPaymentState = () => localStorage.getItem(AXOLOTE_PAYMENT_STATE_KEY) || "";
-      const writePaymentState = (value) => {
-        if (!value) {
-          localStorage.removeItem(AXOLOTE_PAYMENT_STATE_KEY);
-          return;
+          document.getElementById("navLogoutBtn")?.addEventListener("click", async () => {
+            await client.auth.signOut();
+            window.location.href = "index.html";
+          });
         }
-        localStorage.setItem(AXOLOTE_PAYMENT_STATE_KEY, value);
-      };
 
-      if (raceParam === "axolote" && paidParam === "1") {
-        writePaymentState("paid");
-        localStorage.removeItem(AXOLOTE_POST_VERIFY_PROMPT_KEY);
-        profileUrl.searchParams.delete("race");
-        profileUrl.searchParams.delete("paid");
-        window.history.replaceState({}, "", profileUrl.pathname + profileUrl.search + profileUrl.hash);
-      }
+        const racesContainer = document.getElementById("profileRacesContainer");
+        const reminder = document.getElementById("profileRaceReminder");
+        const reminderPay = document.getElementById("profileRaceReminderPay");
+        if (reminderPay) {
+          reminderPay.href = AXOLOTE_PAYMENT_URL;
+        }
 
-      if (raceParam === "axolote" && paidParam === "0") {
-        writePaymentState("pending");
-        profileUrl.searchParams.delete("race");
-        profileUrl.searchParams.delete("paid");
-        window.history.replaceState({}, "", profileUrl.pathname + profileUrl.search + profileUrl.hash);
-      }
+        const profileUrl = new URL(window.location.href);
+        const raceParam = profileUrl.searchParams.get("race");
+        const paidParam = profileUrl.searchParams.get("paid");
 
-      const renderRaces = (state) => {
-        if (!racesContainer) return;
+        const readPaymentState = () => localStorage.getItem(AXOLOTE_PAYMENT_STATE_KEY) || "";
+        const writePaymentState = (value) => {
+          if (!value) {
+            localStorage.removeItem(AXOLOTE_PAYMENT_STATE_KEY);
+            return;
+          }
+          localStorage.setItem(AXOLOTE_PAYMENT_STATE_KEY, value);
+        };
 
-        if (state === "pending") {
-          racesContainer.innerHTML = `
+        if (raceParam === "axolote" && paidParam === "1") {
+          writePaymentState("paid");
+          localStorage.removeItem(AXOLOTE_POST_VERIFY_PROMPT_KEY);
+          profileUrl.searchParams.delete("race");
+          profileUrl.searchParams.delete("paid");
+          window.history.replaceState({}, "", profileUrl.pathname + profileUrl.search + profileUrl.hash);
+        }
+
+        if (raceParam === "axolote" && paidParam === "0") {
+          writePaymentState("pending");
+          profileUrl.searchParams.delete("race");
+          profileUrl.searchParams.delete("paid");
+          window.history.replaceState({}, "", profileUrl.pathname + profileUrl.search + profileUrl.hash);
+        }
+
+        const renderRaces = (state) => {
+          if (!racesContainer) return;
+
+          if (state === "pending") {
+            racesContainer.innerHTML = `
             <div class="profile-race-card">
               <article class="profile-race-item">
                 <div class="profile-race-top">
@@ -2619,11 +2728,11 @@ function setupSupabase() {
               </article>
             </div>
           `;
-          return;
-        }
+            return;
+          }
 
-        if (state === "paid") {
-          racesContainer.innerHTML = `
+          if (state === "paid") {
+            racesContainer.innerHTML = `
             <div class="profile-race-card">
               <article class="profile-race-item">
                 <div class="profile-race-top">
@@ -2638,10 +2747,10 @@ function setupSupabase() {
               </article>
             </div>
           `;
-          return;
-        }
+            return;
+          }
 
-        racesContainer.innerHTML = `
+          racesContainer.innerHTML = `
           <div class="profile-card">
             <div class="profile-empty-state">
               <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -2658,18 +2767,18 @@ function setupSupabase() {
             </div>
           </div>
         `;
-      };
+        };
 
-      const syncReminder = (state) => {
-        if (!reminder) return;
-        reminder.hidden = state !== "pending";
-      };
+        const syncReminder = (state) => {
+          if (!reminder) return;
+          reminder.hidden = state !== "pending";
+        };
 
-      const openRegisterModal = () => {
-        const overlay = document.createElement("div");
-        overlay.className = "profile-race-register-overlay";
-        overlay.id = "profileRaceRegisterOverlay";
-        overlay.innerHTML = `
+        const openRegisterModal = () => {
+          const overlay = document.createElement("div");
+          overlay.className = "profile-race-register-overlay";
+          overlay.id = "profileRaceRegisterOverlay";
+          overlay.innerHTML = `
           <div class="profile-race-register-modal" role="dialog" aria-modal="true" aria-labelledby="profileRaceRegisterTitle">
             <button class="profile-race-register-close" type="button" aria-label="Cerrar">&times;</button>
             <h3 id="profileRaceRegisterTitle">Registro confirmado para Axolote Night Run 2026</h3>
@@ -2689,122 +2798,122 @@ function setupSupabase() {
           </div>
         `;
 
-        const closeModal = () => {
-          overlay.remove();
-          writePaymentState("pending");
-          renderRaces("pending");
-          syncReminder("pending");
-        };
+          const closeModal = () => {
+            overlay.remove();
+            writePaymentState("pending");
+            renderRaces("pending");
+            syncReminder("pending");
+          };
 
-        overlay.addEventListener("click", (event) => {
-          if (event.target === overlay) {
-            closeModal();
-          }
-        });
-
-        overlay.querySelector(".profile-race-register-close")?.addEventListener("click", closeModal);
-        document.addEventListener(
-          "keydown",
-          (event) => {
-            if (event.key === "Escape" && document.getElementById("profileRaceRegisterOverlay")) {
+          overlay.addEventListener("click", (event) => {
+            if (event.target === overlay) {
               closeModal();
             }
-          },
-          { once: true }
-        );
-
-        document.body.appendChild(overlay);
-      };
-
-      let paymentState = readPaymentState();
-      const shouldPromptAfterVerify = localStorage.getItem(AXOLOTE_POST_VERIFY_PROMPT_KEY) === "1";
-
-      if (shouldPromptAfterVerify && paymentState !== "paid") {
-        writePaymentState("pending");
-        localStorage.removeItem(AXOLOTE_POST_VERIFY_PROMPT_KEY);
-        paymentState = "pending";
-      }
-
-      if (!paymentState && shouldPromptAfterVerify) {
-        paymentState = "pending";
-      }
-
-      // For existing accounts without a confirmed payment, default to pending state.
-      if (!paymentState) {
-        writePaymentState("pending");
-        paymentState = "pending";
-      }
-
-      if (paymentState === "pending") {
-        renderRaces("pending");
-        syncReminder("pending");
-        openRegisterModal();
-      } else if (paymentState === "paid") {
-        renderRaces("paid");
-        syncReminder("paid");
-      } else {
-        renderRaces("");
-        syncReminder("");
-      }
-
-      let isEditing = false;
-      setReadOnlyMode(currentProfile);
-
-      if (profileForm) {
-        profileForm.addEventListener("submit", async (event) => {
-          event.preventDefault();
-
-          if (!isEditing) {
-            isEditing = true;
-            showStatus("");
-            setEditMode(currentProfile);
-            return;
-          }
-
-          const originalBtnText = saveBtn?.textContent || "Guardar cambios";
-          if (saveBtn) {
-            saveBtn.disabled = true;
-            saveBtn.textContent = "Guardando...";
-          }
-
-          const nextProfile = normalizeProfile(buildProfileFromForm());
-          nextProfile.full_name = composeFullName(nextProfile);
-
-          const { data: updatedData, error: updateError } = await client.auth.updateUser({
-            data: nextProfile,
           });
 
-          if (updateError) {
-            if (saveBtn) {
-              saveBtn.disabled = false;
-              saveBtn.textContent = originalBtnText;
+          overlay.querySelector(".profile-race-register-close")?.addEventListener("click", closeModal);
+          document.addEventListener(
+            "keydown",
+            (event) => {
+              if (event.key === "Escape" && document.getElementById("profileRaceRegisterOverlay")) {
+                closeModal();
+              }
+            },
+            { once: true }
+          );
+
+          document.body.appendChild(overlay);
+        };
+
+        let paymentState = readPaymentState();
+        const shouldPromptAfterVerify = localStorage.getItem(AXOLOTE_POST_VERIFY_PROMPT_KEY) === "1";
+
+        if (shouldPromptAfterVerify && paymentState !== "paid") {
+          writePaymentState("pending");
+          localStorage.removeItem(AXOLOTE_POST_VERIFY_PROMPT_KEY);
+          paymentState = "pending";
+        }
+
+        if (!paymentState && shouldPromptAfterVerify) {
+          paymentState = "pending";
+        }
+
+        // For existing accounts without a confirmed payment, default to pending state.
+        if (!paymentState) {
+          writePaymentState("pending");
+          paymentState = "pending";
+        }
+
+        if (paymentState === "pending") {
+          renderRaces("pending");
+          syncReminder("pending");
+          openRegisterModal();
+        } else if (paymentState === "paid") {
+          renderRaces("paid");
+          syncReminder("paid");
+        } else {
+          renderRaces("");
+          syncReminder("");
+        }
+
+        let isEditing = false;
+        setReadOnlyMode(currentProfile);
+
+        if (profileForm) {
+          profileForm.addEventListener("submit", async (event) => {
+            event.preventDefault();
+
+            if (!isEditing) {
+              isEditing = true;
+              showStatus("");
+              setEditMode(currentProfile);
+              return;
             }
-            showStatus(updateError.message || "No se pudo actualizar el perfil.", true);
-            return;
-          }
 
-          const tableError = await saveProfileInTable(nextProfile);
-          if (tableError) {
-            const reason = [tableError.code, tableError.message].filter(Boolean).join(" - ");
-            showStatus(
-              `Se guardó en la cuenta, pero falló user_profiles${reason ? `: ${reason}` : "."}`,
-              true
-            );
-            console.warn("No se pudo guardar en user_profiles:", tableError);
-          } else {
-            showStatus("Perfil actualizado correctamente.");
-          }
+            const originalBtnText = saveBtn?.textContent || "Guardar cambios";
+            if (saveBtn) {
+              saveBtn.disabled = true;
+              saveBtn.textContent = "Guardando...";
+            }
 
-          const updatedMeta = updatedData?.user?.user_metadata || nextProfile;
-          currentProfile = normalizeProfile({ ...nextProfile, ...updatedMeta });
-          currentProfile.full_name = currentProfile.full_name || composeFullName(currentProfile);
+            const nextProfile = normalizeProfile(buildProfileFromForm());
+            nextProfile.full_name = composeFullName(nextProfile);
 
-          applyHeader(currentProfile);
+            const { data: updatedData, error: updateError } = await client.auth.updateUser({
+              data: nextProfile,
+            });
 
-          isEditing = false;
-          setReadOnlyMode(currentProfile);
-        });
-      }
+            if (updateError) {
+              if (saveBtn) {
+                saveBtn.disabled = false;
+                saveBtn.textContent = originalBtnText;
+              }
+              showStatus(updateError.message || "No se pudo actualizar el perfil.", true);
+              return;
+            }
+
+            const tableError = await saveProfileInTable(nextProfile);
+            if (tableError) {
+              const reason = [tableError.code, tableError.message].filter(Boolean).join(" - ");
+              showStatus(
+                `Se guardó en la cuenta, pero falló user_profiles${reason ? `: ${reason}` : "."}`,
+                true
+              );
+              console.warn("No se pudo guardar en user_profiles:", tableError);
+            } else {
+              showStatus("Perfil actualizado correctamente.");
+            }
+
+            const updatedMeta = updatedData?.user?.user_metadata || nextProfile;
+            currentProfile = normalizeProfile({ ...nextProfile, ...updatedMeta });
+            currentProfile.full_name = currentProfile.full_name || composeFullName(currentProfile);
+
+            applyHeader(currentProfile);
+
+            isEditing = false;
+            setReadOnlyMode(currentProfile);
+          });
+        }
       });
 
       // Logout desde el sidebar

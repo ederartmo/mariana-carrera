@@ -1,171 +1,168 @@
 <!doctype html>
 <html lang="es">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Kinetic Hub | Acceso</title>
-    <meta
-      name="description"
-      content="Inicia sesión o crea tu cuenta en Kinetic Hub para registrarte y recibir tus resultados."
-    />
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Sora:wght@500;600;700;800&display=swap"
-      rel="stylesheet"
-    />
-    <link rel="stylesheet" href="styles.css?v=__ASSET_VERSION__" />
-    <link rel="icon" type="image/png" href="icon.png" />
-  </head>
-  <body class="auth-page" data-auth-page data-google-login-url="#" data-google-register-url="#">
-    <header class="site-header">
-      <div class="container nav-shell">
-        <a href="index.html" class="brand" aria-label="Ir al inicio de Kinetic Hub">
-          <img class="brand-mascot" src="logo.png" alt="Ajolote Kinetic Hub" />
-          <span class="brand-copy">
-            <strong>Kinetic Hub</strong>
-            <small>Run your next challenge</small>
-          </span>
-        </a>
 
-        <button class="menu-toggle" id="menuToggle" aria-expanded="false" aria-controls="siteNav">
-          Menú
-        </button>
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Kinetic Hub | Acceso</title>
+  <meta name="description"
+    content="Inicia sesión o crea tu cuenta en Kinetic Hub para registrarte y recibir tus resultados." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Sora:wght@500;600;700;800&display=swap"
+    rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css?v=__ASSET_VERSION__" />
+  <link rel="icon" type="image/png" href="icon.png" />
+</head>
 
-        <nav class="site-nav" id="siteNav" aria-label="Navegación principal">
-          <a href="eventos.html">Explorar eventos</a>
-          <a href="blog.html">Blog</a>
-          <a href="nosotros.html">Nosotros</a>
-          <a href="contacto.html">Contacto</a>
-        </nav>
+<body class="auth-page" data-auth-page data-google-login-url="#" data-google-register-url="#">
+  <header class="site-header">
+    <div class="container nav-shell">
+      <a href="index.html" class="brand" aria-label="Ir al inicio de Kinetic Hub">
+        <img class="brand-mascot" src="logo.png" alt="Ajolote Kinetic Hub" />
+        <span class="brand-copy">
+          <strong>Kinetic Hub</strong>
+          <small>Run your next challenge</small>
+        </span>
+      </a>
 
-        <div class="nav-actions">
-          <a class="ghost-link" href="auth.html?mode=login">Iniciar Sesión</a>
-          <a class="btn btn-primary" href="auth.html?mode=register">Registrarse</a>
-        </div>
+      <button class="menu-toggle" id="menuToggle" aria-expanded="false" aria-controls="siteNav">
+        Menú
+      </button>
+
+      <nav class="site-nav" id="siteNav" aria-label="Navegación principal">
+        <a href="eventos.html">Explorar eventos</a>
+        <a href="blog.html">Blog</a>
+        <a href="nosotros.html">Nosotros</a>
+        <a href="contacto.html">Contacto</a>
+      </nav>
+
+      <div class="nav-actions">
+        <a class="ghost-link" href="auth.html?mode=login">Iniciar Sesión</a>
+        <a class="btn btn-primary" href="auth.html?mode=register">Registrarse</a>
       </div>
-    </header>
+    </div>
+  </header>
 
-    <main class="auth-main">
-      <section class="auth-shell reveal">
-        <div class="auth-card">
+  <main class="auth-main">
+    <section class="auth-shell reveal">
+      <div class="auth-card">
 
-          <section class="auth-panel is-active" data-auth-panel="login">
-            <h1>Inicia sesión</h1>
-            <p>Ingresa tu correo para continuar con tu registro y consultar resultados.</p>
+        <section class="auth-panel is-active" data-auth-panel="login">
+          <h1>Inicia sesión</h1>
+          <p>Ingresa tu correo para continuar con tu registro y consultar resultados.</p>
 
-            <form class="auth-form" id="loginForm" action="#" method="post" novalidate>
-              <div class="auth-login-step is-active" data-login-step="email">
-                <label for="loginEmail">Correo electrónico</label>
-                <input id="loginEmail" name="loginEmail" type="email" placeholder="Correo electrónico" required />
-                <button class="auth-submit" type="button" id="loginContinueBtn">Continuar</button>
+          <form class="auth-form" id="loginForm" action="#" method="post" novalidate>
+            <div class="auth-login-step is-active" data-login-step="email">
+              <label for="loginEmail">Correo electrónico</label>
+              <input id="loginEmail" name="loginEmail" type="email" placeholder="Correo electrónico" required />
+              <button class="auth-submit" type="button" id="loginContinueBtn">Continuar</button>
+            </div>
+
+            <div class="auth-login-step" data-login-step="password">
+              <div class="auth-email-lock" id="authEmailLock"></div>
+              <button class="auth-link-inline" type="button" id="authChangeEmailBtn">Cambiar correo electrónico</button>
+
+              <label for="loginPassword">Contraseña</label>
+              <div class="auth-password-wrap">
+                <input id="loginPassword" name="loginPassword" type="password" placeholder="********"
+                  autocomplete="current-password" required />
+                <button class="auth-password-toggle" type="button" id="toggleLoginPassword"
+                  aria-label="Mostrar u ocultar contraseña">
+                  <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M3 12s3.5-6 9-6 9 6 9 6-3.5 6-9 6-9-6-9-6Z" stroke="currentColor" stroke-width="1.7" />
+                    <circle cx="12" cy="12" r="2.8" stroke="currentColor" stroke-width="1.7" />
+                  </svg>
+                </button>
               </div>
 
-              <div class="auth-login-step" data-login-step="password">
-                <div class="auth-email-lock" id="authEmailLock"></div>
-                <button class="auth-link-inline" type="button" id="authChangeEmailBtn">Cambiar correo electrónico</button>
-
-                <label for="loginPassword">Contraseña</label>
-                <div class="auth-password-wrap">
-                  <input
-                    id="loginPassword"
-                    name="loginPassword"
-                    type="password"
-                    placeholder="********"
-                    autocomplete="current-password"
-                    required
-                  />
-                  <button class="auth-password-toggle" type="button" id="toggleLoginPassword" aria-label="Mostrar u ocultar contraseña">
-                    <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                      <path d="M3 12s3.5-6 9-6 9 6 9 6-3.5 6-9 6-9-6-9-6Z" stroke="currentColor" stroke-width="1.7" />
-                      <circle cx="12" cy="12" r="2.8" stroke="currentColor" stroke-width="1.7" />
-                    </svg>
-                  </button>
-                </div>
-
-                <div class="auth-login-row">
-                  <label class="auth-check">
-                    <input type="checkbox" name="rememberMe" />
-                    <span>Recordarme</span>
-                  </label>
-                  <a href="#" class="auth-inline-link">¿Olvidaste tu contraseña?</a>
-                </div>
-
-                <button class="auth-submit" type="submit">Iniciar Sesión</button>
-              </div>
-            </form>
-
-            <p class="auth-switch-copy">
-              ¿No tienes cuenta?
-              <button type="button" class="auth-link-btn" data-auth-tab-target="register">Regístrate</button>
-            </p>
-          </section>
-
-          <section class="auth-panel" data-auth-panel="register">
-            <h1>Crear cuenta</h1>
-            <p>Todos los campos son obligatorios para validar tu inscripción y notificar tus resultados.</p>
-
-            <form class="auth-form" action="#" method="post">
-              <div class="auth-grid-2">
-                <div>
-                  <label for="registerName">Nombre</label>
-                  <input id="registerName" name="registerName" type="text" placeholder="Tu nombre" required />
-                </div>
-                <div>
-                  <label for="registerLastName">Apellido</label>
-                  <input id="registerLastName" name="registerLastName" type="text" placeholder="Tu apellido" required />
-                </div>
+              <div class="auth-login-row">
+                <label class="auth-check">
+                  <input type="checkbox" name="rememberMe" />
+                  <span>Recordarme</span>
+                </label>
+                <a href="#" class="auth-inline-link">¿Olvidaste tu contraseña?</a>
               </div>
 
-              <div class="auth-grid-2">
-                <div>
-                  <label for="registerBirthDate">Fecha de nacimiento</label>
-                  <input id="registerBirthDate" name="registerBirthDate" type="date" required />
-                </div>
-                <div>
+              <button class="auth-submit" type="submit">Iniciar Sesión</button>
+            </div>
+          </form>
+
+          <p class="auth-switch-copy">
+            ¿No tienes cuenta?
+            <button type="button" class="auth-link-btn" data-auth-tab-target="register">Regístrate</button>
+          </p>
+        </section>
+
+        <section class="auth-panel" data-auth-panel="register">
+          <h1>Crear cuenta</h1>
+          <p>Todos los campos son obligatorios para validar tu inscripción y notificar tus resultados.</p>
+
+          <form class="auth-form" action="#" method="post">
+            <div class="auth-grid-2">
+              <div>
+                <label for="registerName">Nombre</label>
+                <input id="registerName" name="registerName" type="text" placeholder="Tu nombre" required />
+              </div>
+              <div>
+                <label for="registerLastName">Apellido</label>
+                <input id="registerLastName" name="registerLastName" type="text" placeholder="Tu apellido" required />
+              </div>
+            </div>
+
+            <div class="auth-grid-2">
+              <div>
+                <label for="registerBirthDate">Fecha de nacimiento</label>
+                <input id="registerBirthDate" name="registerBirthDate" type="date" required />
+              </div>
+              <!-- <div>
                   <label for="registerPhone">Número de teléfono</label>
                   <input id="registerPhone" name="registerPhone" type="tel" placeholder="Tu teléfono" required />
-                </div>
+                </div> -->
+              <div class="auth-field-group">
+                <label for="registerPhone">Número de teléfono <span class="required">*</span></label>
+                <input id="registerPhone" name="registerPhone" type="tel" placeholder="Ej: 3001234567 o +573001234567"
+                  required maxlength="15" />
+                <p id="phoneError" class="auth-field-error"></p>
               </div>
+            </div>
 
-              <label for="registerEmail">Correo electrónico</label>
-              <input id="registerEmail" name="registerEmail" type="email" placeholder="Tu correo" required />
+            <label for="registerEmail">Correo electrónico</label>
+            <input id="registerEmail" name="registerEmail" type="email" placeholder="Tu correo" required />
 
-              <div class="auth-grid-2">
-                <div>
-                  <label for="registerPassword">Contraseña</label>
-                  <input id="registerPassword" name="registerPassword" type="password" placeholder="********" required />
-                </div>
-                <div>
-                  <label for="registerConfirmPassword">Confirmar contraseña</label>
-                  <input
-                    id="registerConfirmPassword"
-                    name="registerConfirmPassword"
-                    type="password"
-                    placeholder="********"
-                    required
-                  />
-                </div>
+            <div class="auth-grid-2">
+              <div>
+                <label for="registerPassword">Contraseña</label>
+                <input id="registerPassword" name="registerPassword" type="password" placeholder="********" required />
               </div>
+              <div>
+                <label for="registerConfirmPassword">Confirmar contraseña</label>
+                <input id="registerConfirmPassword" name="registerConfirmPassword" type="password"
+                  placeholder="********" required />
+              </div>
+            </div>
 
-              <p class="auth-terms">
-                Al continuar aceptas nuestro <a href="privacidad.html">aviso de privacidad</a>, <a href="terminos.html">terminos de uso</a> y <a href="cookies.html">politica de cookies</a>.
-              </p>
-
-              <button class="auth-submit" type="submit">Registrarme</button>
-              <p class="auth-form-status" id="registerStatus" aria-live="polite"></p>
-            </form>
-
-            <p class="auth-switch-copy">
-              ¿Ya tienes cuenta?
-              <button type="button" class="auth-link-btn" data-auth-tab-target="login">Inicia sesión</button>
+            <p class="auth-terms">
+              Al continuar aceptas nuestro <a href="privacidad.html">aviso de privacidad</a>, <a
+                href="terminos.html">terminos de uso</a> y <a href="cookies.html">politica de cookies</a>.
             </p>
-          </section>
-        </div>
-      </section>
-    </main>
 
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="script.js?v=__ASSET_VERSION__"></script>
-  </body>
+            <button class="auth-submit" type="submit">Registrarme</button>
+            <p class="auth-form-status" id="registerStatus" aria-live="polite"></p>
+          </form>
+
+          <p class="auth-switch-copy">
+            ¿Ya tienes cuenta?
+            <button type="button" class="auth-link-btn" data-auth-tab-target="login">Inicia sesión</button>
+          </p>
+        </section>
+      </div>
+    </section>
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="script.js?v=__ASSET_VERSION__"></script>
+</body>
+
 </html>
