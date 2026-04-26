@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="es">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Kinetic Hub | Checkout</title>
+  <meta name="description"
+    content="Completa tu inscripción a eventos de Kinetic Hub con nuestro proceso seguro de checkout." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Sora:wght@500;600;700;800&display=swap"
+    rel="stylesheet" />
+  <link rel="stylesheet" href=styles.css?v=__ASSET_VERSION__" />
+  <link rel="icon" type="image/png" href="icon.png" />
+</head>
+<body>
+    <script>
+    // Detectar si el usuario viene de un pago exitoso
+    function checkPaymentSuccess() {
+      const urlParams = new URLSearchParams(window.location.search);
+      const isSuccess = urlParams.get('success') === 'true';
+      const sessionId = urlParams.get('session_id');
+      if (isSuccess) {
+        // Ocultar el formulario
+        const form = document.getElementById('checkoutForm');
+        if (form) form.style.display = 'none';
+
+        // Mostrar pantalla de éxito
+        const successScreen = document.getElementById('successMessage');
+        if (successScreen) {
+          successScreen.style.display = 'block';
+        }
+
+        // Limpiar la URL (opcional, para que quede más limpia)
+        window.history.replaceState({}, document.title, window.location.pathname);
+
+        console.log('✅ Pago confirmado - Session ID:', sessionId);
+      } else {
+        window.location.href = "index.html";
+      }
+    }
+
+    // Ejecutar cuando cargue la página
+    window.addEventListener('load', checkPaymentSuccess);
+  </script>
+  <!-- Mensaje de Éxito (se muestra después del pago) -->
+    <div id="successMessage" class="success-screen" style="display: none;">
+    <div style="text-align: center; padding: 60px 20px; max-width: 620px; margin: 0 auto;">
+      <div
+        style="width: 90px; height: 90px; margin: 0 auto 24px; background: linear-gradient(135deg, #19c88b, #0fa870); border-radius: 50%; display: flex; align-items: center; justify-content: center;">
+        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M5 12.5L9.5 17L19 8" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" />
+        </svg>
+      </div>
+
+      <h1 style="font-family: 'Sora', sans-serif; font-size: 2rem; margin: 0 0 16px;">¡Inscripción Confirmada!</h1>
+      <p style="font-size: 1.1rem; color: #374151; margin-bottom: 32px;">
+        Gracias por tu pago. Ya estás inscrito en <strong>Axolote Night Run 2026</strong>.
+      </p>
+
+      <div style="display:flex; justify-content: center; align-items: center;flex-direction: column;background: #f8faf9; border-radius: 12px; padding: 24px; margin-bottom: 32px; text-align: left;">
+        <h3 style="margin: 0 0 16px; color: #19c88b;">📋 Descarga estos documentos para la carrera</h3>
+        <p style="margin: 0 0 12px;">Imprime ambas hojas, fírmalas y llévalas el día del evento:</p>
+        <a href="exo.jpeg" download class="btn"
+          style="display: inline-block; margin: 8px 8px 8px 0; background: #19c88b; color: white; padding: 12px 24px; border-radius: 999px; text-decoration: none;">
+          📄 Hoja 1 - Exoneración
+        </a>
+        <a href="exo1.jpeg" download class="btn"
+          style="display: inline-block; margin: 8px 8px 8px 0; background: #19c88b; color: white; padding: 12px 24px; border-radius: 999px; text-decoration: none;">
+          📄 Hoja 2 - Exoneración
+        </a>
+      </div>
+
+      <p style="color: #6b7280; font-size: 0.95rem;">
+        También te enviamos un correo con toda la información.<br>
+        Revisa tu bandeja de entrada (y spam). Puede demorar
+      </p>
+
+      <a href="index.html" class="btn btn-primary" style="margin-top: 32px; padding: 14px 32px;">
+        Volver al inicio
+      </a>
+    </div>
+  </div>
+</body>
+</html>

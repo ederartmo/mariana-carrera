@@ -47,8 +47,10 @@ export default async function handler(req, res) {
           quantity: 1,
         },
       ],
-      success_url: process.env.STRIPE_SUCCESS_URL,
-      cancel_url: process.env.STRIPE_CANCEL_URL,
+      // success_url: process.env.STRIPE_SUCCESS_URL,
+      // cancel_url: process.env.STRIPE_CANCEL_URL,
+      success_url: 'https://www.kinetichub.com.mx/succes.html?session_id={CHECKOUT_SESSION_ID}',   // ← importante el {CHECKOUT_SESSION_ID}
+      cancel_url: 'https://www.kinetichub.com.mx/checkout.html',
     });
     res.status(200).json({ url: session.url });
   } catch (error) {
