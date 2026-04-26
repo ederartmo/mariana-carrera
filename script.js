@@ -277,7 +277,12 @@ function formatEmergencyRelation(value) {
     amigo: "Amigo/a",
     otro: "Otro",
   };
-
+  // function escapeHTML(str) {
+  //   if (typeof str !== "string") return "";
+  //   const div = document.createElement("div");
+  //   div.textContent = str;
+  //   return div.innerHTML;
+  // }
   return labels[value] || value || "Sin relación";
 }
 
@@ -787,12 +792,46 @@ function setupAuthPage() {
   const initialMode = modeParam === "register" ? "register" : "login";
   activateMode(initialMode);
 
+  const ALLOWED_RETURN_PATHS = new Set([
+    "/",
+    "/index.html",
+    "/eventos.html",
+    "/blog.html",
+    "/nosotros.html",
+    "/contacto.html",
+    "/axolote-night-run.html",
+    "/checkout.html",
+    "/auth.html",
+    "/terminos.html",
+    "/privacidad.html",
+    "/evento",
+    "/cookies",
+    // Agrega aquí todos los paths válidos de tu sitio
+  ]);
+
   const searchParams = new URLSearchParams(window.location.search);
-  const isValidReturnPath = (value) =>
-    typeof value === "string" &&
-    value.startsWith("/") &&
-    !value.startsWith("//") &&
-    !value.includes("auth.html");
+  const isValidReturnPath = (value) => {
+    if (typeof value !== "string" || !value) return false;
+    if (!value.startsWith("/")) return false;
+    if (value.includes("//") || value.includes("http") || value.includes("..")) return false;
+    if (value.includes("auth.html") || value.toLowerCase().includes("javascript:")) return false;
+
+    // Normalizar (quitar query y hash)
+    const normalized = value.split("?")[0].split("#")[0];
+
+    // Whitelist estricta o patrón seguro
+    return ALLOWED_RETURN_PATHS.has(normalized) ||
+      (normalized.endsWith(".html") && !normalized.includes(".."));
+  };
+
+  const consumeReturnTarget = () => {
+    const saved = sessionStorage.getItem(AUTH_RETURN_KEY); // Cambiamos a sessionStorage
+    if (isValidReturnPath(saved)) {
+      sessionStorage.removeItem(AUTH_RETURN_KEY);
+      return saved;
+    }
+    return "/perfil.html"; // fallback seguro
+  };
 
   const returnToParam = searchParams.get("returnTo");
   if (isValidReturnPath(returnToParam)) {
@@ -936,7 +975,7 @@ function setupAuthPage() {
     showGlobalStatus("Correo confirmado correctamente. Te estamos enviando a tu perfil...");
   }
 
-  const rememberedEmail = localStorage.getItem(LAST_LOGIN_EMAIL_KEY);
+  const rememberedEmail = sessionStorage.getItem(LAST_LOGIN_EMAIL_KEY);
   if (initialMode === "login" && rememberedEmail && loginEmailInput && !emailParam) {
     window.setTimeout(() => {
       const useRemembered = window.confirm(
@@ -1373,6 +1412,52 @@ function setupEventRegistrationPanel() {
 
   sdkScript.addEventListener("load", initSessionState, { once: true });
 }
+// === SUPABASE LOADER SEGURO ===
+let supabaseInstance = null;
+let supabasePromise = null;
+
+const ensureSupabaseClient = async () => {
+  if (supabaseInstance) return supabaseInstance;
+
+  if (supabasePromise) return supabasePromise;
+
+  supabasePromise = new Promise(async (resolve) => {
+    if (typeof window.supabase !== "undefined") {
+      supabaseInstance = window.supabase.createClient(
+        SUPABASE_URL,
+        SUPABASE_KEY
+      );
+      resolve(supabaseInstance);
+      return;
+    }
+
+    let sdkScript = document.querySelector('script[data-supabase-sdk="true"]');
+    if (!sdkScript) {
+      sdkScript = document.createElement("script");
+      sdkScript.src = "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2";
+      sdkScript.dataset.supabaseSdk = "true";
+      document.head.appendChild(sdkScript);
+    }
+
+    const onLoad = () => {
+      if (typeof window.supabase !== "undefined") {
+        supabaseInstance = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+        resolve(supabaseInstance);
+      } else {
+        console.error("Supabase SDK failed to load");
+        resolve(null);
+      }
+    };
+
+    sdkScript.addEventListener("load", onLoad, { once: true });
+    sdkScript.addEventListener("error", () => {
+      console.error("Supabase SDK load error");
+      resolve(null);
+    }, { once: true });
+  });
+
+  return supabasePromise;
+};
 
 function setupSupabase() {
   const SUPABASE_URL = "https://uycwzhlcnfijjyzkgkem.supabase.co";
@@ -1584,6 +1669,26 @@ function setupSupabase() {
       const hashParams = new URLSearchParams(window.location.hash.replace(/^#/, ""));
       const hasSignupCallback = hashParams.get("type") === "signup" && hashParams.has("access_token");
 
+      client.auth.getSession().then(async ({ data: { session } }) => {
+        if (!session) return;
+
+        if (hasSignupCallback || statusParam === "confirmed") {
+          // Redirigir directamente después de confirmación
+          localStorage.removeItem(AXOLOTE_POST_VERIFY_PROMPT_KEY);
+          window.location.replace(consumeReturnTarget());
+          return;
+        }
+
+        // Opción segura: redirigir automáticamente o mostrar mensaje simple
+        const shouldRedirect = confirm(
+          `Ya tienes una sesión activa.\n\n¿Quieres continuar con esta cuenta?`
+        );
+        if (shouldRedirect) {
+          window.location.replace(consumeReturnTarget());
+        } else {
+          await client.auth.signOut();
+        }
+      });
       const promptActiveSessionChoice = (email) =>
         new Promise((resolve) => {
           const overlay = document.createElement("div");
@@ -1697,7 +1802,7 @@ function setupSupabase() {
           if (error) {
             alert(error.message);
           } else {
-            localStorage.setItem(LAST_LOGIN_EMAIL_KEY, email);
+            sessionStorage.setItem(LAST_LOGIN_EMAIL_KEY, email);
             window.location.href = consumeReturnTarget();
           }
         });
