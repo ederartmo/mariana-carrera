@@ -6257,3 +6257,16 @@ body[data-page="series"] .page-hero .container {
     max-height: 55vh;
   }
 }
+
+.auth-field-error {
+  color: #ff4d4d;
+  font-size: 0.82rem;
+  margin: 4px 0 0 0;
+  min-height: 1.2em;
+  display: none;
+}
+
+.auth-field-group input:invalid + .auth-field-error,
+.auth-field-error.show {
+  display: block;
+}
