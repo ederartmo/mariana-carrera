@@ -1,7 +1,14 @@
-// Endpoint serverless para Stripe Webhook en Vercel
+// Endpoint serverless para Stripe Webhook - Kinetic Hub
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 const { Resend } = require('resend');
+const { createClient } = require('@supabase/supabase-js');
+
 const resend = new Resend(process.env.RESEND_API_KEY);
+
+const supabase = createClient(
+  process.env.SUPABASE_URL,
+  process.env.SUPABASE_SERVICE_ROLE_KEY
+);
 
 module.exports = async (req, res) => {
   if (req.method !== 'POST') {
@@ -11,6 +18,7 @@ module.exports = async (req, res) => {
   // --- VALIDACIÓN DE STRIPE WEBHOOK ---
   const sig = req.headers['stripe-signature'];
   let event;
+
   try {
     event = stripe.webhooks.constructEvent(
       req.body,
@@ -18,23 +26,54 @@ module.exports = async (req, res) => {
       process.env.STRIPE_WEBHOOK_SECRET
     );
   } catch (err) {
+    console.error('Webhook signature verification failed:', err.message);
     return res.status(400).send(`Webhook Error: ${err.message}`);
   }
 
+  // ==================== CHECKOUT SESSION COMPLETED ====================
   if (event.type === 'checkout.session.completed') {
     const session = event.data.object;
 
-    const nombreCompleto = session.customer_details?.name || session.customer_email;
+    const email = session.customer_email || session.customer_details?.email;
+    const nombreCompleto = session.customer_details?.name || "Atleta";
     const ordenId = session.id;
-    const fechaEmision = new Date(session.created * 1000).toLocaleDateString('es-MX', {
-      day: 'numeric', month: 'long', year: 'numeric'
-    });
-    const metodoPago = (session.payment_method_types?.[0] || 'tarjeta').replace('card', 'Tarjeta');
-    const subtotal = ((session.amount_subtotal || 0) / 100).toFixed(2);
-    const total = ((session.amount_total || 0) / 100).toFixed(2);
-    const costoServicio = ((( session.amount_total || 0) - (session.amount_subtotal || 0)) / 100).toFixed(2);
+    const amountTotal = (session.amount_total || 0) / 100;
 
-    const BASE_URL = 'https://kinetichub.com.mx';
+    console.log(`✅ Pago recibido: ${nombreCompleto} - ${email} - Orden: ${ordenId}`);
+
+    if (!email) {
+      console.warn("No se encontró email en la sesión de Stripe");
+      return res.status(200).json({ received: true });
+    }
+
+    // ====================== GUARDAR EN SUPABASE ======================
+    try {
+      const { error: insertError } = await supabase
+        .from('inscripciones')
+        .upsert({
+          stripe_session_id: ordenId,
+          email: email.toLowerCase().trim(),
+          full_name: nombreCompleto.trim(),
+          event_slug: 'axolote-night-run',
+          amount_paid: amountTotal,
+          payment_status: 'paid',
+          payment_method: 'card',
+          created_at: new Date().toISOString(),
+        }, { 
+          onConflict: 'stripe_session_id' 
+        });
+
+      if (insertError) {
+        console.error("Error al guardar inscripción en Supabase:", insertError);
+      } else {
+        console.log(`Inscripción guardada correctamente para ${email}`);
+      }
+    } catch (dbError) {
+      console.error("Error de base de datos:", dbError);
+    }
+
+    // ====================== ENVIAR EMAIL DE CONFIRMACIÓN ======================
+    const BASE_URL = 'https://www.kinetichub.com.mx';
 
     const html = `<!DOCTYPE html>
 <html lang="es">
@@ -75,7 +114,7 @@ module.exports = async (req, res) => {
                   <table cellpadding="0" cellspacing="0"><tr>
                     <td style="width:28px;height:28px;background:#3a9b6f;border-radius:50%;text-align:center;color:#fff;font-weight:700;font-size:13px;vertical-align:middle;">1</td>
                     <td style="padding-left:12px;font-size:14px;color:#333;">
-                      <strong>Completa tu perfil</strong> — llena tu información de contacto y contactos de emergencia en
+                      <strong>Completa tu perfil</strong> — llena tu información de contacto y contactos de emergencia en 
                       <a href="${BASE_URL}/perfil.html" style="color:#3a9b6f;">kinetichub.com.mx/perfil.html</a>
                     </td>
                   </tr></table>
@@ -105,7 +144,7 @@ module.exports = async (req, res) => {
           </td>
         </tr>
 
-        <!-- RESUMEN DE PAGO (cabecera oscura) -->
+        <!-- RESUMEN DE PAGO -->
         <tr>
           <td style="padding:28px 40px 0;">
             <table width="100%" cellpadding="0" cellspacing="0" style="border-radius:10px;overflow:hidden;">
@@ -117,7 +156,7 @@ module.exports = async (req, res) => {
               <tr style="background:#f9f9f9;">
                 <td style="padding:16px 20px;border-bottom:1px solid #eee;">
                   <p style="margin:0 0 4px;font-size:11px;color:#999;text-transform:uppercase;">Fecha de emisión</p>
-                  <p style="margin:0;font-size:14px;font-weight:600;color:#1e2e28;">${fechaEmision}</p>
+                  <p style="margin:0;font-size:14px;font-weight:600;color:#1e2e28;">${new Date(session.created * 1000).toLocaleDateString('es-MX', { day: 'numeric', month: 'long', year: 'numeric' })}</p>
                 </td>
                 <td style="padding:16px 20px;border-bottom:1px solid #eee;border-left:1px solid #eee;">
                   <p style="margin:0 0 4px;font-size:11px;color:#999;text-transform:uppercase;">Número de orden</p>
@@ -125,7 +164,7 @@ module.exports = async (req, res) => {
                 </td>
                 <td style="padding:16px 20px;border-bottom:1px solid #eee;border-left:1px solid #eee;">
                   <p style="margin:0 0 4px;font-size:11px;color:#999;text-transform:uppercase;">Método de pago</p>
-                  <p style="margin:0;font-size:14px;font-weight:600;color:#1e2e28;">${metodoPago}</p>
+                  <p style="margin:0;font-size:14px;font-weight:600;color:#1e2e28;">Tarjeta</p>
                 </td>
               </tr>
 
@@ -145,29 +184,13 @@ module.exports = async (req, res) => {
                 </td>
               </tr>
 
-              <!-- TOTALES -->
-              <tr style="background:#f9f9f9;">
-                <td colspan="2" style="padding:12px 20px;border-bottom:1px solid #eee;">
-                  <p style="margin:0;font-size:13px;color:#555;">Subtotal</p>
-                </td>
-                <td style="padding:12px 20px;border-bottom:1px solid #eee;border-left:1px solid #eee;text-align:right;">
-                  <p style="margin:0;font-size:13px;font-weight:600;color:#1e2e28;">$${subtotal} MXN</p>
-                </td>
-              </tr>
-              <tr style="background:#f9f9f9;">
-                <td colspan="2" style="padding:12px 20px;border-bottom:1px solid #eee;">
-                  <p style="margin:0;font-size:13px;color:#555;">Costo por Servicio</p>
-                </td>
-                <td style="padding:12px 20px;border-bottom:1px solid #eee;border-left:1px solid #eee;text-align:right;">
-                  <p style="margin:0;font-size:13px;font-weight:600;color:#1e2e28;">$${costoServicio} MXN</p>
-                </td>
-              </tr>
+              <!-- TOTAL -->
               <tr style="background:#fff;">
                 <td colspan="2" style="padding:14px 20px;">
-                  <p style="margin:0;font-size:14px;font-weight:700;color:#1e2e28;">Total</p>
+                  <p style="margin:0;font-size:14px;font-weight:700;color:#1e2e28;">Total Pagado</p>
                 </td>
                 <td style="padding:14px 20px;border-left:1px solid #eee;text-align:right;">
-                  <p style="margin:0;font-size:15px;font-weight:800;color:#3a9b6f;">$${total} MXN</p>
+                  <p style="margin:0;font-size:15px;font-weight:800;color:#3a9b6f;">$${amountTotal} MXN</p>
                 </td>
               </tr>
             </table>
@@ -187,25 +210,8 @@ module.exports = async (req, res) => {
                     <a href="${BASE_URL}/exo1.jpeg" style="color:#c0600a;font-weight:700;text-decoration:underline;">DESCARGAR AQUÍ la Exoneración de Responsabilidad (Hoja 2)</a>
                   </p>
                   <p style="margin:0;font-size:14px;color:#444;">
-                    Imprime <strong>ambas hojas</strong>, fírmalas y preséntales en el registro para recoger tu kit.
+                    Imprime <strong>ambas hojas</strong>, fírmalas y preséntalas en el registro para recoger tu kit.
                   </p>
-                </td>
-              </tr>
-              <!-- vistas previas de las hojas -->
-              <tr>
-                <td style="padding:0 24px 20px;">
-                  <table cellpadding="0" cellspacing="0"><tr>
-                    <td style="padding-right:8px;">
-                      <a href="${BASE_URL}/exo.jpeg">
-                        <img src="${BASE_URL}/exo.jpeg" alt="Exoneración hoja 1" width="120" style="border-radius:6px;border:1px solid #ddd;display:block;" />
-                      </a>
-                    </td>
-                    <td>
-                      <a href="${BASE_URL}/exo1.jpeg">
-                        <img src="${BASE_URL}/exo1.jpeg" alt="Exoneración hoja 2" width="120" style="border-radius:6px;border:1px solid #ddd;display:block;" />
-                      </a>
-                    </td>
-                  </tr></table>
                 </td>
               </tr>
             </table>
@@ -226,13 +232,23 @@ module.exports = async (req, res) => {
 </body>
 </html>`;
 
-    await resend.emails.send({
-      from: 'Kinetic Hub <no-reply@kinetichub.com.mx>',
-      to: session.customer_email,
-      subject: `¡${nombreCompleto}, ya estás inscrito en Axolote Night Run 2026! 🎉`,
-      html
-    });
+    // Enviar email
+    try {
+      await resend.emails.send({
+        from: 'Kinetic Hub <no-reply@kinetichub.com.mx>',
+        to: email,
+        subject: `¡${nombreCompleto}, ya estás inscrito en Axolote Night Run 2026! 🎉`,
+        html: html
+      });
+      console.log(`Email de confirmación enviado a ${email}`);
+    } catch (emailError) {
+      console.error("Error enviando email con Resend:", emailError);
+    }
   }
-  // Solo una respuesta por petición
-  return res.status(200).json({ message: 'Webhook recibido correctamente' });
+
+  // Respuesta final
+  return res.status(200).json({ 
+    received: true,
+    message: 'Webhook procesado correctamente' 
+  });
 };
