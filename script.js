@@ -1424,8 +1424,10 @@ const ensureSupabaseClient = async () => {
   supabasePromise = new Promise(async (resolve) => {
     if (typeof window.supabase !== "undefined") {
       supabaseInstance = window.supabase.createClient(
-        SUPABASE_URL,
-        SUPABASE_KEY
+        // SUPABASE_URL || "https://uycwzhlcnfijjyzkgkem.supabase.co",
+        "https://uycwzhlcnfijjyzkgkem.supabase.co",
+        // SUPABASE_KEY || "sb_publishable_IKwD3YtQwWzzEtE8QkVagA_OJGdV2e4"
+        "sb_publishable_IKwD3YtQwWzzEtE8QkVagA_OJGdV2e4"
       );
       resolve(supabaseInstance);
       return;
@@ -2435,6 +2437,39 @@ function setupSupabase() {
 
           return data || null;
         };
+        const readInscriptionsFromTable = async (userEmail) => {
+          if (!userEmail) return [];
+
+          try {
+            const { data, error } = await client
+              .from('inscripciones')                    // ← Nombre de tu tabla
+              .select(`
+        id,
+        created_at,
+        event_slug,
+        full_name,
+        email,
+        amount_paid,
+        payment_status,
+        stripe_session_id,
+        category,
+        bib_number,
+        race_date
+      `)
+              .eq('email', userEmail.toLowerCase().trim())   // Buscamos por email (como haces en loadUserInscriptions)
+              .order('created_at', { ascending: false });    // Más recientes primero
+
+            if (error) {
+              console.error("Error al leer tabla inscripciones:", error);
+              return [];
+            }
+
+            return data || [];
+          } catch (err) {
+            console.error("Excepción al leer inscripciones:", err);
+            return [];
+          }
+        };
 
         const saveProfileInTable = async (profile) => {
           const row = {
@@ -2708,10 +2743,10 @@ function setupSupabase() {
             if (emergencySaveBtn) emergencySaveBtn.textContent = "Actualizar contacto";
             toggleEmergencyMode({ showForm: false, contact: savedContact });
           });
-
+          
           emergencyForm.addEventListener("submit", async (event) => {
             event.preventDefault();
-
+            
             const payload = normalizeEmergencyContact({
               name: emergencyName.value,
               phone: emergencyPhone.value,
@@ -2744,12 +2779,12 @@ function setupSupabase() {
               { userId: user.id, email: user.email || "" },
               payload
             );
-
+            
             if (emergencySaveBtn) {
               emergencySaveBtn.disabled = false;
               emergencySaveBtn.textContent = "Actualizar contacto";
             }
-
+            
             if (error) {
               showEmergencyStatus("No se pudo guardar el contacto. Intenta de nuevo.", true);
               return;
@@ -2765,20 +2800,24 @@ function setupSupabase() {
             toggleEmergencyMode({ showForm: false, contact: payload });
           });
         }
-
+        
         const navActions = document.querySelector(".nav-actions");
         if (navActions) {
           navActions.innerHTML = `
           <span class="ghost-link" style="cursor:default;font-size:0.85rem;">${user.email}</span>
           <button class="btn btn-primary" id="navLogoutBtn" type="button">Cerrar sesión</button>
         `;
-          document.getElementById("navLogoutBtn")?.addEventListener("click", async () => {
+        document.getElementById("navLogoutBtn")?.addEventListener("click", async () => {
             await client.auth.signOut();
             window.location.href = "index.html";
           });
         }
 
+        // ====================== INSCRIPCIONES REALES DESDE SUPABASE ======================
+        // ====================== INSCRIPCIONES REALES DESDE SUPABASE + MODAL QUE FUNCIONABA ======================
+        
                 // ====================== INSCRIPCIONES REALES DESDE SUPABASE ======================
+
         const racesContainer = document.getElementById("profileRacesContainer");
         const reminder = document.getElementById("profileRaceReminder");
         const reminderPay = document.getElementById("profileRaceReminderPay");
@@ -2787,54 +2826,127 @@ function setupSupabase() {
           reminderPay.href = AXOLOTE_PAYMENT_URL;
         }
 
-        // Función principal para cargar inscripciones
-        const loadUserInscriptions = async (userEmail) => {
-          if (!userEmail || !racesContainer) return;
+        const profileUrl = new URL(window.location.href);
+        const raceParam = profileUrl.searchParams.get("race");
+        const paidParam = profileUrl.searchParams.get("paid");
 
-          try {
-            const { data: inscriptions, error } = await client
-              .from('inscripciones')
-              .select('*')
-              .eq('email', userEmail.toLowerCase().trim())
-              .order('created_at', { ascending: false });
-
-            if (error) {
-              console.error("Error cargando inscripciones:", error);
-              showEmptyState();
-              hideReminder();
-              return;
-            }
-
-            if (!inscriptions || inscriptions.length === 0) {
-              // No tiene ninguna inscripción → Mostrar estado vacío + recordatorio de pago
-              showEmptyState();
-              showPaymentReminder();
-              return;
-            }
-
-            // Tiene inscripciones → tomar la más reciente
-            const latest = inscriptions[0];
-
-            if (latest.payment_status === 'paid') {
-              // Ya pagó
-              showPaidInscription(latest);
-              hideReminder();
-            } else {
-              // Pendiente de pago
-              showPendingInscription();
-              showPaymentReminder();
-            }
-
-          } catch (err) {
-            console.error("Error en loadUserInscriptions:", err);
-            showEmptyState();
-            showPaymentReminder();
+        const readPaymentState = () => localStorage.getItem(AXOLOTE_PAYMENT_STATE_KEY) || "";
+        const writePaymentState = (value) => {
+          if (!value) {
+            localStorage.removeItem(AXOLOTE_PAYMENT_STATE_KEY);
+            return;
           }
+          localStorage.setItem(AXOLOTE_PAYMENT_STATE_KEY, value);
         };
 
-        // Funciones auxiliares
-        const showEmptyState = () => {
-          if (!racesContainer) return;
+        if (raceParam === "axolote" && paidParam === "1") {
+          writePaymentState("paid");
+          localStorage.removeItem(AXOLOTE_POST_VERIFY_PROMPT_KEY);
+          profileUrl.searchParams.delete("race");
+          profileUrl.searchParams.delete("paid");
+          window.history.replaceState({}, "", profileUrl.pathname + profileUrl.search + profileUrl.hash);
+        }
+
+        if (raceParam === "axolote" && paidParam === "0") {
+          writePaymentState("pending");
+          profileUrl.searchParams.delete("race");
+          profileUrl.searchParams.delete("paid");
+          window.history.replaceState({}, "", profileUrl.pathname + profileUrl.search + profileUrl.hash);
+        }
+
+        // Modal de "Registro confirmado" (post-verificación)
+        const openRegisterModal = () => {
+          if (document.getElementById("profileRaceRegisterOverlay")) return;
+
+          const overlay = document.createElement("div");
+          overlay.className = "profile-race-register-overlay";
+          overlay.id = "profileRaceRegisterOverlay";
+          overlay.innerHTML = `
+            <div class="profile-race-register-modal" role="dialog" aria-modal="true" aria-labelledby="profileRaceRegisterTitle">
+              <button class="profile-race-register-close" type="button" aria-label="Cerrar">×</button>
+              <h3 id="profileRaceRegisterTitle">Registro confirmado para Axolote Night Run 2026</h3>
+              <ul class="profile-race-register-copy">
+                <li>Tu cuenta ya fue verificada.</li>
+                <li>Tu lugar quedó apartado para la primera edición oficial de Kinetic Hub.</li>
+                <li>Completa tu pago para asegurar tu inscripción en la categoría única 5K del 31 OCT 2026 en Pista de Canotaje, CDMX.</li>
+              </ul>
+              <div class="profile-race-register-highlights">
+                <span>Incluye playera técnica oficial Axolote Night Run 2026.</span>
+                <span>Incluye medalla de finisher exclusiva.</span>
+              </div>
+              <div class="profile-race-register-actions">
+                <a class="profile-race-detail-btn" href="${AXOLOTE_EVENT_URL}">Ver detalle</a>
+                <a class="profile-race-register-pay" href="${AXOLOTE_PAYMENT_URL}">Pagar para asegurar mi lugar</a>
+              </div>
+            </div>
+          `;
+
+          const closeModal = () => overlay.remove();
+
+          overlay.addEventListener("click", (event) => {
+            if (event.target === overlay) closeModal();
+          });
+
+          overlay.querySelector(".profile-race-register-close")?.addEventListener("click", closeModal);
+
+          document.addEventListener("keydown", (event) => {
+            if (event.key === "Escape" && document.getElementById("profileRaceRegisterOverlay")) {
+              closeModal();
+            }
+          }, { once: true });
+
+          document.body.appendChild(overlay);
+        };
+
+        // Renderizado de las tarjetas (PAID / PENDING)
+        const renderRaces = (state) => {
+          if (!racesContainer) {
+            console.warn("racesContainer no encontrado");
+            return;
+          }
+
+          console.log(`Renderizando estado: ${state}`);
+
+          if (state === "pending") {
+            racesContainer.innerHTML = `
+              <div class="profile-race-card">
+                <article class="profile-race-item">
+                  <div class="profile-race-top">
+                    <h3 class="profile-race-name">Axolote Night Run 2026</h3>
+                    <span class="profile-race-status is-pending">Pendiente de pago</span>
+                  </div>
+                  <p class="profile-race-meta">31 OCT 2026 · Pista de Canotaje, CDMX · Categoría única 5K</p>
+                  <p class="profile-race-meta">Tu lugar está apartado. Completa el pago para asegurar tu inscripción.</p>
+                  <div class="profile-race-actions">
+                    <a class="profile-race-pay-btn" href="${AXOLOTE_PAYMENT_URL}">Pagar para asegurar lugar</a>
+                    <a class="profile-race-detail-btn" href="${AXOLOTE_EVENT_URL}">Ver detalle del evento</a>
+                  </div>
+                </article>
+              </div>
+            `;
+            return;
+          }
+
+          if (state === "paid") {
+            racesContainer.innerHTML = `
+              <div class="profile-race-card">
+                <article class="profile-race-item">
+                  <div class="profile-race-top">
+                    <h3 class="profile-race-name">Axolote Night Run 2026</h3>
+                    <span class="profile-race-status is-paid">Inscripción pagada</span>
+                  </div>
+                  <p class="profile-race-meta">31 OCT 2026 · Pista de Canotaje, CDMX · Categoría única 5K</p>
+                  <p class="profile-race-meta">Incluye playera técnica oficial Axolote Night Run 2026 y medalla de finisher exclusiva.</p>
+                  <div class="profile-race-actions">
+                    <a class="profile-race-detail-btn" href="${AXOLOTE_EVENT_URL}">Ver detalle del evento</a>
+                  </div>
+                </article>
+              </div>
+            `;
+            return;
+          }
+
+          // Sin inscripciones
           racesContainer.innerHTML = `
             <div class="profile-card">
               <div class="profile-empty-state">
@@ -2854,68 +2966,79 @@ function setupSupabase() {
           `;
         };
 
-        const showPaidInscription = () => {
-          if (!racesContainer) return;
-          racesContainer.innerHTML = `
-            <div class="profile-race-card">
-              <article class="profile-race-item">
-                <div class="profile-race-top">
-                  <h3 class="profile-race-name">Axolote Night Run 2026</h3>
-                  <span class="profile-race-status is-paid">Inscripción pagada</span>
-                </div>
-                <p class="profile-race-meta">31 OCT 2026 · Pista de Canotaje, CDMX · Categoría única 5K</p>
-                <p class="profile-race-meta">Incluye playera técnica oficial y medalla de finisher exclusiva.</p>
-                <div class="profile-race-actions">
-                  <a class="profile-race-detail-btn" href="${AXOLOTE_EVENT_URL}">Ver detalle del evento</a>
-                </div>
-              </article>
-            </div>
-          `;
+        const syncReminder = (state) => {
+          if (reminder) reminder.hidden = state !== "pending";
         };
 
-        const showPendingInscription = () => {
-          if (!racesContainer) return;
-          racesContainer.innerHTML = `
-            <div class="profile-race-card">
-              <article class="profile-race-item">
-                <div class="profile-race-top">
-                  <h3 class="profile-race-name">Axolote Night Run 2026</h3>
-                  <span class="profile-race-status is-pending">Pendiente de pago</span>
-                </div>
-                <p class="profile-race-meta">31 OCT 2026 · Pista de Canotaje, CDMX · Categoría única 5K</p>
-                <p class="profile-race-meta">Tu lugar está apartado. Completa el pago para asegurar tu inscripción.</p>
-                <div class="profile-race-actions">
-                  <a class="profile-race-pay-btn" href="${AXOLOTE_PAYMENT_URL}">Pagar ahora</a>
-                  <a class="profile-race-detail-btn" href="${AXOLOTE_EVENT_URL}">Ver detalle</a>
-                </div>
-              </article>
-            </div>
-          `;
-        };
+        // Tu función loadUserInscriptions (sin cambios importantes)
+        async function loadUserInscriptions() {
+          const client = await ensureSupabaseClient();
+          if (!client) return;
 
-        const showPaymentReminder = () => {
-          if (reminder) reminder.hidden = false;
-        };
+          const { data: { session } } = await client.auth.getSession();
+          const user = session?.user;
+          if (!user) return;
 
-        const hideReminder = () => {
-          if (reminder) reminder.hidden = true;
-        };
+          const email = user.email.trim().toLowerCase();
 
-        // ====================== EJECUTAR CARGA DE INSCRIPCIONES ======================
-        const userEmail = user.email;
-        await loadUserInscriptions(userEmail);
+          console.log("🔍 Buscando inscripciones para:", email);
 
-        // Mantener compatibilidad con parámetros de URL
-        const profileUrl = new URL(window.location.href);
-        const raceParam = profileUrl.searchParams.get("race");
-        const paidParam = profileUrl.searchParams.get("paid");
+          const { data, error } = await client
+            .from("inscripciones")
+            .select(`
+              id, created_at, stripe_session_id, email, full_name, 
+              event_slug, amount_paid, payment_status
+            `)
+            .eq("email", email)
+            .order("created_at", { ascending: false });
 
-        if (raceParam === "axolote" && paidParam === "1") {
-          localStorage.removeItem(AXOLOTE_POST_VERIFY_PROMPT_KEY);
-          profileUrl.searchParams.delete("race");
-          profileUrl.searchParams.delete("paid");
-          window.history.replaceState({}, "", profileUrl.pathname + profileUrl.search + profileUrl.hash);
+          if (error) {
+            console.error("❌ Error al cargar inscripciones:", error);
+            renderRaces("pending");
+            return;
+          }
+
+          console.log(`✅ Encontradas ${data?.length || 0} inscripciones:`, data);
+
+          let finalState = "pending";
+
+          if (data && data.length > 0) {
+            const inscription = data[0];
+            const dbStatus = (inscription.payment_status || "").toLowerCase().trim();
+            console.log("Estado en la base de datos:", dbStatus);
+
+            if (dbStatus === "paid") {
+              finalState = "paid";
+              writePaymentState("paid");
+            } else {
+              finalState = "pending";
+              writePaymentState("pending");
+            }
+          }
+
+          renderRaces(finalState);
+          syncReminder(finalState);
         }
+
+        // Inicialización
+        let paymentState = readPaymentState();
+        const shouldPromptAfterVerify = localStorage.getItem(AXOLOTE_POST_VERIFY_PROMPT_KEY) === "1";
+
+        if (shouldPromptAfterVerify) {
+          localStorage.removeItem(AXOLOTE_POST_VERIFY_PROMPT_KEY);
+          setTimeout(openRegisterModal, 800);
+        }
+
+        if (!paymentState) {
+          paymentState = "pending";
+          writePaymentState("pending");
+        }
+
+        // Render inicial + carga real
+        renderRaces(paymentState);
+        syncReminder(paymentState);
+
+        loadUserInscriptions();
 
         let isEditing = false;
         setReadOnlyMode(currentProfile);
