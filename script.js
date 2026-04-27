@@ -2781,25 +2781,117 @@ function setupSupabase() {
         const racesContainer = document.getElementById("profileRacesContainer");
         const reminder = document.getElementById("profileRaceReminder");
         const reminderPay = document.getElementById("profileRaceReminderPay");
+
         if (reminderPay) {
           reminderPay.href = AXOLOTE_PAYMENT_URL;
         }
 
+        // Función principal: Cargar inscripciones reales del usuario
+        const loadUserInscriptions = async (userEmail) => {
+          if (!userEmail || !racesContainer) return;
+
+          try {
+            const { data: inscriptions, error } = await client
+              .from('inscripciones')
+              .select('*')
+              .eq('email', userEmail.toLowerCase().trim())
+              .order('created_at', { ascending: false });
+
+            if (error) {
+              console.error("Error cargando inscripciones:", error);
+              renderEmptyState();
+              if (reminder) reminder.hidden = true;
+              return;
+            }
+
+            if (!inscriptions || inscriptions.length === 0) {
+              renderEmptyState();
+              if (reminder) reminder.hidden = true;
+              return;
+            }
+
+            // Tomamos la inscripción más reciente
+            const latest = inscriptions[0];
+
+            if (latest.payment_status === 'paid') {
+              // Ya pagó → Mostrar como pagado y ocultar reminder
+              racesContainer.innerHTML = `
+                <div class="profile-race-card">
+                  <article class="profile-race-item">
+                    <div class="profile-race-top">
+                      <h3 class="profile-race-name">Axolote Night Run 2026</h3>
+                      <span class="profile-race-status is-paid">Inscripción pagada</span>
+                    </div>
+                    <p class="profile-race-meta">31 OCT 2026 · Pista de Canotaje, CDMX · Categoría única 5K</p>
+                    <p class="profile-race-meta">Incluye playera técnica oficial Axolote Night Run 2026 y medalla de finisher exclusiva.</p>
+                    <div class="profile-race-actions">
+                      <a class="profile-race-detail-btn" href="${AXOLOTE_EVENT_URL}">Ver detalle del evento</a>
+                    </div>
+                  </article>
+                </div>
+              `;
+              if (reminder) reminder.hidden = true;
+            } 
+            else {
+              // Pendiente de pago
+              racesContainer.innerHTML = `
+                <div class="profile-race-card">
+                  <article class="profile-race-item">
+                    <div class="profile-race-top">
+                      <h3 class="profile-race-name">Axolote Night Run 2026</h3>
+                      <span class="profile-race-status is-pending">Pendiente de pago</span>
+                    </div>
+                    <p class="profile-race-meta">31 OCT 2026 · Pista de Canotaje, CDMX · Categoría única 5K</p>
+                    <p class="profile-race-meta">Tu lugar está apartado. Completa el pago para asegurar tu inscripción.</p>
+                    <div class="profile-race-actions">
+                      <a class="profile-race-pay-btn" href="${AXOLOTE_PAYMENT_URL}">Pagar para asegurar lugar</a>
+                      <a class="profile-race-detail-btn" href="${AXOLOTE_EVENT_URL}">Ver detalle del evento</a>
+                    </div>
+                  </article>
+                </div>
+              `;
+              if (reminder) reminder.hidden = false;
+            }
+
+          } catch (err) {
+            console.error("Error en loadUserInscriptions:", err);
+            renderEmptyState();
+            if (reminder) reminder.hidden = true;
+          }
+        };
+
+        const renderEmptyState = () => {
+          if (!racesContainer) return;
+          racesContainer.innerHTML = `
+            <div class="profile-card">
+              <div class="profile-empty-state">
+                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <rect x="3" y="4" width="18" height="18" rx="2" stroke="currentColor" stroke-width="1.7" />
+                  <line x1="16" y1="2" x2="16" y2="6" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" />
+                  <line x1="8" y1="2" x2="8" y2="6" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" />
+                  <line x1="3" y1="10" x2="21" y2="10" stroke="currentColor" stroke-width="1.7" />
+                </svg>
+                <p>
+                  Aún no tienes inscripciones.
+                  <a href="index.html" class="auth-link-btn">Explora eventos</a>
+                  y regístrate en tu próxima carrera.
+                </p>
+              </div>
+            </div>
+          `;
+          if (reminder) reminder.hidden = true;
+        };
+
+        // ====================== CARGAR INSCRIPCIONES DEL USUARIO ======================
+        const userEmail = user.email;
+        await loadUserInscriptions(userEmail);
+
+        // ====================== LÓGICA ANTIGUA DE PARÁMETROS URL (mantener compatibilidad) ======================
         const profileUrl = new URL(window.location.href);
         const raceParam = profileUrl.searchParams.get("race");
         const paidParam = profileUrl.searchParams.get("paid");
 
-        const readPaymentState = () => localStorage.getItem(AXOLOTE_PAYMENT_STATE_KEY) || "";
-        const writePaymentState = (value) => {
-          if (!value) {
-            localStorage.removeItem(AXOLOTE_PAYMENT_STATE_KEY);
-            return;
-          }
-          localStorage.setItem(AXOLOTE_PAYMENT_STATE_KEY, value);
-        };
-
         if (raceParam === "axolote" && paidParam === "1") {
-          writePaymentState("paid");
           localStorage.removeItem(AXOLOTE_POST_VERIFY_PROMPT_KEY);
           profileUrl.searchParams.delete("race");
           profileUrl.searchParams.delete("paid");
@@ -2807,158 +2899,9 @@ function setupSupabase() {
         }
 
         if (raceParam === "axolote" && paidParam === "0") {
-          writePaymentState("pending");
           profileUrl.searchParams.delete("race");
           profileUrl.searchParams.delete("paid");
           window.history.replaceState({}, "", profileUrl.pathname + profileUrl.search + profileUrl.hash);
-        }
-
-        const renderRaces = (state) => {
-          if (!racesContainer) return;
-
-          if (state === "pending") {
-            racesContainer.innerHTML = `
-            <div class="profile-race-card">
-              <article class="profile-race-item">
-                <div class="profile-race-top">
-                  <h3 class="profile-race-name">Axolote Night Run 2026</h3>
-                  <span class="profile-race-status is-pending">Pendiente de pago</span>
-                </div>
-                <p class="profile-race-meta">31 OCT 2026 · Pista de Canotaje, CDMX · Categoría única 5K</p>
-                <p class="profile-race-meta">Tu lugar está apartado. Completa el pago para asegurar tu inscripción.</p>
-                <div class="profile-race-actions">
-                  <a class="profile-race-pay-btn" href="${AXOLOTE_PAYMENT_URL}">Pagar para asegurar lugar</a>
-                  <a class="profile-race-detail-btn" href="${AXOLOTE_EVENT_URL}">Ver detalle del evento</a>
-                </div>
-              </article>
-            </div>
-          `;
-            return;
-          }
-
-          if (state === "paid") {
-            racesContainer.innerHTML = `
-            <div class="profile-race-card">
-              <article class="profile-race-item">
-                <div class="profile-race-top">
-                  <h3 class="profile-race-name">Axolote Night Run 2026</h3>
-                  <span class="profile-race-status is-paid">Inscripción pagada</span>
-                </div>
-                <p class="profile-race-meta">31 OCT 2026 · Pista de Canotaje, CDMX · Categoría única 5K</p>
-                <p class="profile-race-meta">Incluye playera técnica oficial Axolote Night Run 2026 y medalla de finisher exclusiva.</p>
-                <div class="profile-race-actions">
-                  <a class="profile-race-detail-btn" href="${AXOLOTE_EVENT_URL}">Ver detalle del evento</a>
-                </div>
-              </article>
-            </div>
-          `;
-            return;
-          }
-
-          racesContainer.innerHTML = `
-          <div class="profile-card">
-            <div class="profile-empty-state">
-              <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <rect x="3" y="4" width="18" height="18" rx="2" stroke="currentColor" stroke-width="1.7" />
-                <line x1="16" y1="2" x2="16" y2="6" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" />
-                <line x1="8" y1="2" x2="8" y2="6" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" />
-                <line x1="3" y1="10" x2="21" y2="10" stroke="currentColor" stroke-width="1.7" />
-              </svg>
-              <p>
-                Aún no tienes inscripciones.
-                <a href="index.html" class="auth-link-btn">Explora eventos</a>
-                y regístrate en tu próxima carrera.
-              </p>
-            </div>
-          </div>
-        `;
-        };
-
-        const syncReminder = (state) => {
-          if (!reminder) return;
-          reminder.hidden = state !== "pending";
-        };
-
-        const openRegisterModal = () => {
-          const overlay = document.createElement("div");
-          overlay.className = "profile-race-register-overlay";
-          overlay.id = "profileRaceRegisterOverlay";
-          overlay.innerHTML = `
-          <div class="profile-race-register-modal" role="dialog" aria-modal="true" aria-labelledby="profileRaceRegisterTitle">
-            <button class="profile-race-register-close" type="button" aria-label="Cerrar">&times;</button>
-            <h3 id="profileRaceRegisterTitle">Registro confirmado para Axolote Night Run 2026</h3>
-            <ul class="profile-race-register-copy">
-              <li>Tu cuenta ya fue verificada.</li>
-              <li>Tu lugar quedó apartado para la primera edición oficial de Kinetic Hub.</li>
-              <li>Completa tu pago para asegurar tu inscripción en la categoría única 5K del 31 OCT 2026 en Pista de Canotaje, CDMX.</li>
-            </ul>
-            <div class="profile-race-register-highlights">
-              <span>Incluye playera técnica oficial Axolote Night Run 2026.</span>
-              <span>Incluye medalla de finisher exclusiva.</span>
-            </div>
-            <div class="profile-race-register-actions">
-              <a class="profile-race-detail-btn" href="${AXOLOTE_EVENT_URL}">Ver detalle</a>
-              <a class="profile-race-register-pay" href="${AXOLOTE_PAYMENT_URL}">Pagar para asegurar mi lugar</a>
-            </div>
-          </div>
-        `;
-
-          const closeModal = () => {
-            overlay.remove();
-            writePaymentState("pending");
-            renderRaces("pending");
-            syncReminder("pending");
-          };
-
-          overlay.addEventListener("click", (event) => {
-            if (event.target === overlay) {
-              closeModal();
-            }
-          });
-
-          overlay.querySelector(".profile-race-register-close")?.addEventListener("click", closeModal);
-          document.addEventListener(
-            "keydown",
-            (event) => {
-              if (event.key === "Escape" && document.getElementById("profileRaceRegisterOverlay")) {
-                closeModal();
-              }
-            },
-            { once: true }
-          );
-
-          document.body.appendChild(overlay);
-        };
-
-        let paymentState = readPaymentState();
-        const shouldPromptAfterVerify = localStorage.getItem(AXOLOTE_POST_VERIFY_PROMPT_KEY) === "1";
-
-        if (shouldPromptAfterVerify && paymentState !== "paid") {
-          writePaymentState("pending");
-          localStorage.removeItem(AXOLOTE_POST_VERIFY_PROMPT_KEY);
-          paymentState = "pending";
-        }
-
-        if (!paymentState && shouldPromptAfterVerify) {
-          paymentState = "pending";
-        }
-
-        // For existing accounts without a confirmed payment, default to pending state.
-        if (!paymentState) {
-          writePaymentState("pending");
-          paymentState = "pending";
-        }
-
-        if (paymentState === "pending") {
-          renderRaces("pending");
-          syncReminder("pending");
-          openRegisterModal();
-        } else if (paymentState === "paid") {
-          renderRaces("paid");
-          syncReminder("paid");
-        } else {
-          renderRaces("");
-          syncReminder("");
         }
 
         let isEditing = false;
@@ -3241,13 +3184,19 @@ function setupCheckoutForm() {
   form.addEventListener("submit", async (e) => {
     e.preventDefault();
 
-    const email = document.getElementById("userEmail")?.value;
+    const emailInput = document.getElementById("userEmail");
+    const email = emailInput?.value.trim();
     const termsCheck = document.getElementById("termsCheck")?.checked;
 
     if (!email || !termsCheck) {
-      alert("Por favor completa todos los campos y acepta los términos");
+      alert("Por favor completa el correo y acepta los términos");
       return;
     }
+
+    const submitBtn = form.querySelector('button[type="submit"]');
+    const originalText = submitBtn.textContent;
+    submitBtn.disabled = true;
+    submitBtn.textContent = "Verificando...";
 
     try {
       const response = await fetch("/api/create-checkout-session", {
@@ -3256,15 +3205,27 @@ function setupCheckoutForm() {
         body: JSON.stringify({ email }),
       });
 
+      const data = await response.json();
+
       if (!response.ok) {
-        throw new Error("Error al crear la sesión de pago");
+        if (data.alreadyPaid) {
+          alert("¡Ya tienes una inscripción pagada con este correo!\n\nInicia sesión en tu cuenta para ver los detalles.");
+        } else {
+          alert(data.error || "Error al procesar la solicitud");
+        }
+        submitBtn.disabled = false;
+        submitBtn.textContent = originalText;
+        return;
       }
 
-      const { url } = await response.json();
-      window.location.href = url;
+      // Si todo está bien, redirigir a Stripe
+      window.location.href = data.url;
+
     } catch (error) {
       console.error("Error al iniciar checkout:", error);
       alert("Hubo un error al procesar tu solicitud. Intenta de nuevo.");
+      submitBtn.disabled = false;
+      submitBtn.textContent = originalText;
     }
   });
 }
