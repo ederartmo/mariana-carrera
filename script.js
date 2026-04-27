@@ -2778,6 +2778,7 @@ function setupSupabase() {
           });
         }
 
+                // ====================== INSCRIPCIONES REALES DESDE SUPABASE ======================
         const racesContainer = document.getElementById("profileRacesContainer");
         const reminder = document.getElementById("profileRaceReminder");
         const reminderPay = document.getElementById("profileRaceReminderPay");
@@ -2786,7 +2787,7 @@ function setupSupabase() {
           reminderPay.href = AXOLOTE_PAYMENT_URL;
         }
 
-        // Función principal: Cargar inscripciones reales del usuario
+        // Función principal para cargar inscripciones
         const loadUserInscriptions = async (userEmail) => {
           if (!userEmail || !racesContainer) return;
 
@@ -2799,68 +2800,40 @@ function setupSupabase() {
 
             if (error) {
               console.error("Error cargando inscripciones:", error);
-              renderEmptyState();
-              if (reminder) reminder.hidden = true;
+              showEmptyState();
+              hideReminder();
               return;
             }
 
             if (!inscriptions || inscriptions.length === 0) {
-              renderEmptyState();
-              if (reminder) reminder.hidden = true;
+              // No tiene ninguna inscripción → Mostrar estado vacío + recordatorio de pago
+              showEmptyState();
+              showPaymentReminder();
               return;
             }
 
-            // Tomamos la inscripción más reciente
+            // Tiene inscripciones → tomar la más reciente
             const latest = inscriptions[0];
 
             if (latest.payment_status === 'paid') {
-              // Ya pagó → Mostrar como pagado y ocultar reminder
-              racesContainer.innerHTML = `
-                <div class="profile-race-card">
-                  <article class="profile-race-item">
-                    <div class="profile-race-top">
-                      <h3 class="profile-race-name">Axolote Night Run 2026</h3>
-                      <span class="profile-race-status is-paid">Inscripción pagada</span>
-                    </div>
-                    <p class="profile-race-meta">31 OCT 2026 · Pista de Canotaje, CDMX · Categoría única 5K</p>
-                    <p class="profile-race-meta">Incluye playera técnica oficial Axolote Night Run 2026 y medalla de finisher exclusiva.</p>
-                    <div class="profile-race-actions">
-                      <a class="profile-race-detail-btn" href="${AXOLOTE_EVENT_URL}">Ver detalle del evento</a>
-                    </div>
-                  </article>
-                </div>
-              `;
-              if (reminder) reminder.hidden = true;
-            } 
-            else {
+              // Ya pagó
+              showPaidInscription(latest);
+              hideReminder();
+            } else {
               // Pendiente de pago
-              racesContainer.innerHTML = `
-                <div class="profile-race-card">
-                  <article class="profile-race-item">
-                    <div class="profile-race-top">
-                      <h3 class="profile-race-name">Axolote Night Run 2026</h3>
-                      <span class="profile-race-status is-pending">Pendiente de pago</span>
-                    </div>
-                    <p class="profile-race-meta">31 OCT 2026 · Pista de Canotaje, CDMX · Categoría única 5K</p>
-                    <p class="profile-race-meta">Tu lugar está apartado. Completa el pago para asegurar tu inscripción.</p>
-                    <div class="profile-race-actions">
-                      <a class="profile-race-pay-btn" href="${AXOLOTE_PAYMENT_URL}">Pagar para asegurar lugar</a>
-                      <a class="profile-race-detail-btn" href="${AXOLOTE_EVENT_URL}">Ver detalle del evento</a>
-                    </div>
-                  </article>
-                </div>
-              `;
-              if (reminder) reminder.hidden = false;
+              showPendingInscription();
+              showPaymentReminder();
             }
 
           } catch (err) {
             console.error("Error en loadUserInscriptions:", err);
-            renderEmptyState();
-            if (reminder) reminder.hidden = true;
+            showEmptyState();
+            showPaymentReminder();
           }
         };
 
-        const renderEmptyState = () => {
+        // Funciones auxiliares
+        const showEmptyState = () => {
           if (!racesContainer) return;
           racesContainer.innerHTML = `
             <div class="profile-card">
@@ -2872,33 +2845,73 @@ function setupSupabase() {
                   <line x1="3" y1="10" x2="21" y2="10" stroke="currentColor" stroke-width="1.7" />
                 </svg>
                 <p>
-                  Aún no tienes inscripciones.
-                  <a href="index.html" class="auth-link-btn">Explora eventos</a>
+                  Aún no tienes inscripciones.<br>
+                  <a href="index.html" class="auth-link-btn">Explora eventos</a> 
                   y regístrate en tu próxima carrera.
                 </p>
               </div>
             </div>
           `;
+        };
+
+        const showPaidInscription = () => {
+          if (!racesContainer) return;
+          racesContainer.innerHTML = `
+            <div class="profile-race-card">
+              <article class="profile-race-item">
+                <div class="profile-race-top">
+                  <h3 class="profile-race-name">Axolote Night Run 2026</h3>
+                  <span class="profile-race-status is-paid">Inscripción pagada</span>
+                </div>
+                <p class="profile-race-meta">31 OCT 2026 · Pista de Canotaje, CDMX · Categoría única 5K</p>
+                <p class="profile-race-meta">Incluye playera técnica oficial y medalla de finisher exclusiva.</p>
+                <div class="profile-race-actions">
+                  <a class="profile-race-detail-btn" href="${AXOLOTE_EVENT_URL}">Ver detalle del evento</a>
+                </div>
+              </article>
+            </div>
+          `;
+        };
+
+        const showPendingInscription = () => {
+          if (!racesContainer) return;
+          racesContainer.innerHTML = `
+            <div class="profile-race-card">
+              <article class="profile-race-item">
+                <div class="profile-race-top">
+                  <h3 class="profile-race-name">Axolote Night Run 2026</h3>
+                  <span class="profile-race-status is-pending">Pendiente de pago</span>
+                </div>
+                <p class="profile-race-meta">31 OCT 2026 · Pista de Canotaje, CDMX · Categoría única 5K</p>
+                <p class="profile-race-meta">Tu lugar está apartado. Completa el pago para asegurar tu inscripción.</p>
+                <div class="profile-race-actions">
+                  <a class="profile-race-pay-btn" href="${AXOLOTE_PAYMENT_URL}">Pagar ahora</a>
+                  <a class="profile-race-detail-btn" href="${AXOLOTE_EVENT_URL}">Ver detalle</a>
+                </div>
+              </article>
+            </div>
+          `;
+        };
+
+        const showPaymentReminder = () => {
+          if (reminder) reminder.hidden = false;
+        };
+
+        const hideReminder = () => {
           if (reminder) reminder.hidden = true;
         };
 
-        // ====================== CARGAR INSCRIPCIONES DEL USUARIO ======================
+        // ====================== EJECUTAR CARGA DE INSCRIPCIONES ======================
         const userEmail = user.email;
         await loadUserInscriptions(userEmail);
 
-        // ====================== LÓGICA ANTIGUA DE PARÁMETROS URL (mantener compatibilidad) ======================
+        // Mantener compatibilidad con parámetros de URL
         const profileUrl = new URL(window.location.href);
         const raceParam = profileUrl.searchParams.get("race");
         const paidParam = profileUrl.searchParams.get("paid");
 
         if (raceParam === "axolote" && paidParam === "1") {
           localStorage.removeItem(AXOLOTE_POST_VERIFY_PROMPT_KEY);
-          profileUrl.searchParams.delete("race");
-          profileUrl.searchParams.delete("paid");
-          window.history.replaceState({}, "", profileUrl.pathname + profileUrl.search + profileUrl.hash);
-        }
-
-        if (raceParam === "axolote" && paidParam === "0") {
           profileUrl.searchParams.delete("race");
           profileUrl.searchParams.delete("paid");
           window.history.replaceState({}, "", profileUrl.pathname + profileUrl.search + profileUrl.hash);
