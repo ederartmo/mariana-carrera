@@ -15,14 +15,15 @@
   <link rel="stylesheet" href=styles.css?v=__ASSET_VERSION__" />
   <link rel="icon" type="image/png" href="icon.png" />
 </head>
+
 <body>
-    <script>
+  <script>
     // Detectar si el usuario viene de un pago exitoso
     function checkPaymentSuccess() {
       const urlParams = new URLSearchParams(window.location.search);
       const isSuccess = urlParams.get('success') === 'true';
       const sessionId = urlParams.get('session_id');
-      if (true) {
+      if (isSuccess) {
         // Ocultar el formulario
         const form = document.getElementById('checkoutForm');
         if (form) form.style.display = 'none';
@@ -46,7 +47,7 @@
     window.addEventListener('load', checkPaymentSuccess);
   </script>
   <!-- Mensaje de Éxito (se muestra después del pago) -->
-    <div id="successMessage" class="success-screen" style="display: none;">
+  <div id="successMessage" class="success-screen" style="display: none;">
     <div style="text-align: center; padding: 60px 20px; max-width: 620px; margin: 0 auto;">
       <div
         style="width: 90px; height: 90px; margin: 0 auto 24px; background: linear-gradient(135deg, #19c88b, #0fa870); border-radius: 50%; display: flex; align-items: center; justify-content: center;">
@@ -60,7 +61,8 @@
         Gracias por tu pago. Ya estás inscrito en <strong>Axolote Night Run 2026</strong>.
       </p>
 
-      <div style="display:flex; justify-content: center; align-items: center;flex-direction: column;background: #f8faf9; border-radius: 12px; padding: 24px; margin-bottom: 32px; text-align: left;">
+      <div
+        style="display:flex; justify-content: center; align-items: center;flex-direction: column;background: #f8faf9; border-radius: 12px; padding: 24px; margin-bottom: 32px; text-align: left;">
         <h3 style="margin: 0 0 16px; color: #19c88b;">📋 Descarga estos documentos para la carrera</h3>
         <p style="margin: 0 0 12px;">Imprime ambas hojas, fírmalas y llévalas el día del evento:</p>
         <a href="exo.jpeg" download class="btn"
@@ -72,14 +74,18 @@
           📄 Hoja 2 - Exoneración
         </a>
       </div>
-      <a href="exo1.jpeg" download class="btn"
+      <!-- <a href="exo1.jpeg" download class="btn"
           style="display: inline-block; margin: 8px 8px 8px 0; background: #19c88b; color: white; padding: 12px 24px; border-radius: 999px; text-decoration: none;">
           📄 Hoja 2 - Exoneración
-        </a>
+        </a> -->
 
       <p style="color: #6b7280; font-size: 0.95rem;">
         También te enviamos un correo con toda la información.<br>
         Revisa tu bandeja de entrada (y spam). Puede demorar
+      </p>
+      <p style="color: #19c88b; font-size: 0.95rem;">
+        Si no te has registrado crea una cuenta con el mail asociado a la cuenta.
+        
       </p>
 
       <a href="index.html" class="btn btn-primary" style="margin-top: 32px; padding: 14px 32px;">
@@ -88,4 +94,5 @@
     </div>
   </div>
 </body>
+
 </html>
