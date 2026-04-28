@@ -6270,3 +6270,14 @@ body[data-page="series"] .page-hero .container {
 .auth-field-error.show {
   display: block;
 }
+
+.modal-special-dialog{
+  left: 0;
+}
+
+@media screen and (min-width: 601px) {
+  .modal-special-dialog {
+    position: relative; /* Asegúrate de tener un posicionamiento que admita 'left' */
+    left: 12.5dvw;
+  }
+}

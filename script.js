@@ -2743,10 +2743,10 @@ function setupSupabase() {
             if (emergencySaveBtn) emergencySaveBtn.textContent = "Actualizar contacto";
             toggleEmergencyMode({ showForm: false, contact: savedContact });
           });
-          
+
           emergencyForm.addEventListener("submit", async (event) => {
             event.preventDefault();
-            
+
             const payload = normalizeEmergencyContact({
               name: emergencyName.value,
               phone: emergencyPhone.value,
@@ -2779,12 +2779,12 @@ function setupSupabase() {
               { userId: user.id, email: user.email || "" },
               payload
             );
-            
+
             if (emergencySaveBtn) {
               emergencySaveBtn.disabled = false;
               emergencySaveBtn.textContent = "Actualizar contacto";
             }
-            
+
             if (error) {
               showEmergencyStatus("No se pudo guardar el contacto. Intenta de nuevo.", true);
               return;
@@ -2800,31 +2800,24 @@ function setupSupabase() {
             toggleEmergencyMode({ showForm: false, contact: payload });
           });
         }
-        
+
         const navActions = document.querySelector(".nav-actions");
         if (navActions) {
           navActions.innerHTML = `
           <span class="ghost-link" style="cursor:default;font-size:0.85rem;">${user.email}</span>
           <button class="btn btn-primary" id="navLogoutBtn" type="button">Cerrar sesión</button>
         `;
-        document.getElementById("navLogoutBtn")?.addEventListener("click", async () => {
+          document.getElementById("navLogoutBtn")?.addEventListener("click", async () => {
             await client.auth.signOut();
             window.location.href = "index.html";
           });
         }
 
+        const reminderPay = document.getElementById("profileRaceReminderPay");
         // ====================== INSCRIPCIONES REALES DESDE SUPABASE ======================
-        // ====================== INSCRIPCIONES REALES DESDE SUPABASE + MODAL QUE FUNCIONABA ======================
-        
-                // ====================== INSCRIPCIONES REALES DESDE SUPABASE ======================
 
         const racesContainer = document.getElementById("profileRacesContainer");
         const reminder = document.getElementById("profileRaceReminder");
-        const reminderPay = document.getElementById("profileRaceReminderPay");
-
-        if (reminderPay) {
-          reminderPay.href = AXOLOTE_PAYMENT_URL;
-        }
 
         const profileUrl = new URL(window.location.href);
         const raceParam = profileUrl.searchParams.get("race");
@@ -2898,12 +2891,9 @@ function setupSupabase() {
           document.body.appendChild(overlay);
         };
 
-        // Renderizado de las tarjetas (PAID / PENDING)
+        // Renderizado de las tarjetas grandes
         const renderRaces = (state) => {
-          if (!racesContainer) {
-            console.warn("racesContainer no encontrado");
-            return;
-          }
+          if (!racesContainer) return;
 
           console.log(`Renderizando estado: ${state}`);
 
@@ -2937,10 +2927,17 @@ function setupSupabase() {
                   </div>
                   <p class="profile-race-meta">31 OCT 2026 · Pista de Canotaje, CDMX · Categoría única 5K</p>
                   <p class="profile-race-meta">Incluye playera técnica oficial Axolote Night Run 2026 y medalla de finisher exclusiva.</p>
+                  <section style="display:flex; justify-content:space-between; align-items:center">
                   <div class="profile-race-actions">
                     <a class="profile-race-detail-btn" href="${AXOLOTE_EVENT_URL}">Ver detalle del evento</a>
                   </div>
+                  <button id="verDocumentosReminderBtn2" class="profile-reminder-cta" style="background:#19c88b; color:white; border:none;">
+                Ver documentos
+              </button>
+                  
+                  </section>
                 </article>
+
               </div>
             `;
             return;
@@ -2966,11 +2963,114 @@ function setupSupabase() {
           `;
         };
 
-        const syncReminder = (state) => {
-          if (reminder) reminder.hidden = state !== "pending";
+        // Función para actualizar el reminder cuando está inscrito (paid)
+        const updateReminderForPaid = () => {
+          if (!reminder) return;
+
+          reminder.hidden = false;   // ← Importante: quitamos el hidden
+
+          reminder.innerHTML = `
+            <div class="container profile-reminder-inner">
+              <div>
+                <p class="profile-reminder-title">Carrera Inscrita</p>
+                <p class="profile-reminder-copy">Axolote Night Run 2026 · Categoría única 5K · 31 OCT 2026</p>
+              </div>
+              <button id="verDocumentosReminderBtn" class="profile-reminder-cta" style="background:#19c88b; color:white; border:none;">
+                Ver documentos
+              </button>
+            </div>
+          `;
+
+          // Agregar evento al botón
+          setTimeout(() => {
+            const btn = document.getElementById("verDocumentosReminderBtn");
+            const btn2 = document.getElementById("verDocumentosReminderBtn2");
+            if (btn) {
+              btn.addEventListener("click", openLegalDocumentsModal);
+            }
+            if (btn2){
+              btn2.addEventListener("click", openLegalDocumentsModal);
+            }
+          }, 100);
         };
 
-        // Tu función loadUserInscriptions (sin cambios importantes)
+        // Modal de Documentos Legales
+        function openLegalDocumentsModal() {
+          let existing = document.getElementById("legalDocumentsModal");
+          if (existing) existing.remove();
+
+          const modalHTML = `
+            <div class="modal-overlay" id="legalDocumentsModal" style="display: flex !important; z-index: 100000;  ">
+              <div class="modal-dialog modal-dialog-gallery modal-special-dialog" role="dialog" aria-modal="true" aria-labelledby="legalModalTitle"  >
+                <button class="modal-close" type="button" aria-label="Cerrar" data-modal-close>×</button>
+                <h3 id="legalModalTitle">Documentos del Evento</h3>
+                <p id="legalModalParagraf">Debe descargar todas las exoneraciones y traerlas firmadas al evento</p>
+                <div class="modal-gallery" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px;">
+                <section style="display:flex;justify-content:center;align-items:center;flex-direction:column;">
+                    <img src="exo.jpeg" alt="Documento legal página 1" style="width:100%; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.2);">
+                    <a href="exo.jpeg" download class="btn"
+                    style="display: inline-block; margin: 8px 8px 8px 0; background: #19c88b; color: white; padding: 10px 20px; border-radius: 999px; text-decoration: none;">
+          📄          Descargar - Exoneración
+                  </a>
+                  </section>
+                  <section style="display:flex;justify-content:center;align-items:center;flex-direction:column;">
+                    <img src="exo.jpeg" alt="Documento legal página 1" style="width:100%; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.2);">
+                    <a href="exo1.jpeg" download class="btn"
+                    style="display: inline-block; margin: 8px 8px 8px 0; background: #19c88b; color: white; padding: 10px 20px; border-radius: 999px; text-decoration: none;">
+          📄          Descargar - Exoneración
+                  </a>
+                  </section>
+                  <section style="display:flex;justify-content:center;align-items:center;flex-direction:column;">
+                    <img src="exo3.jpeg" alt="Documento legal página 1" style="width:100%; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.2);">
+                    <a href="exo.jpeg" download class="btn"
+                    style="display: inline-block; margin: 8px 8px 8px 0; background: #19c88b; color: white; padding: 10px 20px; border-radius: 999px; text-decoration: none;">
+          📄          Descargar - Exoneración
+                  </a>
+                  </section>
+
+                  <a href="axo_convo.jpeg" target="_blank">
+                  <img src="axo_convo.jpeg" alt="Convocatoria" style="width:100%; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.2);">
+                  </a>
+                  <a href="axo_convo1.jpeg" target="_blank">
+                  <img src="axo_convo1.jpeg" alt="Convocatoria" style="width:100%; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.2);">
+                  </a>
+                  <a href="axo_convo2.jpeg" target="_blank">
+                  <img src="axo_convo2.jpeg" alt="Convocatoria" style="width:100%; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.2);">
+                  </a>
+                </div>
+                <div class="modal-actions" style="text-align: center; padding: 20px 0;">
+                  <button class="modal-close-secondary" type="button" data-modal-close style="
+                    padding: 12px 32px; background: #19c88b; color: white; border: none; 
+                    border-radius: 999px; font-weight: 600; cursor: pointer;
+                  ">Cerrar</button>
+                </div>
+              </div>
+            </div>
+          `;
+
+          document.body.insertAdjacentHTML("beforeend", modalHTML);
+
+          const modal = document.getElementById("legalDocumentsModal");
+
+          const closeModal = () => {
+            if (modal) modal.remove();
+          };
+
+          modal.addEventListener("click", (e) => {
+            if (e.target === modal || e.target.hasAttribute("data-modal-close")) {
+              closeModal();
+            }
+          });
+
+          document.addEventListener("keydown", function handler(e) {
+            if (e.key === "Escape") {
+              closeModal();
+              document.removeEventListener("keydown", handler);
+            }
+          });
+        }
+
+        // ====================== loadUserInscriptions ======================
         async function loadUserInscriptions() {
           const client = await ensureSupabaseClient();
           if (!client) return;
@@ -3010,6 +3110,7 @@ function setupSupabase() {
             if (dbStatus === "paid") {
               finalState = "paid";
               writePaymentState("paid");
+              updateReminderForPaid();        // ← Actualiza el reminder
             } else {
               finalState = "pending";
               writePaymentState("pending");
@@ -3017,7 +3118,6 @@ function setupSupabase() {
           }
 
           renderRaces(finalState);
-          syncReminder(finalState);
         }
 
         // Inicialización
@@ -3034,10 +3134,10 @@ function setupSupabase() {
           writePaymentState("pending");
         }
 
-        // Render inicial + carga real
+        // Render inicial
         renderRaces(paymentState);
-        syncReminder(paymentState);
 
+        // Carga real desde Supabase
         loadUserInscriptions();
 
         let isEditing = false;
