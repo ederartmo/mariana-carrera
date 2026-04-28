@@ -6281,3 +6281,20 @@ body[data-page="series"] .page-hero .container {
     left: 12.5dvw;
   }
 }
+.nav-mobile-actions {
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 1px solid rgba(255,255,255,0.1);
+}
+
+.nav-mobile-cta {
+  display: block;
+  text-decoration: none;
+  font-size: 1rem;
+  transition: all 0.2s ease;
+}
+
+.nav-mobile-cta:hover {
+  transform: translateY(-2px);
+  opacity: 0.95;
+}
