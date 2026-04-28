@@ -49,19 +49,21 @@ module.exports = async (req, res) => {
     // ====================== GUARDAR EN SUPABASE ======================
     try {
       const { error: insertError } = await supabase
-        .from('inscripciones')
-        .upsert({
-          stripe_session_id: ordenId,
-          email: email.toLowerCase().trim(),
-          full_name: nombreCompleto.trim(),
-          event_slug: 'axolote-night-run',
-          amount_paid: amountTotal,
-          payment_status: 'paid',
-          payment_method: 'card',
-          created_at: new Date().toISOString(),
-        }, { 
-          onConflict: 'stripe_session_id' 
-        });
+  .from('inscripciones')
+  .upsert({
+    stripe_session_id: ordenId,
+    email: email.toLowerCase().trim(),
+    full_name: nombreCompleto.trim(),
+    event_slug: 'axolote-night-run',
+    amount_paid: amountTotal,
+    payment_status: 'paid',
+    payment_method: 'card',
+    // Agrega más campos si los tienes
+  }, { 
+    onConflict: 'stripe_session_id',           // sigue siendo útil
+    // O mejor, si ya tienes la constraint única:
+    // onConflict: 'email,event_slug'
+  });
 
       if (insertError) {
         console.error("Error al guardar inscripción en Supabase:", insertError);

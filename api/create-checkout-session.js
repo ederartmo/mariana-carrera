@@ -52,7 +52,7 @@ export default async function handler(req, res) {
       .maybeSingle();
 
     if (existingInscripcion) {
-      return res.status(400).json({ 
+      return res.status(400).json({
         error: 'Ya tienes una inscripción pagada con este correo electrónico.',
         alreadyPaid: true
       });
@@ -64,6 +64,25 @@ export default async function handler(req, res) {
       .select('email')
       .eq('email', email.toLowerCase().trim())
       .maybeSingle();
+    const { data: existingAny } = await supabase
+      .from('inscripciones')
+      .select('id, payment_status')
+      .eq('email', email.toLowerCase().trim())
+      .eq('event_slug', 'axolote-night-run')
+      .maybeSingle();
+
+    if (existingAny) {
+      if (existingAny.payment_status === 'paid') {
+        return res.status(400).json({
+          error: 'Ya tienes una inscripción pagada...',
+          alreadyPaid: true
+        });
+      } else {
+        return res.status(400).json({
+          error: 'Ya tienes una inscripción en proceso con este correo.'
+        });
+      }
+    }
 
     // ====================== CREAR SESIÓN DE STRIPE ======================
     const session = await stripe.checkout.sessions.create({
@@ -81,9 +100,9 @@ export default async function handler(req, res) {
       }
     });
 
-    res.status(200).json({ 
+    res.status(200).json({
       url: session.url,
-      hasProfile: !!existingProfile 
+      hasProfile: !!existingProfile
     });
 
   } catch (error) {
