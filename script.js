@@ -41,35 +41,214 @@ function setupMenuToggle() {
     }
   });
 }
+// ====================== FUNCIÓN REUTILIZABLE PARA VERIFICAR PAGO ======================
+  async function checkIfUserHasPaid() {
+  // Esperar a que Supabase esté disponible
+  if (typeof window.supabase === "undefined") {
+    await new Promise(resolve => setTimeout(resolve, 600)); // pequeña espera
+  }
 
-function setupActiveNavLink() {
-  const nav = document.getElementById("siteNav");
-  if (!nav) return;
+  try {
+    const client = window.supabase.createClient(
+      "https://uycwzhlcnfijjyzkgkem.supabase.co",
+      "sb_publishable_IKwD3YtQwWzzEtE8QkVagA_OJGdV2e4"
+    );
 
-  const links = Array.from(nav.querySelectorAll("a[href]"));
-  if (!links.length) return;
+    const { data: { session } } = await client.auth.getSession();
+    if (!session?.user?.email) return false;
 
-  const currentPath = window.location.pathname.split("/").pop() || "index.html";
-  links.forEach((link) => {
-    const linkPath = (link.getAttribute("href") || "").split("#")[0];
-    const isHome = currentPath === "" || currentPath === "index.html";
-    const shouldActivate = linkPath === currentPath || (isHome && linkPath === "index.html");
+    const email = session.user.email.trim().toLowerCase();
 
-    if (shouldActivate) {
-      link.classList.add("is-active");
-      link.setAttribute("aria-current", "page");
+    const { data, error } = await client
+      .from("inscripciones")
+      .select("payment_status")
+      .eq("email", email)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    if (error) {
+      console.warn("Error al consultar inscripciones:", error);
+      return false;
     }
-  });
 
-  if (!nav.querySelector(".nav-mobile-cta")) {
-    const cta = document.createElement("a");
-    cta.href = "auth.html?mode=register";
-    cta.className = "nav-mobile-cta";
-    cta.textContent = "Registrarse";
-    nav.appendChild(cta);
+    const isPaid = (data?.payment_status || "").toLowerCase().trim() === "paid";
+    console.log("✅ checkIfUserHasPaid() →", isPaid, "| email:", email);
+    
+    return isPaid;
+
+  } catch (err) {
+    console.warn("Error en checkIfUserHasPaid():", err);
+    return false;
   }
 }
+// function setupActiveNavLink() {
+//   const nav = document.getElementById("siteNav");
+//   if (!nav) return;
 
+//   const links = Array.from(nav.querySelectorAll("a[href]"));
+//   if (!links.length) return;
+
+//   const currentPath = window.location.pathname.split("/").pop() || "index.html";
+//   links.forEach((link) => {
+//     const linkPath = (link.getAttribute("href") || "").split("#")[0];
+//     const isHome = currentPath === "" || currentPath === "index.html";
+//     const shouldActivate = linkPath === currentPath || (isHome && linkPath === "index.html");
+
+//     if (shouldActivate) {
+//       link.classList.add("is-active");
+//       link.setAttribute("aria-current", "page");
+//     }
+//   });
+
+//   if (!nav.querySelector(".nav-mobile-cta")) {
+//     const cta = document.createElement("a");
+//     cta.href = "auth.html?mode=register";
+//     cta.className = "nav-mobile-cta";
+//     cta.textContent = "Registrarse";
+//     nav.appendChild(cta);
+//   }
+// }
+  function setupActiveNavLink() {
+    const nav = document.getElementById("siteNav");
+    if (!nav) return;
+
+    // Marcar enlace activo
+    const currentPath = window.location.pathname.split("/").pop() || "index.html";
+    const links = Array.from(nav.querySelectorAll("a[href]"));
+
+    links.forEach((link) => {
+      const linkPath = (link.getAttribute("href") || "").split("#")[0].split("?")[0];
+      const isHome = currentPath === "" || currentPath === "index.html";
+      const shouldActivate = linkPath === currentPath || (isHome && (linkPath === "index.html" || linkPath === ""));
+
+      if (shouldActivate) {
+        link.classList.add("is-active");
+        link.setAttribute("aria-current", "page");
+      }
+    });
+
+    // Contenedor para botones en móvil
+    let mobileActions = nav.querySelector(".nav-mobile-actions");
+    if (!mobileActions) {
+      mobileActions = document.createElement("div");
+      mobileActions.className = "nav-mobile-actions";
+      nav.appendChild(mobileActions);
+    }
+
+    const updateMobileAuthUI = async () => {
+      mobileActions.innerHTML = '';
+
+      let isLoggedIn = false;
+
+      // Esperar a que Supabase esté disponible
+      if (typeof window.supabase === "undefined") {
+        // Si aún no cargó, mostrar "Registrarse" por defecto
+        mobileActions.innerHTML = `<a href="auth.html?mode=register" class="nav-mobile-cta">Registrarse</a>`;
+        return;
+      }
+
+      try {
+        const client = window.supabase.createClient(
+          "https://uycwzhlcnfijjyzkgkem.supabase.co",
+          "sb_publishable_IKwD3YtQwWzzEtE8QkVagA_OJGdV2e4"
+        );
+
+        const { data: { session } } = await client.auth.getSession();
+        isLoggedIn = !!session?.user;
+      } catch (err) {
+        console.warn("Error verificando sesión en menú móvil:", err);
+      }
+
+      if (isLoggedIn) {
+        mobileActions.innerHTML = `
+          <a href="perfil.html" class="nav-mobile-cta logged-in">👤 Mi Perfil</a>
+          <button id="mobileLogoutBtn" class="nav-mobile-cta logout-btn logout-btn-sp">Cerrar Sesión</button>
+        `;
+
+        setTimeout(() => {
+          const logoutBtn = document.getElementById("mobileLogoutBtn");
+          if (logoutBtn) {
+            logoutBtn.addEventListener("click", async () => {
+              try {
+                const client = window.supabase.createClient(
+                  "https://uycwzhlcnfijjyzkgkem.supabase.co",
+                  "sb_publishable_IKwD3YtQwWzzEtE8QkVagA_OJGdV2e4"
+                );
+                await client.auth.signOut();
+              } catch (e) {}
+              window.location.href = "index.html";
+            });
+          }
+        }, 100);
+
+      } else {
+        mobileActions.innerHTML = `
+          <a href="auth.html?mode=register" class="nav-mobile-cta">Registrarse</a>
+        `;
+      }
+    };
+
+    // Ejecutar cuando el DOM esté listo
+    updateMobileAuthUI();
+
+    // Intentar actualizar cuando Supabase cargue
+    const checkSupabaseLoaded = setInterval(() => {
+      if (typeof window.supabase !== "undefined") {
+        clearInterval(checkSupabaseLoaded);
+        updateMobileAuthUI();
+      }
+    }, 300);
+
+    // Listener de cambio de autenticación (solo si Supabase ya cargó)
+    setTimeout(() => {
+      if (typeof window.supabase !== "undefined" && window.supabase.auth) {
+        window.supabase.auth.onAuthStateChange(() => {
+          updateMobileAuthUI();
+        });
+      }
+    }, 800);
+  }
+
+  // ====================== OCULTAR BOTONES DE COMPRA SI YA PAGÓ ======================
+async function setupEventBuyButtons() {
+  console.log("🔄 setupEventBuyButtons iniciado...");
+
+  // Esperar un poco a que Supabase se inicialice
+  await new Promise(resolve => setTimeout(resolve, 800));
+
+  const hasPaid = await checkIfUserHasPaid();
+  console.log("¿Usuario ya pagó la inscripción?", hasPaid);
+
+  if (!hasPaid) return; // Si no pagó, no hacemos nada
+
+  // === Ocultar todos los botones de "Comprar" ===
+  const buySelectors = [
+    'a[href*="checkout.html"]',
+    '.event-spotlight-cta[href*="checkout.html"]',
+    '.neon-cta[href*="checkout.html"]',
+    '#spotlightBuyBtn'
+  ];
+
+  buySelectors.forEach(selector => {
+    document.querySelectorAll(selector).forEach(el => {
+      el.style.display = "none";
+      console.log("Botón ocultado:", el.textContent || el.href);
+    });
+  });
+
+  // Ocultar panel de registro en axolote-night-run.html
+  const registerPanel = document.querySelector("[data-event-register-panel]");
+  if (registerPanel) {
+    registerPanel.style.display = "none";
+  }
+
+  // Redirigir si está en checkout.html
+  if (window.location.pathname.includes("checkout.html")) {
+    alert("Ya tienes una inscripción pagada. Redirigiendo a tu perfil...");
+    window.location.href = "perfil.html";
+  }
+}
 function setupPageLoadIndicator() {
   if (document.querySelector(".page-load-bar")) return;
 
@@ -3491,3 +3670,6 @@ setupBlogTabs();
 setupTipsCarousel();
 setupSupabase();
 setupCheckoutForm();
+
+// NUEVA LLAMADA
+setupEventBuyButtons();
