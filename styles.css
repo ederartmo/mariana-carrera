@@ -6298,3 +6298,9 @@ body[data-page="series"] .page-hero .container {
   transform: translateY(-2px);
   opacity: 0.95;
 }
+.logout-btn-sp {
+  padding-top: 0.4rem!important;
+  padding-bottom: 0.4rem!important;
+  padding-left: 0.4rem!important;
+  padding-right: 0.4rem!important;
+}

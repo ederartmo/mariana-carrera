@@ -1,168 +1,166 @@
 <!doctype html>
 <html lang="es">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Kinetic Hub | Eventos y Carreras</title>
-    <meta
-      name="description"
-      content="Kinetic Hub es la plataforma para descubrir eventos deportivos, carreras y experiencias que te mueven."
-    />
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Sora:wght@500;600;700;800&display=swap"
-      rel="stylesheet"
-    />
-    <link rel="stylesheet" href="styles.css?v=__ASSET_VERSION__" />
-      <link rel="icon" type="image/png" href="icon.png" />
-  </head>
-  <body>
-    <div class="page-glow page-glow-a"></div>
-    <div class="page-glow page-glow-b"></div>
 
-    <header class="site-header">
-      <div class="container nav-shell">
-        <a href="index.html" class="brand" aria-label="Ir al inicio de Kinetic Hub">
-          <img class="brand-mascot" src="Logo_kinect.png" alt="Ajolote Kinetic Hub" />
-          <span class="brand-copy">
-            <strong>Kinetic Hub</strong>
-            <small>Run your next challenge</small>
-          </span>
-        </a>
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Kinetic Hub | Eventos y Carreras</title>
+  <meta name="description"
+    content="Kinetic Hub es la plataforma para descubrir eventos deportivos, carreras y experiencias que te mueven." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Sora:wght@500;600;700;800&display=swap"
+    rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css?v=__ASSET_VERSION__" />
+  <link rel="icon" type="image/png" href="icon.png" />
+</head>
 
-        <button class="menu-toggle" id="menuToggle" aria-expanded="false" aria-controls="siteNav">
-          Menú
-        </button>
+<body>
+  <div class="page-glow page-glow-a"></div>
+  <div class="page-glow page-glow-b"></div>
 
-        <nav class="site-nav" id="siteNav" aria-label="Navegación principal">
-          <a href="eventos.html">Explorar eventos</a>
-          <a href="blog.html">Blog</a>
-          <a href="nosotros.html">Nosotros</a>
-          <a href="contacto.html">Contacto</a>
-        </nav>
+  <header class="site-header">
+    <div class="container nav-shell">
+      <a href="index.html" class="brand" aria-label="Ir al inicio de Kinetic Hub">
+        <img class="brand-mascot" src="Logo_kinect.png" alt="Ajolote Kinetic Hub" />
+        <span class="brand-copy">
+          <strong>Kinetic Hub</strong>
+          <small>Run your next challenge</small>
+        </span>
+      </a>
 
-        <div class="nav-actions">
-          <a class="ghost-link" href="auth.html?mode=login">Iniciar Sesión</a>
-          <a class="btn btn-primary" href="checkout.html">Comprar</a>
-        </div>
+      <button class="menu-toggle" id="menuToggle" aria-expanded="false" aria-controls="siteNav">
+        Menú
+      </button>
+
+      <nav class="site-nav" id="siteNav" aria-label="Navegación principal">
+        <a href="eventos.html">Explorar eventos</a>
+        <a href="blog.html">Blog</a>
+        <a href="nosotros.html">Nosotros</a>
+        <a href="contacto.html">Contacto</a>
+      </nav>
+
+      <div class="nav-actions">
+        <a class="ghost-link" href="auth.html?mode=login">Iniciar Sesión</a>
+        <a class="btn btn-primary" href="checkout.html">Comprar</a>
       </div>
-    </header>
+    </div>
+  </header>
 
-    <main>
-      <section class="hero hero-sport" id="registro">
-        <div class="container hero-banner-shell reveal">
-          <h1 class="hero-banner-title sr-only">Regístrate a la siguiente carrera</h1>
+  <main>
+    <section class="hero hero-sport" id="registro">
+      <div class="container hero-banner-shell reveal">
+        <h1 class="hero-banner-title sr-only">Regístrate a la siguiente carrera</h1>
 
-          <article class="event-spotlight-card event-summary-card" id="raceRegisterBar">
-            <div class="event-spotlight-main">
-              <div class="event-spotlight-thumb" aria-hidden="true"></div>
-              <div class="event-spotlight-copy">
-                <h2>Axolote Night Run</h2>
-                <p class="event-spotlight-location">CDMX · 2026</p>
-                <p class="event-spotlight-category">Running nocturno</p>
-                <p class="event-spotlight-distance">Distancias: 3K · 5K</p>
-              </div>
+        <article class="event-spotlight-card event-summary-card" id="raceRegisterBar">
+          <div class="event-spotlight-main">
+            <div class="event-spotlight-thumb" aria-hidden="true"></div>
+            <div class="event-spotlight-copy">
+              <h2>Axolote Night Run</h2>
+              <p class="event-spotlight-location">CDMX · 2026</p>
+              <p class="event-spotlight-category">Running nocturno</p>
+              <p class="event-spotlight-distance">Distancias: 3K · 5K</p>
             </div>
-
-            <div class="event-spotlight-divider" aria-hidden="true"></div>
-
-            <div class="event-spotlight-details">
-              <div class="event-detail-item">
-                <span class="event-detail-icon" aria-hidden="true">
-                  <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <rect x="3.5" y="4.5" width="17" height="16" rx="2.5" stroke="currentColor" stroke-width="1.6" />
-                    <path d="M8 2.8V6.2M16 2.8V6.2M3.5 9.2H20.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" />
-                  </svg>
-                </span>
-                <div>
-                  <strong>31 OCT 2026</strong>
-                  <a href="#">Agregar a calendario</a>
-                </div>
-              </div>
-
-              <div class="event-detail-item">
-                <span class="event-detail-icon" aria-hidden="true">
-                  <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M12 21s6-5.2 6-10a6 6 0 1 0-12 0c0 4.8 6 10 6 10Z" stroke="currentColor" stroke-width="1.6" />
-                    <circle cx="12" cy="11" r="2.3" stroke="currentColor" stroke-width="1.6" />
-                  </svg>
-                </span>
-                <div>
-                  <strong>Pista de Canotaje, CDMX</strong>
-                  <a href="#" data-modal-open="mapModal">¿Cómo llegar?</a>
-                </div>
-              </div>
-
-              <div class="event-detail-item">
-                <span class="event-detail-icon" aria-hidden="true">
-                  <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <circle cx="12" cy="12" r="8.4" stroke="currentColor" stroke-width="1.6" />
-                    <path d="M12 7.4V12.2L15 14" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" />
-                  </svg>
-                </span>
-                <div>
-                  <strong>18:00 H</strong>
-                </div>
-              </div>
-            </div>
-
-            <div class="event-spotlight-divider" aria-hidden="true"></div>
-
-            <div class="event-spotlight-pricing">
-              <p class="event-spotlight-price-label">Precio desde</p>
-              <p class="event-spotlight-price">$480 MXN</p>
-              <div class="event-spotlight-actions">
-                <a class="event-spotlight-cta" href="checkout.html">Comprar</a>
-                <button
-                  class="event-spotlight-more"
-                  type="button"
-                  data-neon-toggle
-                  aria-expanded="false"
-                  aria-controls="neonEventDetails"
-                >
-                  Ver más
-                </button>
-              </div>
-            </div>
-          </article>
-
-        </div>
-      </section>
-
-      <section class="hero-white-bridge" aria-hidden="true"></section>
-
-      <aside class="event-sticky-banner" id="eventStickyBanner" aria-hidden="true">
-        <div class="event-sticky-inner">
-          <div class="event-sticky-thumb" aria-hidden="true"></div>
-          <div class="event-sticky-main">
-            <p class="event-sticky-name">Axolote Night Run</p>
-            <p class="event-sticky-distance">Categoría única 5K</p>
-            <p class="event-sticky-meta">31 OCT 2026 · Pista de Canotaje, CDMX</p>
-          </div>
-          <p class="event-sticky-price">Desde $480 MXN</p>
-          <a class="event-sticky-cta" href="checkout.html">Comprar</a>
-        </div>
-      </aside>
-
-      <section class="neon-event-section">
-        <div class="neon-event-container">
-          <div class="neon-header">
-            <p class="neon-kicker">AXOLOTE NIGHT RUN</p>
-            <h2>REGISTRATE A LA SIGUIENTE CARRERA</h2>
-            <p class="neon-subtitle">
-              Acepta el reto, revisa toda la información y registrate en un clic.
-            </p>
           </div>
 
-          <div class="neon-collapsible" id="neonEventDetails" hidden>
+          <div class="event-spotlight-divider" aria-hidden="true"></div>
+
+          <div class="event-spotlight-details">
+            <div class="event-detail-item">
+              <span class="event-detail-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <rect x="3.5" y="4.5" width="17" height="16" rx="2.5" stroke="currentColor" stroke-width="1.6" />
+                  <path d="M8 2.8V6.2M16 2.8V6.2M3.5 9.2H20.5" stroke="currentColor" stroke-width="1.6"
+                    stroke-linecap="round" />
+                </svg>
+              </span>
+              <div>
+                <strong>31 OCT 2026</strong>
+                <a href="#">Agregar a calendario</a>
+              </div>
+            </div>
+
+            <div class="event-detail-item">
+              <span class="event-detail-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M12 21s6-5.2 6-10a6 6 0 1 0-12 0c0 4.8 6 10 6 10Z" stroke="currentColor"
+                    stroke-width="1.6" />
+                  <circle cx="12" cy="11" r="2.3" stroke="currentColor" stroke-width="1.6" />
+                </svg>
+              </span>
+              <div>
+                <strong>Pista de Canotaje, CDMX</strong>
+                <a href="#" data-modal-open="mapModal">¿Cómo llegar?</a>
+              </div>
+            </div>
+
+            <div class="event-detail-item">
+              <span class="event-detail-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <circle cx="12" cy="12" r="8.4" stroke="currentColor" stroke-width="1.6" />
+                  <path d="M12 7.4V12.2L15 14" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"
+                    stroke-linejoin="round" />
+                </svg>
+              </span>
+              <div>
+                <strong>18:00 H</strong>
+              </div>
+            </div>
+          </div>
+
+          <div class="event-spotlight-divider" aria-hidden="true"></div>
+
+          <div class="event-spotlight-pricing">
+            <p class="event-spotlight-price-label">Precio desde</p>
+            <p class="event-spotlight-price">$480 MXN</p>
+            <div class="event-spotlight-actions" id="spotlightActions">
+              <a id="spotlightBuyBtn" class="event-spotlight-cta" href="checkout.html">Comprar</a>
+              <button class="event-spotlight-more" type="button" data-neon-toggle aria-expanded="false"
+                aria-controls="neonEventDetails">
+                Ver más
+              </button>
+            </div>
+          </div>
+        </article>
+
+      </div>
+    </section>
+
+    <section class="hero-white-bridge" aria-hidden="true"></section>
+
+    <aside class="event-sticky-banner" id="eventStickyBanner" aria-hidden="true">
+      <div class="event-sticky-inner">
+        <div class="event-sticky-thumb" aria-hidden="true"></div>
+        <div class="event-sticky-main">
+          <p class="event-sticky-name">Axolote Night Run</p>
+          <p class="event-sticky-distance">Categoría única 5K</p>
+          <p class="event-sticky-meta">31 OCT 2026 · Pista de Canotaje, CDMX</p>
+        </div>
+        <p class="event-sticky-price">Desde $480 MXN</p>
+        <a class="event-sticky-cta" href="checkout.html">Comprar</a>
+      </div>
+    </aside>
+
+    <section class="neon-event-section">
+      <div class="neon-event-container">
+        <div class="neon-header">
+          <p class="neon-kicker">AXOLOTE NIGHT RUN</p>
+          <h2>REGISTRATE A LA SIGUIENTE CARRERA</h2>
+          <p class="neon-subtitle">
+            Acepta el reto, revisa toda la información y registrate en un clic.
+          </p>
+        </div>
+
+        <div class="neon-collapsible" id="neonEventDetails" hidden>
           <div class="neon-grid">
             <div class="neon-card" tabindex="0" role="button" aria-pressed="false" aria-label="Ver fecha del evento">
               <span class="neon-label">Fecha</span>
               <h3>31 OCT 2026</h3>
             </div>
 
-            <div class="neon-card" tabindex="0" role="button" aria-pressed="false" aria-label="Ver ubicación del evento">
+            <div class="neon-card" tabindex="0" role="button" aria-pressed="false"
+              aria-label="Ver ubicación del evento">
               <span class="neon-label">Ubicación</span>
               <h3>Pista de Canotaje, CDMX</h3>
               <button class="neon-inline-action" type="button" data-modal-open="mapModal">
@@ -176,12 +174,14 @@
           </div>
 
           <div class="neon-grid">
-            <div class="neon-card" tabindex="0" role="button" aria-pressed="false" aria-label="Ver horario de entrega de kits">
+            <div class="neon-card" tabindex="0" role="button" aria-pressed="false"
+              aria-label="Ver horario de entrega de kits">
               <span class="neon-label">Entrega de kits</span>
               <h3>16:00 - 17:30 H.</h3>
             </div>
 
-            <div class="neon-card" tabindex="0" role="button" aria-pressed="false" aria-label="Ver horario de arranque de carrera">
+            <div class="neon-card" tabindex="0" role="button" aria-pressed="false"
+              aria-label="Ver horario de arranque de carrera">
               <span class="neon-label">Arranque carrera</span>
               <h3>18:00 H.</h3>
             </div>
@@ -219,548 +219,573 @@
               </div>
             </div>
           </div>
-          </div>
-
-          <div class="neon-cta-wrap">
-            <a href="checkout.html" class="neon-cta">Comprar</a>
-          </div>
         </div>
-      </section>
 
-      <div class="modal-overlay" id="mapModal" hidden>
-        <div class="modal-dialog" role="dialog" aria-modal="true" aria-labelledby="mapModalTitle">
-          <button class="modal-close" type="button" aria-label="Cerrar" data-modal-close>&times;</button>
-          <h3 id="mapModalTitle">Ubicación del evento</h3>
-          <p>Pista de Canotaje Virgilio Uribe, CDMX</p>
-          <div class="modal-map-wrap">
-            <iframe
-              title="Mapa de ubicación del evento"
-              loading="lazy"
-              referrerpolicy="no-referrer-when-downgrade"
-              src="https://www.google.com/maps?q=Pista%20de%20Canotaje%20Virgilio%20Uribe%20CDMX&output=embed"
-            ></iframe>
-          </div>
+        <div class="neon-cta-wrap">
+          <a href="checkout.html" class="neon-cta">Comprar</a>
         </div>
       </div>
+    </section>
 
-      <div class="modal-overlay" id="legalModal" hidden>
-        <div class="modal-dialog modal-dialog-gallery" role="dialog" aria-modal="true" aria-labelledby="legalModalTitle">
-          <button class="modal-close" type="button" aria-label="Cerrar" data-modal-close>&times;</button>
-          <h3 id="legalModalTitle">Información legal extendida</h3>
-          <div class="modal-gallery">
-            <img src="axo_convo.jpeg" alt="Documento legal del evento, página 2" />
-            <img src="axo_convo1.jpeg" alt="Documento legal del evento, página 2" />
-            <img src="axo_convo2.jpeg" alt="Documento legal del evento, página 2" />
-          </div>
-          <div class="modal-actions">
-            <button class="modal-close-secondary" type="button" data-modal-close>Cerrar</button>
-          </div>
+    <div class="modal-overlay" id="mapModal" hidden>
+      <div class="modal-dialog" role="dialog" aria-modal="true" aria-labelledby="mapModalTitle">
+        <button class="modal-close" type="button" aria-label="Cerrar" data-modal-close>&times;</button>
+        <h3 id="mapModalTitle">Ubicación del evento</h3>
+        <p>Pista de Canotaje Virgilio Uribe, CDMX</p>
+        <div class="modal-map-wrap">
+          <iframe title="Mapa de ubicación del evento" loading="lazy" referrerpolicy="no-referrer-when-downgrade"
+            src="https://www.google.com/maps?q=Pista%20de%20Canotaje%20Virgilio%20Uribe%20CDMX&output=embed"></iframe>
         </div>
       </div>
+    </div>
 
-      <!-- RESULTS DASHBOARD SECTION -->
-      <section class="results-dashboard-section">
-        <div class="container">
-          
-          <!-- HEADER ROW -->
-          <div class="dashboard-header-row">
-            
-            <!-- Logo Block -->
-            <div class="dashboard-logo-block">
+    <div class="modal-overlay" id="legalModal" hidden>
+      <div class="modal-dialog modal-dialog-gallery" role="dialog" aria-modal="true" aria-labelledby="legalModalTitle">
+        <button class="modal-close" type="button" aria-label="Cerrar" data-modal-close>&times;</button>
+        <h3 id="legalModalTitle">Información legal extendida</h3>
+        <div class="modal-gallery">
+          <img src="axo_convo.jpeg" alt="Documento legal del evento, página 2" />
+          <img src="axo_convo1.jpeg" alt="Documento legal del evento, página 2" />
+          <img src="axo_convo2.jpeg" alt="Documento legal del evento, página 2" />
+        </div>
+        <div class="modal-actions">
+          <button class="modal-close-secondary" type="button" data-modal-close>Cerrar</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- RESULTS DASHBOARD SECTION -->
+    <section class="results-dashboard-section">
+      <div class="container">
+
+        <!-- HEADER ROW -->
+        <div class="dashboard-header-row">
+
+          <!-- Logo Block -->
+          <div class="dashboard-logo-block">
+            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8Z" fill="currentColor" stroke="currentColor" stroke-width="0.5"
+                stroke-linejoin="round" />
+            </svg>
+          </div>
+
+          <!-- Primary Text -->
+          <div class="dashboard-text-main">
+            <h2 class="dashboard-title">¡Conoce los resultados de tu última competencia!</h2>
+          </div>
+
+          <!-- Secondary Text -->
+          <div class="dashboard-text-secondary">
+            <p class="dashboard-subtitle">Descubre, comparte y compara tus logros más recientes.</p>
+          </div>
+
+          <!-- CTA Button -->
+          <div class="dashboard-cta-block">
+            <a href="perfil.html#resultados" class="dashboard-btn-primary">Ver resultados</a>
+          </div>
+
+        </div>
+        <!-- END HEADER ROW -->
+
+        <!-- CARDS ROW -->
+        <div class="dashboard-cards-grid">
+
+          <!-- Card 1: Profile -->
+          <article class="dashboard-card">
+            <div class="dashboard-card-icon-circle">
               <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8Z" fill="currentColor" stroke="currentColor" stroke-width="0.5" stroke-linejoin="round"/>
+                <circle cx="12" cy="8" r="4" stroke="currentColor" stroke-width="1.7" />
+                <path d="M4 20c0-4 3.6-7 8-7s8 3 8 7" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" />
               </svg>
             </div>
+            <h3 class="dashboard-card-title">Iniciar sesión</h3>
+            <p class="dashboard-card-text">Accede a tu perfil personalizado para ver tus datos, logros y progreso.</p>
+            <a href="auth.html?mode=login" class="dashboard-card-link">Inicia sesión</a>
+          </article>
 
-            <!-- Primary Text -->
-            <div class="dashboard-text-main">
-              <h2 class="dashboard-title">¡Conoce los resultados de tu última competencia!</h2>
+          <!-- Card 2: Mi Score -->
+          <article class="dashboard-card">
+            <div class="dashboard-card-header">
+              <span class="dashboard-card-label">MI SCORE</span>
             </div>
-
-            <!-- Secondary Text -->
-            <div class="dashboard-text-secondary">
-              <p class="dashboard-subtitle">Descubre, comparte y compara tus logros más recientes.</p>
+            <div class="dashboard-card-icon">
+              <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M12 2a7 7 0 1 0 0 14 7 7 0 0 0 0-14Z" stroke="currentColor" stroke-width="1.7" />
+                <path d="M12 6v6l4.5 2.25" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"
+                  stroke-linejoin="round" />
+              </svg>
             </div>
+            <h3 class="dashboard-card-subtitle">Conecta tu dispositivo</h3>
+            <p class="dashboard-card-text">Revisa métricas clave de actividad, sueño y HRV.</p>
+            <a href="#" class="dashboard-card-link">Conectar</a>
+          </article>
 
-            <!-- CTA Button -->
-            <div class="dashboard-cta-block">
-              <a href="perfil.html#resultados" class="dashboard-btn-primary">Ver resultados</a>
+          <!-- Card 3: Mi Marca Personal -->
+          <article class="dashboard-card">
+            <div class="dashboard-card-header">
+              <span class="dashboard-card-label">MI MARCA PERSONAL</span>
             </div>
+            <div class="dashboard-card-icon">
+              <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8Z" stroke="currentColor" stroke-width="1.7"
+                  stroke-linejoin="round" />
+              </svg>
+            </div>
+            <p class="dashboard-card-text">Realiza varias competencias para que puedas tener una buena marca y puedas
+              compartir esos logros.</p>
+            <a href="perfil.html#resultados" class="dashboard-card-link">Ver competencias</a>
+          </article>
 
-          </div>
-          <!-- END HEADER ROW -->
+          <!-- Card 4: Mi Historial -->
+          <article class="dashboard-card">
+            <div class="dashboard-card-header">
+              <span class="dashboard-card-label">MI HISTORIAL</span>
+            </div>
+            <div class="dashboard-card-icon">
+              <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="1.7" />
+                <path d="M12 6v6l4 2.5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"
+                  stroke-linejoin="round" />
+              </svg>
+            </div>
+            <p class="dashboard-card-text">Participa en una o más competencias para tener un historial de tus desafíos
+              deportivos.</p>
+            <a href="eventos.html" class="dashboard-card-link">Ver competencias</a>
+          </article>
 
-          <!-- CARDS ROW -->
-          <div class="dashboard-cards-grid">
-
-            <!-- Card 1: Profile -->
-            <article class="dashboard-card">
-              <div class="dashboard-card-icon-circle">
-                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <circle cx="12" cy="8" r="4" stroke="currentColor" stroke-width="1.7"/>
-                  <path d="M4 20c0-4 3.6-7 8-7s8 3 8 7" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>
-                </svg>
-              </div>
-              <h3 class="dashboard-card-title">Iniciar sesión</h3>
-              <p class="dashboard-card-text">Accede a tu perfil personalizado para ver tus datos, logros y progreso.</p>
-              <a href="auth.html?mode=login" class="dashboard-card-link">Inicia sesión</a>
-            </article>
-
-            <!-- Card 2: Mi Score -->
-            <article class="dashboard-card">
-              <div class="dashboard-card-header">
-                <span class="dashboard-card-label">MI SCORE</span>
-              </div>
-              <div class="dashboard-card-icon">
-                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M12 2a7 7 0 1 0 0 14 7 7 0 0 0 0-14Z" stroke="currentColor" stroke-width="1.7"/>
-                  <path d="M12 6v6l4.5 2.25" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>
-                </svg>
-              </div>
-              <h3 class="dashboard-card-subtitle">Conecta tu dispositivo</h3>
-              <p class="dashboard-card-text">Revisa métricas clave de actividad, sueño y HRV.</p>
-              <a href="#" class="dashboard-card-link">Conectar</a>
-            </article>
-
-            <!-- Card 3: Mi Marca Personal -->
-            <article class="dashboard-card">
-              <div class="dashboard-card-header">
-                <span class="dashboard-card-label">MI MARCA PERSONAL</span>
-              </div>
-              <div class="dashboard-card-icon">
-                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8Z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/>
-                </svg>
-              </div>
-              <p class="dashboard-card-text">Realiza varias competencias para que puedas tener una buena marca y puedas compartir esos logros.</p>
-              <a href="perfil.html#resultados" class="dashboard-card-link">Ver competencias</a>
-            </article>
-
-            <!-- Card 4: Mi Historial -->
-            <article class="dashboard-card">
-              <div class="dashboard-card-header">
-                <span class="dashboard-card-label">MI HISTORIAL</span>
-              </div>
-              <div class="dashboard-card-icon">
-                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="1.7"/>
-                  <path d="M12 6v6l4 2.5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>
-                </svg>
-              </div>
-              <p class="dashboard-card-text">Participa en una o más competencias para tener un historial de tus desafíos deportivos.</p>
-              <a href="eventos.html" class="dashboard-card-link">Ver competencias</a>
-            </article>
-
-            <!-- Card 5: Mi Galería -->
-            <article class="dashboard-card">
-              <div class="dashboard-card-header">
-                <span class="dashboard-card-label">MI GALERÍA</span>
-              </div>
-              <div class="dashboard-gallery-preview">
-                <div class="gallery-placeholder"></div>
-                <div class="gallery-placeholder"></div>
-                <div class="gallery-placeholder"></div>
-                <div class="gallery-placeholder"></div>
-                <div class="gallery-placeholder"></div>
-              </div>
-              <p class="dashboard-card-text" style="font-size: 0.85rem; margin-top: 8px; text-align: center;">Al participar en una competencia podrás obtener tus fotos</p>
-            </article>
-
-          </div>
-          <!-- END CARDS ROW -->
+          <!-- Card 5: Mi Galería -->
+          <article class="dashboard-card">
+            <div class="dashboard-card-header">
+              <span class="dashboard-card-label">MI GALERÍA</span>
+            </div>
+            <div class="dashboard-gallery-preview">
+              <div class="gallery-placeholder"></div>
+              <div class="gallery-placeholder"></div>
+              <div class="gallery-placeholder"></div>
+              <div class="gallery-placeholder"></div>
+              <div class="gallery-placeholder"></div>
+            </div>
+            <p class="dashboard-card-text" style="font-size: 0.85rem; margin-top: 8px; text-align: center;">Al
+              participar en una competencia podrás obtener tus fotos</p>
+          </article>
 
         </div>
-      </section>
+        <!-- END CARDS ROW -->
 
-      <section class="section" id="future">
-        <div class="container">
-          <div class="section-head">
-            <div>
-              <p class="eyebrow">Confianza y claridad</p>
-              <h2>Preguntas frecuentes de esta edición</h2>
-            </div>
-            <a class="inline-link" href="auth.html?mode=register">Ir al registro</a>
-          </div>
+      </div>
+    </section>
 
-          <div class="future-grid">
-            <article class="future-card reveal">
-              <span>FAQ</span>
-              <h3>¿Puedo transferir mi inscripción?</h3>
-              <p>No, la inscripción es individual e intransferible.</p>
-            </article>
-            <article class="future-card reveal">
-              <span>FAQ</span>
-              <h3>¿Habrá reembolso?</h3>
-              <p>No hay reembolso por cancelación del participante.</p>
-            </article>
-            <article class="future-card reveal">
-              <span>FAQ</span>
-              <h3>¿Qué debo llevar al evento?</h3>
-              <p>Identificación oficial y luz frontal para la modalidad Night Run.</p>
-            </article>
-          </div>
-        </div>
-      </section>
-
-      <section class="section alt">
-        <div class="container">
-          <div class="section-head">
-            <div>
-              <p class="eyebrow">Siguiente paso</p>
-              <h2>Próximas ediciones</h2>
-            </div>
-          </div>
-
-          <p class="notice">
-            Axolote Night Run es nuestra primera carrera oficial. Las próximas fechas se anunciarán
-            al cierre de esta edición para mantener calidad operativa y experiencia del corredor.
-          </p>
-        </div>
-      </section>
-
-      <section class="section alt">
-        <div class="container">
-          <div class="section-head">
-            <div>
-              <p class="eyebrow">Preparación básica</p>
-              <h2>Guía rápida para correr tu primera Night Run</h2>
-            </div>
-            <a class="inline-link" href="auth.html?mode=register">Ver registro</a>
-          </div>
-
-          <div class="card-grid card-grid-3">
-            <article class="blog-card reveal">
-              <h3>Entrena 3 veces por semana</h3>
-              <p>Alterna trote suave, trabajo técnico y un fondo corto para llegar sin sobrecarga.</p>
-              <a class="inline-link" href="auth.html?mode=register">Aplicar al registro</a>
-            </article>
-            <article class="blog-card reveal">
-              <h3>Hidrátate desde el día previo</h3>
-              <p>Prioriza agua y cena ligera; evita experimentar alimentos nuevos antes del evento.</p>
-              <a class="inline-link" href="auth.html?mode=register">Quiero participar</a>
-            </article>
-            <article class="blog-card reveal">
-              <h3>Llega con anticipación al kit</h3>
-              <p>Presenta identificación, firma exoneración y confirma tus datos antes del arranque.</p>
-              <a class="inline-link" href="auth.html?mode=register">Inscribirme</a>
-            </article>
-          </div>
-        </div>
-      </section>
-
-      <section class="section home-blog-feed" id="homeBlog">
-        <div class="container">
-          <div class="home-blog-head reveal">
-            <h2>ESTO ES LO QUE NECESITAS SABER PARA EJERCITARTE</h2>
-            <p>Descubre cómo entrenar, alimentarte e inspirarte para cumplir tus objetivos</p>
-          </div>
-
-          <div class="home-blog-tabs reveal" aria-label="Categorías del blog">
-            <button class="home-blog-tab is-active" type="button">Todos</button>
-            <button class="home-blog-tab" type="button">Video (109)</button>
-            <button class="home-blog-tab" type="button">Podcast (1)</button>
-          </div>
-
-          <div class="home-blog-grid">
-            <article class=\"home-blog-card reveal\" data-type=\"todos video\">
-              <div class="home-blog-card-media" style="background-image: url('evento1.png');"></div>
-              <div class="home-blog-card-body">
-                <span class="home-blog-kicker">NOTICIAS</span>
-                <h3><a href="blog.html">Tadej Pogacar IMPARABLE en el Tour de Francia 2025</a></h3>
-                <time datetime="2025-07-30">JULIO 30, 2025</time>
-                <p>
-                  Tadej Pogacar se impuso en el Tour de Francia 2025 demostrando ser uno de los mejores
-                  ciclistas del mundo, super versatil en todo terreno.
-                </p>
-                <div class="home-blog-row">
-                  <a class="home-blog-share" href="blog.html" aria-label="Compartir articulo">Compartir</a>
-                  <a class="home-blog-read" href="blog.html">Continuar leyendo</a>
-                </div>
-              </div>
-            </article>
-
-            <article class="home-blog-card reveal" data-type="todos podcast">
-              <div class="home-blog-card-media" style="background-image: url('evento1_1.png');"></div>
-              <div class="home-blog-card-body">
-                <span class="home-blog-kicker">NOTICIAS</span>
-                <h3><a href="blog.html">Sigue la emocion con las mujeres en Le Tour de France Femmes</a></h3>
-                <time datetime="2025-07-29">JULIO 29, 2025</time>
-                <p>
-                  Sigue la emocion del Tour de France ahora con las mujeres en Le Tour de France Femmes,
-                  con las mejores ciclistas del mundo.
-                </p>
-                <div class="home-blog-row">
-                  <a class="home-blog-share" href="blog.html" aria-label="Compartir articulo">Compartir</a>
-                  <a class="home-blog-read" href="blog.html">Continuar leyendo</a>
-                </div>
-              </div>
-            </article>
-          </div>
-        </div>
-      </section>
-
-      <section class="section">
-        <div class="container final-cta reveal">
+    <section class="section" id="future">
+      <div class="container">
+        <div class="section-head">
           <div>
-            <p class="eyebrow">Comunidad Kinetic Hub</p>
-            <h2>Déjanos tu correo para avisarte de la próxima carrera y tu posición final.</h2>
+            <p class="eyebrow">Confianza y claridad</p>
+            <h2>Preguntas frecuentes de esta edición</h2>
           </div>
-          <form class="newsletter" action="#" method="post">
-            <label for="newsletterEmail" class="sr-only">Correo</label>
-            <input id="newsletterEmail" type="email" placeholder="Escribe tu correo para notificaciones" required />
-            <button class="btn btn-primary" type="submit">Quiero que me avisen</button>
-          </form>
+          <a class="inline-link" href="auth.html?mode=register">Ir al registro</a>
         </div>
-      </section>
 
-      <!-- ─── Testimonios ─── -->
-      <section class="tips-section">
-        <div class="container">
-          <div class="tips-header reveal">
-            <div class="tips-header-left">
-              <span class="tips-icon-badge" aria-hidden="true">tt</span>
-              <h2 class="tips-title">Testimonios</h2>
-            </div>
-            <a href="#" class="tips-show-all">Mostrar todo</a>
+        <div class="future-grid">
+          <article class="future-card reveal">
+            <span>FAQ</span>
+            <h3>¿Puedo transferir mi inscripción?</h3>
+            <p>No, la inscripción es individual e intransferible.</p>
+          </article>
+          <article class="future-card reveal">
+            <span>FAQ</span>
+            <h3>¿Habrá reembolso?</h3>
+            <p>No hay reembolso por cancelación del participante.</p>
+          </article>
+          <article class="future-card reveal">
+            <span>FAQ</span>
+            <h3>¿Qué debo llevar al evento?</h3>
+            <p>Identificación oficial y luz frontal para la modalidad Night Run.</p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section class="section alt">
+      <div class="container">
+        <div class="section-head">
+          <div>
+            <p class="eyebrow">Siguiente paso</p>
+            <h2>Próximas ediciones</h2>
           </div>
+        </div>
 
-          <div class="tips-carousel-shell reveal">
-            <button class="tips-arrow tips-arrow-prev" aria-label="Ver anteriores" type="button">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true"><polyline points="15 18 9 12 15 6" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
-            </button>
+        <p class="notice">
+          Axolote Night Run es nuestra primera carrera oficial. Las próximas fechas se anunciarán
+          al cierre de esta edición para mantener calidad operativa y experiencia del corredor.
+        </p>
+      </div>
+    </section>
 
-            <div class="tips-viewport">
-              <div class="tips-track" id="tipsTrack">
+    <section class="section alt">
+      <div class="container">
+        <div class="section-head">
+          <div>
+            <p class="eyebrow">Preparación básica</p>
+            <h2>Guía rápida para correr tu primera Night Run</h2>
+          </div>
+          <a class="inline-link" href="auth.html?mode=register">Ver registro</a>
+        </div>
 
-                <!-- Card 1 -->
-                <article class="tips-card"
-                  data-cf-id="CLOUDFLARE_VIDEO_ID_1"
-                  data-username="@sporttips"
-                  data-bio="Entrena duro, sí. Pero entrena con datos y ciencia detrás de cada sesión."
-                  data-avatar=""
-                  tabindex="0" role="button" aria-label="Ver video de @sporttips">
-                  <div class="tips-card-media">
-                    <img class="tips-card-poster" src="https://videodelivery.net/CLOUDFLARE_VIDEO_ID_1/thumbnails/thumbnail.jpg?width=400&height=711&time=1s" alt="" loading="lazy" />
-                    <div class="tips-card-preview-wrap" aria-hidden="true"></div>
-                    <span class="tips-play-hint" aria-hidden="true">
-                      <svg viewBox="0 0 24 24" fill="currentColor" width="26" height="26"><polygon points="5,3 19,12 5,21"/></svg>
-                    </span>
-                  </div>
-                  <div class="tips-card-user">
-                    <div class="tips-card-avatar-ring">
-                      <span class="tips-card-avatar-placeholder" aria-hidden="true">tt</span>
-                    </div>
-                    <div class="tips-card-user-info">
-                      <span class="tips-card-username">@sporttips</span>
-                      <p class="tips-card-bio">Entrena duro, sí. Pero entrena con datos y ciencia detrás de cada sesión.</p>
-                    </div>
-                  </div>
-                </article>
+        <div class="card-grid card-grid-3">
+          <article class="blog-card reveal">
+            <h3>Entrena 3 veces por semana</h3>
+            <p>Alterna trote suave, trabajo técnico y un fondo corto para llegar sin sobrecarga.</p>
+            <a class="inline-link" href="auth.html?mode=register">Aplicar al registro</a>
+          </article>
+          <article class="blog-card reveal">
+            <h3>Hidrátate desde el día previo</h3>
+            <p>Prioriza agua y cena ligera; evita experimentar alimentos nuevos antes del evento.</p>
+            <a class="inline-link" href="auth.html?mode=register">Quiero participar</a>
+          </article>
+          <article class="blog-card reveal">
+            <h3>Llega con anticipación al kit</h3>
+            <p>Presenta identificación, firma exoneración y confirma tus datos antes del arranque.</p>
+            <a class="inline-link" href="auth.html?mode=register">Inscribirme</a>
+          </article>
+        </div>
+      </div>
+    </section>
 
-                <!-- Card 2 -->
-                <article class="tips-card"
-                  data-cf-id="CLOUDFLARE_VIDEO_ID_2"
-                  data-username="@marcroig"
-                  data-bio="Si vas al maratón de Boston, prepárate así con 12 semanas de anticipación."
-                  data-avatar=""
-                  tabindex="0" role="button" aria-label="Ver video de @marcroig">
-                  <div class="tips-card-media">
-                    <img class="tips-card-poster" src="https://videodelivery.net/CLOUDFLARE_VIDEO_ID_2/thumbnails/thumbnail.jpg?width=400&height=711&time=1s" alt="" loading="lazy" />
-                    <div class="tips-card-preview-wrap" aria-hidden="true"></div>
-                    <span class="tips-play-hint" aria-hidden="true">
-                      <svg viewBox="0 0 24 24" fill="currentColor" width="26" height="26"><polygon points="5,3 19,12 5,21"/></svg>
-                    </span>
-                  </div>
-                  <div class="tips-card-user">
-                    <div class="tips-card-avatar-ring">
-                      <span class="tips-card-avatar-placeholder" aria-hidden="true">mr</span>
-                    </div>
-                    <div class="tips-card-user-info">
-                      <span class="tips-card-username">@marcroig</span>
-                      <p class="tips-card-bio">Si vas al maratón de Boston, prepárate así con 12 semanas de anticipación.</p>
-                    </div>
-                  </div>
-                </article>
+    <section class="section home-blog-feed" id="homeBlog">
+      <div class="container">
+        <div class="home-blog-head reveal">
+          <h2>ESTO ES LO QUE NECESITAS SABER PARA EJERCITARTE</h2>
+          <p>Descubre cómo entrenar, alimentarte e inspirarte para cumplir tus objetivos</p>
+        </div>
 
-                <!-- Card 3 -->
-                <article class="tips-card"
-                  data-cf-id="CLOUDFLARE_VIDEO_ID_3"
-                  data-username="@innovasport"
-                  data-bio="Servicios de expertos certificados en CDMX para llevar tu rendimiento al siguiente nivel."
-                  data-avatar=""
-                  tabindex="0" role="button" aria-label="Ver video de @innovasport">
-                  <div class="tips-card-media">
-                    <img class="tips-card-poster" src="https://videodelivery.net/CLOUDFLARE_VIDEO_ID_3/thumbnails/thumbnail.jpg?width=400&height=711&time=1s" alt="" loading="lazy" />
-                    <div class="tips-card-preview-wrap" aria-hidden="true"></div>
-                    <span class="tips-play-hint" aria-hidden="true">
-                      <svg viewBox="0 0 24 24" fill="currentColor" width="26" height="26"><polygon points="5,3 19,12 5,21"/></svg>
-                    </span>
-                  </div>
-                  <div class="tips-card-user">
-                    <div class="tips-card-avatar-ring">
-                      <span class="tips-card-avatar-placeholder" aria-hidden="true">is</span>
-                    </div>
-                    <div class="tips-card-user-info">
-                      <span class="tips-card-username">@innovasport</span>
-                      <p class="tips-card-bio">Servicios de expertos certificados en CDMX para llevar tu rendimiento al siguiente nivel.</p>
-                    </div>
-                  </div>
-                </article>
+        <div class="home-blog-tabs reveal" aria-label="Categorías del blog">
+          <button class="home-blog-tab is-active" type="button">Todos</button>
+          <button class="home-blog-tab" type="button">Video (109)</button>
+          <button class="home-blog-tab" type="button">Podcast (1)</button>
+        </div>
 
-                <!-- Card 4 -->
-                <article class="tips-card"
-                  data-cf-id="CLOUDFLARE_VIDEO_ID_4"
-                  data-username="@jaumeleiva"
-                  data-bio="El entrenamiento cruzado como herramienta para mejorar el rendimiento."
-                  data-avatar=""
-                  tabindex="0" role="button" aria-label="Ver video de @jaumeleiva">
-                  <div class="tips-card-media">
-                    <img class="tips-card-poster" src="https://videodelivery.net/CLOUDFLARE_VIDEO_ID_4/thumbnails/thumbnail.jpg?width=400&height=711&time=1s" alt="" loading="lazy" />
-                    <div class="tips-card-preview-wrap" aria-hidden="true"></div>
-                    <span class="tips-play-hint" aria-hidden="true">
-                      <svg viewBox="0 0 24 24" fill="currentColor" width="26" height="26"><polygon points="5,3 19,12 5,21"/></svg>
-                    </span>
-                  </div>
-                  <div class="tips-card-user">
-                    <div class="tips-card-avatar-ring">
-                      <span class="tips-card-avatar-placeholder" aria-hidden="true">jl</span>
-                    </div>
-                    <div class="tips-card-user-info">
-                      <span class="tips-card-username">@jaumeleiva</span>
-                      <p class="tips-card-bio">El entrenamiento cruzado como herramienta para mejorar el rendimiento.</p>
-                    </div>
-                  </div>
-                </article>
+        <div class="home-blog-grid">
+          <article class=\"home-blog-card reveal\" data-type=\"todos video\">
+            <div class="home-blog-card-media" style="background-image: url('evento1.png');"></div>
+            <div class="home-blog-card-body">
+              <span class="home-blog-kicker">NOTICIAS</span>
+              <h3><a href="blog.html">Tadej Pogacar IMPARABLE en el Tour de Francia 2025</a></h3>
+              <time datetime="2025-07-30">JULIO 30, 2025</time>
+              <p>
+                Tadej Pogacar se impuso en el Tour de Francia 2025 demostrando ser uno de los mejores
+                ciclistas del mundo, super versatil en todo terreno.
+              </p>
+              <div class="home-blog-row">
+                <a class="home-blog-share" href="blog.html" aria-label="Compartir articulo">Compartir</a>
+                <a class="home-blog-read" href="blog.html">Continuar leyendo</a>
+              </div>
+            </div>
+          </article>
 
-                <!-- Card 5 -->
-                <article class="tips-card"
-                  data-cf-id="CLOUDFLARE_VIDEO_ID_5"
-                  data-username="@sporttips"
-                  data-bio="¿Listo para competir en tu mejor nivel? El plan de entrada fácil te lleva ahí."
-                  data-avatar=""
-                  tabindex="0" role="button" aria-label="Ver video de @sporttips">
-                  <div class="tips-card-media">
-                    <img class="tips-card-poster" src="https://videodelivery.net/CLOUDFLARE_VIDEO_ID_5/thumbnails/thumbnail.jpg?width=400&height=711&time=1s" alt="" loading="lazy" />
-                    <div class="tips-card-preview-wrap" aria-hidden="true"></div>
-                    <span class="tips-play-hint" aria-hidden="true">
-                      <svg viewBox="0 0 24 24" fill="currentColor" width="26" height="26"><polygon points="5,3 19,12 5,21"/></svg>
-                    </span>
-                  </div>
-                  <div class="tips-card-user">
-                    <div class="tips-card-avatar-ring">
-                      <span class="tips-card-avatar-placeholder" aria-hidden="true">tt</span>
-                    </div>
-                    <div class="tips-card-user-info">
-                      <span class="tips-card-username">@sporttips</span>
-                      <p class="tips-card-bio">¿Listo para competir en tu mejor nivel? El plan de entrada fácil te lleva ahí.</p>
-                    </div>
-                  </div>
-                </article>
+          <article class="home-blog-card reveal" data-type="todos podcast">
+            <div class="home-blog-card-media" style="background-image: url('evento1_1.png');"></div>
+            <div class="home-blog-card-body">
+              <span class="home-blog-kicker">NOTICIAS</span>
+              <h3><a href="blog.html">Sigue la emocion con las mujeres en Le Tour de France Femmes</a></h3>
+              <time datetime="2025-07-29">JULIO 29, 2025</time>
+              <p>
+                Sigue la emocion del Tour de France ahora con las mujeres en Le Tour de France Femmes,
+                con las mejores ciclistas del mundo.
+              </p>
+              <div class="home-blog-row">
+                <a class="home-blog-share" href="blog.html" aria-label="Compartir articulo">Compartir</a>
+                <a class="home-blog-read" href="blog.html">Continuar leyendo</a>
+              </div>
+            </div>
+          </article>
+        </div>
+      </div>
+    </section>
 
-                <!-- Card 6 -->
-                <article class="tips-card"
-                  data-cf-id="CLOUDFLARE_VIDEO_ID_6"
-                  data-username="@jorgegarza123"
-                  data-bio="Adaptación física para los deportistas de alto rendimiento en entornos extremos."
-                  data-avatar=""
-                  tabindex="0" role="button" aria-label="Ver video de @jorgegarza123">
-                  <div class="tips-card-media">
-                    <img class="tips-card-poster" src="https://videodelivery.net/CLOUDFLARE_VIDEO_ID_6/thumbnails/thumbnail.jpg?width=400&height=711&time=1s" alt="" loading="lazy" />
-                    <div class="tips-card-preview-wrap" aria-hidden="true"></div>
-                    <span class="tips-play-hint" aria-hidden="true">
-                      <svg viewBox="0 0 24 24" fill="currentColor" width="26" height="26"><polygon points="5,3 19,12 5,21"/></svg>
-                    </span>
-                  </div>
-                  <div class="tips-card-user">
-                    <div class="tips-card-avatar-ring">
-                      <span class="tips-card-avatar-placeholder" aria-hidden="true">jg</span>
-                    </div>
-                    <div class="tips-card-user-info">
-                      <span class="tips-card-username">@jorgegarza123</span>
-                      <p class="tips-card-bio">Adaptación física para los deportistas de alto rendimiento en entornos extremos.</p>
-                    </div>
-                  </div>
-                </article>
+    <section class="section">
+      <div class="container final-cta reveal">
+        <div>
+          <p class="eyebrow">Comunidad Kinetic Hub</p>
+          <h2>Déjanos tu correo para avisarte de la próxima carrera y tu posición final.</h2>
+        </div>
+        <form class="newsletter" action="#" method="post">
+          <label for="newsletterEmail" class="sr-only">Correo</label>
+          <input id="newsletterEmail" type="email" placeholder="Escribe tu correo para notificaciones" required />
+          <button class="btn btn-primary" type="submit">Quiero que me avisen</button>
+        </form>
+      </div>
+    </section>
 
-              </div><!-- /tips-track -->
-            </div><!-- /tips-viewport -->
+    <!-- ─── Testimonios ─── -->
+    <section class="tips-section">
+      <div class="container">
+        <div class="tips-header reveal">
+          <div class="tips-header-left">
+            <span class="tips-icon-badge" aria-hidden="true">tt</span>
+            <h2 class="tips-title">Testimonios</h2>
+          </div>
+          <a href="#" class="tips-show-all">Mostrar todo</a>
+        </div>
 
-            <button class="tips-arrow tips-arrow-next" aria-label="Ver siguientes" type="button">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true"><polyline points="9 18 15 12 9 6" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
-            </button>
-          </div><!-- /tips-carousel-shell -->
-        </div><!-- /container -->
-      </section>
-
-      <!-- Tips video modal -->
-      <div class="tips-modal-overlay" id="tipsModal" hidden role="dialog" aria-modal="true" aria-label="Reproducir video">
-        <div class="tips-modal-box">
-          <button class="tips-modal-close" id="tipsModalClose" type="button" aria-label="Cerrar video">
-            <svg viewBox="0 0 24 24" fill="none" width="20" height="20" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/><line x1="6" y1="6" x2="18" y2="18" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/></svg>
+        <div class="tips-carousel-shell reveal">
+          <button class="tips-arrow tips-arrow-prev" aria-label="Ver anteriores" type="button">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <polyline points="15 18 9 12 15 6" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"
+                stroke-linejoin="round" />
+            </svg>
           </button>
-          <div class="tips-modal-video-shell" id="tipsModalVideoShell"></div>
-          <div class="tips-modal-user" id="tipsModalUser">
-            <div class="tips-modal-avatar-ring" id="tipsModalAvatarRing">
-              <span class="tips-modal-avatar-placeholder" id="tipsModalAvatarPlaceholder"></span>
-            </div>
-            <div class="tips-modal-user-info">
-              <span class="tips-modal-username" id="tipsModalUsername"></span>
-              <p class="tips-modal-bio" id="tipsModalBio"></p>
-            </div>
+
+          <div class="tips-viewport">
+            <div class="tips-track" id="tipsTrack">
+
+              <!-- Card 1 -->
+              <article class="tips-card" data-cf-id="CLOUDFLARE_VIDEO_ID_1" data-username="@sporttips"
+                data-bio="Entrena duro, sí. Pero entrena con datos y ciencia detrás de cada sesión." data-avatar=""
+                tabindex="0" role="button" aria-label="Ver video de @sporttips">
+                <div class="tips-card-media">
+                  <img class="tips-card-poster"
+                    src="https://videodelivery.net/CLOUDFLARE_VIDEO_ID_1/thumbnails/thumbnail.jpg?width=400&height=711&time=1s"
+                    alt="" loading="lazy" />
+                  <div class="tips-card-preview-wrap" aria-hidden="true"></div>
+                  <span class="tips-play-hint" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="currentColor" width="26" height="26">
+                      <polygon points="5,3 19,12 5,21" />
+                    </svg>
+                  </span>
+                </div>
+                <div class="tips-card-user">
+                  <div class="tips-card-avatar-ring">
+                    <span class="tips-card-avatar-placeholder" aria-hidden="true">tt</span>
+                  </div>
+                  <div class="tips-card-user-info">
+                    <span class="tips-card-username">@sporttips</span>
+                    <p class="tips-card-bio">Entrena duro, sí. Pero entrena con datos y ciencia detrás de cada sesión.
+                    </p>
+                  </div>
+                </div>
+              </article>
+
+              <!-- Card 2 -->
+              <article class="tips-card" data-cf-id="CLOUDFLARE_VIDEO_ID_2" data-username="@marcroig"
+                data-bio="Si vas al maratón de Boston, prepárate así con 12 semanas de anticipación." data-avatar=""
+                tabindex="0" role="button" aria-label="Ver video de @marcroig">
+                <div class="tips-card-media">
+                  <img class="tips-card-poster"
+                    src="https://videodelivery.net/CLOUDFLARE_VIDEO_ID_2/thumbnails/thumbnail.jpg?width=400&height=711&time=1s"
+                    alt="" loading="lazy" />
+                  <div class="tips-card-preview-wrap" aria-hidden="true"></div>
+                  <span class="tips-play-hint" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="currentColor" width="26" height="26">
+                      <polygon points="5,3 19,12 5,21" />
+                    </svg>
+                  </span>
+                </div>
+                <div class="tips-card-user">
+                  <div class="tips-card-avatar-ring">
+                    <span class="tips-card-avatar-placeholder" aria-hidden="true">mr</span>
+                  </div>
+                  <div class="tips-card-user-info">
+                    <span class="tips-card-username">@marcroig</span>
+                    <p class="tips-card-bio">Si vas al maratón de Boston, prepárate así con 12 semanas de anticipación.
+                    </p>
+                  </div>
+                </div>
+              </article>
+
+              <!-- Card 3 -->
+              <article class="tips-card" data-cf-id="CLOUDFLARE_VIDEO_ID_3" data-username="@innovasport"
+                data-bio="Servicios de expertos certificados en CDMX para llevar tu rendimiento al siguiente nivel."
+                data-avatar="" tabindex="0" role="button" aria-label="Ver video de @innovasport">
+                <div class="tips-card-media">
+                  <img class="tips-card-poster"
+                    src="https://videodelivery.net/CLOUDFLARE_VIDEO_ID_3/thumbnails/thumbnail.jpg?width=400&height=711&time=1s"
+                    alt="" loading="lazy" />
+                  <div class="tips-card-preview-wrap" aria-hidden="true"></div>
+                  <span class="tips-play-hint" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="currentColor" width="26" height="26">
+                      <polygon points="5,3 19,12 5,21" />
+                    </svg>
+                  </span>
+                </div>
+                <div class="tips-card-user">
+                  <div class="tips-card-avatar-ring">
+                    <span class="tips-card-avatar-placeholder" aria-hidden="true">is</span>
+                  </div>
+                  <div class="tips-card-user-info">
+                    <span class="tips-card-username">@innovasport</span>
+                    <p class="tips-card-bio">Servicios de expertos certificados en CDMX para llevar tu rendimiento al
+                      siguiente nivel.</p>
+                  </div>
+                </div>
+              </article>
+
+              <!-- Card 4 -->
+              <article class="tips-card" data-cf-id="CLOUDFLARE_VIDEO_ID_4" data-username="@jaumeleiva"
+                data-bio="El entrenamiento cruzado como herramienta para mejorar el rendimiento." data-avatar=""
+                tabindex="0" role="button" aria-label="Ver video de @jaumeleiva">
+                <div class="tips-card-media">
+                  <img class="tips-card-poster"
+                    src="https://videodelivery.net/CLOUDFLARE_VIDEO_ID_4/thumbnails/thumbnail.jpg?width=400&height=711&time=1s"
+                    alt="" loading="lazy" />
+                  <div class="tips-card-preview-wrap" aria-hidden="true"></div>
+                  <span class="tips-play-hint" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="currentColor" width="26" height="26">
+                      <polygon points="5,3 19,12 5,21" />
+                    </svg>
+                  </span>
+                </div>
+                <div class="tips-card-user">
+                  <div class="tips-card-avatar-ring">
+                    <span class="tips-card-avatar-placeholder" aria-hidden="true">jl</span>
+                  </div>
+                  <div class="tips-card-user-info">
+                    <span class="tips-card-username">@jaumeleiva</span>
+                    <p class="tips-card-bio">El entrenamiento cruzado como herramienta para mejorar el rendimiento.</p>
+                  </div>
+                </div>
+              </article>
+
+              <!-- Card 5 -->
+              <article class="tips-card" data-cf-id="CLOUDFLARE_VIDEO_ID_5" data-username="@sporttips"
+                data-bio="¿Listo para competir en tu mejor nivel? El plan de entrada fácil te lleva ahí." data-avatar=""
+                tabindex="0" role="button" aria-label="Ver video de @sporttips">
+                <div class="tips-card-media">
+                  <img class="tips-card-poster"
+                    src="https://videodelivery.net/CLOUDFLARE_VIDEO_ID_5/thumbnails/thumbnail.jpg?width=400&height=711&time=1s"
+                    alt="" loading="lazy" />
+                  <div class="tips-card-preview-wrap" aria-hidden="true"></div>
+                  <span class="tips-play-hint" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="currentColor" width="26" height="26">
+                      <polygon points="5,3 19,12 5,21" />
+                    </svg>
+                  </span>
+                </div>
+                <div class="tips-card-user">
+                  <div class="tips-card-avatar-ring">
+                    <span class="tips-card-avatar-placeholder" aria-hidden="true">tt</span>
+                  </div>
+                  <div class="tips-card-user-info">
+                    <span class="tips-card-username">@sporttips</span>
+                    <p class="tips-card-bio">¿Listo para competir en tu mejor nivel? El plan de entrada fácil te lleva
+                      ahí.</p>
+                  </div>
+                </div>
+              </article>
+
+              <!-- Card 6 -->
+              <article class="tips-card" data-cf-id="CLOUDFLARE_VIDEO_ID_6" data-username="@jorgegarza123"
+                data-bio="Adaptación física para los deportistas de alto rendimiento en entornos extremos."
+                data-avatar="" tabindex="0" role="button" aria-label="Ver video de @jorgegarza123">
+                <div class="tips-card-media">
+                  <img class="tips-card-poster"
+                    src="https://videodelivery.net/CLOUDFLARE_VIDEO_ID_6/thumbnails/thumbnail.jpg?width=400&height=711&time=1s"
+                    alt="" loading="lazy" />
+                  <div class="tips-card-preview-wrap" aria-hidden="true"></div>
+                  <span class="tips-play-hint" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="currentColor" width="26" height="26">
+                      <polygon points="5,3 19,12 5,21" />
+                    </svg>
+                  </span>
+                </div>
+                <div class="tips-card-user">
+                  <div class="tips-card-avatar-ring">
+                    <span class="tips-card-avatar-placeholder" aria-hidden="true">jg</span>
+                  </div>
+                  <div class="tips-card-user-info">
+                    <span class="tips-card-username">@jorgegarza123</span>
+                    <p class="tips-card-bio">Adaptación física para los deportistas de alto rendimiento en entornos
+                      extremos.</p>
+                  </div>
+                </div>
+              </article>
+
+            </div><!-- /tips-track -->
+          </div><!-- /tips-viewport -->
+
+          <button class="tips-arrow tips-arrow-next" aria-label="Ver siguientes" type="button">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <polyline points="9 18 15 12 9 6" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"
+                stroke-linejoin="round" />
+            </svg>
+          </button>
+        </div><!-- /tips-carousel-shell -->
+      </div><!-- /container -->
+    </section>
+
+    <!-- Tips video modal -->
+    <div class="tips-modal-overlay" id="tipsModal" hidden role="dialog" aria-modal="true" aria-label="Reproducir video">
+      <div class="tips-modal-box">
+        <button class="tips-modal-close" id="tipsModalClose" type="button" aria-label="Cerrar video">
+          <svg viewBox="0 0 24 24" fill="none" width="20" height="20" aria-hidden="true">
+            <line x1="18" y1="6" x2="6" y2="18" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" />
+            <line x1="6" y1="6" x2="18" y2="18" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" />
+          </svg>
+        </button>
+        <div class="tips-modal-video-shell" id="tipsModalVideoShell"></div>
+        <div class="tips-modal-user" id="tipsModalUser">
+          <div class="tips-modal-avatar-ring" id="tipsModalAvatarRing">
+            <span class="tips-modal-avatar-placeholder" id="tipsModalAvatarPlaceholder"></span>
+          </div>
+          <div class="tips-modal-user-info">
+            <span class="tips-modal-username" id="tipsModalUsername"></span>
+            <p class="tips-modal-bio" id="tipsModalBio"></p>
           </div>
         </div>
       </div>
+    </div>
 
-    </main>
+  </main>
 
-    <footer class="site-footer">
-      <div class="container footer-grid">
-        <div>
-          <a href="index.html" class="footer-brand" aria-label="Inicio Kinetic Hub">
-            <img class="brand-logo" src="KineticHUB.png" alt="Kinetic Hub" />
-            
-          </a>
-        </div>
+  <footer class="site-footer">
+    <div class="container footer-grid">
+      <div>
+        <a href="index.html" class="footer-brand" aria-label="Inicio Kinetic Hub">
+          <img class="brand-logo" src="KineticHUB.png" alt="Kinetic Hub" />
 
-        <div>
-          <h3>Navegación</h3>
-          <a href="eventos.html">Explorar eventos</a>
-          <a href="blog.html">Blog</a>
-        </div>
-
-        <div>
-          <h3>Comunidad</h3>
-          <a href="nosotros.html">Nosotros</a>
-          <a href="contacto.html">Contacto</a>
-          <a href="#future">FAQ del evento</a>
-          <a href="https://www.instagram.com/kinetic.hub" target="_blank" rel="noopener noreferrer">Instagram</a>
-          <a href="https://www.facebook.com/profile.php?id=100065314880446&mibextid=wwXIfr&rdid=KDtMnE3lJn9aQZkB&share_url=https%3A%2F%2Fwww.facebook.com%2Fshare%2F18ER76xC2i%2F%3Fmibextid%3DwwXIfr#" target="_blank" rel="noopener noreferrer">Facebook</a>
-          <a href="https://x.com/kinetichubmx?s=21" target="_blank" rel="noopener noreferrer">X (Twitter)</a>
-        </div>
-
-        <div>
-          <h3>Newsletter</h3>
-          <p>Te notificamos próxima carrera, resultados y tu posición oficial al cierre del evento.</p>
-          <form class="footer-newsletter" action="#" method="post">
-            <label for="footerMail" class="sr-only">Correo</label>
-            <input id="footerMail" type="email" placeholder="Correo para notificaciones" required />
-            <button class="btn btn-small" type="submit">Quiero avisos</button>
-          </form>
-        </div>
+        </a>
       </div>
 
-      <div class="footer-bottom">
-        <div class="container footer-bottom-shell">
-          <small>© <span id="yearNow"></span> Kinetic Hub. Todos los derechos reservados.</small>
-          <div class="footer-links">
-            <a href="#">Privacidad</a>
-            <a href="#">Términos</a>
-            <a href="#">Cookies</a>
-          </div>
+      <div>
+        <h3>Navegación</h3>
+        <a href="eventos.html">Explorar eventos</a>
+        <a href="blog.html">Blog</a>
+      </div>
+
+      <div>
+        <h3>Comunidad</h3>
+        <a href="nosotros.html">Nosotros</a>
+        <a href="contacto.html">Contacto</a>
+        <a href="#future">FAQ del evento</a>
+        <a href="https://www.instagram.com/kinetic.hub" target="_blank" rel="noopener noreferrer">Instagram</a>
+        <a href="https://www.facebook.com/profile.php?id=100065314880446&mibextid=wwXIfr&rdid=KDtMnE3lJn9aQZkB&share_url=https%3A%2F%2Fwww.facebook.com%2Fshare%2F18ER76xC2i%2F%3Fmibextid%3DwwXIfr#"
+          target="_blank" rel="noopener noreferrer">Facebook</a>
+        <a href="https://x.com/kinetichubmx?s=21" target="_blank" rel="noopener noreferrer">X (Twitter)</a>
+      </div>
+
+      <div>
+        <h3>Newsletter</h3>
+        <p>Te notificamos próxima carrera, resultados y tu posición oficial al cierre del evento.</p>
+        <form class="footer-newsletter" action="#" method="post">
+          <label for="footerMail" class="sr-only">Correo</label>
+          <input id="footerMail" type="email" placeholder="Correo para notificaciones" required />
+          <button class="btn btn-small" type="submit">Quiero avisos</button>
+        </form>
+      </div>
+    </div>
+
+    <div class="footer-bottom">
+      <div class="container footer-bottom-shell">
+        <small>© <span id="yearNow"></span> Kinetic Hub. Todos los derechos reservados.</small>
+        <div class="footer-links">
+          <a href="#">Privacidad</a>
+          <a href="#">Términos</a>
+          <a href="#">Cookies</a>
         </div>
       </div>
-    </footer>
+    </div>
+  </footer>
 
-    <script src="script.js?v=__ASSET_VERSION__"></script>
-  </body>
+  <script src="script.js?v=__ASSET_VERSION__"></script>
+</body>
+
 </html>
