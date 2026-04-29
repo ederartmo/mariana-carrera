@@ -6304,3 +6304,11 @@ body[data-page="series"] .page-hero .container {
   padding-left: 0.4rem!important;
   padding-right: 0.4rem!important;
 }
+
+@media (max-width: 640px) {           /* o 768px si prefieres */
+  .related-grid {
+    grid-template-columns: repeat(1, 1fr);   /* 1 columna */
+    /* Opcional: puedes aumentar el gap en móvil */
+    gap: 15px;
+  }
+}
