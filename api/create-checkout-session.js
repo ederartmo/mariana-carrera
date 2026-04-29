@@ -2,10 +2,14 @@
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 const { createClient } = require('@supabase/supabase-js');
 
-const supabase = createClient(
-  process.env.SUPABASE_URL,
-  process.env.SUPABASE_SERVICE_ROLE_KEY
-);
+const supabaseUrl = process.env.SUPABASE_URL;
+const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+if (!supabaseUrl || !supabaseServiceKey) {
+  console.error("❌ Faltan variables de Supabase");
+}
+
+const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
 function getPriceId() {
   const now = new Date();
@@ -13,15 +17,12 @@ function getPriceId() {
   const month = now.getMonth() + 1;
   const day = now.getDate();
 
-  // Early Bird hasta mayo 2026
   if (year < 2026 || (year === 2026 && month <= 5)) {
-    return 'price_1TMJT7IXKIIcpa3QGMfn9Ww4';
+    return 'price_1TMJT7IXKIIcpa3QGMfn9Ww4'; // Early Bird
   }
-  // Precio normal junio-julio
   if (year === 2026 && month <= 7) {
     return 'price_1TPS8dIXKIIcpa3QtPe4BzQS';
   }
-  // Precio final hasta 10 oct
   if (year === 2026 && (month <= 9 || (month === 10 && day <= 10))) {
     return 'price_1TPSEKIXKIIcpa3QsyDngV4h';
   }
@@ -34,34 +35,34 @@ export default async function handler(req, res) {
   }
 
   try {
-    const { email } = req.body;
+    const { email } = req.body || {};
 
-    if (!email || !email.includes('@')) {
-      return res.status(400).json({ 
-        error: 'Por favor ingresa un correo electrónico válido.' 
-      });
+    console.log(`🔄 Intentando crear checkout para email: ${email}`);
+
+    if (!email || typeof email !== 'string' || !email.includes('@')) {
+      return res.status(400).json({ error: 'Correo electrónico inválido.' });
     }
 
     const priceId = getPriceId();
     if (!priceId) {
-      return res.status(400).json({ 
-        error: 'Las inscripciones para Axolote Night Run 2026 están cerradas.' 
-      });
+      return res.status(400).json({ error: 'Inscripciones cerradas.' });
     }
 
-    console.log(`🔄 Creando checkout para: ${email}`);
-
-    // Verificar si ya pagó
-    const { data: existing } = await supabase
+    // Verificar inscripción existente
+    const { data: existingInscripcion, error: checkError } = await supabase
       .from('inscripciones')
       .select('payment_status')
       .eq('email', email.toLowerCase().trim())
       .eq('payment_status', 'paid')
       .maybeSingle();
 
-    if (existing) {
+    if (checkError) {
+      console.error("Error al consultar Supabase:", checkError);
+    }
+
+    if (existingInscripcion) {
       return res.status(400).json({
-        error: 'Ya tienes una inscripción pagada con este correo electrónico.',
+        error: 'Ya tienes una inscripción pagada con este correo.',
         alreadyPaid: true
       });
     }
@@ -81,16 +82,17 @@ export default async function handler(req, res) {
       }
     });
 
-    console.log(`✅ Checkout session creada: ${session.id}`);
+    console.log(`✅ Sesión creada exitosamente: ${session.id}`);
 
     return res.status(200).json({ url: session.url });
 
   } catch (error) {
-    console.error("❌ Error en create-checkout-session:", error.message);
+    console.error("❌ Error grave en create-checkout-session:");
+    console.error(error.message);
     console.error(error.stack);
 
     return res.status(500).json({ 
-      error: 'Error interno del servidor. Inténtalo de nuevo o contacta soporte.' 
+      error: 'Error interno del servidor. Revisa los logs de Vercel.'
     });
   }
 }
