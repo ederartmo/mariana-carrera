@@ -29,70 +29,58 @@ function getPriceId() {
   return null;
 }
 
+// api/create-checkout-session.js
+console.log("🚀 create-checkout-session.js cargado correctamente");
+
 export default async function handler(req, res) {
+  console.log(`📥 Método recibido: ${req.method}`);
+
   if (req.method !== 'POST') {
     return res.status(405).json({ message: 'Método no permitido' });
   }
 
   try {
+    // Verificar variables de entorno primero
+    if (!process.env.STRIPE_SECRET_KEY) {
+      console.error("❌ STRIPE_SECRET_KEY no configurada");
+      return res.status(500).json({ error: "Falta configuración de Stripe en el servidor" });
+    }
+
+    const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
+
     const { email } = req.body || {};
 
-    console.log(`🔄 Intentando crear checkout para email: ${email}`);
-
     if (!email || typeof email !== 'string' || !email.includes('@')) {
-      return res.status(400).json({ error: 'Correo electrónico inválido.' });
+      return res.status(400).json({ error: 'Por favor ingresa un correo válido.' });
     }
 
-    const priceId = getPriceId();
-    if (!priceId) {
-      return res.status(400).json({ error: 'Inscripciones cerradas.' });
-    }
+    console.log(`🔄 Creando sesión para: ${email}`);
 
-    // Verificar inscripción existente
-    const { data: existingInscripcion, error: checkError } = await supabase
-      .from('inscripciones')
-      .select('payment_status')
-      .eq('email', email.toLowerCase().trim())
-      .eq('payment_status', 'paid')
-      .maybeSingle();
-
-    if (checkError) {
-      console.error("Error al consultar Supabase:", checkError);
-    }
-
-    if (existingInscripcion) {
-      return res.status(400).json({
-        error: 'Ya tienes una inscripción pagada con este correo.',
-        alreadyPaid: true
-      });
-    }
+    // Usamos un priceId fijo temporalmente para probar si Stripe funciona
+    const priceId = 'price_1TMJT7IXKIIcpa3QGMfn9Ww4'; // Early Bird
 
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ['card'],
       mode: 'payment',
-      allow_promotion_codes: true,
       customer_email: email,
       line_items: [{ price: priceId, quantity: 1 }],
       success_url: 'https://www.kinetichub.com.mx/success.html?session_id={CHECKOUT_SESSION_ID}',
       cancel_url: 'https://www.kinetichub.com.mx/checkout.html',
-      metadata: {
-        event_slug: 'axolote-night-run',
-        source: 'guest_checkout',
-        user_email: email.toLowerCase().trim()
-      }
+      metadata: { event_slug: 'axolote-night-run' }
     });
 
-    console.log(`✅ Sesión creada exitosamente: ${session.id}`);
+    console.log(`✅ Sesión creada: ${session.id}`);
 
     return res.status(200).json({ url: session.url });
 
   } catch (error) {
-    console.error("❌ Error grave en create-checkout-session:");
+    console.error("💥 ERROR EN CHECKOUT:");
     console.error(error.message);
-    console.error(error.stack);
+    console.error(error.stack || error);
 
-    return res.status(500).json({ 
-      error: 'Error interno del servidor. Revisa los logs de Vercel.'
+    return res.status(500).json({
+      error: 'Error interno del servidor',
+      message: error.message
     });
   }
 }
