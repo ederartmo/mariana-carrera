@@ -1,5 +1,11 @@
-// api/create-checkout-session.js - Versión estable para Vercel
+// api/create-checkout-session.js - Versión completa con Supabase
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
+const { createClient } = require('@supabase/supabase-js');
+
+const supabase = createClient(
+  process.env.SUPABASE_URL,
+  process.env.SUPABASE_SERVICE_ROLE_KEY
+);
 
 function getPriceId() {
   const now = new Date();
@@ -40,28 +46,47 @@ export default async function handler(req, res) {
       });
     }
 
-    console.log(`🔄 Creando checkout session para: ${email} | Price: ${priceId}`);
+    const cleanEmail = email.toLowerCase().trim();
+    console.log(`🔄 Creando checkout para: ${cleanEmail}`);
 
+    // === VERIFICACIÓN EN SUPABASE ===
+    const { data: existingInscripcion, error: checkError } = await supabase
+      .from('inscripciones')
+      .select('payment_status')
+      .eq('email', cleanEmail)
+      .eq('payment_status', 'paid')
+      .maybeSingle();
+
+    if (checkError) {
+      console.error("Error al consultar Supabase:", checkError.message);
+      // No bloqueamos el flujo por error de lectura, solo lo logueamos
+    }
+
+    if (existingInscripcion) {
+      console.log(`⛔ Usuario ya tiene pago: ${cleanEmail}`);
+      return res.status(400).json({
+        error: 'Ya tienes una inscripción pagada con este correo electrónico.',
+        alreadyPaid: true
+      });
+    }
+
+    // === CREAR SESIÓN DE STRIPE ===
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ['card'],
       mode: 'payment',
       allow_promotion_codes: true,
       customer_email: email,
-      line_items: [
-        {
-          price: priceId,
-          quantity: 1,
-        },
-      ],
+      line_items: [{ price: priceId, quantity: 1 }],
       success_url: 'https://www.kinetichub.com.mx/success.html?session_id={CHECKOUT_SESSION_ID}',
       cancel_url: 'https://www.kinetichub.com.mx/checkout.html',
       metadata: {
         event_slug: 'axolote-night-run',
-        source: 'guest_checkout'
+        source: 'guest_checkout',
+        user_email: cleanEmail
       }
     });
 
-    console.log(`✅ Sesión creada correctamente: ${session.id}`);
+    console.log(`✅ Sesión Stripe creada: ${session.id}`);
 
     return res.status(200).json({ 
       url: session.url 
@@ -73,8 +98,7 @@ export default async function handler(req, res) {
     console.error(error.stack);
 
     return res.status(500).json({ 
-      error: 'Error interno del servidor. Inténtalo de nuevo.',
-      // Solo en desarrollo: error.message 
+      error: 'Error interno del servidor. Por favor intenta de nuevo.' 
     });
   }
 }
