@@ -1,4 +1,4 @@
-// Endpoint para crear una sesión de Stripe Checkout - Kinetic Hub (Versión corregida)
+// api/create-checkout-session.js
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 const { createClient } = require('@supabase/supabase-js');
 
@@ -13,12 +13,15 @@ function getPriceId() {
   const month = now.getMonth() + 1;
   const day = now.getDate();
 
+  // Early Bird hasta mayo 2026
   if (year < 2026 || (year === 2026 && month <= 5)) {
-    return 'price_1TMJT7IXKIIcpa3QGMfn9Ww4'; // Early Bird
+    return 'price_1TMJT7IXKIIcpa3QGMfn9Ww4';
   }
+  // Precio normal junio-julio
   if (year === 2026 && month <= 7) {
     return 'price_1TPS8dIXKIIcpa3QtPe4BzQS';
   }
+  // Precio final hasta 10 oct
   if (year === 2026 && (month <= 9 || (month === 10 && day <= 10))) {
     return 'price_1TPSEKIXKIIcpa3QsyDngV4h';
   }
@@ -34,32 +37,35 @@ export default async function handler(req, res) {
     const { email } = req.body;
 
     if (!email || !email.includes('@')) {
-      return res.status(400).json({ error: 'Por favor ingresa un correo válido.' });
+      return res.status(400).json({ 
+        error: 'Por favor ingresa un correo electrónico válido.' 
+      });
     }
 
     const priceId = getPriceId();
     if (!priceId) {
-      return res.status(400).json({ error: 'Las inscripciones están cerradas.' });
+      return res.status(400).json({ 
+        error: 'Las inscripciones para Axolote Night Run 2026 están cerradas.' 
+      });
     }
 
-    console.log(`🔄 Creando checkout para email: ${email}`);
+    console.log(`🔄 Creando checkout para: ${email}`);
 
-    // Verificaciones en Supabase
-    const { data: existingInscripcion } = await supabase
+    // Verificar si ya pagó
+    const { data: existing } = await supabase
       .from('inscripciones')
       .select('payment_status')
       .eq('email', email.toLowerCase().trim())
       .eq('payment_status', 'paid')
       .maybeSingle();
 
-    if (existingInscripcion) {
+    if (existing) {
       return res.status(400).json({
         error: 'Ya tienes una inscripción pagada con este correo electrónico.',
         alreadyPaid: true
       });
     }
 
-    // Crear sesión de Stripe
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ['card'],
       mode: 'payment',
@@ -75,18 +81,16 @@ export default async function handler(req, res) {
       }
     });
 
-    console.log(`✅ Sesión creada correctamente: ${session.id}`);
+    console.log(`✅ Checkout session creada: ${session.id}`);
 
-    return res.status(200).json({
-      url: session.url
-    });
+    return res.status(200).json({ url: session.url });
 
   } catch (error) {
-    console.error("❌ Error grave en create-checkout-session:", error);
-    console.error("Stack:", error.stack);
-    
+    console.error("❌ Error en create-checkout-session:", error.message);
+    console.error(error.stack);
+
     return res.status(500).json({ 
-      error: 'Error interno del servidor. Revisa los logs de Vercel.' 
+      error: 'Error interno del servidor. Inténtalo de nuevo o contacta soporte.' 
     });
   }
 }
