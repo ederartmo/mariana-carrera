@@ -1,4 +1,4 @@
-// api/create-checkout-session.js - Versión estable para Vercel + Supabase
+// api/create-checkout-session.js - Versión temporal SOLO STRIPE (funciona)
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 
 function getPriceId() {
@@ -24,8 +24,6 @@ export default async function handler(req, res) {
     return res.status(405).json({ message: 'Método no permitido' });
   }
 
-  let supabase = null;
-
   try {
     const { email } = req.body;
 
@@ -36,31 +34,7 @@ export default async function handler(req, res) {
     }
 
     const cleanEmail = email.toLowerCase().trim();
-    console.log(`🔄 Checkout iniciado para: ${cleanEmail}`);
-
-    // Crear cliente de Supabase DENTRO del try (más seguro en Vercel)
-    const { createClient } = require('@supabase/supabase-js');
-    
-    supabase = createClient(
-      process.env.SUPABASE_URL,
-      process.env.SUPABASE_SERVICE_ROLE_KEY
-    );
-
-    // Verificar si ya tiene pago
-    const { data: existing } = await supabase
-      .from('inscripciones')
-      .select('payment_status')
-      .eq('email', cleanEmail)
-      .eq('payment_status', 'paid')
-      .maybeSingle();
-
-    if (existing) {
-      console.log(`⛔ Ya pagó: ${cleanEmail}`);
-      return res.status(400).json({
-        error: 'Ya tienes una inscripción pagada con este correo electrónico.',
-        alreadyPaid: true
-      });
-    }
+    console.log(`🔄 Checkout para: ${cleanEmail}`);
 
     const priceId = getPriceId();
     if (!priceId) {
@@ -69,7 +43,6 @@ export default async function handler(req, res) {
       });
     }
 
-    // Crear sesión de Stripe
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ['card'],
       mode: 'payment',
@@ -80,22 +53,19 @@ export default async function handler(req, res) {
       cancel_url: 'https://www.kinetichub.com.mx/checkout.html',
       metadata: {
         event_slug: 'axolote-night-run',
-        source: 'guest_checkout',
         user_email: cleanEmail
       }
     });
 
-    console.log(`✅ Sesión creada exitosamente: ${session.id}`);
+    console.log(`✅ Sesión creada: ${session.id}`);
 
     return res.status(200).json({ url: session.url });
 
   } catch (error) {
-    console.error("💥 ERROR en create-checkout-session:");
-    console.error("Mensaje:", error.message);
-    console.error("Stack:", error.stack);
-
+    console.error("💥 Error:", error.message);
+    console.error(error.stack);
     return res.status(500).json({ 
-      error: 'Error interno del servidor. Por favor intenta de nuevo más tarde.' 
+      error: 'Error interno del servidor. Inténtalo de nuevo.' 
     });
   }
 }
