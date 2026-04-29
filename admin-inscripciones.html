@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin - Inscripciones Pagadas | Kinetic Hub</title>
+  <style>
+    body {
+      font-family: 'Manrope', system-ui, sans-serif;
+      background: #0a0f14;
+      color: #e0e0e0;
+      margin: 0;
+      padding: 20px;
+    }
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+    h1 {
+      color: #19c88b;
+      text-align: center;
+      margin-bottom: 30px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: #11181f;
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+    }
+    th, td {
+      padding: 14px 16px;
+      text-align: left;
+      border-bottom: 1px solid #1f2a36;
+    }
+    th {
+      background: #19c88b;
+      color: #000;
+      font-weight: 700;
+      text-transform: uppercase;
+      font-size: 0.85rem;
+      letter-spacing: 0.5px;
+    }
+    tr:hover {
+      background: #1a2533;
+    }
+    .status-paid {
+      background: #19c88b;
+      color: #000;
+      padding: 4px 12px;
+      border-radius: 999px;
+      font-size: 0.8rem;
+      font-weight: 700;
+    }
+    .no-data {
+      text-align: center;
+      padding: 60px 20px;
+      color: #888;
+      font-size: 1.1rem;
+    }
+    .error {
+      color: #ff6b6b;
+      text-align: center;
+      padding: 20px;
+    }
+    .loading {
+      text-align: center;
+      padding: 40px;
+      color: #19c88b;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Panel Admin - Inscripciones Pagadas</h1>
+    <p>Los Usuarios con numero 000 son de uso de pruebas de creacion y edicion de la web</p>
+    <div id="content">
+        <div class="loading">Cargando inscripciones...</div>
+    </div>
+  </div>
+
+  <script>
+    // ====================== CONFIG ======================
+    const ADMIN_EMAIL = "mariana@kinetichub.com.mx";
+    const SUPABASE_URL = "https://uycwzhlcnfijjyzkgkem.supabase.co";
+    const SUPABASE_KEY = "sb_publishable_IKwD3YtQwWzzEtE8QkVagA_OJGdV2e4";
+
+    // ====================== VERIFICACIÓN DE ACCESO ======================
+    async function checkAdminAccess() {
+      if (typeof window.supabase === "undefined") {
+        const script = document.createElement("script");
+        script.src = "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2";
+        document.head.appendChild(script);
+        await new Promise(r => script.onload = r);
+      }
+
+      const client = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+      const { data: { session } } = await client.auth.getSession();
+      
+      if (!session?.user) {
+        alert("Debes iniciar sesión para acceder a esta página.");
+        window.location.href = "auth.html?mode=login";
+        return null;
+      }
+
+      const userEmail = session.user.email.trim().toLowerCase();
+
+      if (userEmail !== ADMIN_EMAIL.toLowerCase()) {
+        alert("No tienes permisos para acceder a esta página.");
+        window.location.href = "perfil.html";
+        return null;
+      }
+
+      console.log("✅ Acceso admin concedido a:", userEmail);
+      return client;
+    }
+
+    // ====================== CARGAR INSCRIPCIONES ======================
+    async function loadPaidInscriptions(client) {
+      const contentDiv = document.getElementById("content");
+
+      try {
+        const { data, error } = await client
+          .from("inscripciones")
+          .select("id, full_name, email, event_slug, amount_paid, payment_status, bib_number, created_at")
+          .eq("payment_status", "paid")
+          .order("created_at", { ascending: false });
+
+        if (error) throw error;
+
+        if (!data || data.length === 0) {
+          contentDiv.innerHTML = `<div class="no-data">No hay inscripciones pagadas todavía.</div>`;
+          return;
+        }
+
+        let html = `
+          <table>
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Nombre Completo</th>
+                <th>Email</th>
+                <th>Evento</th>
+                <th>Monto Pagado</th>
+                <th>Numero de corredor</th>
+                <th>Fecha</th>
+              </tr>
+            </thead>
+            <tbody>
+        `;
+
+        data.forEach(row => {
+          const date = new Date(row.created_at).toLocaleDateString('es-MX', {
+            year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit'
+          });
+
+          html += `
+            <tr>
+              <td>${row.id}</td>
+              <td><strong>${row.full_name || '-'}</strong></td>
+              <td>${row.email}</td>
+              <td>${row.event_slug || 'Axolote Night Run'}</td>
+              <td><strong>$${parseFloat(row.amount_paid || 0).toLocaleString('es-MX')}</strong></td>
+              <td style="font-weight:800; color:#19c88b;">${row.bib_number ? '#' + row.bib_number : '—'}</td>
+              <td>${date}</td>
+            </tr>
+          `;
+        });
+
+        html += `</tbody></table>`;
+        contentDiv.innerHTML = html;
+
+      } catch (err) {
+        console.error(err);
+        contentDiv.innerHTML = `<div class="error">Error al cargar los datos: ${err.message}</div>`;
+      }
+    }
+
+    // ====================== INICIALIZACIÓN ======================
+    async function initAdminPage() {
+      const client = await checkAdminAccess();
+      if (!client) return;
+
+      await loadPaidInscriptions(client);
+    }
+
+    // Ejecutar al cargar la página
+    window.addEventListener("load", initAdminPage);
+  </script>
+</body>
+</html>
