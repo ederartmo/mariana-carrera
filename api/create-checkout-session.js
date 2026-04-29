@@ -1,4 +1,4 @@
-// api/create-checkout-session.js - Versión estable con Supabase
+// api/create-checkout-session.js - Versión estable para Vercel + Supabase
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 
 function getPriceId() {
@@ -24,6 +24,8 @@ export default async function handler(req, res) {
     return res.status(405).json({ message: 'Método no permitido' });
   }
 
+  let supabase = null;
+
   try {
     const { email } = req.body;
 
@@ -34,26 +36,26 @@ export default async function handler(req, res) {
     }
 
     const cleanEmail = email.toLowerCase().trim();
-    console.log(`🔄 Creando checkout para: ${cleanEmail}`);
+    console.log(`🔄 Checkout iniciado para: ${cleanEmail}`);
 
-    // === SUPABASE - Creamos el cliente DENTRO del handler (más seguro en Vercel) ===
+    // Crear cliente de Supabase DENTRO del try (más seguro en Vercel)
     const { createClient } = require('@supabase/supabase-js');
     
-    const supabase = createClient(
+    supabase = createClient(
       process.env.SUPABASE_URL,
       process.env.SUPABASE_SERVICE_ROLE_KEY
     );
 
-    // Verificar si ya pagó
-    const { data: existingInscripcion } = await supabase
+    // Verificar si ya tiene pago
+    const { data: existing } = await supabase
       .from('inscripciones')
       .select('payment_status')
       .eq('email', cleanEmail)
       .eq('payment_status', 'paid')
       .maybeSingle();
 
-    if (existingInscripcion) {
-      console.log(`⛔ Ya tiene pago registrado: ${cleanEmail}`);
+    if (existing) {
+      console.log(`⛔ Ya pagó: ${cleanEmail}`);
       return res.status(400).json({
         error: 'Ya tienes una inscripción pagada con este correo electrónico.',
         alreadyPaid: true
@@ -63,7 +65,7 @@ export default async function handler(req, res) {
     const priceId = getPriceId();
     if (!priceId) {
       return res.status(400).json({ 
-        error: 'Las inscripciones para Axolote Night Run 2026 están cerradas.' 
+        error: 'Las inscripciones están cerradas.' 
       });
     }
 
@@ -83,17 +85,17 @@ export default async function handler(req, res) {
       }
     });
 
-    console.log(`✅ Sesión creada: ${session.id} | Email: ${cleanEmail}`);
+    console.log(`✅ Sesión creada exitosamente: ${session.id}`);
 
     return res.status(200).json({ url: session.url });
 
   } catch (error) {
-    console.error("💥 Error crítico en create-checkout-session:");
+    console.error("💥 ERROR en create-checkout-session:");
     console.error("Mensaje:", error.message);
     console.error("Stack:", error.stack);
 
     return res.status(500).json({ 
-      error: 'Error interno del servidor. Por favor intenta más tarde.' 
+      error: 'Error interno del servidor. Por favor intenta de nuevo más tarde.' 
     });
   }
 }
