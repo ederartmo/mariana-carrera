@@ -42,7 +42,7 @@ function setupMenuToggle() {
   });
 }
 // ====================== FUNCIÓN REUTILIZABLE PARA VERIFICAR PAGO ======================
-  async function checkIfUserHasPaid() {
+async function checkIfUserHasPaid() {
   // Esperar a que Supabase esté disponible
   if (typeof window.supabase === "undefined") {
     await new Promise(resolve => setTimeout(resolve, 600)); // pequeña espera
@@ -74,7 +74,7 @@ function setupMenuToggle() {
 
     const isPaid = (data?.payment_status || "").toLowerCase().trim() === "paid";
     console.log("✅ checkIfUserHasPaid() →", isPaid, "| email:", email);
-    
+
     return isPaid;
 
   } catch (err) {
@@ -109,108 +109,109 @@ function setupMenuToggle() {
 //     nav.appendChild(cta);
 //   }
 // }
-  function setupActiveNavLink() {
-    const nav = document.getElementById("siteNav");
-    if (!nav) return;
+function setupActiveNavLink() {
+  const nav = document.getElementById("siteNav");
+  if (!nav) return;
 
-    // Marcar enlace activo
-    const currentPath = window.location.pathname.split("/").pop() || "index.html";
-    const links = Array.from(nav.querySelectorAll("a[href]"));
+  // Marcar enlace activo
+  const currentPath = window.location.pathname.split("/").pop() || "index.html";
+  const links = Array.from(nav.querySelectorAll("a[href]"));
 
-    links.forEach((link) => {
-      const linkPath = (link.getAttribute("href") || "").split("#")[0].split("?")[0];
-      const isHome = currentPath === "" || currentPath === "index.html";
-      const shouldActivate = linkPath === currentPath || (isHome && (linkPath === "index.html" || linkPath === ""));
+  links.forEach((link) => {
+    const linkPath = (link.getAttribute("href") || "").split("#")[0].split("?")[0];
+    const isHome = currentPath === "" || currentPath === "index.html";
+    const shouldActivate = linkPath === currentPath || (isHome && (linkPath === "index.html" || linkPath === ""));
 
-      if (shouldActivate) {
-        link.classList.add("is-active");
-        link.setAttribute("aria-current", "page");
-      }
-    });
+    if (shouldActivate) {
+      link.classList.add("is-active");
+      link.setAttribute("aria-current", "page");
+    }
+  });
 
-    // Contenedor para botones en móvil
-    let mobileActions = nav.querySelector(".nav-mobile-actions");
-    if (!mobileActions) {
-      mobileActions = document.createElement("div");
-      mobileActions.className = "nav-mobile-actions";
-      nav.appendChild(mobileActions);
+  // Contenedor para botones en móvil
+  let mobileActions = nav.querySelector(".nav-mobile-actions");
+  if (!mobileActions) {
+    mobileActions = document.createElement("div");
+    mobileActions.className = "nav-mobile-actions";
+    nav.appendChild(mobileActions);
+  }
+
+  const updateMobileAuthUI = async () => {
+    mobileActions.innerHTML = '';
+
+    let isLoggedIn = false;
+
+    // Esperar a que Supabase esté disponible
+    if (typeof window.supabase === "undefined") {
+      // Si aún no cargó, mostrar "Registrarse" por defecto
+      mobileActions.innerHTML = `<a href="auth.html?mode=register" class="nav-mobile-cta">Registrarse</a>`;
+      return;
     }
 
-    const updateMobileAuthUI = async () => {
-      mobileActions.innerHTML = '';
+    try {
+      const client = window.supabase.createClient(
+        "https://uycwzhlcnfijjyzkgkem.supabase.co",
+        "sb_publishable_IKwD3YtQwWzzEtE8QkVagA_OJGdV2e4"
+      );
 
-      let isLoggedIn = false;
+      const { data: { session } } = await client.auth.getSession();
+      isLoggedIn = !!session?.user;
+    } catch (err) {
+      console.warn("Error verificando sesión en menú móvil:", err);
+    }
 
-      // Esperar a que Supabase esté disponible
-      if (typeof window.supabase === "undefined") {
-        // Si aún no cargó, mostrar "Registrarse" por defecto
-        mobileActions.innerHTML = `<a href="auth.html?mode=register" class="nav-mobile-cta">Registrarse</a>`;
-        return;
-      }
-
-      try {
-        const client = window.supabase.createClient(
-          "https://uycwzhlcnfijjyzkgkem.supabase.co",
-          "sb_publishable_IKwD3YtQwWzzEtE8QkVagA_OJGdV2e4"
-        );
-
-        const { data: { session } } = await client.auth.getSession();
-        isLoggedIn = !!session?.user;
-      } catch (err) {
-        console.warn("Error verificando sesión en menú móvil:", err);
-      }
-
-      if (isLoggedIn) {
-        mobileActions.innerHTML = `
+    if (isLoggedIn) {
+      mobileActions.innerHTML = `
           <a href="perfil.html" class="nav-mobile-cta logged-in">👤 Mi Perfil</a>
           <button id="mobileLogoutBtn" class="nav-mobile-cta logout-btn logout-btn-sp">Cerrar Sesión</button>
         `;
 
-        setTimeout(() => {
-          const logoutBtn = document.getElementById("mobileLogoutBtn");
-          if (logoutBtn) {
-            logoutBtn.addEventListener("click", async () => {
-              try {
-                const client = window.supabase.createClient(
-                  "https://uycwzhlcnfijjyzkgkem.supabase.co",
-                  "sb_publishable_IKwD3YtQwWzzEtE8QkVagA_OJGdV2e4"
-                );
-                await client.auth.signOut();
-              } catch (e) {}
-              window.location.href = "index.html";
-            });
-          }
-        }, 100);
+      setTimeout(() => {
+        const logoutBtn = document.getElementById("mobileLogoutBtn");
+        if (logoutBtn) {
+          logoutBtn.addEventListener("click", async () => {
+            try {
+              const client = window.supabase.createClient(
+                "https://uycwzhlcnfijjyzkgkem.supabase.co",
+                "sb_publishable_IKwD3YtQwWzzEtE8QkVagA_OJGdV2e4"
+              );
+              await client.auth.signOut();
+            } catch (e) { }
+            window.location.href = "index.html";
+          });
+        }
+      }, 100);
 
-      } else {
-        mobileActions.innerHTML = `
+    } else {
+      mobileActions.innerHTML = `
           <a href="auth.html?mode=register" class="nav-mobile-cta">Registrarse</a>
         `;
-      }
-    };
+    }
+  };
 
-    // Ejecutar cuando el DOM esté listo
-    updateMobileAuthUI();
+  // Ejecutar cuando el DOM esté listo
+  updateMobileAuthUI();
 
-    // Intentar actualizar cuando Supabase cargue
-    const checkSupabaseLoaded = setInterval(() => {
-      if (typeof window.supabase !== "undefined") {
-        clearInterval(checkSupabaseLoaded);
+  // Intentar actualizar cuando Supabase cargue
+  const checkSupabaseLoaded = setInterval(() => {
+    if (typeof window.supabase !== "undefined") {
+      clearInterval(checkSupabaseLoaded);
+      updateMobileAuthUI();
+    }
+  }, 300);
+
+  // Listener de cambio de autenticación (solo si Supabase ya cargó)
+  setTimeout(() => {
+    if (typeof window.supabase !== "undefined" && window.supabase.auth) {
+      window.supabase.auth.onAuthStateChange(() => {
         updateMobileAuthUI();
-      }
-    }, 300);
 
-    // Listener de cambio de autenticación (solo si Supabase ya cargó)
-    setTimeout(() => {
-      if (typeof window.supabase !== "undefined" && window.supabase.auth) {
-        window.supabase.auth.onAuthStateChange(() => {
-          updateMobileAuthUI();
-        });
-      }
-    }, 800);
-  }
+      });
+    }
+  }, 800);
+}
 
-  // ====================== OCULTAR BOTONES DE COMPRA SI YA PAGÓ ======================
+// ====================== OCULTAR BOTONES DE COMPRA SI YA PAGÓ ======================
 async function setupEventBuyButtons() {
   console.log("🔄 setupEventBuyButtons iniciado...");
 
@@ -1478,21 +1479,99 @@ function setupWhatsAppButton() {
   document.body.appendChild(wrapper);
 }
 
-function setupProfilePage() {
+// async function setupProfilePage() {
+//   if (!document.querySelector("[data-profile-page]")) return;
+//   // const user = await getCurrentUser();   // o como obtengas el usuario logueado
+//   const { data: { session } } = await client.auth.getSession();
+//   isLoggedIn = session?.user;
+//   if (!isLoggedIn) {
+//     // redirigir a login o mostrar mensaje
+//     return;
+//   }
+//   const client = await ensureSupabaseClient();
+//   let profileData = await readProfileFromTable() || {};
+
+//   // Sidebar section switching
+//   const navItems = Array.from(document.querySelectorAll(".profile-nav-item[data-section]"));
+//   const panels = Array.from(document.querySelectorAll(".profile-panel[data-section]"));
+
+//   navItems.forEach((item) => {
+//     item.addEventListener("click", (e) => {
+//       e.preventDefault();
+//       const section = item.getAttribute("data-section");
+//       navItems.forEach((n) => n.classList.toggle("is-active", n === item));
+//       panels.forEach((p) => p.classList.toggle("is-active", p.getAttribute("data-section") === section));
+//     });
+//   });
+//   await syncBibNumberToProfile(client, user);
+//   profileData = await readProfileFromTable();
+//   updateBibNumberInUI(profileData.bib_number);
+// }
+async function updateProfileBibNumberUI(client, user) {
+  if (!user?.email) return;
+
+  try {
+    const email = user.email.trim().toLowerCase();
+
+    const { data: profile } = await client
+      .from('user_profiles')
+      .select('bib_number')
+      .eq('email', email)
+      .maybeSingle();
+
+    const bibNumber = profile?.bib_number || '—';
+
+    // Actualiza todos los elementos que muestren el número de corredor
+    document.querySelectorAll('#bibNumberDisplay, .bib-number, [data-bib-number]').forEach(el => {
+      if (el) el.textContent = bibNumber;
+    });
+
+    console.log(`📍 Bib number mostrado en UI: ${bibNumber}`);
+
+  } catch (err) {
+    console.warn("No se pudo actualizar bib_number en UI:", err);
+  }
+}
+async function setupProfilePage() {
   if (!document.querySelector("[data-profile-page]")) return;
 
-  // Sidebar section switching
-  const navItems = Array.from(document.querySelectorAll(".profile-nav-item[data-section]"));
-  const panels = Array.from(document.querySelectorAll(".profile-panel[data-section]"));
+  try {
+    const client = await ensureSupabaseClient();
 
-  navItems.forEach((item) => {
-    item.addEventListener("click", (e) => {
-      e.preventDefault();
-      const section = item.getAttribute("data-section");
-      navItems.forEach((n) => n.classList.toggle("is-active", n === item));
-      panels.forEach((p) => p.classList.toggle("is-active", p.getAttribute("data-section") === section));
+    const { data: { session } } = await client.auth.getSession();
+    const user = session?.user;
+
+    if (!user) {
+      console.log("Usuario no logueado en perfil");
+      return;
+    }
+
+    console.log("✅ Usuario logueado en perfil:", user.email);
+
+    // ====================== SINCRONIZACIÓN DEL BIB_NUMBER ======================
+    await syncBibNumberToProfile(client, user);
+
+    // Actualizar UI del bib_number (sin depender de readProfileFromTable)
+    await updateProfileBibNumberUI(client, user);
+
+    // Sidebar navigation (mantener tu código original)
+    const navItems = Array.from(document.querySelectorAll(".profile-nav-item[data-section]"));
+    const panels = Array.from(document.querySelectorAll(".profile-panel[data-section]"));
+
+    navItems.forEach((item) => {
+      item.addEventListener("click", (e) => {
+        e.preventDefault();
+        const section = item.getAttribute("data-section");
+        navItems.forEach((n) => n.classList.toggle("is-active", n === item));
+        panels.forEach((p) => p.classList.toggle("is-active", p.getAttribute("data-section") === section));
+      });
     });
-  });
+
+    console.log("✅ setupProfilePage completado correctamente");
+
+  } catch (error) {
+    console.error("Error en setupProfilePage:", error);
+  }
 }
 
 function setupBlogTabs() {
@@ -3071,75 +3150,66 @@ function setupSupabase() {
         };
 
         // Renderizado de las tarjetas grandes
-        const renderRaces = (state) => {
+        const renderRaces = (state, bibNumber = null) => {
           if (!racesContainer) return;
 
-          console.log(`Renderizando estado: ${state}`);
+          console.log(`Renderizando estado: ${state} | Bib: ${bibNumber || 'null'}`);
+
+          const bibHTML = bibNumber
+            ? `<p class="profile-race-meta bib-number-display" style="color:#19c88b; font-size:1.15rem; font-weight:800; margin:10px 0 0;">
+         Número de corredor: <strong>#${bibNumber}</strong>
+       </p>`
+            : '';
 
           if (state === "pending") {
             racesContainer.innerHTML = `
-              <div class="profile-race-card">
-                <article class="profile-race-item">
-                  <div class="profile-race-top">
-                    <h3 class="profile-race-name">Axolote Night Run 2026</h3>
-                    <span class="profile-race-status is-pending">Pendiente de pago</span>
-                  </div>
-                  <p class="profile-race-meta">31 OCT 2026 · Pista de Canotaje, CDMX · Categoría única 5K</p>
-                  <p class="profile-race-meta">Tu lugar está apartado. Completa el pago para asegurar tu inscripción.</p>
-                  <div class="profile-race-actions">
-                    <a class="profile-race-pay-btn" href="${AXOLOTE_PAYMENT_URL}">Pagar para asegurar lugar</a>
-                    <a class="profile-race-detail-btn" href="${AXOLOTE_EVENT_URL}">Ver detalle del evento</a>
-                  </div>
-                </article>
-              </div>
-            `;
+      <div class="profile-race-card">
+        <article class="profile-race-item">
+          <div class="profile-race-top">
+            <h3 class="profile-race-name">Axolote Night Run 2026</h3>
+            <span class="profile-race-status is-pending">Pendiente de pago</span>
+          </div>
+          <p class="profile-race-meta">31 OCT 2026 · Pista de Canotaje, CDMX · Categoría única 5K</p>
+          <p class="profile-race-meta">Tu lugar está apartado. Completa el pago para asegurar tu inscripción.</p>
+          ${bibHTML}
+          <div class="profile-race-actions">
+            <a class="profile-race-pay-btn" href="${AXOLOTE_PAYMENT_URL}">Pagar para asegurar lugar</a>
+            <a class="profile-race-detail-btn" href="${AXOLOTE_EVENT_URL}">Ver detalle del evento</a>
+          </div>
+        </article>
+      </div>
+    `;
             return;
           }
 
           if (state === "paid") {
             racesContainer.innerHTML = `
-              <div class="profile-race-card">
-                <article class="profile-race-item">
-                  <div class="profile-race-top">
-                    <h3 class="profile-race-name">Axolote Night Run 2026</h3>
-                    <span class="profile-race-status is-paid">Inscripción pagada</span>
-                  </div>
-                  <p class="profile-race-meta">31 OCT 2026 · Pista de Canotaje, CDMX · Categoría única 5K</p>
-                  <p class="profile-race-meta">Incluye playera técnica oficial Axolote Night Run 2026 y medalla de finisher exclusiva.</p>
-                  <section style="display:flex; justify-content:space-between; align-items:center">
-                  <div class="profile-race-actions">
-                    <a class="profile-race-detail-btn" href="${AXOLOTE_EVENT_URL}">Ver detalle del evento</a>
-                  </div>
-                  <button id="verDocumentosReminderBtn2" class="profile-reminder-cta" style="background:#19c88b; color:white; border:none;">
-                Ver documentos
-              </button>
-                  
-                  </section>
-                </article>
-
-              </div>
-            `;
+      <div class="profile-race-card">
+        <article class="profile-race-item">
+          <div class="profile-race-top">
+            <h3 class="profile-race-name">Axolote Night Run 2026</h3>
+            <span class="profile-race-status is-paid">Inscripción pagada ✓</span>
+          </div>
+          <p class="profile-race-meta">31 OCT 2026 · Pista de Canotaje, CDMX · Categoría única 5K</p>
+          ${bibHTML}
+          <p class="profile-race-meta">Incluye playera técnica oficial y medalla de finisher exclusiva.</p>
+          
+          <section style="display:flex; justify-content:space-between; align-items:center; margin-top:12px;">
+            <div class="profile-race-actions">
+              <a class="profile-race-detail-btn" href="${AXOLOTE_EVENT_URL}">Ver detalle del evento</a>
+            </div>
+            <button id="verDocumentosReminderBtn2" class="profile-reminder-cta" style="background:#19c88b; color:white; border:none;">
+              Ver documentos
+            </button>
+          </section>
+        </article>
+      </div>
+    `;
             return;
           }
 
           // Sin inscripciones
-          racesContainer.innerHTML = `
-            <div class="profile-card">
-              <div class="profile-empty-state">
-                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <rect x="3" y="4" width="18" height="18" rx="2" stroke="currentColor" stroke-width="1.7" />
-                  <line x1="16" y1="2" x2="16" y2="6" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" />
-                  <line x1="8" y1="2" x2="8" y2="6" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" />
-                  <line x1="3" y1="10" x2="21" y2="10" stroke="currentColor" stroke-width="1.7" />
-                </svg>
-                <p>
-                  Aún no tienes inscripciones.<br>
-                  <a href="index.html" class="auth-link-btn">Explora eventos</a> 
-                  y regístrate en tu próxima carrera.
-                </p>
-              </div>
-            </div>
-          `;
+          racesContainer.innerHTML = `... tu HTML vacío actual ...`;
         };
 
         // Función para actualizar el reminder cuando está inscrito (paid)
@@ -3167,7 +3237,7 @@ function setupSupabase() {
             if (btn) {
               btn.addEventListener("click", openLegalDocumentsModal);
             }
-            if (btn2){
+            if (btn2) {
               btn2.addEventListener("click", openLegalDocumentsModal);
             }
           }, 100);
@@ -3265,38 +3335,48 @@ function setupSupabase() {
           const { data, error } = await client
             .from("inscripciones")
             .select(`
-              id, created_at, stripe_session_id, email, full_name, 
-              event_slug, amount_paid, payment_status
-            `)
+      id, 
+      created_at, 
+      stripe_session_id, 
+      email, 
+      full_name, 
+      event_slug, 
+      amount_paid, 
+      payment_status,
+      bib_number          
+    `)
             .eq("email", email)
             .order("created_at", { ascending: false });
 
           if (error) {
             console.error("❌ Error al cargar inscripciones:", error);
-            renderRaces("pending");
+            renderRaces("pending", null);
             return;
           }
 
           console.log(`✅ Encontradas ${data?.length || 0} inscripciones:`, data);
 
           let finalState = "pending";
+          let bibNumber = null;
 
           if (data && data.length > 0) {
             const inscription = data[0];
             const dbStatus = (inscription.payment_status || "").toLowerCase().trim();
-            console.log("Estado en la base de datos:", dbStatus);
+            bibNumber = inscription.bib_number || null;   // ← Ahora sí se recupera
+
+            console.log("Estado en la base de datos:", dbStatus, "| Bib:", bibNumber);
 
             if (dbStatus === "paid") {
               finalState = "paid";
               writePaymentState("paid");
-              updateReminderForPaid();        // ← Actualiza el reminder
+              updateReminderForPaid();
             } else {
               finalState = "pending";
               writePaymentState("pending");
             }
           }
 
-          renderRaces(finalState);
+          renderRaces(finalState, bibNumber);   // ← Pasamos el bibNumber correctamente
         }
 
         // Inicialización
@@ -3314,7 +3394,7 @@ function setupSupabase() {
         }
 
         // Render inicial
-        renderRaces(paymentState);
+        renderRaces(paymentState, null);
 
         // Carga real desde Supabase
         loadUserInscriptions();
@@ -3643,6 +3723,101 @@ function setupCheckoutForm() {
       submitBtn.textContent = originalText;
     }
   });
+}
+async function generateNextBibNumber(client) {
+  try {
+    // Contamos cuántas inscripciones ya tienen bib_number asignado
+    const { count, error } = await client
+      .from('inscripciones')
+      .select('*', { count: 'exact', head: true })
+      .not('bib_number', 'is', null);
+
+    if (error) {
+      console.error("Error al contar inscripciones:", error);
+      return "001";
+    }
+
+    const nextNumber = (count || 0) + 1;
+    const formattedBib = String(nextNumber).padStart(3, '0');
+
+    console.log(`📍 Nuevo bib_number generado: ${formattedBib} (inscripciones previas: ${count})`);
+    return formattedBib;
+
+  } catch (err) {
+    console.error("Error generando bib_number:", err);
+    return "000"; // fallback seguro
+  }
+}
+
+async function syncBibNumberToProfile(client, user) {
+  if (!user?.email) return;
+
+  try {
+    const email = user.email.trim().toLowerCase();
+
+    // Buscar la inscripción más reciente pagada
+    const { data: inscription } = await client
+      .from('inscripciones')
+      .select('bib_number')
+      .eq('email', email)
+      .eq('payment_status', 'paid')
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    if (inscription?.bib_number) {
+      // Actualizar o insertar en user_profiles
+      const { error } = await client
+        .from('user_profiles')
+        .upsert({
+          user_id: user.id,
+          email: email,
+          bib_number: inscription.bib_number,
+          updated_at: new Date().toISOString()
+        }, { onConflict: 'user_id' });
+
+      if (!error) {
+        console.log(`✅ Bib number sincronizado a perfil: ${inscription.bib_number}`);
+      }
+    }
+  } catch (err) {
+    console.warn("Error sincronizando bib_number al perfil:", err);
+  }
+}
+async function syncBibNumberToProfile(client, user) {
+  if (!user?.email) return;
+
+  try {
+    const email = user.email.trim().toLowerCase();
+
+    // Buscar la inscripción más reciente pagada
+    const { data: inscription } = await client
+      .from('inscripciones')
+      .select('bib_number')
+      .eq('email', email)
+      .eq('payment_status', 'paid')
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    if (inscription?.bib_number) {
+      // Actualizar o insertar en user_profiles
+      const { error } = await client
+        .from('user_profiles')
+        .upsert({
+          user_id: user.id,
+          email: email,
+          bib_number: inscription.bib_number,
+          updated_at: new Date().toISOString()
+        }, { onConflict: 'user_id' });
+
+      if (!error) {
+        console.log(`✅ Bib number sincronizado a perfil: ${inscription.bib_number}`);
+      }
+    }
+  } catch (err) {
+    console.warn("Error sincronizando bib_number al perfil:", err);
+  }
 }
 
 setupPageLoadIndicator();
