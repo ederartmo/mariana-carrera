@@ -1,11 +1,5 @@
-// api/create-checkout-session.js - Versión completa con Supabase
+// api/create-checkout-session.js - Versión estable con Supabase
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
-const { createClient } = require('@supabase/supabase-js');
-
-const supabase = createClient(
-  process.env.SUPABASE_URL,
-  process.env.SUPABASE_SERVICE_ROLE_KEY
-);
 
 function getPriceId() {
   const now = new Date();
@@ -39,6 +33,33 @@ export default async function handler(req, res) {
       });
     }
 
+    const cleanEmail = email.toLowerCase().trim();
+    console.log(`🔄 Creando checkout para: ${cleanEmail}`);
+
+    // === SUPABASE - Creamos el cliente DENTRO del handler (más seguro en Vercel) ===
+    const { createClient } = require('@supabase/supabase-js');
+    
+    const supabase = createClient(
+      process.env.SUPABASE_URL,
+      process.env.SUPABASE_SERVICE_ROLE_KEY
+    );
+
+    // Verificar si ya pagó
+    const { data: existingInscripcion } = await supabase
+      .from('inscripciones')
+      .select('payment_status')
+      .eq('email', cleanEmail)
+      .eq('payment_status', 'paid')
+      .maybeSingle();
+
+    if (existingInscripcion) {
+      console.log(`⛔ Ya tiene pago registrado: ${cleanEmail}`);
+      return res.status(400).json({
+        error: 'Ya tienes una inscripción pagada con este correo electrónico.',
+        alreadyPaid: true
+      });
+    }
+
     const priceId = getPriceId();
     if (!priceId) {
       return res.status(400).json({ 
@@ -46,31 +67,7 @@ export default async function handler(req, res) {
       });
     }
 
-    const cleanEmail = email.toLowerCase().trim();
-    console.log(`🔄 Creando checkout para: ${cleanEmail}`);
-
-    // === VERIFICACIÓN EN SUPABASE ===
-    const { data: existingInscripcion, error: checkError } = await supabase
-      .from('inscripciones')
-      .select('payment_status')
-      .eq('email', cleanEmail)
-      .eq('payment_status', 'paid')
-      .maybeSingle();
-
-    if (checkError) {
-      console.error("Error al consultar Supabase:", checkError.message);
-      // No bloqueamos el flujo por error de lectura, solo lo logueamos
-    }
-
-    if (existingInscripcion) {
-      console.log(`⛔ Usuario ya tiene pago: ${cleanEmail}`);
-      return res.status(400).json({
-        error: 'Ya tienes una inscripción pagada con este correo electrónico.',
-        alreadyPaid: true
-      });
-    }
-
-    // === CREAR SESIÓN DE STRIPE ===
+    // Crear sesión de Stripe
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ['card'],
       mode: 'payment',
@@ -86,19 +83,17 @@ export default async function handler(req, res) {
       }
     });
 
-    console.log(`✅ Sesión Stripe creada: ${session.id}`);
+    console.log(`✅ Sesión creada: ${session.id} | Email: ${cleanEmail}`);
 
-    return res.status(200).json({ 
-      url: session.url 
-    });
+    return res.status(200).json({ url: session.url });
 
   } catch (error) {
-    console.error("💥 Error en create-checkout-session:");
-    console.error(error.message);
-    console.error(error.stack);
+    console.error("💥 Error crítico en create-checkout-session:");
+    console.error("Mensaje:", error.message);
+    console.error("Stack:", error.stack);
 
     return res.status(500).json({ 
-      error: 'Error interno del servidor. Por favor intenta de nuevo.' 
+      error: 'Error interno del servidor. Por favor intenta más tarde.' 
     });
   }
 }
