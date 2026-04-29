@@ -3672,6 +3672,58 @@ function setupTipsCarousel() {
   });
 }
 
+// function setupCheckoutForm() {
+//   const form = document.getElementById("checkoutForm");
+//   if (!form) return;
+
+//   form.addEventListener("submit", async (e) => {
+//     e.preventDefault();
+
+//     const emailInput = document.getElementById("userEmail");
+//     const email = emailInput?.value.trim();
+//     const termsCheck = document.getElementById("termsCheck")?.checked;
+
+//     if (!email || !termsCheck) {
+//       alert("Por favor completa el correo y acepta los términos");
+//       return;
+//     }
+
+//     const submitBtn = form.querySelector('button[type="submit"]');
+//     const originalText = submitBtn.textContent;
+//     submitBtn.disabled = true;
+//     submitBtn.textContent = "Verificando...";
+
+//     try {
+//       const response = await fetch("/api/create-checkout-session", {
+//         method: "POST",
+//         headers: { "Content-Type": "application/json" },
+//         body: JSON.stringify({ email }),
+//       });
+
+//       const data = await response.json();
+
+//       if (!response.ok) {
+//         if (data.alreadyPaid) {
+//           alert("¡Ya tienes una inscripción pagada con este correo!\n\nInicia sesión en tu cuenta para ver los detalles.");
+//         } else {
+//           alert(data.error || "Error al procesar la solicitud");
+//         }
+//         submitBtn.disabled = false;
+//         submitBtn.textContent = originalText;
+//         return;
+//       }
+
+//       // Si todo está bien, redirigir a Stripe
+//       window.location.href = data.url;
+
+//     } catch (error) {
+//       console.error("Error al iniciar checkout:", error);
+//       alert("Hubo un error al procesar tu solicitud. Intenta de nuevo.");
+//       submitBtn.disabled = false;
+//       submitBtn.textContent = originalText;
+//     }
+//   });
+// }
 function setupCheckoutForm() {
   const form = document.getElementById("checkoutForm");
   if (!form) return;
@@ -3684,14 +3736,14 @@ function setupCheckoutForm() {
     const termsCheck = document.getElementById("termsCheck")?.checked;
 
     if (!email || !termsCheck) {
-      alert("Por favor completa el correo y acepta los términos");
+      alert("Por favor ingresa tu correo y acepta los términos.");
       return;
     }
 
     const submitBtn = form.querySelector('button[type="submit"]');
     const originalText = submitBtn.textContent;
     submitBtn.disabled = true;
-    submitBtn.textContent = "Verificando...";
+    submitBtn.textContent = "Procesando...";
 
     try {
       const response = await fetch("/api/create-checkout-session", {
@@ -3700,25 +3752,33 @@ function setupCheckoutForm() {
         body: JSON.stringify({ email }),
       });
 
-      const data = await response.json();
+      // Leer la respuesta como texto primero para depurar
+      const text = await response.text();
+      let data;
+      try {
+        data = JSON.parse(text);
+      } catch (parseErr) {
+        console.error("Respuesta no es JSON:", text.substring(0, 300));
+        throw new Error("El servidor devolvió un error inesperado.");
+      }
 
       if (!response.ok) {
-        if (data.alreadyPaid) {
-          alert("¡Ya tienes una inscripción pagada con este correo!\n\nInicia sesión en tu cuenta para ver los detalles.");
-        } else {
-          alert(data.error || "Error al procesar la solicitud");
-        }
+        alert(data.error || "Error al procesar el pago. Intenta de nuevo.");
         submitBtn.disabled = false;
         submitBtn.textContent = originalText;
         return;
       }
 
-      // Si todo está bien, redirigir a Stripe
-      window.location.href = data.url;
+      // Éxito → redirigir a Stripe
+      if (data.url) {
+        window.location.href = data.url;
+      } else {
+        alert("No se recibió la URL de pago.");
+      }
 
     } catch (error) {
       console.error("Error al iniciar checkout:", error);
-      alert("Hubo un error al procesar tu solicitud. Intenta de nuevo.");
+      alert("Hubo un error al conectar con el servidor. Revisa la consola o intenta más tarde.");
       submitBtn.disabled = false;
       submitBtn.textContent = originalText;
     }
