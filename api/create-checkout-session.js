@@ -1,4 +1,4 @@
-// Endpoint para crear una sesión de Stripe Checkout - Kinetic Hub
+// Endpoint para crear una sesión de Stripe Checkout - Kinetic Hub (Versión corregida)
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 const { createClient } = require('@supabase/supabase-js');
 
@@ -17,10 +17,10 @@ function getPriceId() {
     return 'price_1TMJT7IXKIIcpa3QGMfn9Ww4'; // Early Bird
   }
   if (year === 2026 && month <= 7) {
-    return 'price_1TPS8dIXKIIcpa3QtPe4BzQS'; // General
+    return 'price_1TPS8dIXKIIcpa3QtPe4BzQS';
   }
   if (year === 2026 && (month <= 9 || (month === 10 && day <= 10))) {
-    return 'price_1TPSEKIXKIIcpa3QsyDngV4h'; // Last Minute
+    return 'price_1TPSEKIXKIIcpa3QsyDngV4h';
   }
   return null;
 }
@@ -42,8 +42,9 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: 'Las inscripciones están cerradas.' });
     }
 
-    // ====================== VERIFICACIÓN PREVIA ======================
-    // 1. Revisar si ya tiene una inscripción pagada
+    console.log(`🔄 Creando checkout para email: ${email}`);
+
+    // Verificaciones en Supabase
     const { data: existingInscripcion } = await supabase
       .from('inscripciones')
       .select('payment_status')
@@ -58,33 +59,7 @@ export default async function handler(req, res) {
       });
     }
 
-    // 2. Revisar si ya tiene cuenta en user_profiles
-    const { data: existingProfile } = await supabase
-      .from('user_profiles')
-      .select('email')
-      .eq('email', email.toLowerCase().trim())
-      .maybeSingle();
-    const { data: existingAny } = await supabase
-      .from('inscripciones')
-      .select('id, payment_status')
-      .eq('email', email.toLowerCase().trim())
-      .eq('event_slug', 'axolote-night-run')
-      .maybeSingle();
-
-    if (existingAny) {
-      if (existingAny.payment_status === 'paid') {
-        return res.status(400).json({
-          error: 'Ya tienes una inscripción pagada...',
-          alreadyPaid: true
-        });
-      } else {
-        return res.status(400).json({
-          error: 'Ya tienes una inscripción en proceso con este correo.'
-        });
-      }
-    }
-
-    // ====================== CREAR SESIÓN DE STRIPE ======================
+    // Crear sesión de Stripe
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ['card'],
       mode: 'payment',
@@ -100,13 +75,18 @@ export default async function handler(req, res) {
       }
     });
 
-    res.status(200).json({
-      url: session.url,
-      hasProfile: !!existingProfile
+    console.log(`✅ Sesión creada correctamente: ${session.id}`);
+
+    return res.status(200).json({
+      url: session.url
     });
 
   } catch (error) {
-    console.error("Error en create-checkout-session:", error);
-    res.status(500).json({ error: 'Error interno del servidor.' });
+    console.error("❌ Error grave en create-checkout-session:", error);
+    console.error("Stack:", error.stack);
+    
+    return res.status(500).json({ 
+      error: 'Error interno del servidor. Revisa los logs de Vercel.' 
+    });
   }
 }
