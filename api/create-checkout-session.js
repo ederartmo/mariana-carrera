@@ -7,6 +7,11 @@ function getPriceId() {
   const month = now.getMonth() + 1;
   const day = now.getDate();
 
+  // TEST MODE: usar price de prueba
+  if (process.env.STRIPE_SECRET_KEY && process.env.STRIPE_SECRET_KEY.startsWith('sk_test_')) {
+    return 'price_1TRmV3IXKIIcpa3Qn0BUOdxn'; // Test price
+  }
+
   if (year < 2026 || (year === 2026 && month <= 5)) {
     return 'price_1TMJT7IXKIIcpa3QGMfn9Ww4'; // Early Bird
   }
