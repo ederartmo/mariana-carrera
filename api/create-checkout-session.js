@@ -19,7 +19,7 @@ function getPriceId() {
   return null;
 }
 
-export default async function handler(req, res) {
+module.exports = async function handler(req, res) {
   if (req.method !== 'POST') {
     return res.status(405).json({ message: 'Método no permitido' });
   }
@@ -49,7 +49,7 @@ export default async function handler(req, res) {
       allow_promotion_codes: true,
       customer_email: email,
       line_items: [{ price: priceId, quantity: 1 }],
-      success_url: 'https://www.kinetichub.com.mx/success.html?session_id={CHECKOUT_SESSION_ID}',
+      success_url: 'https://www.kinetichub.com.mx/succes.html?session_id={CHECKOUT_SESSION_ID}',
       cancel_url: 'https://www.kinetichub.com.mx/checkout.html',
       metadata: {
         event_slug: 'axolote-night-run',
