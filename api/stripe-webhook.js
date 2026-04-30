@@ -71,6 +71,7 @@ module.exports = async (req, res) => {
     const fullName = session.customer_details?.name || "Atleta";
     const sessionId = session.id;
     const amountTotal = (session.amount_total || 0) / 100;
+    const shirtSize = (session.metadata?.shirt_size || '').trim().toUpperCase();
 
     if (!email) {
       console.warn("⚠️ No se encontró email en la sesión de checkout");
@@ -93,6 +94,7 @@ module.exports = async (req, res) => {
           event_slug: 'axolote-night-run',
           amount_paid: amountTotal,
           payment_status: 'paid',
+          shirt_size: ['S', 'M', 'L'].includes(shirtSize) ? shirtSize : null,
           bib_number: bibNumber,
           created_at: new Date().toISOString()
         }, {
@@ -259,6 +261,10 @@ module.exports = async (req, res) => {
             <div class="info-row">
                 <span class="label">Monto pagado</span>
                 <span class="value">$${amountTotal} MXN</span>
+            </div>
+            <div class="info-row">
+              <span class="label">Talla de playera</span>
+              <span class="value">${['S', 'M', 'L'].includes(shirtSize) ? shirtSize : 'Por confirmar'}</span>
             </div>
             <div class="info-row">
                 <span class="label">Estado</span>
