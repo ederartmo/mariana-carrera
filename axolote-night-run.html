@@ -17,29 +17,58 @@
     <link rel="stylesheet" href="styles.css?v=__ASSET_VERSION__" />
     <link rel="icon" type="image/png" href="icon.png" />
     <style>
+      body[data-event-page] {
+        background:
+          radial-gradient(circle at top, rgba(222, 111, 32, 0.09), transparent 24%),
+          linear-gradient(180deg, #f5f7fb 0%, #eef2f7 100%);
+      }
+
       .axolote-hero {
+        position: relative;
+        overflow: hidden;
+        min-height: 340px;
+        padding: 30px;
+        border: 1px solid rgba(255, 255, 255, 0.08);
         background-image:
-          linear-gradient(135deg, rgba(6, 10, 18, 0.82), rgba(6, 10, 18, 0.52)),
+          linear-gradient(115deg, rgba(4, 10, 22, 0.76), rgba(8, 17, 31, 0.3) 56%, rgba(7, 20, 32, 0.74)),
           url("banner.png");
-        background-position: center top;
+        background-position: center;
+        box-shadow: 0 24px 48px rgba(5, 10, 18, 0.22);
+      }
+
+      .axolote-hero::after {
+        content: "";
+        position: absolute;
+        inset: auto -80px -90px auto;
+        width: 320px;
+        height: 320px;
+        border-radius: 999px;
+        background: radial-gradient(circle at center, rgba(255, 45, 191, 0.18), transparent 70%);
+        pointer-events: none;
+      }
+
+      .ax-hero-copy {
+        position: relative;
+        z-index: 1;
+        width: min(680px, 100%);
+        display: grid;
+        gap: 12px;
       }
 
       .axolote-badge {
         display: inline-flex;
         align-items: center;
-        gap: 6px;
-        background: rgba(13, 199, 133, 0.15);
-        border: 1px solid rgba(13, 199, 133, 0.4);
-        color: #0dc785;
-        font-size: 0.78rem;
-        font-weight: 700;
+        gap: 8px;
+        width: fit-content;
+        padding: 6px 12px;
+        border-radius: 999px;
+        background: rgba(222, 111, 32, 0.16);
+        border: 1px solid rgba(222, 111, 32, 0.34);
+        color: #ffbe88;
+        font-size: 0.74rem;
+        font-weight: 800;
         letter-spacing: 0.08em;
         text-transform: uppercase;
-        padding: 4px 10px;
-        border-radius: 20px;
-        margin-bottom: 10px;
-        width: fit-content;
-        max-width: 100%;
       }
 
       .axolote-badge::before {
@@ -47,73 +76,752 @@
         width: 7px;
         height: 7px;
         border-radius: 50%;
-        background: #0dc785;
-        animation: pulse-dot 1.8s ease-in-out infinite;
+        background: #ff9a4d;
       }
 
-      @keyframes pulse-dot {
-        0%, 100% { opacity: 1; transform: scale(1); }
-        50% { opacity: 0.5; transform: scale(0.7); }
-      }
-
-      .info-banner {
-        background: linear-gradient(135deg, rgba(13, 199, 133, 0.08), rgba(13, 199, 133, 0.03));
-        border: 1px solid rgba(13, 199, 133, 0.25);
-        border-radius: 12px;
-        padding: 16px 20px;
-        margin-bottom: 24px;
-      }
-
-      .info-banner p {
-        margin: 0;
-        font-size: 0.95rem;
-        color: var(--muted);
-      }
-
-      .info-banner strong {
-        color: #0dc785;
-      }
-
-      .ax-gallery-grid {
-        margin-top: 12px;
-        display: grid;
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-        gap: 10px;
-      }
-
-      .ax-gallery-card {
-        border: 1px solid var(--line);
-        border-radius: 12px;
-        overflow: hidden;
-        background: #fff;
-      }
-
-      .ax-gallery-card img {
-        display: block;
-        width: 100%;
-        height: auto;
-        object-fit: cover;
-      }
-
-      .ax-gallery-card small {
-        display: block;
-        padding: 8px 10px;
-        color: var(--muted);
+      .ax-hero-meta {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px 18px;
+        color: rgba(244, 249, 255, 0.9);
+        font-size: 1rem;
         font-weight: 700;
       }
 
-      .ax-flyer-link {
-        display: block;
-        margin-top: 12px;
-        border-radius: 12px;
-        overflow: hidden;
-        border: 1px solid var(--line);
+      .ax-hero-description {
+        margin: 0;
+        max-width: 58ch;
+        color: rgba(225, 236, 248, 0.88);
+        font-size: 1.04rem;
+        line-height: 1.65;
       }
 
-      .ax-flyer-link img {
+      .quick-stats {
+        margin-top: 4px;
+      }
+
+      .quick-stats span {
+        background: rgba(255, 255, 255, 0.08);
+        border-color: rgba(255, 255, 255, 0.18);
+        color: #f4f8ff;
+        backdrop-filter: blur(4px);
+      }
+
+      .ax-event-shell {
+        padding-top: 14px;
+      }
+
+      .ax-event-layout {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) 320px;
+        gap: 18px;
+        align-items: start;
+      }
+
+      .ax-event-main {
+        display: grid;
+        gap: 16px;
+      }
+
+      .ax-section-card {
+        background: rgba(255, 255, 255, 0.96);
+        border: 1px solid rgba(210, 218, 230, 0.92);
+        border-radius: 20px;
+        padding: 20px;
+        box-shadow: 0 18px 34px rgba(12, 18, 30, 0.07);
+      }
+
+      .ax-section-card:hover,
+      .ax-distance-card:hover,
+      .ax-price-card:hover,
+      .ax-visual-card:hover,
+      .ax-related-card:hover,
+      .ax-side-note:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 22px 38px rgba(12, 18, 30, 0.1);
+      }
+
+      .ax-section-card,
+      .ax-distance-card,
+      .ax-price-card,
+      .ax-visual-card,
+      .ax-related-card,
+      .ax-side-note {
+        transition: transform 180ms ease, box-shadow 180ms ease, border-color 180ms ease;
+      }
+
+      .ax-section-heading {
+        display: flex;
+        align-items: flex-start;
+        gap: 16px;
+      }
+
+      .ax-section-icon {
+        width: 58px;
+        height: 58px;
+        border-radius: 18px;
+        background: linear-gradient(145deg, rgba(255, 45, 191, 0.14), rgba(0, 208, 132, 0.14));
+        border: 1px solid rgba(197, 209, 224, 0.9);
+        display: grid;
+        place-items: center;
+        flex: 0 0 auto;
+      }
+
+      .ax-section-icon img {
+        width: 38px;
+        height: 38px;
+        object-fit: contain;
+      }
+
+      .ax-section-title {
+        margin: 0;
+        font-family: "Sora", sans-serif;
+        font-size: 1.32rem;
+        color: var(--ink);
+      }
+
+      .ax-section-copy,
+      .ax-subcopy,
+      .ax-policy-note,
+      .ax-side-note p,
+      .ax-register-helper,
+      .ax-register-meta,
+      .ax-register-trust li,
+      .ax-visual-card p {
+        margin: 0;
+        color: var(--muted);
+        line-height: 1.65;
+      }
+
+      .ax-distance-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 14px;
+      }
+
+      .ax-distance-card {
+        background: rgba(255, 255, 255, 0.98);
+        border: 1px solid rgba(213, 221, 232, 0.96);
+        border-radius: 18px;
+        padding: 18px;
+        display: grid;
+        grid-template-columns: auto 1fr;
+        gap: 16px;
+        align-items: center;
+        box-shadow: 0 16px 28px rgba(12, 18, 30, 0.05);
+      }
+
+      .ax-distance-value {
+        font-family: "Sora", sans-serif;
+        font-size: clamp(2rem, 4vw, 2.5rem);
+        font-weight: 800;
+        line-height: 1;
+      }
+
+      .ax-distance-value.is-3k {
+        color: #25d2d2;
+      }
+
+      .ax-distance-value.is-5k {
+        color: #e13dd1;
+      }
+
+      .ax-distance-card strong {
         display: block;
+        color: var(--ink);
+        font-size: 1.02rem;
+      }
+
+      .ax-distance-card p {
+        margin: 4px 0 0;
+        color: var(--muted);
+      }
+
+      .ax-price-grid {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 14px;
+      }
+
+      .ax-price-card {
+        position: relative;
+        background: #ffffff;
+        border: 1px solid rgba(213, 221, 232, 0.96);
+        border-radius: 18px;
+        padding: 18px;
+        box-shadow: 0 16px 28px rgba(12, 18, 30, 0.05);
+      }
+
+      .ax-price-card.featured {
+        background: linear-gradient(155deg, #0b1422, #101b2e 68%, #0f1830 100%);
+        border-color: rgba(53, 221, 208, 0.48);
+        box-shadow:
+          0 18px 34px rgba(9, 14, 24, 0.24),
+          0 0 0 1px rgba(53, 221, 208, 0.12) inset,
+          0 0 28px rgba(53, 221, 208, 0.14);
+      }
+
+      .ax-price-badge {
+        display: inline-flex;
+        align-items: center;
+        min-height: 24px;
+        padding: 0 10px;
+        border-radius: 999px;
+        background: rgba(222, 111, 32, 0.14);
+        color: var(--accent);
+        font-size: 0.7rem;
+        font-weight: 800;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+
+      .ax-price-card h3 {
+        margin: 12px 0 6px;
+        font-family: "Sora", sans-serif;
+        font-size: 1.1rem;
+        color: var(--ink);
+      }
+
+      .ax-price-card.featured h3,
+      .ax-price-card.featured .ax-price-amount,
+      .ax-price-card.featured .ax-price-note,
+      .ax-price-card.featured li {
+        color: #f7fbff;
+      }
+
+      .ax-price-amount {
+        margin: 0;
+        font-family: "Sora", sans-serif;
+        font-size: clamp(1.9rem, 3vw, 2.4rem);
+        color: var(--ink);
+      }
+
+      .ax-price-amount small {
+        font-size: 1rem;
+      }
+
+      .ax-price-note {
+        margin: 4px 0 0;
+        color: var(--muted);
+        font-size: 0.92rem;
+        font-weight: 700;
+      }
+
+      .ax-price-list {
+        margin: 14px 0 16px;
+        padding: 0;
+        list-style: none;
+        display: grid;
+        gap: 8px;
+      }
+
+      .ax-price-list li {
+        position: relative;
+        padding-left: 18px;
+        color: var(--muted);
+        font-size: 0.92rem;
+      }
+
+      .ax-price-list li::before {
+        content: "";
+        position: absolute;
+        left: 0;
+        top: 8px;
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: #0dc785;
+      }
+
+      .ax-price-state {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 38px;
         width: 100%;
-        height: auto;
+        border-radius: 12px;
+        border: 1px solid rgba(194, 205, 221, 0.95);
+        background: #f8fafc;
+        color: #4d617d;
+        font-weight: 800;
+        font-size: 0.88rem;
+      }
+
+      .ax-price-card.featured .ax-price-state {
+        border-color: rgba(13, 199, 133, 0.24);
+        background: linear-gradient(135deg, rgba(13, 199, 133, 0.16), rgba(13, 199, 133, 0.3));
+        color: #b8ffe3;
+      }
+
+      .ax-policy-note {
+        margin-top: 14px;
+        font-size: 0.9rem;
+      }
+
+      .ax-policy-note a {
+        color: var(--accent);
+        font-weight: 700;
+        text-decoration: none;
+      }
+
+      .ax-benefits-band {
+        display: grid;
+        grid-template-columns: repeat(6, minmax(0, 1fr));
+        gap: 10px;
+        padding: 16px;
+        border-radius: 18px;
+        background: linear-gradient(180deg, rgba(245, 249, 252, 0.98), rgba(239, 244, 250, 0.92));
+        border: 1px solid rgba(216, 224, 235, 0.94);
+      }
+
+      .ax-benefit-item {
+        display: grid;
+        gap: 10px;
+        justify-items: center;
+        text-align: center;
+      }
+
+      .ax-benefit-icon {
+        width: 46px;
+        height: 46px;
+        border-radius: 14px;
+        background: #ffffff;
+        border: 1px solid rgba(211, 219, 230, 0.96);
+        display: grid;
+        place-items: center;
+        color: #3a536f;
+      }
+
+      .ax-benefit-icon svg {
+        width: 22px;
+        height: 22px;
+      }
+
+      .ax-benefit-item span {
+        color: #253244;
+        font-size: 0.84rem;
+        font-weight: 700;
+        line-height: 1.35;
+      }
+
+      .ax-timeline {
+        position: relative;
+        margin-top: 12px;
+        display: grid;
+        gap: 16px;
+      }
+
+      .ax-timeline::before {
+        content: "";
+        position: absolute;
+        left: 118px;
+        top: 8px;
+        bottom: 8px;
+        width: 2px;
+        background: linear-gradient(180deg, #25d2d2, #9a46ff);
+      }
+
+      .ax-timeline-item {
+        position: relative;
+        display: grid;
+        grid-template-columns: 88px 88px 1fr;
+        gap: 16px;
+        align-items: start;
+      }
+
+      .ax-timeline-item::before {
+        content: "";
+        position: absolute;
+        left: 114px;
+        top: 10px;
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        background: #25d2d2;
+        box-shadow: 0 0 0 4px rgba(37, 210, 210, 0.12);
+      }
+
+      .ax-timeline-date {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 28px;
+        padding: 0 10px;
+        border-radius: 999px;
+        background: rgba(154, 70, 255, 0.1);
+        color: #7d37d7;
+        font-size: 0.74rem;
+        font-weight: 800;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+      }
+
+      .ax-timeline-time {
+        color: var(--ink);
+        font-weight: 800;
+        font-size: 0.95rem;
+      }
+
+      .ax-timeline-copy strong {
+        display: block;
+        color: #1b2736;
+      }
+
+      .ax-timeline-copy p {
+        margin: 2px 0 0;
+        color: var(--muted);
+        font-size: 0.92rem;
+      }
+
+      .ax-visual-strip {
+        margin-top: 12px;
+        display: grid;
+        grid-template-columns: repeat(5, minmax(0, 1fr));
+        gap: 12px;
+      }
+
+      .ax-visual-card {
+        background: #ffffff;
+        border: 1px solid rgba(213, 221, 232, 0.96);
+        border-radius: 16px;
+        padding: 10px;
+        box-shadow: 0 14px 24px rgba(12, 18, 30, 0.05);
+      }
+
+      .ax-visual-card a,
+      .ax-visual-card img {
+        display: block;
+      }
+
+      .ax-visual-card img {
+        width: 100%;
+        aspect-ratio: 4 / 5;
+        object-fit: cover;
+        border-radius: 12px;
+      }
+
+      .ax-visual-card strong {
+        display: block;
+        margin-top: 10px;
+        color: var(--ink);
+        font-size: 0.92rem;
+      }
+
+      .ax-page-faq {
+        display: grid;
+        gap: 18px;
+      }
+
+      .ax-page-faq .home-faq-grid {
+        margin-top: 0;
+      }
+
+      .ax-page-faq .home-faq-item {
+        border-radius: 16px;
+      }
+
+      .ax-page-faq .home-faq-question {
+        min-height: 62px;
+        padding: 18px 20px;
+        font-size: 0.98rem;
+      }
+
+      .ax-page-faq .home-faq-answer p {
+        padding: 0 20px 18px;
+        font-size: 0.94rem;
+      }
+
+      .ax-event-sidebar {
+        display: grid;
+        gap: 14px;
+      }
+
+      .ax-register-card {
+        position: sticky;
+        top: 108px;
+        padding: 20px;
+        border-radius: 22px;
+        border: 1px solid rgba(0, 208, 132, 0.18);
+        background:
+          radial-gradient(circle at 10% 0%, rgba(0, 255, 156, 0.1), transparent 34%),
+          linear-gradient(160deg, #08121d 0%, #0c1727 54%, #101c2e 100%);
+        color: #f4f9ff;
+        box-shadow:
+          0 24px 42px rgba(7, 12, 20, 0.28),
+          0 0 0 1px rgba(255, 255, 255, 0.03) inset;
+      }
+
+      .ax-register-kicker {
+        margin: 0 0 10px;
+        color: #19c88b;
+        font-size: 0.76rem;
+        font-weight: 800;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+      }
+
+      .ax-register-card #eventRegisterTitle {
+        margin: 0;
+        font-family: "Sora", sans-serif;
+        color: #ffffff;
+        font-size: 1.1rem;
+      }
+
+      .ax-register-card .ax-register-price-label {
+        margin: 14px 0 4px;
+        color: #9eb8d3;
+        font-size: 0.82rem;
+        font-weight: 700;
+      }
+
+      .ax-register-price {
+        margin: 0;
+        font-family: "Sora", sans-serif;
+        font-size: clamp(2.1rem, 3vw, 2.8rem);
+        color: #ffffff;
+      }
+
+      .ax-register-price small {
+        font-size: 1.2rem;
+      }
+
+      .ax-register-helper {
+        margin-top: 10px;
+        color: #bdd1e7;
+        font-size: 0.94rem;
+      }
+
+      .ax-register-actions {
+        display: grid;
+        gap: 10px;
+        margin-top: 18px;
+      }
+
+      .ax-register-secondary {
+        min-height: 48px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 14px;
+        border: 1px solid rgba(155, 176, 203, 0.3);
+        background: rgba(255, 255, 255, 0.02);
+        color: #e5edf7;
+        text-decoration: none;
+        font-weight: 700;
+      }
+
+      .ax-register-secondary:hover {
+        border-color: rgba(255, 255, 255, 0.4);
+        background: rgba(255, 255, 255, 0.05);
+      }
+
+      .ax-register-list {
+        margin: 18px 0 0;
+        padding: 18px 0 0;
+        list-style: none;
+        border-top: 1px solid rgba(255, 255, 255, 0.08);
+        display: grid;
+        gap: 14px;
+      }
+
+      .ax-register-list li {
+        display: grid;
+        grid-template-columns: 18px 1fr;
+        gap: 10px;
+        align-items: start;
+      }
+
+      .ax-register-list svg {
+        width: 18px;
+        height: 18px;
+        color: #19c88b;
+        margin-top: 2px;
+      }
+
+      .ax-register-list strong {
+        display: block;
+        color: #d7e6f6;
+        font-size: 0.83rem;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+      }
+
+      .ax-register-meta {
+        color: #f2f6fb;
+        font-weight: 600;
+      }
+
+      .ax-register-trust {
+        margin: 18px 0 0;
+        padding: 18px 0 0;
+        list-style: none;
+        border-top: 1px solid rgba(255, 255, 255, 0.08);
+        display: grid;
+        gap: 10px;
+      }
+
+      .ax-register-trust li {
+        position: relative;
+        padding-left: 16px;
+        color: #d4e2f0;
+        font-size: 0.9rem;
+      }
+
+      .ax-register-trust li::before {
+        content: "";
+        position: absolute;
+        left: 0;
+        top: 9px;
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: #19c88b;
+      }
+
+      .ax-side-note {
+        background: rgba(255, 255, 255, 0.98);
+        border: 1px solid rgba(210, 218, 230, 0.92);
+        border-radius: 18px;
+        padding: 18px;
+        box-shadow: 0 16px 28px rgba(12, 18, 30, 0.06);
+      }
+
+      .ax-side-note h3 {
+        margin: 0 0 10px;
+        font-family: "Sora", sans-serif;
+        color: var(--ink);
+        font-size: 1rem;
+      }
+
+      .ax-side-inline-link {
+        color: var(--accent);
+        font-weight: 700;
+        text-decoration: none;
+      }
+
+      .ax-side-share {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-top: 12px;
+      }
+
+      .ax-more-events-section {
+        padding-top: 20px;
+      }
+
+      .ax-more-events-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+        margin-bottom: 14px;
+      }
+
+      .ax-more-events-head h2 {
+        margin: 0;
+        font-family: "Sora", sans-serif;
+        color: var(--ink);
+      }
+
+      .ax-related-grid {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 14px;
+      }
+
+      .ax-related-card {
+        background: #ffffff;
+        border: 1px solid rgba(213, 221, 232, 0.96);
+        border-radius: 16px;
+        overflow: hidden;
+        box-shadow: 0 14px 24px rgba(12, 18, 30, 0.05);
+      }
+
+      .ax-related-media {
+        position: relative;
+        min-height: 116px;
+        background-size: cover;
+        background-position: center;
+      }
+
+      .ax-related-media::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(180deg, rgba(5, 11, 21, 0.12), rgba(5, 11, 21, 0.58));
+      }
+
+      .ax-related-media.is-urban {
+        background-image: url("correr.jpg");
+      }
+
+      .ax-related-media.is-trail-city {
+        background-image: url("correr2.jpg");
+      }
+
+      .ax-related-media.is-norte {
+        background-image: url("correr1.jpg");
+      }
+
+      .ax-related-media.is-sunset {
+        background-image: url("evento1.png");
+      }
+
+      .ax-related-badge {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        z-index: 1;
+        min-height: 24px;
+        padding: 0 9px;
+        border-radius: 999px;
+        background: rgba(12, 18, 30, 0.82);
+        color: #ffffff;
+        font-size: 0.66rem;
+        font-weight: 800;
+        letter-spacing: 0.07em;
+        text-transform: uppercase;
+        display: inline-flex;
+        align-items: center;
+      }
+
+      .ax-related-body {
+        padding: 14px;
+      }
+
+      .ax-related-body h3 {
+        margin: 0;
+        font-family: "Sora", sans-serif;
+        font-size: 1rem;
+        color: var(--ink);
+      }
+
+      .ax-related-body p {
+        margin: 6px 0 0;
+        color: var(--muted);
+        font-size: 0.88rem;
+      }
+
+      .ax-related-cta {
+        margin-top: 12px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 36px;
+        width: 100%;
+        border-radius: 10px;
+        border: 1px solid rgba(193, 205, 222, 0.95);
+        background: #f7fafc;
+        color: #203047;
+        text-decoration: none;
+        font-size: 0.86rem;
+        font-weight: 800;
+      }
+
+      .ax-related-cta:hover {
+        border-color: rgba(25, 200, 139, 0.4);
+        color: #0f7b59;
       }
 
       .ax-lightbox {
@@ -173,8 +881,108 @@
         padding: 6px 10px;
       }
 
-      @media (max-width: 800px) {
-        .ax-gallery-grid {
+      @media (max-width: 1100px) {
+        .ax-event-layout {
+          grid-template-columns: minmax(0, 1fr) 300px;
+        }
+
+        .ax-price-grid,
+        .ax-related-grid {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+
+        .ax-benefits-band {
+          grid-template-columns: repeat(3, minmax(0, 1fr));
+        }
+
+        .ax-visual-strip {
+          grid-template-columns: repeat(3, minmax(0, 1fr));
+        }
+      }
+
+      @media (max-width: 980px) {
+        .ax-event-layout {
+          display: flex;
+          flex-direction: column;
+        }
+
+        .ax-event-sidebar {
+          order: -1;
+        }
+
+        .ax-register-card {
+          position: static;
+        }
+      }
+
+      @media (max-width: 760px) {
+        .axolote-hero {
+          min-height: 300px;
+          padding: 22px 20px;
+          background-position: 68% center;
+        }
+
+        .ax-hero-meta {
+          flex-direction: column;
+          gap: 6px;
+        }
+
+        .ax-section-card,
+        .ax-register-card,
+        .ax-side-note {
+          padding: 18px;
+          border-radius: 18px;
+        }
+
+        .ax-section-heading,
+        .ax-distance-grid,
+        .ax-price-grid,
+        .ax-related-grid,
+        .ax-page-faq .home-faq-grid {
+          grid-template-columns: 1fr;
+        }
+
+        .ax-benefits-band {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+
+        .ax-timeline::before {
+          left: 13px;
+        }
+
+        .ax-timeline-item {
+          grid-template-columns: 1fr;
+          gap: 4px;
+          padding-left: 32px;
+        }
+
+        .ax-timeline-item::before {
+          left: 9px;
+        }
+
+        .ax-timeline-date {
+          width: fit-content;
+        }
+
+        .ax-visual-strip {
+          display: flex;
+          overflow-x: auto;
+          padding-bottom: 4px;
+          scroll-snap-type: x proximity;
+        }
+
+        .ax-visual-card {
+          min-width: 180px;
+          scroll-snap-align: start;
+        }
+      }
+
+      @media (max-width: 560px) {
+        .ax-benefits-band {
+          grid-template-columns: 1fr 1fr;
+        }
+
+        .ax-related-grid {
           grid-template-columns: 1fr;
         }
       }
@@ -212,196 +1020,487 @@
     <main>
       <section class="container">
         <header class="event-detail-hero axolote-hero reveal">
-          <div class="axolote-badge">Edición inaugural</div>
-          <p class="eyebrow">Running nocturno · Evento oficial Kinetic Hub</p>
-          <h1>Axolote Night Run 2026</h1>
-          <p>31 octubre 2026 · Pista de Canotaje, CDMX</p>
-          <div class="quick-stats">
-            <span>Categoría única 5K</span>
-            <span>Nivel: Todos los niveles</span>
-            <span>Cupo limitado</span>
-            <span>Nocturno</span>
+          <div class="ax-hero-copy">
+            <div class="axolote-badge">Edición inaugural</div>
+            <p class="eyebrow">Running nocturno · Evento oficial Kinetic Hub</p>
+            <h1>Axolote Night Run 2026</h1>
+            <div class="ax-hero-meta">
+              <span>31 octubre 2026</span>
+              <span>Pista de Canotaje, CDMX</span>
+            </div>
+            <p class="ax-hero-description">La carrera nocturna más vibrante de la temporada. Corre entre luces, música y una atmósfera premium diseñada para que tu primera experiencia Axolote se sienta inolvidable desde el registro hasta la meta.</p>
+            <div class="quick-stats">
+              <span>3K y 5K</span>
+              <span>Todos los niveles</span>
+              <span>Cupo limitado</span>
+              <span>Kit premium</span>
+            </div>
           </div>
         </header>
       </section>
 
-      <section class="section">
-        <div class="container event-layout">
-          <div>
-
-            <div class="info-banner">
-              <p><strong>Primera edición oficial de Kinetic Hub.</strong> Axolote Night Run abre con operación enfocada en una experiencia ordenada, segura y memorable bajo las estrellas.</p>
-            </div>
-
-            <article class="event-panel reveal">
-              <h2 class="content-title">Sobre el evento</h2>
-              <p class="page-lead">
-                Axolote Night Run es la primera carrera oficial organizada por Kinetic Hub. Una experiencia nocturna única diseñada para corredores de todos los niveles en formato de categoría única 5K.
-              </p>
-              <p style="margin-top: 12px; color: var(--muted);">
-                La carrera se celebra el 31 de octubre de 2026 en la Pista de Canotaje de la Ciudad de México, con un recorrido luminoso, ambiente festivo y todo lo que necesitas para vivir una noche inolvidable corriendo.
-              </p>
-            </article>
-
-            <article class="event-panel reveal">
-              <h2 class="content-title">Distancias y modalidades</h2>
-              <ul class="info-list">
-                <li>5K categoría única con cronometraje oficial.</li>
-                <li>Modalidad presencial únicamente.</li>
-                <li>Salida en oleadas para garantizar orden y seguridad.</li>
-              </ul>
-            </article>
-
-            <article class="event-panel reveal">
-              <h2 class="content-title">Costos e inscripción</h2>
-              <div class="pricing-grid">
-                <div class="pricing-card">
-                  <strong>Early Bird</strong>
-                  <p>$480 MXN</p>
+      <section class="section ax-event-shell">
+        <div class="container ax-event-layout">
+          <div class="ax-event-main">
+            <article class="ax-section-card reveal">
+              <div class="ax-section-heading">
+                <div class="ax-section-icon" aria-hidden="true">
+                  <img src="Logo_kinect.png" alt="" />
                 </div>
-                <div class="pricing-card">
-                  <strong>Etapa regular</strong>
-                  <p>$550 MXN</p>
-                </div>
-                <div class="pricing-card">
-                  <strong>Etapa extemporánea</strong>
-                  <p>$600 MXN</p>
+                <div>
+                  <h2 class="ax-section-title">Sobre el evento</h2>
+                  <p class="ax-section-copy">Axolote Night Run 2026 es la primera gran experiencia nocturna de Kinetic Hub en la Ciudad de México. Diseñamos esta edición para que se sienta premium, ágil y visualmente poderosa: recorrido iluminado, logística clara, ambientación sonora y una narrativa que mezcla energía deportiva con identidad de marca.</p>
+                  <p class="ax-subcopy" style="margin-top: 10px;">La sede será la Pista de Canotaje y el formato está pensado para runners que buscan vivir algo distinto, ya sea compitiendo fuerte en 5K o compartiendo una ruta más relajada en 3K. Todo con operación ordenada, salida por oleadas y foco real en experiencia de corredor.</p>
                 </div>
               </div>
-              <div style="display: flex;flex-direction: column;gap:.8rem">
-                <a style="color: #4949d6;" target="_blank" href="axo_convo.jpeg">Politicas de inscipcion 1</a>
-                <a style="color: #4949d6;" target="_blank" href="axo_convo1.jpeg">Politicas de inscipcion 2</a>
-                <a style="color: #4949d6;" target="_blank" href="axo_convo2.jpeg">Politicas de inscipcion 3</a>
+            </article>
+
+            <article class="ax-section-card reveal">
+              <div class="ax-section-heading">
+                <div class="ax-section-icon" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M6 19h12"></path>
+                    <path d="M6 5h12"></path>
+                    <path d="M7 12h10"></path>
+                  </svg>
+                </div>
+                <div>
+                  <h2 class="ax-section-title">Distancias y modalidades</h2>
+                  <p class="ax-section-copy">Dos rutas, una misma vibra nocturna. Elige la experiencia que mejor encaje con tu objetivo y prepárate para un recorrido seguro, bien señalizado y pensado para disfrutarlo.</p>
+                </div>
+              </div>
+              <div class="ax-distance-grid" style="margin-top: 18px;">
+                <article class="ax-distance-card">
+                  <div class="ax-distance-value is-3k">3K</div>
+                  <div>
+                    <strong>Ruta recreativa</strong>
+                    <p>Ideal para vivir la experiencia, correr acompañado y entrar al ambiente del evento sin presión competitiva.</p>
+                  </div>
+                </article>
+                <article class="ax-distance-card">
+                  <div class="ax-distance-value is-5k">5K</div>
+                  <div>
+                    <strong>Ruta competitiva</strong>
+                    <p>Con chip de cronometraje, salida por bloques y seguimiento oficial para quienes quieren empujar ritmo y marcar tiempo.</p>
+                  </div>
+                </article>
               </div>
             </article>
 
-            <article class="event-panel reveal">
-              <h2 class="content-title">Flyer oficial y visuales del evento</h2>
-              <p class="page-lead">Consulta el flyer oficial y el material visual de la edición Axolote Night Run 2026.</p>
-              <a class="ax-flyer-link" href="#ax-flyer-lightbox" aria-label="Ver flyer oficial en grande">
-                <img src="fyler_act.jpeg" alt="Flyer oficial Axolote Night Run 2026" loading="lazy" />
-              </a>
-              <div class="ax-gallery-grid">
-                <figure class="ax-gallery-card">
+            <article class="ax-section-card reveal">
+              <div class="ax-section-heading">
+                <div class="ax-section-icon" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="3" y="5" width="18" height="14" rx="3"></rect>
+                    <path d="M3 10h18"></path>
+                  </svg>
+                </div>
+                <div>
+                  <h2 class="ax-section-title">Costos e inscripción</h2>
+                  <p class="ax-section-copy">La etapa vigente es la regular. Cada fase tiene cupo limitado y la tarifa cambia automáticamente cuando la capacidad de esa etapa se agota.</p>
+                </div>
+              </div>
+              <div class="ax-price-grid" style="margin-top: 18px;">
+                <article class="ax-price-card">
+                  <span class="ax-price-badge">Etapa 1</span>
+                  <h3>Early Bird</h3>
+                  <p class="ax-price-amount"><small>$</small>480</p>
+                  <p class="ax-price-note">Acceso de lanzamiento</p>
+                  <ul class="ax-price-list">
+                    <li>Precio preferencial</li>
+                    <li>Mismo kit oficial</li>
+                    <li>Cupo ya agotado</li>
+                  </ul>
+                  <div class="ax-price-state">Agotado</div>
+                </article>
+                <article class="ax-price-card featured">
+                  <span class="ax-price-badge">Etapa vigente</span>
+                  <h3>Regular</h3>
+                  <p class="ax-price-amount"><small>$</small>550</p>
+                  <p class="ax-price-note">Precio actual del evento</p>
+                  <ul class="ax-price-list">
+                    <li>Disponible hoy</li>
+                    <li>Aplicable a 3K y 5K</li>
+                    <li>Acceso a todos los beneficios</li>
+                  </ul>
+                  <div class="ax-price-state">Inscripciones abiertas</div>
+                </article>
+                <article class="ax-price-card">
+                  <span class="ax-price-badge">Última llamada</span>
+                  <h3>Extemporánea</h3>
+                  <p class="ax-price-amount"><small>$</small>600</p>
+                  <p class="ax-price-note">Sujeta a disponibilidad</p>
+                  <ul class="ax-price-list">
+                    <li>Se activa al cerrar etapa regular</li>
+                    <li>Cupo final del evento</li>
+                    <li>Puede cerrar antes por aforo</li>
+                  </ul>
+                  <div class="ax-price-state">Próximamente</div>
+                </article>
+              </div>
+              <p class="ax-policy-note">Tu inscripción es personal e intransferible. Consulta nuestras políticas en <a href="axo_convo.jpeg" target="_blank" rel="noopener noreferrer">documento 1</a>, <a href="axo_convo1.jpeg" target="_blank" rel="noopener noreferrer">documento 2</a> y <a href="axo_convo2.jpeg" target="_blank" rel="noopener noreferrer">documento 3</a>.</p>
+            </article>
+
+            <article class="ax-section-card reveal">
+              <div class="ax-section-heading">
+                <div class="ax-section-icon" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M12 3v18"></path>
+                    <path d="M5 12h14"></path>
+                  </svg>
+                </div>
+                <div>
+                  <h2 class="ax-section-title">Tu inscripción incluye</h2>
+                  <p class="ax-section-copy">No es solo tu acceso al evento. Es un paquete completo para que llegues listo, corras cómodo y cierres la experiencia con una pieza memorable de esta primera edición.</p>
+                </div>
+              </div>
+              <div class="ax-benefits-band" style="margin-top: 18px;">
+                <div class="ax-benefit-item">
+                  <div class="ax-benefit-icon" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M8 5h8l-1 5 3 2-6 7-6-7 3-2-1-5z"></path></svg>
+                  </div>
+                  <span>Medalla finisher exclusiva</span>
+                </div>
+                <div class="ax-benefit-item">
+                  <div class="ax-benefit-icon" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 7h16"></path><path d="M7 7v10"></path><path d="M17 7v10"></path><path d="M4 17h16"></path></svg>
+                  </div>
+                  <span>Playera oficial del evento</span>
+                </div>
+                <div class="ax-benefit-item">
+                  <div class="ax-benefit-icon" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 3v18"></path><path d="M7 7h10"></path><path d="M7 17h10"></path></svg>
+                  </div>
+                  <span>Número de corredor</span>
+                </div>
+                <div class="ax-benefit-item">
+                  <div class="ax-benefit-icon" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M8 4h8v4H8z"></path><path d="M10 8v12"></path><path d="M14 8v12"></path></svg>
+                  </div>
+                  <span>Hidratación en ruta y meta</span>
+                </div>
+                <div class="ax-benefit-item">
+                  <div class="ax-benefit-icon" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="7"></circle><path d="M12 8v4l3 2"></path></svg>
+                  </div>
+                  <span>Chip y resultados oficiales</span>
+                </div>
+                <div class="ax-benefit-item">
+                  <div class="ax-benefit-icon" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 8l8 5 8-5"></path><path d="M4 8v8h16V8"></path></svg>
+                  </div>
+                  <span>Comunicación previa y logística</span>
+                </div>
+              </div>
+            </article>
+
+            <article class="ax-section-card reveal">
+              <div class="ax-section-heading">
+                <div class="ax-section-icon" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M12 8v5l3 3"></path>
+                    <circle cx="12" cy="12" r="8"></circle>
+                  </svg>
+                </div>
+                <div>
+                  <h2 class="ax-section-title">Horarios clave</h2>
+                  <p class="ax-section-copy">Te compartimos la secuencia completa del evento para que planees tu llegada con margen y disfrutes la experiencia sin correr contra el reloj.</p>
+                </div>
+              </div>
+              <div class="ax-timeline">
+                <div class="ax-timeline-item">
+                  <span class="ax-timeline-date">30 Oct</span>
+                  <span class="ax-timeline-time">10:00 - 18:00</span>
+                  <div class="ax-timeline-copy">
+                    <strong>Entrega de kits</strong>
+                    <p>Recoge tu paquete con identificación y comprobante de registro. La sede exacta se compartirá por correo previo al evento.</p>
+                  </div>
+                </div>
+                <div class="ax-timeline-item">
+                  <span class="ax-timeline-date">31 Oct</span>
+                  <span class="ax-timeline-time">16:00</span>
+                  <div class="ax-timeline-copy">
+                    <strong>Apertura de venue</strong>
+                    <p>Ingreso a zona de salida, activaciones, foto oficial y validación final de corredores.</p>
+                  </div>
+                </div>
+                <div class="ax-timeline-item">
+                  <span class="ax-timeline-date">31 Oct</span>
+                  <span class="ax-timeline-time">18:00</span>
+                  <div class="ax-timeline-copy">
+                    <strong>Salida 5K</strong>
+                    <p>Primera oleada competitiva con chip activo, control de ruta y cronometraje oficial.</p>
+                  </div>
+                </div>
+                <div class="ax-timeline-item">
+                  <span class="ax-timeline-date">31 Oct</span>
+                  <span class="ax-timeline-time">18:20</span>
+                  <div class="ax-timeline-copy">
+                    <strong>Salida 3K</strong>
+                    <p>Bloque recreativo para quienes quieren vivir el evento con ritmo libre y ambiente social.</p>
+                  </div>
+                </div>
+                <div class="ax-timeline-item">
+                  <span class="ax-timeline-date">31 Oct</span>
+                  <span class="ax-timeline-time">20:30</span>
+                  <div class="ax-timeline-copy">
+                    <strong>Premiación y cierre</strong>
+                    <p>Anuncio de resultados, foto final y cierre de edición inaugural.</p>
+                  </div>
+                </div>
+              </div>
+            </article>
+
+            <article class="ax-section-card reveal">
+              <div class="ax-section-heading">
+                <div class="ax-section-icon" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="3" y="5" width="18" height="14" rx="2"></rect>
+                    <path d="M9 10l2 2 4-4"></path>
+                  </svg>
+                </div>
+                <div>
+                  <h2 class="ax-section-title">Flyer oficial y visuales del evento</h2>
+                  <p class="ax-section-copy">Una vista rápida de la identidad visual que acompañará la experiencia. Aquí puedes revisar piezas clave antes del día de la carrera.</p>
+                </div>
+              </div>
+              <div class="ax-visual-strip">
+                <article class="ax-visual-card">
+                  <a href="#ax-flyer-lightbox" aria-label="Ver flyer oficial en grande">
+                    <img src="fyler_act.jpeg" alt="Flyer oficial Axolote Night Run 2026" loading="lazy" />
+                  </a>
+                  <strong>Flyer oficial</strong>
+                  <p>La pieza principal de comunicación de esta edición.</p>
+                </article>
+                <article class="ax-visual-card">
                   <img src="playeras.jpeg" alt="Playeras oficiales Axolote Night Run" loading="lazy" />
-                  <small>Playeras oficiales</small>
-                </figure>
-                <figure class="ax-gallery-card">
+                  <strong>Playera oficial</strong>
+                  <p>Diseño técnico incluido dentro de tu inscripción.</p>
+                </article>
+                <article class="ax-visual-card">
                   <img src="axo_oficial.png" alt="Axolote oficial del evento" loading="lazy" />
-                  <small>Imagen oficial</small>
-                </figure>
-                <figure class="ax-gallery-card">
+                  <strong>Imagen oficial</strong>
+                  <p>Visual principal que acompaña la campaña.</p>
+                </article>
+                <article class="ax-visual-card">
                   <img src="axo3d_oficial.png" alt="Axolote 3D oficial del evento" loading="lazy" />
-                  <small>Axolote 3D oficial</small>
-                </figure>
-                <figure class="ax-gallery-card">
+                  <strong>Axolote 3D</strong>
+                  <p>Activo digital para contenido y materiales especiales.</p>
+                </article>
+                <article class="ax-visual-card">
                   <img src="fyler_act1.jpeg" alt="Flyer alternativo Axolote Night Run 2026" loading="lazy" />
-                  <small>Flyer alternativo</small>
-                </figure>
+                  <strong>Arte alterno</strong>
+                  <p>Versión complementaria para pauta y difusión.</p>
+                </article>
               </div>
             </article>
 
-            <article class="event-panel reveal">
-              <h2 class="content-title">Qué incluye tu inscripción</h2>
-              <ul class="key-points">
-                <li>Número de corredor con chip de cronometraje oficial.</li>
-                <li>Playera técnica oficial Axolote Night Run 2026.</li>
-                <li>Medalla de finisher exclusiva edición inaugural.</li>
-                <li>Hidratación en ruta y zona de meta.</li>
-                <li>Comunicación previa por correo (indicaciones, logística, kit).</li>
-                <li>Acceso a resultados oficiales publicados post-evento.</li>
-              </ul>
-            </article>
+            <article class="ax-section-card reveal">
+              <div class="ax-page-faq home-faq">
+                <div class="ax-section-heading">
+                  <div class="ax-section-icon" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M9.09 9a3 3 0 1 1 5.82 1c0 2-3 3-3 3"></path>
+                      <path d="M12 17h.01"></path>
+                      <circle cx="12" cy="12" r="9"></circle>
+                    </svg>
+                  </div>
+                  <div>
+                    <h2 class="ax-section-title">Preguntas frecuentes</h2>
+                    <p class="ax-section-copy">Todo lo importante antes de registrarte: logística, cambios, resultados y operación general del evento.</p>
+                  </div>
+                </div>
 
-            <article class="event-panel reveal">
-              <h2 class="content-title">Resultados y seguimiento</h2>
-              <p style="color: var(--muted);">
-                Publicaremos los resultados oficiales dentro de las 24 horas posteriores al evento. Se compartirán en nuestros canales oficiales y estarán disponibles en tu perfil de Kinetic Hub si te registras con cuenta.
-              </p>
-              <p style="margin-top: 10px; color: var(--muted);">
-                La galería fotográfica del evento se compartirá en Instagram y Facebook en los días siguientes a la carrera.
-              </p>
-            </article>
+                <div class="home-faq-grid">
+                  <article class="home-faq-item is-open">
+                    <button class="home-faq-question" type="button" aria-expanded="true">
+                      <span>¿Puedo participar si es mi primera carrera?</span>
+                      <span class="home-faq-icon" aria-hidden="true"></span>
+                    </button>
+                    <div class="home-faq-answer">
+                      <p>Sí. El evento fue diseñado para recibir tanto a runners experimentados como a personas que quieren vivir su primera noche de carrera en un formato bien guiado.</p>
+                    </div>
+                  </article>
 
-            <article class="event-panel reveal">
-              <h2 class="content-title">Horarios clave</h2>
-              <div class="timeline">
-                <div class="timeline-item">
-                  <strong>Sábado 30 oct</strong>
-                  <p>Entrega de kits · 10:00 a 18:00 h · Lugar por confirmar</p>
+                  <article class="home-faq-item">
+                    <button class="home-faq-question" type="button" aria-expanded="false">
+                      <span>¿Cómo elijo entre 3K y 5K?</span>
+                      <span class="home-faq-icon" aria-hidden="true"></span>
+                    </button>
+                    <div class="home-faq-answer">
+                      <p>Seleccionas tu modalidad durante el proceso de registro. Ambas rutas comparten atmósfera y servicios, pero 5K incluye enfoque competitivo con cronometraje oficial.</p>
+                    </div>
+                  </article>
+
+                  <article class="home-faq-item">
+                    <button class="home-faq-question" type="button" aria-expanded="false">
+                      <span>¿La talla de playera se elige al pagar?</span>
+                      <span class="home-faq-icon" aria-hidden="true"></span>
+                    </button>
+                    <div class="home-faq-answer">
+                      <p>Sí. Durante el checkout te pediremos correo y talla de playera disponible para apartar tu kit con la información correcta.</p>
+                    </div>
+                  </article>
+
+                  <article class="home-faq-item">
+                    <button class="home-faq-question" type="button" aria-expanded="false">
+                      <span>¿Hay guardarropa?</span>
+                      <span class="home-faq-icon" aria-hidden="true"></span>
+                    </button>
+                    <div class="home-faq-answer">
+                      <p>Por ahora no contemplamos guardarropa en esta edición inaugural. Recomendamos llegar con lo esencial para moverte con facilidad antes y después de la salida.</p>
+                    </div>
+                  </article>
+
+                  <article class="home-faq-item">
+                    <button class="home-faq-question" type="button" aria-expanded="false">
+                      <span>¿Puedo transferir mi lugar a otra persona?</span>
+                      <span class="home-faq-icon" aria-hidden="true"></span>
+                    </button>
+                    <div class="home-faq-answer">
+                      <p>No. La inscripción es personal e intransferible por control operativo, asignación de kit y seguridad del evento.</p>
+                    </div>
+                  </article>
+
+                  <article class="home-faq-item">
+                    <button class="home-faq-question" type="button" aria-expanded="false">
+                      <span>¿Cuándo recibiré mi exoneración y confirmación?</span>
+                      <span class="home-faq-icon" aria-hidden="true"></span>
+                    </button>
+                    <div class="home-faq-answer">
+                      <p>Al completar el pago recibirás confirmación por correo. Ahí mismo te indicaremos siguientes pasos, kit y documentación necesaria para recoger tu paquete.</p>
+                    </div>
+                  </article>
+
+                  <article class="home-faq-item">
+                    <button class="home-faq-question" type="button" aria-expanded="false">
+                      <span>¿Los resultados estarán disponibles el mismo día?</span>
+                      <span class="home-faq-icon" aria-hidden="true"></span>
+                    </button>
+                    <div class="home-faq-answer">
+                      <p>Publicaremos resultados oficiales dentro de las 24 horas posteriores al evento y también los comunicaremos por nuestros canales oficiales.</p>
+                    </div>
+                  </article>
+
+                  <article class="home-faq-item">
+                    <button class="home-faq-question" type="button" aria-expanded="false">
+                      <span>¿Habrá fotos y contenido post evento?</span>
+                      <span class="home-faq-icon" aria-hidden="true"></span>
+                    </button>
+                    <div class="home-faq-answer">
+                      <p>Sí. Compartiremos galería y contenido oficial en redes durante los días posteriores para que revivas la edición y descargues tus momentos favoritos.</p>
+                    </div>
+                  </article>
+
+                  <article class="home-faq-item">
+                    <button class="home-faq-question" type="button" aria-expanded="false">
+                      <span>¿Qué pasa si se agota la etapa regular?</span>
+                      <span class="home-faq-icon" aria-hidden="true"></span>
+                    </button>
+                    <div class="home-faq-answer">
+                      <p>Si todavía hay aforo disponible, se abrirá automáticamente la etapa extemporánea con la tarifa final. Si el cupo se agota por completo, se cerrarán inscripciones.</p>
+                    </div>
+                  </article>
+
+                  <article class="home-faq-item">
+                    <button class="home-faq-question" type="button" aria-expanded="false">
+                      <span>¿Puedo resolver dudas antes de pagar?</span>
+                      <span class="home-faq-icon" aria-hidden="true"></span>
+                    </button>
+                    <div class="home-faq-answer">
+                      <p>Sí. Puedes escribirnos por WhatsApp o desde contacto para resolver logística, registro, métodos de pago y operación general antes de asegurar tu lugar.</p>
+                    </div>
+                  </article>
                 </div>
-                <div class="timeline-item">
-                  <strong>Viernes 31 oct · 16:00 h</strong>
-                  <p>Apertura de área de salida y registro en sitio.</p>
-                </div>
-                <div class="timeline-item">
-                  <strong>Viernes 31 oct · 18:00 h</strong>
-                  <p>Salida 5K competitivo (primera oleada).</p>
-                </div>
-                <div class="timeline-item">
-                  <strong>Viernes 31 oct · 18:20 h</strong>
-                  <p>Salida 3K recreativo.</p>
-                </div>
-                <div class="timeline-item">
-                  <strong>Viernes 31 oct · 20:30 h</strong>
-                  <p>Premiación y cierre del evento.</p>
-                </div>
+
+                <article class="home-faq-cta">
+                  <div>
+                    <strong>¿Tienes otra duda antes de registrarte?</strong>
+                    <p>Te respondemos por WhatsApp para ayudarte a elegir modalidad, revisar pagos o resolver temas de logística.</p>
+                  </div>
+                  <a class="btn btn-primary" href="https://wa.me/525530790944?text=Hola%2C%20quiero%20informacion%20de%20Axolote%20Night%20Run" target="_blank" rel="noopener noreferrer">Hablar con el equipo</a>
+                </article>
               </div>
             </article>
 
-            <article class="event-panel reveal">
-              <h2 class="content-title">FAQs</h2>
-              <div class="faq-list">
-                <div class="faq-item">
-                  <strong>¿Es apta para principiantes?</strong>
-                  <p>Sí. La categoría única 5K está abierta a todo corredor que pueda completar la distancia.</p>
+            <article class="ax-section-card reveal">
+              <div class="ax-section-heading">
+                <div class="ax-section-icon" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M5 12h14"></path>
+                    <path d="M12 5l7 7-7 7"></path>
+                  </svg>
                 </div>
-                <div class="faq-item">
-                  <strong>¿Hay cambio de distancia?</strong>
-                  <p>No aplica, ya que esta edición corre en categoría única 5K.</p>
+                <div>
+                  <h2 class="ax-section-title">Listo para correr la noche más divertida del año</h2>
+                  <p class="ax-section-copy">Axolote Night Run está diseñado para agotarse por etapas. Si quieres asegurar tarifa vigente y talla de playera, haz tu registro hoy.</p>
                 </div>
-                <div class="faq-item">
-                  <strong>¿Hay guardarropa?</strong>
-                  <p>No habrá servicio de guardarropa en esta edición.</p>
-                </div>
-                <div class="faq-item">
-                  <strong>¿Recibiré exoneración al pagar?</strong>
-                  <p>Sí. Al completar el pago, recibirás por correo tu exoneración automáticamente. Debes presentarla al recoger tu kit.</p>
-                </div>
-                <div class="faq-item">
-                  <strong>¿Dónde se publican los resultados?</strong>
-                  <p>En Kinetic Hub y nuestras redes sociales dentro de las 24 horas post-evento.</p>
-                </div>
+              </div>
+              <div class="ax-register-actions" style="max-width: 420px; margin-top: 18px;">
+                <a class="btn btn-primary" href="#registro">Inscribirme ahora</a>
+                <a class="ax-register-secondary" href="https://wa.me/525530790944?text=Hola%2C%20quiero%20informacion%20de%20Axolote%20Night%20Run" target="_blank" rel="noopener noreferrer">Resolver dudas por WhatsApp</a>
               </div>
             </article>
           </div>
 
-          <aside>
-            <article class="sidebar-panel reveal" id="registro" data-event-register-panel>
-              <h2 class="content-title" id="eventRegisterTitle">Registro rápido</h2>
-              <p class="page-lead" id="eventRegisterText">Reserva tu lugar y asegura tarifa vigente.</p>
-              <a class="btn btn-primary" id="eventRegisterCta" href="checkout.html">Pagar inscripción</a>
+          <aside class="ax-event-sidebar">
+            <article class="ax-register-card reveal" id="registro" data-event-register-panel data-register-variant="premium">
+              <p class="ax-register-kicker">Registro premium</p>
+              <h2 id="eventRegisterTitle">Asegura tu lugar esta noche</h2>
+              <p class="ax-register-price-label">Etapa vigente</p>
+              <p class="ax-register-price"><small>$</small>550</p>
+              <p class="ax-register-helper" id="eventRegisterText">Reserva tu inscripción, elige tu talla de playera y recibe confirmación al instante.</p>
+
+              <div class="ax-register-actions">
+                <a class="btn btn-primary" id="eventRegisterCta" href="checkout.html">Pagar inscripción</a>
+                <a class="ax-register-secondary" href="#ax-flyer-lightbox">Ver flyer oficial</a>
+              </div>
+
+              <ul class="ax-register-list">
+                <li>
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="8"></circle><path d="M12 8v4l3 2"></path></svg>
+                  <div>
+                    <strong>Fecha</strong>
+                    <p class="ax-register-meta">31 octubre 2026</p>
+                  </div>
+                </li>
+                <li>
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 21s6-5.33 6-11a6 6 0 1 0-12 0c0 5.67 6 11 6 11z"></path><circle cx="12" cy="10" r="2.5"></circle></svg>
+                  <div>
+                    <strong>Sede</strong>
+                    <p class="ax-register-meta">Pista de Canotaje, Ciudad de México</p>
+                  </div>
+                </li>
+                <li>
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 12h16"></path><path d="M7 6h10"></path><path d="M7 18h10"></path></svg>
+                  <div>
+                    <strong>Modalidades</strong>
+                    <p class="ax-register-meta">3K recreativo y 5K competitivo</p>
+                  </div>
+                </li>
+              </ul>
+
+              <ul class="ax-register-trust">
+                <li>Checkout seguro y confirmación inmediata por correo.</li>
+                <li>Selección de talla de playera integrada en el registro.</li>
+                <li>Comunicación oficial del evento directo a tu correo.</li>
+              </ul>
             </article>
 
-            <article class="sidebar-panel reveal">
-              <h2 class="content-title">Fecha y lugar</h2>
-              <p><strong>31 octubre 2026</strong></p>
-              <p style="color: var(--muted);">Pista de Canotaje, Ciudad de México</p>
-              <div class="map-box" style="margin-top: 10px;">Mapa referencial del evento</div>
+            <article class="ax-side-note reveal">
+              <h3>Organiza tu llegada</h3>
+              <p>La sede estará preparada para operación nocturna. Te recomendamos llegar con al menos 60 minutos de anticipación para estacionamiento, activaciones y foto de salida.</p>
             </article>
 
-            <article class="sidebar-panel reveal">
-              <h2 class="content-title">Organizador</h2>
-              <p><strong>Kinetic Hub Events</strong></p>
-              <p style="color: var(--muted);">contacto@kinetichub.mx</p>
-              <p style="color: var(--muted);">5530790944</p>
-              <p style="margin-top: 8px;"><a class="inline-link" href="https://wa.me/525530790944?text=Hola%2C%20quiero%20informacion%20de%20Axolote%20Night%20Run" target="_blank" rel="noopener noreferrer">Escribir por WhatsApp</a></p>
+            <article class="ax-side-note reveal">
+              <h3>¿Necesitas ayuda?</h3>
+              <p>Escríbenos a contacto@kinetichub.mx o por WhatsApp al 5530790944. También puedes abrir conversación directa desde <a class="ax-side-inline-link" href="https://wa.me/525530790944?text=Hola%2C%20quiero%20informacion%20de%20Axolote%20Night%20Run" target="_blank" rel="noopener noreferrer">este enlace</a>.</p>
             </article>
 
-            <article class="sidebar-panel reveal">
-              <h2 class="content-title">Comparte el evento</h2>
-              <p style="color: var(--muted); font-size: 0.9rem;">¿Corres con alguien? Comparte el link y comiencen juntos.</p>
-              <div style="display: flex; gap: 8px; margin-top: 12px;">
+            <article class="ax-side-note reveal">
+              <h3>Compártelo con tu crew</h3>
+              <p>Si vas a correr con amigos, comparte la landing y armen su noche desde ahora.</p>
+              <div class="ax-side-share">
                 <a class="btn btn-small" href="https://www.instagram.com/kinetic.hub" target="_blank" rel="noopener noreferrer">Instagram</a>
                 <a class="btn btn-small" href="https://www.facebook.com/profile.php?id=100065314880446" target="_blank" rel="noopener noreferrer">Facebook</a>
               </div>
@@ -410,38 +1509,55 @@
         </div>
       </section>
 
-      <section class="section alt">
+      <section class="section ax-more-events-section">
         <div class="container">
-          <div class="section-head">
+          <div class="ax-more-events-head">
             <h2>Más eventos</h2>
             <a class="inline-link" href="eventos.html">Ver todos</a>
           </div>
 
-          <div class="related-grid" id="related-grid-sp">
-            <article class="event-card reveal is-locked">
-              <div class="event-media media-run"></div>
-              <div class="event-body">
+          <div class="ax-related-grid">
+            <article class="ax-related-card reveal">
+              <div class="ax-related-media is-urban">
+                <span class="ax-related-badge">Próximamente</span>
+              </div>
+              <div class="ax-related-body">
                 <h3>Urban Pulse 10K</h3>
-                <p>CDMX · 14 junio 2026</p>
-                <span class="btn btn-small event-locked-btn" aria-disabled="true">Bloqueado todavía</span>
+                <p>CDMX · Ruta urbana con pacing, música y salida matutina.</p>
+                <a class="ax-related-cta" href="contacto.html">Notifícame</a>
               </div>
             </article>
 
-            <article class="event-card reveal is-locked">
-              <div class="event-media media-tri"></div>
-              <div class="event-body">
+            <article class="ax-related-card reveal">
+              <div class="ax-related-media is-trail-city">
+                <span class="ax-related-badge">Próximamente</span>
+              </div>
+              <div class="ax-related-body">
                 <h3>Tri Experience City</h3>
-                <p>Monterrey · 19 julio 2026</p>
-                <span class="btn btn-small event-locked-btn" aria-disabled="true">Bloqueado todavía</span>
+                <p>Monterrey · Experiencia híbrida para atletas que quieren un nuevo reto.</p>
+                <a class="ax-related-cta" href="contacto.html">Notifícame</a>
               </div>
             </article>
 
-            <article class="event-card reveal is-locked">
-              <div class="event-media media-trail"></div>
-              <div class="event-body">
+            <article class="ax-related-card reveal">
+              <div class="ax-related-media is-norte">
+                <span class="ax-related-badge">Próximamente</span>
+              </div>
+              <div class="ax-related-body">
                 <h3>Trail Desafío Norte</h3>
-                <p>Saltillo · 26 julio 2026</p>
-                <span class="btn btn-small event-locked-btn" aria-disabled="true">Bloqueado todavía</span>
+                <p>Saltillo · Ruta técnica, paisaje abierto y desafío de montaña.</p>
+                <a class="ax-related-cta" href="contacto.html">Notifícame</a>
+              </div>
+            </article>
+
+            <article class="ax-related-card reveal">
+              <div class="ax-related-media is-sunset">
+                <span class="ax-related-badge">Próximamente</span>
+              </div>
+              <div class="ax-related-body">
+                <h3>Sunset Social Run</h3>
+                <p>Guadalajara · Un formato social con visuales, comunidad y cierre al atardecer.</p>
+                <a class="ax-related-cta" href="contacto.html">Notifícame</a>
               </div>
             </article>
           </div>

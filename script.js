@@ -1256,8 +1256,28 @@ function setupEventDetailAccordions() {
     if (!title) return;
 
     const panelName = normalize(title.textContent);
+    const isFaqPanel = panelName === "faqs";
     const shouldStayOpen = keepExpanded.has(panelName);
     const contentNodes = Array.from(panel.children).filter((node) => node !== title);
+
+    let contentWrapper = panel.querySelector(":scope > .event-panel-body");
+    if (!contentWrapper) {
+      contentWrapper = document.createElement("div");
+      contentWrapper.className = "event-panel-body";
+      contentNodes.forEach((node) => {
+        contentWrapper.appendChild(node);
+      });
+      panel.appendChild(contentWrapper);
+    }
+
+    if (isFaqPanel) {
+      panel.classList.remove("is-collapsible", "is-open");
+      title.removeAttribute("role");
+      title.removeAttribute("tabindex");
+      title.removeAttribute("aria-expanded");
+      contentWrapper.hidden = false;
+      return;
+    }
 
     panel.classList.add("is-collapsible");
     panel.classList.toggle("is-open", shouldStayOpen);
@@ -1265,18 +1285,13 @@ function setupEventDetailAccordions() {
     title.setAttribute("role", "button");
     title.setAttribute("tabindex", "0");
     title.setAttribute("aria-expanded", String(shouldStayOpen));
-
-    contentNodes.forEach((node) => {
-      node.hidden = !shouldStayOpen;
-    });
+    contentWrapper.hidden = !shouldStayOpen;
 
     const togglePanel = () => {
       const nextOpen = !panel.classList.contains("is-open");
       panel.classList.toggle("is-open", nextOpen);
       title.setAttribute("aria-expanded", String(nextOpen));
-      contentNodes.forEach((node) => {
-        node.hidden = !nextOpen;
-      });
+      contentWrapper.hidden = !nextOpen;
     };
 
     title.addEventListener("click", togglePanel);
@@ -1315,6 +1330,41 @@ function setupEventDetailAccordions() {
         event.preventDefault();
         toggleFaq();
       }
+    });
+  });
+}
+
+function setupHomeFaqAccordion() {
+  const faqRoot = document.querySelector(".home-faq");
+  if (!faqRoot) return;
+
+  const faqItems = Array.from(faqRoot.querySelectorAll(".home-faq-item"));
+  if (!faqItems.length) return;
+
+  const setItemState = (item, isOpen) => {
+    const trigger = item.querySelector(".home-faq-question");
+    const panel = item.querySelector(".home-faq-answer");
+    if (!trigger || !panel) return;
+
+    item.classList.toggle("is-open", isOpen);
+    trigger.setAttribute("aria-expanded", String(isOpen));
+    panel.setAttribute("aria-hidden", String(!isOpen));
+  };
+
+  faqItems.forEach((item, index) => {
+    const trigger = item.querySelector(".home-faq-question");
+    if (!trigger) return;
+
+    setItemState(item, index === 0);
+
+    trigger.addEventListener("click", () => {
+      const willOpen = !item.classList.contains("is-open");
+
+      faqItems.forEach((entry) => {
+        setItemState(entry, false);
+      });
+
+      setItemState(item, willOpen);
     });
   });
 }
@@ -1611,6 +1661,7 @@ function setupEventRegistrationPanel() {
   const title = document.getElementById("eventRegisterTitle");
   const text = document.getElementById("eventRegisterText");
   const cta = document.getElementById("eventRegisterCta");
+  const isPremiumVariant = panel.getAttribute("data-register-variant") === "premium";
   const checkoutHref = "checkout.html";
   const authHref = `auth.html?mode=register&returnTo=${encodeURIComponent(`/${checkoutHref}`)}`;
 
@@ -1618,16 +1669,24 @@ function setupEventRegistrationPanel() {
     if (!title || !text || !cta) return;
 
     if (isLoggedIn) {
-      title.textContent = "Continuar registro";
-      text.textContent = "Ya iniciaste sesión. Continúa al checkout para asegurar tu lugar en Axolote Night Run.";
+      if (!isPremiumVariant) {
+        title.textContent = "Continuar registro";
+      }
+      text.textContent = isPremiumVariant
+        ? "Ya iniciaste sesión. Continúa al checkout para asegurar tu lugar en Axolote Night Run."
+        : "Ya iniciaste sesión. Continúa al checkout para asegurar tu lugar en Axolote Night Run.";
       cta.textContent = "Completar inscripción";
       cta.href = checkoutHref;
       return;
     }
 
-    title.textContent = "Regístrate para asegurar tu lugar";
-    text.textContent = "Crea tu cuenta o inicia sesión para continuar con tu inscripción y pago.";
-    cta.textContent = "Iniciar sesión o registrarme";
+    if (!isPremiumVariant) {
+      title.textContent = "Regístrate para asegurar tu lugar";
+    }
+    text.textContent = isPremiumVariant
+      ? "Crea tu cuenta o inicia sesión para continuar con tu inscripción y pago de forma segura."
+      : "Crea tu cuenta o inicia sesión para continuar con tu inscripción y pago.";
+    cta.textContent = isPremiumVariant ? "Completar inscripción" : "Iniciar sesión o registrarme";
     cta.href = authHref;
   };
 
@@ -3732,11 +3791,13 @@ function setupCheckoutForm() {
     e.preventDefault();
 
     const emailInput = document.getElementById("userEmail");
+    const shirtSizeInput = document.getElementById("shirtSize");
     const email = emailInput?.value.trim();
+    const shirtSize = shirtSizeInput?.value.trim().toUpperCase();
     const termsCheck = document.getElementById("termsCheck")?.checked;
 
-    if (!email || !termsCheck) {
-      alert("Por favor ingresa tu correo y acepta los términos.");
+    if (!email || !shirtSize || !termsCheck) {
+      alert("Por favor ingresa tu correo, selecciona talla y acepta los términos.");
       return;
     }
 
@@ -3749,7 +3810,7 @@ function setupCheckoutForm() {
       const response = await fetch("/api/create-checkout-session", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email }),
+        body: JSON.stringify({ email, shirtSize }),
       });
 
       // Leer la respuesta como texto primero para depurar
@@ -3895,6 +3956,7 @@ setupHeroPosterSizing();
 setupRegisterScrollLed();
 setupEventModals();
 setupEventDetailAccordions();
+setupHomeFaqAccordion();
 setupNeonCardGlow();
 setupNeonEventToggle();
 setupWhatsAppButton();
