@@ -21,9 +21,8 @@
     // Detectar si el usuario viene de un pago exitoso
     function checkPaymentSuccess() {
       const urlParams = new URLSearchParams(window.location.search);
-      const isSuccess = urlParams.get('success') === 'true';
       const sessionId = urlParams.get('session_id');
-      if (isSuccess) {
+      if (sessionId) {
         // Ocultar el formulario
         const form = document.getElementById('checkoutForm');
         if (form) form.style.display = 'none';
