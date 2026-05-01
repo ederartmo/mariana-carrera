@@ -1256,28 +1256,8 @@ function setupEventDetailAccordions() {
     if (!title) return;
 
     const panelName = normalize(title.textContent);
-    const isFaqPanel = panelName === "faqs";
     const shouldStayOpen = keepExpanded.has(panelName);
     const contentNodes = Array.from(panel.children).filter((node) => node !== title);
-
-    let contentWrapper = panel.querySelector(":scope > .event-panel-body");
-    if (!contentWrapper) {
-      contentWrapper = document.createElement("div");
-      contentWrapper.className = "event-panel-body";
-      contentNodes.forEach((node) => {
-        contentWrapper.appendChild(node);
-      });
-      panel.appendChild(contentWrapper);
-    }
-
-    if (isFaqPanel) {
-      panel.classList.remove("is-collapsible", "is-open");
-      title.removeAttribute("role");
-      title.removeAttribute("tabindex");
-      title.removeAttribute("aria-expanded");
-      contentWrapper.hidden = false;
-      return;
-    }
 
     panel.classList.add("is-collapsible");
     panel.classList.toggle("is-open", shouldStayOpen);
@@ -1285,13 +1265,18 @@ function setupEventDetailAccordions() {
     title.setAttribute("role", "button");
     title.setAttribute("tabindex", "0");
     title.setAttribute("aria-expanded", String(shouldStayOpen));
-    contentWrapper.hidden = !shouldStayOpen;
+
+    contentNodes.forEach((node) => {
+      node.hidden = !shouldStayOpen;
+    });
 
     const togglePanel = () => {
       const nextOpen = !panel.classList.contains("is-open");
       panel.classList.toggle("is-open", nextOpen);
       title.setAttribute("aria-expanded", String(nextOpen));
-      contentWrapper.hidden = !nextOpen;
+      contentNodes.forEach((node) => {
+        node.hidden = !nextOpen;
+      });
     };
 
     title.addEventListener("click", togglePanel);
@@ -1330,41 +1315,6 @@ function setupEventDetailAccordions() {
         event.preventDefault();
         toggleFaq();
       }
-    });
-  });
-}
-
-function setupHomeFaqAccordion() {
-  const faqRoot = document.querySelector(".home-faq");
-  if (!faqRoot) return;
-
-  const faqItems = Array.from(faqRoot.querySelectorAll(".home-faq-item"));
-  if (!faqItems.length) return;
-
-  const setItemState = (item, isOpen) => {
-    const trigger = item.querySelector(".home-faq-question");
-    const panel = item.querySelector(".home-faq-answer");
-    if (!trigger || !panel) return;
-
-    item.classList.toggle("is-open", isOpen);
-    trigger.setAttribute("aria-expanded", String(isOpen));
-    panel.setAttribute("aria-hidden", String(!isOpen));
-  };
-
-  faqItems.forEach((item, index) => {
-    const trigger = item.querySelector(".home-faq-question");
-    if (!trigger) return;
-
-    setItemState(item, index === 0);
-
-    trigger.addEventListener("click", () => {
-      const willOpen = !item.classList.contains("is-open");
-
-      faqItems.forEach((entry) => {
-        setItemState(entry, false);
-      });
-
-      setItemState(item, willOpen);
     });
   });
 }
@@ -1661,7 +1611,6 @@ function setupEventRegistrationPanel() {
   const title = document.getElementById("eventRegisterTitle");
   const text = document.getElementById("eventRegisterText");
   const cta = document.getElementById("eventRegisterCta");
-  const isPremiumVariant = panel.getAttribute("data-register-variant") === "premium";
   const checkoutHref = "checkout.html";
   const authHref = `auth.html?mode=register&returnTo=${encodeURIComponent(`/${checkoutHref}`)}`;
 
@@ -1669,24 +1618,16 @@ function setupEventRegistrationPanel() {
     if (!title || !text || !cta) return;
 
     if (isLoggedIn) {
-      if (!isPremiumVariant) {
-        title.textContent = "Continuar registro";
-      }
-      text.textContent = isPremiumVariant
-        ? "Ya iniciaste sesión. Continúa al checkout para asegurar tu lugar en Axolote Night Run."
-        : "Ya iniciaste sesión. Continúa al checkout para asegurar tu lugar en Axolote Night Run.";
+      title.textContent = "Continuar registro";
+      text.textContent = "Ya iniciaste sesión. Continúa al checkout para asegurar tu lugar en Axolote Night Run.";
       cta.textContent = "Completar inscripción";
       cta.href = checkoutHref;
       return;
     }
 
-    if (!isPremiumVariant) {
-      title.textContent = "Regístrate para asegurar tu lugar";
-    }
-    text.textContent = isPremiumVariant
-      ? "Crea tu cuenta o inicia sesión para continuar con tu inscripción y pago de forma segura."
-      : "Crea tu cuenta o inicia sesión para continuar con tu inscripción y pago.";
-    cta.textContent = isPremiumVariant ? "Completar inscripción" : "Iniciar sesión o registrarme";
+    title.textContent = "Regístrate para asegurar tu lugar";
+    text.textContent = "Crea tu cuenta o inicia sesión para continuar con tu inscripción y pago.";
+    cta.textContent = "Iniciar sesión o registrarme";
     cta.href = authHref;
   };
 
@@ -3791,13 +3732,11 @@ function setupCheckoutForm() {
     e.preventDefault();
 
     const emailInput = document.getElementById("userEmail");
-    const shirtSizeInput = document.getElementById("shirtSize");
     const email = emailInput?.value.trim();
-    const shirtSize = shirtSizeInput?.value.trim().toUpperCase();
     const termsCheck = document.getElementById("termsCheck")?.checked;
 
-    if (!email || !shirtSize || !termsCheck) {
-      alert("Por favor ingresa tu correo, selecciona talla y acepta los términos.");
+    if (!email || !termsCheck) {
+      alert("Por favor ingresa tu correo y acepta los términos.");
       return;
     }
 
@@ -3810,7 +3749,7 @@ function setupCheckoutForm() {
       const response = await fetch("/api/create-checkout-session", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, shirtSize }),
+        body: JSON.stringify({ email }),
       });
 
       // Leer la respuesta como texto primero para depurar
@@ -3956,7 +3895,6 @@ setupHeroPosterSizing();
 setupRegisterScrollLed();
 setupEventModals();
 setupEventDetailAccordions();
-setupHomeFaqAccordion();
 setupNeonCardGlow();
 setupNeonEventToggle();
 setupWhatsAppButton();
@@ -3970,3 +3908,77 @@ setupCheckoutForm();
 
 // NUEVA LLAMADA
 setupEventBuyButtons();
+
+// ====================== CHECKLIST: ESTADO DE TARJETA "COMPLETA TU PERFIL" ======================
+async function setupChecklistProfileCard() {
+  const card = document.getElementById("cl-card-profile");
+  if (!card) return; // Solo aplica en index.html
+
+  // Esperar a que Supabase esté disponible
+  if (typeof window.supabase === "undefined") {
+    await new Promise(resolve => setTimeout(resolve, 800));
+  }
+  if (typeof window.supabase === "undefined") return;
+
+  try {
+    const client = window.supabase.createClient(
+      "https://uycwzhlcnfijjyzkgkem.supabase.co",
+      "sb_publishable_IKwD3YtQwWzzEtE8QkVagA_OJGdV2e4"
+    );
+
+    const { data: { session } } = await client.auth.getSession();
+    if (!session?.user?.id) return; // No hay sesión activa
+
+    const { data, error } = await client
+      .from("user_profiles")
+      .select("emergency_name,emergency_phone,emergency_relation,emergency_email")
+      .eq("user_id", session.user.id)
+      .maybeSingle();
+
+    if (error) {
+      console.warn("Error al verificar perfil para checklist:", error);
+      return;
+    }
+
+    const contact = emergencyContactFromProfile(data || {});
+    if (!hasCompleteEmergencyContact(contact)) return; // Aún incompleto
+
+    // ─── Actualizar tarjeta a estado "Completado" ───
+    // Número
+    const numEl = card.querySelector(".cl-num");
+    if (numEl) {
+      numEl.classList.replace("cl-num-orange", "cl-num-green");
+    }
+
+    // Badge
+    const badgeEl = card.querySelector(".cl-badge");
+    if (badgeEl) {
+      badgeEl.classList.replace("cl-badge-orange", "cl-badge-green");
+      badgeEl.innerHTML = `
+        <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="#198754" stroke-width="2.5">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+        </svg>
+        Completado`;
+    }
+
+    // Ícono de la tarjeta
+    const iconEl = card.querySelector(".cl-icon");
+    if (iconEl) {
+      iconEl.classList.replace("cl-icon-orange", "cl-icon-green");
+      const svg = iconEl.querySelector("svg");
+      if (svg) svg.setAttribute("stroke", "#10895B");
+    }
+
+    // Botón
+    const btnEl = card.querySelector(".cl-btn");
+    if (btnEl) {
+      btnEl.classList.replace("cl-btn-orange", "cl-btn-done");
+      btnEl.textContent = "✓ Perfil Completado";
+    }
+
+  } catch (err) {
+    console.warn("Error en setupChecklistProfileCard:", err);
+  }
+}
+
+setupChecklistProfileCard();
