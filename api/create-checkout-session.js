@@ -30,18 +30,11 @@ module.exports = async function handler(req, res) {
   }
 
   try {
-    const { email, shirtSize } = req.body;
-    const normalizedShirtSize = String(shirtSize || '').trim().toUpperCase();
+    const { email } = req.body;
 
     if (!email || typeof email !== 'string' || !email.includes('@')) {
       return res.status(400).json({ 
         error: 'Por favor ingresa un correo electrónico válido.' 
-      });
-    }
-
-    if (!['S', 'M', 'L'].includes(normalizedShirtSize)) {
-      return res.status(400).json({
-        error: 'Selecciona una talla de playera válida (S, M o L).'
       });
     }
 
@@ -65,8 +58,7 @@ module.exports = async function handler(req, res) {
       cancel_url: 'https://www.kinetichub.com.mx/checkout.html',
       metadata: {
         event_slug: 'axolote-night-run',
-        user_email: cleanEmail,
-        shirt_size: normalizedShirtSize
+        user_email: cleanEmail
       }
     });
 
