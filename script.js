@@ -3909,6 +3909,56 @@ setupCheckoutForm();
 // NUEVA LLAMADA
 setupEventBuyButtons();
 
+// ====================== CHECKLIST: ESTADO DE TARJETA "REALIZA TU PAGO" ======================
+async function setupChecklistPaymentCard() {
+  const card = document.getElementById("cl-card-payment");
+  if (!card) return; // Solo aplica en index.html
+
+  // Esperar a que Supabase esté disponible
+  if (typeof window.supabase === "undefined") {
+    await new Promise(resolve => setTimeout(resolve, 800));
+  }
+  if (typeof window.supabase === "undefined") return;
+
+  try {
+    const hasPaid = await checkIfUserHasPaid();
+    if (!hasPaid) return; // Mantener estado Pendiente
+
+    // ─── Actualizar tarjeta a estado "Completado" ───
+    const numEl = card.querySelector(".cl-num");
+    if (numEl) numEl.classList.replace("cl-num-orange", "cl-num-green");
+
+    const badgeEl = card.querySelector(".cl-badge");
+    if (badgeEl) {
+      badgeEl.classList.replace("cl-badge-orange", "cl-badge-green");
+      badgeEl.innerHTML = `
+        <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="#198754" stroke-width="2.5">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+        </svg>
+        Completado`;
+    }
+
+    const iconEl = card.querySelector(".cl-icon");
+    if (iconEl) {
+      iconEl.classList.replace("cl-icon-orange", "cl-icon-green");
+      const svg = iconEl.querySelector("svg");
+      if (svg) svg.setAttribute("stroke", "#10895B");
+    }
+
+    const btnEl = card.querySelector(".cl-btn");
+    if (btnEl) {
+      btnEl.classList.replace("cl-btn-orange", "cl-btn-done");
+      btnEl.textContent = "\u2713 Pago Completado";
+      btnEl.href = "perfil.html";
+    }
+
+  } catch (err) {
+    console.warn("Error en setupChecklistPaymentCard:", err);
+  }
+}
+
+setupChecklistPaymentCard();
+
 // ====================== CHECKLIST: ESTADO DE TARJETA "COMPLETA TU PERFIL" ======================
 async function setupChecklistProfileCard() {
   const card = document.getElementById("cl-card-profile");
@@ -3982,3 +4032,41 @@ async function setupChecklistProfileCard() {
 }
 
 setupChecklistProfileCard();
+
+// ====================== TIPS: REPRODUCIR VIDEO AL HACER HOVER ======================
+(function setupTipsHoverPlay() {
+  let activeCard = null;
+
+  document.querySelectorAll(".tips-card").forEach(card => {
+    card.addEventListener("mouseenter", () => {
+      // Quitar iframe de la tarjeta activa anterior
+      if (activeCard && activeCard !== card) {
+        const oldIframe = activeCard.querySelector(".tips-card-media > iframe");
+        if (oldIframe) oldIframe.remove();
+        activeCard.classList.remove("is-playing");
+      }
+
+      const media = card.querySelector(".tips-card-media");
+      if (!media || media.querySelector("iframe")) return;
+
+      const cfId = card.dataset.cfId;
+      if (!cfId) return;
+
+      const iframe = document.createElement("iframe");
+      iframe.src = `https://iframe.videodelivery.net/${cfId}?autoplay=true&muted=true&loop=true&controls=false&preload=auto`;
+      iframe.allow = "accelerometer; gyroscope; autoplay; encrypted-media; picture-in-picture;";
+      iframe.allowFullscreen = true;
+      media.prepend(iframe);
+      card.classList.add("is-playing");
+
+      activeCard = card;
+    });
+
+    card.addEventListener("mouseleave", () => {
+      const iframe = card.querySelector(".tips-card-media > iframe");
+      if (iframe) iframe.remove();
+      card.classList.remove("is-playing");
+      if (activeCard === card) activeCard = null;
+    });
+  });
+})();
