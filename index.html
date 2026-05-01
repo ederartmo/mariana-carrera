@@ -281,14 +281,14 @@
 
           <!-- CTA Button -->
           <div class="dashboard-cta-block">
-            <a href="perfil.html#resultados" class="dashboard-btn-primary">Ver resultados</a>
+            <a href="perfil.html#resultados" class="dashboard-btn-primary">Próximamente</a>
           </div>
 
         </div>
         <!-- END HEADER ROW -->
 
         <!-- CARDS ROW -->
-        <div class="dashboard-cards-grid">
+        <div class="dashboard-cards-grid" style="display:none;">
 
           <!-- Card 1: Profile -->
           <article class="dashboard-card">
@@ -393,21 +393,21 @@
         <!-- Grid de tarjetas -->
         <div class="cl-grid">
 
-          <!-- Tarjeta 1 — Completado -->
-          <article class="cl-card reveal">
+          <!-- Tarjeta 1 — Pago (estado dinámico, por defecto Pendiente) -->
+          <article class="cl-card reveal" id="cl-card-payment">
             <div class="cl-card-top">
-              <div class="cl-num cl-num-green">1</div>
-              <span class="cl-badge cl-badge-green">
-                <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="#198754" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                Completado
+              <div class="cl-num cl-num-orange">1</div>
+              <span class="cl-badge cl-badge-orange">
+                <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="#F97316" stroke-width="2.5"><circle cx="12" cy="12" r="9"/><path stroke-linecap="round" d="M12 7v5l3 3"/></svg>
+                Pendiente
               </span>
             </div>
-            <div class="cl-icon cl-icon-green">
-              <svg width="36" height="36" fill="none" viewBox="0 0 24 24" stroke="#10895B" stroke-width="1.7"><path stroke-linecap="round" stroke-linejoin="round" d="M3 10h18M7 15h1m4 0h1m-7 4h12a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+            <div class="cl-icon cl-icon-orange">
+              <svg width="36" height="36" fill="none" viewBox="0 0 24 24" stroke="#F97316" stroke-width="1.7"><path stroke-linecap="round" stroke-linejoin="round" d="M3 10h18M7 15h1m4 0h1m-7 4h12a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
             </div>
             <h3 class="cl-card-title">Realiza tu pago</h3>
             <p class="cl-card-desc">Confirma tu inscripción y asegura tu lugar en la carrera.</p>
-            <a class="cl-btn cl-btn-done" href="perfil.html">✓ Pago Completado</a>
+            <a class="cl-btn cl-btn-orange" href="checkout.html">Realizar pago</a>
           </article>
 
           <!-- Tarjeta 2 — Pendiente -->
@@ -466,55 +466,97 @@
     </section>
 
 
-    <section class="section home-blog-feed" id="homeBlog">
-      <div class="container">
-        <div class="home-blog-head reveal">
-          <h2>ESTO ES LO QUE NECESITAS SABER PARA EJERCITARTE</h2>
-          <p>Descubre cómo entrenar, alimentarte e inspirarte para cumplir tus objetivos</p>
+    <section class="hbf-section" id="homeBlog">
+      <div class="hbf-container">
+
+        <!-- Header -->
+        <div class="hbf-header reveal">
+          <div class="hbf-header-copy">
+            <p class="hbf-eyebrow">BLOG &amp; ENTRENAMIENTO</p>
+            <h2 class="hbf-title">Contenido útil para correr con más claridad</h2>
+            <p class="hbf-desc">Explora artículos sobre preparación, nutrición, comunidad y rendimiento.</p>
+          </div>
+          <div class="hbf-header-cta">
+            <a href="blog.html" class="hbf-btn-outline">Ver blog completo <span aria-hidden="true">→</span></a>
+          </div>
         </div>
 
-        <div class="home-blog-tabs reveal" aria-label="Categorías del blog">
-          <button class="home-blog-tab is-active" type="button">Todos</button>
-          <button class="home-blog-tab" type="button">Video (109)</button>
-          <button class="home-blog-tab" type="button">Podcast (1)</button>
-        </div>
+        <!-- Main grid -->
+        <div class="hbf-grid reveal">
 
-        <div class="home-blog-grid">
-          <article class=\"home-blog-card reveal\" data-type=\"todos video\">
-            <div class="home-blog-card-media" style="background-image: url('evento1.png');"></div>
-            <div class="home-blog-card-body">
-              <span class="home-blog-kicker">NOTICIAS</span>
-              <h3><a href="blog.html">Tadej Pogacar IMPARABLE en el Tour de Francia 2025</a></h3>
-              <time datetime="2025-07-30">JULIO 30, 2025</time>
-              <p>
-                Tadej Pogacar se impuso en el Tour de Francia 2025 demostrando ser uno de los mejores
-                ciclistas del mundo, super versatil en todo terreno.
-              </p>
-              <div class="home-blog-row">
-                <a class="home-blog-share" href="blog.html" aria-label="Compartir articulo">Compartir</a>
-                <a class="home-blog-read" href="blog.html">Continuar leyendo</a>
-              </div>
+          <!-- Left: Artículo destacado -->
+          <article class="hbf-featured">
+            <span class="hbf-pill">ARTÍCULO DESTACADO</span>
+            <h3 class="hbf-featured-title">Cómo preparar tu cuerpo para correr de noche sin perder rendimiento</h3>
+            <p class="hbf-featured-excerpt">La carrera nocturna tiene reglas propias. Descubre cómo ajustar tu entrenamiento, nutrición y equipo para rendir al máximo cuando el sol ya se puso.</p>
+            <div class="hbf-featured-meta">
+              <span>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                7 min lectura
+              </span>
+              <span class="hbf-meta-sep">|</span>
+              <span>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                Por Carlos Ruiz
+              </span>
             </div>
+            <a href="blog.html" class="hbf-btn-green">Leer más <span aria-hidden="true">→</span></a>
           </article>
 
-          <article class="home-blog-card reveal" data-type="todos podcast">
-            <div class="home-blog-card-media" style="background-image: url('evento1_1.png');"></div>
-            <div class="home-blog-card-body">
-              <span class="home-blog-kicker">NOTICIAS</span>
-              <h3><a href="blog.html">Sigue la emocion con las mujeres en Le Tour de France Femmes</a></h3>
-              <time datetime="2025-07-29">JULIO 29, 2025</time>
-              <p>
-                Sigue la emocion del Tour de France ahora con las mujeres en Le Tour de France Femmes,
-                con las mejores ciclistas del mundo.
-              </p>
-              <div class="home-blog-row">
-                <a class="home-blog-share" href="blog.html" aria-label="Compartir articulo">Compartir</a>
-                <a class="home-blog-read" href="blog.html">Continuar leyendo</a>
+          <!-- Right: 3 cards secundarias -->
+          <div class="hbf-aside">
+
+            <article class="hbf-card">
+              <img class="hbf-card-img" src="https://images.unsplash.com/photo-1552674605-db6ffd4facb5?auto=format&fit=crop&w=400&q=80" alt="Entrenamiento aeróbico" loading="lazy">
+              <div class="hbf-card-body">
+                <p class="hbf-card-cat">ENTRENAMIENTO</p>
+                <h4 class="hbf-card-title">Cómo construir base aeróbica para tu primer 21K</h4>
+                <div class="hbf-card-footer">
+                  <span class="hbf-card-time">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                    6 min
+                  </span>
+                  <span class="hbf-meta-sep">|</span>
+                  <a href="blog.html" class="hbf-card-link">Leer más →</a>
+                </div>
               </div>
-            </div>
-          </article>
-        </div>
-      </div>
+            </article>
+
+            <article class="hbf-card">
+              <img class="hbf-card-img" src="https://images.unsplash.com/photo-1476480862126-209bfaa8edc8?auto=format&fit=crop&w=400&q=80" alt="Hidratación en carrera" loading="lazy">
+              <div class="hbf-card-body">
+                <p class="hbf-card-cat">NUTRICIÓN</p>
+                <h4 class="hbf-card-title">Hidratación inteligente para carreras de calor</h4>
+                <div class="hbf-card-footer">
+                  <span class="hbf-card-time">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                    4 min
+                  </span>
+                  <span class="hbf-meta-sep">|</span>
+                  <a href="blog.html" class="hbf-card-link">Leer más →</a>
+                </div>
+              </div>
+            </article>
+
+            <article class="hbf-card">
+              <img class="hbf-card-img" src="https://images.unsplash.com/photo-1594737625785-a6cbdabd333c?auto=format&fit=crop&w=400&q=80" alt="Comunidad running" loading="lazy">
+              <div class="hbf-card-body">
+                <p class="hbf-card-cat">COMUNIDAD</p>
+                <h4 class="hbf-card-title">5 clubes de running para empezar acompañado</h4>
+                <div class="hbf-card-footer">
+                  <span class="hbf-card-time">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                    5 min
+                  </span>
+                  <span class="hbf-meta-sep">|</span>
+                  <a href="blog.html" class="hbf-card-link">Leer más →</a>
+                </div>
+              </div>
+            </article>
+
+          </div><!-- /hbf-aside -->
+        </div><!-- /hbf-grid -->
+      </div><!-- /hbf-container -->
     </section>
 
     <section class="section">
@@ -536,8 +578,11 @@
       <div class="container">
         <div class="tips-header reveal">
           <div class="tips-header-left">
-            <span class="tips-icon-badge" aria-hidden="true">tt</span>
-            <h2 class="tips-title">Testimonios</h2>
+            <div>
+              <span class="tips-eyebrow">COMUNIDAD</span>
+              <h2 class="tips-title">Lo que dicen quienes ya corrieron</h2>
+              <p class="tips-desc">Historias reales de quienes ya cruzaron la meta con nosotros.</p>
+            </div>
           </div>
           <a href="#" class="tips-show-all">Mostrar todo</a>
         </div>
@@ -558,24 +603,15 @@
                 data-bio="Entrena duro, sí. Pero entrena con datos y ciencia detrás de cada sesión." data-avatar=""
                 tabindex="0" role="button" aria-label="Ver video de @creator_nova27">
                 <div class="tips-card-media">
-                  <img class="tips-card-poster"
-                    src="https://videodelivery.net/33bff89e05ae4ef22fa7209e590b294f/thumbnails/thumbnail.jpg?width=400&height=711&time=1s"
-                    alt="" loading="lazy" />
-                  <div class="tips-card-preview-wrap" aria-hidden="true"></div>
-                  <span class="tips-play-hint" aria-hidden="true">
-                    <svg viewBox="0 0 24 24" fill="currentColor" width="26" height="26">
-                      <polygon points="5,3 19,12 5,21" />
-                    </svg>
-                  </span>
-                </div>
-                <div class="tips-card-user">
-                  <div class="tips-card-avatar-ring">
-                    <span class="tips-card-avatar-placeholder" aria-hidden="true">tt</span>
-                  </div>
-                  <div class="tips-card-user-info">
-                    <span class="tips-card-username">@creator_nova27</span>
-                    <p class="tips-card-bio">Entrena duro, sí. Pero entrena con datos y ciencia detrás de cada sesión.
-                    </p>
+                  <img class="tips-card-poster" src="https://videodelivery.net/33bff89e05ae4ef22fa7209e590b294f/thumbnails/thumbnail.jpg?time=0s" alt="" loading="lazy">
+                  <div class="tips-card-user">
+                    <div class="tips-card-avatar-ring">
+                      <span class="tips-card-avatar-placeholder" aria-hidden="true">cn</span>
+                    </div>
+                    <div class="tips-card-user-info">
+                      <span class="tips-card-username">@creator_nova27</span>
+                      <p class="tips-card-bio">Entrena duro, sí. Pero entrena con datos y ciencia detrás de cada sesión.</p>
+                    </div>
                   </div>
                 </div>
               </article>
@@ -585,24 +621,15 @@
                 data-bio="Si vas al maratón de Boston, prepárate así con 12 semanas de anticipación." data-avatar=""
                 tabindex="0" role="button" aria-label="Ver video de @pixel_runner88">
                 <div class="tips-card-media">
-                  <img class="tips-card-poster"
-                    src="https://videodelivery.net/7d1f809e62cd96de90d56232cd519a5f/thumbnails/thumbnail.jpg?width=400&height=711&time=1s"
-                    alt="" loading="lazy" />
-                  <div class="tips-card-preview-wrap" aria-hidden="true"></div>
-                  <span class="tips-play-hint" aria-hidden="true">
-                    <svg viewBox="0 0 24 24" fill="currentColor" width="26" height="26">
-                      <polygon points="5,3 19,12 5,21" />
-                    </svg>
-                  </span>
-                </div>
-                <div class="tips-card-user">
-                  <div class="tips-card-avatar-ring">
-                    <span class="tips-card-avatar-placeholder" aria-hidden="true">mr</span>
-                  </div>
-                  <div class="tips-card-user-info">
-                    <span class="tips-card-username">@pixel_runner88</span>
-                    <p class="tips-card-bio">Si vas al maratón de Boston, prepárate así con 12 semanas de anticipación.
-                    </p>
+                  <img class="tips-card-poster" src="https://videodelivery.net/7d1f809e62cd96de90d56232cd519a5f/thumbnails/thumbnail.jpg?time=0s" alt="" loading="lazy">
+                  <div class="tips-card-user">
+                    <div class="tips-card-avatar-ring">
+                      <span class="tips-card-avatar-placeholder" aria-hidden="true">pr</span>
+                    </div>
+                    <div class="tips-card-user-info">
+                      <span class="tips-card-username">@pixel_runner88</span>
+                      <p class="tips-card-bio">Si vas al maratón de Boston, prepárate así con 12 semanas de anticipación.</p>
+                    </div>
                   </div>
                 </div>
               </article>
@@ -612,24 +639,15 @@
                 data-bio="Servicios de expertos certificados en CDMX para llevar tu rendimiento al siguiente nivel."
                 data-avatar="" tabindex="0" role="button" aria-label="Ver video de @luna_stride">
                 <div class="tips-card-media">
-                  <img class="tips-card-poster"
-                    src="https://videodelivery.net/eca22e5e7d7cc48ce1073eacadf95e0f/thumbnails/thumbnail.jpg?width=400&height=711&time=1s"
-                    alt="" loading="lazy" />
-                  <div class="tips-card-preview-wrap" aria-hidden="true"></div>
-                  <span class="tips-play-hint" aria-hidden="true">
-                    <svg viewBox="0 0 24 24" fill="currentColor" width="26" height="26">
-                      <polygon points="5,3 19,12 5,21" />
-                    </svg>
-                  </span>
-                </div>
-                <div class="tips-card-user">
-                  <div class="tips-card-avatar-ring">
-                    <span class="tips-card-avatar-placeholder" aria-hidden="true">is</span>
-                  </div>
-                  <div class="tips-card-user-info">
-                    <span class="tips-card-username">@luna_stride</span>
-                    <p class="tips-card-bio">Servicios de expertos certificados en CDMX para llevar tu rendimiento al
-                      siguiente nivel.</p>
+                  <img class="tips-card-poster" src="https://videodelivery.net/eca22e5e7d7cc48ce1073eacadf95e0f/thumbnails/thumbnail.jpg?time=0s" alt="" loading="lazy">
+                  <div class="tips-card-user">
+                    <div class="tips-card-avatar-ring">
+                      <span class="tips-card-avatar-placeholder" aria-hidden="true">ls</span>
+                    </div>
+                    <div class="tips-card-user-info">
+                      <span class="tips-card-username">@luna_stride</span>
+                      <p class="tips-card-bio">Servicios de expertos certificados en CDMX para llevar tu rendimiento al siguiente nivel.</p>
+                    </div>
                   </div>
                 </div>
               </article>
@@ -639,23 +657,15 @@
                 data-bio="El entrenamiento cruzado como herramienta para mejorar el rendimiento." data-avatar=""
                 tabindex="0" role="button" aria-label="Ver video de @urbanpeak.fit">
                 <div class="tips-card-media">
-                  <img class="tips-card-poster"
-                    src="https://videodelivery.net/48d6bc075a25e6de9cea25ef2ddc8fb6/thumbnails/thumbnail.jpg?width=400&height=711&time=1s"
-                    alt="" loading="lazy" />
-                  <div class="tips-card-preview-wrap" aria-hidden="true"></div>
-                  <span class="tips-play-hint" aria-hidden="true">
-                    <svg viewBox="0 0 24 24" fill="currentColor" width="26" height="26">
-                      <polygon points="5,3 19,12 5,21" />
-                    </svg>
-                  </span>
-                </div>
-                <div class="tips-card-user">
-                  <div class="tips-card-avatar-ring">
-                    <span class="tips-card-avatar-placeholder" aria-hidden="true">jl</span>
-                  </div>
-                  <div class="tips-card-user-info">
-                    <span class="tips-card-username">@urbanpeak.fit</span>
-                    <p class="tips-card-bio">El entrenamiento cruzado como herramienta para mejorar el rendimiento.</p>
+                  <img class="tips-card-poster" src="https://videodelivery.net/48d6bc075a25e6de9cea25ef2ddc8fb6/thumbnails/thumbnail.jpg?time=0s" alt="" loading="lazy">
+                  <div class="tips-card-user">
+                    <div class="tips-card-avatar-ring">
+                      <span class="tips-card-avatar-placeholder" aria-hidden="true">up</span>
+                    </div>
+                    <div class="tips-card-user-info">
+                      <span class="tips-card-username">@urbanpeak.fit</span>
+                      <p class="tips-card-bio">El entrenamiento cruzado como herramienta para mejorar el rendimiento.</p>
+                    </div>
                   </div>
                 </div>
               </article>
@@ -665,24 +675,15 @@
                 data-bio="¿Listo para competir en tu mejor nivel? El plan de entrada fácil te lleva ahí." data-avatar=""
                 tabindex="0" role="button" aria-label="Ver video de @tempo.labmx">
                 <div class="tips-card-media">
-                  <img class="tips-card-poster"
-                    src="https://videodelivery.net/615ec8d8e1489c254a3f58b4976d5bcd/thumbnails/thumbnail.jpg?width=400&height=711&time=1s"
-                    alt="" loading="lazy" />
-                  <div class="tips-card-preview-wrap" aria-hidden="true"></div>
-                  <span class="tips-play-hint" aria-hidden="true">
-                    <svg viewBox="0 0 24 24" fill="currentColor" width="26" height="26">
-                      <polygon points="5,3 19,12 5,21" />
-                    </svg>
-                  </span>
-                </div>
-                <div class="tips-card-user">
-                  <div class="tips-card-avatar-ring">
-                    <span class="tips-card-avatar-placeholder" aria-hidden="true">tt</span>
-                  </div>
-                  <div class="tips-card-user-info">
-                    <span class="tips-card-username">@tempo.labmx</span>
-                    <p class="tips-card-bio">¿Listo para competir en tu mejor nivel? El plan de entrada fácil te lleva
-                      ahí.</p>
+                  <img class="tips-card-poster" src="https://videodelivery.net/615ec8d8e1489c254a3f58b4976d5bcd/thumbnails/thumbnail.jpg?time=0s" alt="" loading="lazy">
+                  <div class="tips-card-user">
+                    <div class="tips-card-avatar-ring">
+                      <span class="tips-card-avatar-placeholder" aria-hidden="true">tl</span>
+                    </div>
+                    <div class="tips-card-user-info">
+                      <span class="tips-card-username">@tempo.labmx</span>
+                      <p class="tips-card-bio">¿Listo para competir en tu mejor nivel? El plan de entrada fácil te lleva ahí.</p>
+                    </div>
                   </div>
                 </div>
               </article>
