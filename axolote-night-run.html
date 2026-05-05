@@ -23,53 +23,77 @@
           linear-gradient(180deg, #f5f7fb 0%, #eef2f7 100%);
       }
 
-      html, body {
-        overflow-x: hidden;
-        max-width: 100%;
+      .axolote-hero {
+        position: relative;
+        overflow: hidden;
+        min-height: 340px;
+        padding: 30px;
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        background-image:
+          linear-gradient(115deg, rgba(4, 10, 22, 0.76), rgba(8, 17, 31, 0.3) 56%, rgba(7, 20, 32, 0.74)),
+          url("banner.png");
+        background-position: center;
+        box-shadow: 0 24px 48px rgba(5, 10, 18, 0.22);
       }
 
-      .axolote-hero {
-        background:
-          linear-gradient(
-            to right,
-            rgba(0, 8, 18, 0.97) 0%,
-            rgba(0, 10, 22, 0.85) 42%,
-            rgba(0, 10, 22, 0.55) 68%,
-            rgba(0, 10, 22, 0.22) 100%
-          ),
-          url("banner3.png") center right / cover no-repeat;
-        min-height: 540px;
-        display: flex;
-        align-items: center;
-        padding: 120px 0 80px;
+      .axolote-hero::after {
+        content: "";
+        position: absolute;
+        inset: auto -80px -90px auto;
+        width: 320px;
+        height: 320px;
+        border-radius: 999px;
+        background: radial-gradient(circle at center, rgba(255, 45, 191, 0.18), transparent 70%);
+        pointer-events: none;
       }
 
       .ax-hero-copy {
-        max-width: 680px;
-        text-align: left;
+        position: relative;
+        z-index: 1;
+        width: min(680px, 100%);
+        display: grid;
+        gap: 12px;
       }
 
       .axolote-badge {
-        font-size: 12px;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        width: fit-content;
+        padding: 6px 12px;
+        border-radius: 999px;
+        background: rgba(222, 111, 32, 0.16);
+        border: 1px solid rgba(222, 111, 32, 0.34);
+        color: #ffbe88;
+        font-size: 0.74rem;
         font-weight: 800;
+        letter-spacing: 0.08em;
         text-transform: uppercase;
-        letter-spacing: 1.5px;
-        color: #F28C38;
-        margin: 0 0 22px;
-        display: block;
+      }
+
+      .axolote-badge::before {
+        content: "";
+        width: 7px;
+        height: 7px;
+        border-radius: 50%;
+        background: #ff9a4d;
       }
 
       .ax-hero-meta {
-        display: none;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px 18px;
+        color: rgba(244, 249, 255, 0.9);
+        font-size: 1rem;
+        font-weight: 700;
       }
 
       .ax-hero-description {
-        font-size: clamp(15px, 1.4vw, 17px);
-        line-height: 1.75;
-        font-weight: 400;
-        color: rgba(255, 255, 255, 0.82);
-        max-width: 560px;
         margin: 0;
+        max-width: 58ch;
+        color: rgba(225, 236, 248, 0.88);
+        font-size: 1.04rem;
+        line-height: 1.65;
       }
 
       .quick-stats {
@@ -166,8 +190,7 @@
       .ax-visual-card p {
         margin: 0;
         color: var(--muted);
-        line-height: 1.62;
-        font-size: 0.875rem;
+        line-height: 1.65;
       }
 
       .ax-distance-grid {
@@ -193,6 +216,10 @@
         font-size: clamp(2rem, 4vw, 2.5rem);
         font-weight: 800;
         line-height: 1;
+      }
+
+      .ax-distance-value.is-3k {
+        color: #25d2d2;
       }
 
       .ax-distance-value.is-5k {
@@ -879,10 +906,8 @@
           flex-direction: column;
         }
 
-        .ax-event-main,
         .ax-event-sidebar {
-          width: 100%;
-          min-width: 0;
+          order: -1;
         }
 
         .ax-register-card {
@@ -892,18 +917,9 @@
 
       @media (max-width: 760px) {
         .axolote-hero {
-          min-height: 400px;
-          padding: 36px 0 44px;
-          background-position: 70% center;
-          background-image:
-            linear-gradient(
-              to bottom,
-              rgba(0, 8, 18, 0.88) 0%,
-              rgba(0, 8, 18, 0.72) 60%,
-              rgba(0, 8, 18, 0.40) 100%
-            ),
-            url("banner3.png");
-          background-size: cover;
+          min-height: 300px;
+          padding: 22px 20px;
+          background-position: 68% center;
         }
 
         .ax-hero-meta {
@@ -911,37 +927,14 @@
           gap: 6px;
         }
 
-        .ax-hero-description {
-          font-size: 14px;
-        }
-
         .ax-section-card,
         .ax-register-card,
         .ax-side-note {
-          padding: 16px;
-          border-radius: 16px;
+          padding: 18px;
+          border-radius: 18px;
         }
 
-        .ax-section-icon {
-          width: 44px;
-          height: 44px;
-          border-radius: 14px;
-        }
-
-        .ax-section-icon img {
-          width: 28px;
-          height: 28px;
-        }
-
-        .ax-section-heading {
-          flex-direction: column;
-          gap: 12px;
-        }
-
-        .ax-section-title {
-          font-size: 1.15rem;
-        }
-
+        .ax-section-heading,
         .ax-distance-grid,
         .ax-price-grid,
         .ax-related-grid,
@@ -992,44 +985,6 @@
         .ax-related-grid {
           grid-template-columns: 1fr;
         }
-
-        .ax-price-grid {
-          grid-template-columns: 1fr;
-        }
-
-        .ax-section-card,
-        .ax-register-card,
-        .ax-side-note {
-          padding: 14px;
-          border-radius: 14px;
-        }
-
-        .ax-register-kicker {
-          font-size: 0.7rem;
-        }
-
-        .ax-more-events-head h2 {
-          font-size: 1rem;
-        }
-      }
-
-      @media (max-width: 420px) {
-        .axolote-hero {
-          min-height: 360px;
-          padding: 28px 0 36px;
-        }
-
-        .axolote-badge {
-          font-size: 10px;
-        }
-
-        .ax-timeline-item {
-          padding-left: 28px;
-        }
-
-        .ax-visual-card {
-          min-width: 150px;
-        }
       }
     </style>
   </head>
@@ -1063,17 +1018,25 @@
     </header>
 
     <main>
-      <section class="axolote-hero">
-        <div class="container">
-          <div class="ax-hero-copy reveal">
-            <p class="axolote-badge">EDICIÓN INAUGURAL</p>
-            <h1 style="font-size:clamp(26px,8vw,58px);font-weight:900;line-height:1.12;letter-spacing:-1px;color:#ffffff;margin:0;text-transform:none;">
-              Corre bajo las estrellas en la noche más <em style="font-style:normal;color:#18D79B;">vibrante</em> del año.
-            </h1>
-            <div style="width:72px;height:3px;background:#F28C38;margin:20px 0;border-radius:2px;"></div>
-            <p class="ax-hero-description">La primera edición oficial de Kinetic Hub. 31 octubre 2026 · Pista de Canotaje, CDMX.</p>
+      <section class="container">
+        <header class="event-detail-hero axolote-hero reveal">
+          <div class="ax-hero-copy">
+            <div class="axolote-badge">Edición inaugural</div>
+            <p class="eyebrow">Running nocturno · Evento oficial Kinetic Hub</p>
+            <h1>Axolote Night Run 2026</h1>
+            <div class="ax-hero-meta">
+              <span>31 octubre 2026</span>
+              <span>Pista de Canotaje, CDMX</span>
+            </div>
+            <p class="ax-hero-description">La carrera nocturna más vibrante de la temporada. Corre entre luces, música y una atmósfera premium diseñada para que tu primera experiencia Axolote se sienta inolvidable desde el registro hasta la meta.</p>
+            <div class="quick-stats">
+              <span>3K y 5K</span>
+              <span>Todos los niveles</span>
+              <span>Cupo limitado</span>
+              <span>Kit premium</span>
+            </div>
           </div>
-        </div>
+        </header>
       </section>
 
       <section class="section ax-event-shell">
@@ -1086,8 +1049,8 @@
                 </div>
                 <div>
                   <h2 class="ax-section-title">Sobre el evento</h2>
-                  <p class="ax-section-copy">Axolote Night Run 2026 es la primera carrera oficial de Kinetic Hub en CDMX. Una experiencia nocturna pensada para corredores principiantes, recreativos y competitivos que quieren vivir una ruta diferente bajo las estrellas.</p>
-                  <p class="ax-subcopy" style="margin-top: 10px;">La sede será la Pista de Canotaje y el formato está diseñado para que se sienta premium: recorrido iluminado, logística clara, ambientación sonora y una narrativa que mezcla energía deportiva con identidad de marca.</p>
+                  <p class="ax-section-copy">Axolote Night Run 2026 es la primera gran experiencia nocturna de Kinetic Hub en la Ciudad de México. Diseñamos esta edición para que se sienta premium, ágil y visualmente poderosa: recorrido iluminado, logística clara, ambientación sonora y una narrativa que mezcla energía deportiva con identidad de marca.</p>
+                  <p class="ax-subcopy" style="margin-top: 10px;">La sede será la Pista de Canotaje y el formato está pensado para runners que buscan vivir algo distinto, ya sea compitiendo fuerte en 5K o compartiendo una ruta más relajada en 3K. Todo con operación ordenada, salida por oleadas y foco real en experiencia de corredor.</p>
                 </div>
               </div>
             </article>
@@ -1103,15 +1066,22 @@
                 </div>
                 <div>
                   <h2 class="ax-section-title">Distancias y modalidades</h2>
-                  <p class="ax-section-copy">Una sola distancia, toda la vibra nocturna. Ruta bien señalizada, cronometraje oficial y una experiencia pensada para disfrutarla.</p>
+                  <p class="ax-section-copy">Dos rutas, una misma vibra nocturna. Elige la experiencia que mejor encaje con tu objetivo y prepárate para un recorrido seguro, bien señalizado y pensado para disfrutarlo.</p>
                 </div>
               </div>
-              <div class="ax-distance-grid" style="margin-top: 18px; grid-template-columns: minmax(0,1fr);">
+              <div class="ax-distance-grid" style="margin-top: 18px;">
+                <article class="ax-distance-card">
+                  <div class="ax-distance-value is-3k">3K</div>
+                  <div>
+                    <strong>Ruta recreativa</strong>
+                    <p>Ideal para vivir la experiencia, correr acompañado y entrar al ambiente del evento sin presión competitiva.</p>
+                  </div>
+                </article>
                 <article class="ax-distance-card">
                   <div class="ax-distance-value is-5k">5K</div>
                   <div>
-                    <strong>Competitiva</strong>
-                    <p>Con chip de cronometraje y seguimiento oficial para quienes quieren superarse y marcar tiempo.</p>
+                    <strong>Ruta competitiva</strong>
+                    <p>Con chip de cronometraje, salida por bloques y seguimiento oficial para quienes quieren empujar ritmo y marcar tiempo.</p>
                   </div>
                 </article>
               </div>
@@ -1127,47 +1097,43 @@
                 </div>
                 <div>
                   <h2 class="ax-section-title">Costos e inscripción</h2>
-                  <p class="ax-section-copy"><span style="background:rgba(222,111,32,0.12);color:#de6f20;font-weight:700;padding:2px 8px;border-radius:6px;font-size:0.82rem;">Aprovecha el mejor precio</span></p>
-                  <p class="ax-section-copy" style="margin-top:8px;">La etapa Early Bird es la más accesible y tiene cupo limitado. Asegura tu lugar antes de que suba la tarifa.</p>
+                  <p class="ax-section-copy">La etapa vigente es la regular. Cada fase tiene cupo limitado y la tarifa cambia automáticamente cuando la capacidad de esa etapa se agota.</p>
                 </div>
               </div>
               <div class="ax-price-grid" style="margin-top: 18px;">
-                <article class="ax-price-card featured">
-                  <span class="ax-price-badge" style="background:rgba(0,208,132,0.15);color:#0dc785;">Mejor precio</span>
+                <article class="ax-price-card">
+                  <span class="ax-price-badge">Etapa 1</span>
                   <h3>Early Bird</h3>
                   <p class="ax-price-amount"><small>$</small>480</p>
-                  <p class="ax-price-note">Hasta agotar existencias</p>
+                  <p class="ax-price-note">Acceso de lanzamiento</p>
                   <ul class="ax-price-list">
-                    <li>Número de corredor</li>
-                    <li>Medalla conmemorativa</li>
-                    <li>Hidratación en ruta</li>
-                    <li>Resultados oficiales</li>
+                    <li>Precio preferencial</li>
+                    <li>Mismo kit oficial</li>
+                    <li>Cupo ya agotado</li>
                   </ul>
-                  <div class="ax-price-state">Etapa actual</div>
+                  <div class="ax-price-state">Agotado</div>
                 </article>
-                <article class="ax-price-card">
-                  <span class="ax-price-badge">Etapa regular</span>
-                  <h3>Etapa regular</h3>
+                <article class="ax-price-card featured">
+                  <span class="ax-price-badge">Etapa vigente</span>
+                  <h3>Regular</h3>
                   <p class="ax-price-amount"><small>$</small>550</p>
-                  <p class="ax-price-note">Próximamente</p>
+                  <p class="ax-price-note">Precio actual del evento</p>
                   <ul class="ax-price-list">
-                    <li>Número de corredor</li>
-                    <li>Medalla conmemorativa</li>
-                    <li>Hidratación en ruta</li>
-                    <li>Resultados oficiales</li>
+                    <li>Disponible hoy</li>
+                    <li>Aplicable a 3K y 5K</li>
+                    <li>Acceso a todos los beneficios</li>
                   </ul>
-                  <div class="ax-price-state">Próximamente</div>
+                  <div class="ax-price-state">Inscripciones abiertas</div>
                 </article>
                 <article class="ax-price-card">
                   <span class="ax-price-badge">Última llamada</span>
                   <h3>Extemporánea</h3>
                   <p class="ax-price-amount"><small>$</small>600</p>
-                  <p class="ax-price-note">Última etapa</p>
+                  <p class="ax-price-note">Sujeta a disponibilidad</p>
                   <ul class="ax-price-list">
-                    <li>Número de corredor</li>
-                    <li>Medalla conmemorativa</li>
-                    <li>Hidratación en ruta</li>
-                    <li>Resultados oficiales</li>
+                    <li>Se activa al cerrar etapa regular</li>
+                    <li>Cupo final del evento</li>
+                    <li>Puede cerrar antes por aforo</li>
                   </ul>
                   <div class="ax-price-state">Próximamente</div>
                 </article>
@@ -1191,39 +1157,39 @@
               <div class="ax-benefits-band" style="margin-top: 18px;">
                 <div class="ax-benefit-item">
                   <div class="ax-benefit-icon" aria-hidden="true">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="4" y="6" width="16" height="12" rx="2"></rect><path d="M8 6V4h8v2"></path><path d="M12 10v4m-2-2h4"></path></svg>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M8 5h8l-1 5 3 2-6 7-6-7 3-2-1-5z"></path></svg>
+                  </div>
+                  <span>Medalla finisher exclusiva</span>
+                </div>
+                <div class="ax-benefit-item">
+                  <div class="ax-benefit-icon" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 7h16"></path><path d="M7 7v10"></path><path d="M17 7v10"></path><path d="M4 17h16"></path></svg>
+                  </div>
+                  <span>Playera oficial del evento</span>
+                </div>
+                <div class="ax-benefit-item">
+                  <div class="ax-benefit-icon" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 3v18"></path><path d="M7 7h10"></path><path d="M7 17h10"></path></svg>
                   </div>
                   <span>Número de corredor</span>
                 </div>
                 <div class="ax-benefit-item">
                   <div class="ax-benefit-icon" aria-hidden="true">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 3C7 3 4 7.5 4 12s3 9 8 9 8-4.5 8-9-3-9-8-9z"></path><path d="M12 8v4l3 2"></path></svg>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M8 4h8v4H8z"></path><path d="M10 8v12"></path><path d="M14 8v12"></path></svg>
                   </div>
-                  <span>Acceso al evento</span>
+                  <span>Hidratación en ruta y meta</span>
                 </div>
                 <div class="ax-benefit-item">
                   <div class="ax-benefit-icon" aria-hidden="true">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M8 5h8l-1 5 3 2-6 7-6-7 3-2-1-5z"></path></svg>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="7"></circle><path d="M12 8v4l3 2"></path></svg>
                   </div>
-                  <span>Medalla de participación</span>
+                  <span>Chip y resultados oficiales</span>
                 </div>
                 <div class="ax-benefit-item">
                   <div class="ax-benefit-icon" aria-hidden="true">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2z"></path><path d="M8 12h8M12 8v8"></path></svg>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 8l8 5 8-5"></path><path d="M4 8v8h16V8"></path></svg>
                   </div>
-                  <span>Hidratación en ruta</span>
-                </div>
-                <div class="ax-benefit-item">
-                  <div class="ax-benefit-icon" aria-hidden="true">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="7" height="7" rx="1"></rect><rect x="14" y="3" width="7" height="7" rx="1"></rect><rect x="3" y="14" width="7" height="7" rx="1"></rect><path d="M17 14v7M14 17h7"></path></svg>
-                  </div>
-                  <span>Resultados posteriores</span>
-                </div>
-                <div class="ax-benefit-item">
-                  <div class="ax-benefit-icon" aria-hidden="true">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l3 3"></path></svg>
-                  </div>
-                  <span>Experiencia Axolote Night Run</span>
+                  <span>Comunicación previa y logística</span>
                 </div>
               </div>
             </article>
@@ -1243,35 +1209,43 @@
               </div>
               <div class="ax-timeline">
                 <div class="ax-timeline-item">
-                  <span class="ax-timeline-date">Sáb 30 Oct</span>
+                  <span class="ax-timeline-date">30 Oct</span>
                   <span class="ax-timeline-time">10:00 - 18:00</span>
                   <div class="ax-timeline-copy">
                     <strong>Entrega de kits</strong>
-                    <p>Lugar por confirmar. Recoge tu paquete con identificación y comprobante de registro.</p>
+                    <p>Recoge tu paquete con identificación y comprobante de registro. La sede exacta se compartirá por correo previo al evento.</p>
                   </div>
                 </div>
                 <div class="ax-timeline-item">
-                  <span class="ax-timeline-date">Vie 31 Oct</span>
+                  <span class="ax-timeline-date">31 Oct</span>
                   <span class="ax-timeline-time">16:00</span>
                   <div class="ax-timeline-copy">
-                    <strong>Apertura de registro y área de salida</strong>
+                    <strong>Apertura de venue</strong>
                     <p>Ingreso a zona de salida, activaciones, foto oficial y validación final de corredores.</p>
                   </div>
                 </div>
                 <div class="ax-timeline-item">
-                  <span class="ax-timeline-date">Vie 31 Oct</span>
+                  <span class="ax-timeline-date">31 Oct</span>
                   <span class="ax-timeline-time">18:00</span>
                   <div class="ax-timeline-copy">
-                    <strong>Salida 5K competitiva</strong>
+                    <strong>Salida 5K</strong>
                     <p>Primera oleada competitiva con chip activo, control de ruta y cronometraje oficial.</p>
                   </div>
                 </div>
                 <div class="ax-timeline-item">
-                  <span class="ax-timeline-date">Vie 31 Oct</span>
+                  <span class="ax-timeline-date">31 Oct</span>
+                  <span class="ax-timeline-time">18:20</span>
+                  <div class="ax-timeline-copy">
+                    <strong>Salida 3K</strong>
+                    <p>Bloque recreativo para quienes quieren vivir el evento con ritmo libre y ambiente social.</p>
+                  </div>
+                </div>
+                <div class="ax-timeline-item">
+                  <span class="ax-timeline-date">31 Oct</span>
                   <span class="ax-timeline-time">20:30</span>
                   <div class="ax-timeline-copy">
-                    <strong>Premiación y cierre del evento</strong>
-                    <p>Anuncio de resultados, foto final y cierre de la edición inaugural.</p>
+                    <strong>Premiación y cierre</strong>
+                    <p>Anuncio de resultados, foto final y cierre de edición inaugural.</p>
                   </div>
                 </div>
               </div>
@@ -1299,30 +1273,22 @@
                   <p>La pieza principal de comunicación de esta edición.</p>
                 </article>
                 <article class="ax-visual-card">
-                  <a href="#ax-playera-lightbox" aria-label="Ver playera oficial en grande">
-                    <img src="playeras.jpeg" alt="Playeras oficiales Axolote Night Run" loading="lazy" />
-                  </a>
+                  <img src="playeras.jpeg" alt="Playeras oficiales Axolote Night Run" loading="lazy" />
                   <strong>Playera oficial</strong>
                   <p>Diseño técnico incluido dentro de tu inscripción.</p>
                 </article>
                 <article class="ax-visual-card">
-                  <a href="#ax-imagen-lightbox" aria-label="Ver imagen oficial en grande">
-                    <img src="axo_oficial.png" alt="Axolote oficial del evento" loading="lazy" />
-                  </a>
+                  <img src="axo_oficial.png" alt="Axolote oficial del evento" loading="lazy" />
                   <strong>Imagen oficial</strong>
                   <p>Visual principal que acompaña la campaña.</p>
                 </article>
                 <article class="ax-visual-card">
-                  <a href="#ax-axo3d-lightbox" aria-label="Ver axolote 3D en grande">
-                    <img src="axo3d_oficial.png" alt="Axolote 3D oficial del evento" loading="lazy" />
-                  </a>
+                  <img src="axo3d_oficial.png" alt="Axolote 3D oficial del evento" loading="lazy" />
                   <strong>Axolote 3D</strong>
                   <p>Activo digital para contenido y materiales especiales.</p>
                 </article>
                 <article class="ax-visual-card">
-                  <a href="#ax-alterno-lightbox" aria-label="Ver flyer alternativo en grande">
-                    <img src="fyler_act1.jpeg" alt="Flyer alternativo Axolote Night Run 2026" loading="lazy" />
-                  </a>
+                  <img src="fyler_act1.jpeg" alt="Flyer alternativo Axolote Night Run 2026" loading="lazy" />
                   <strong>Arte alterno</strong>
                   <p>Versión complementaria para pauta y difusión.</p>
                 </article>
@@ -1348,139 +1314,151 @@
                 <div class="home-faq-grid">
                   <article class="home-faq-item is-open">
                     <button class="home-faq-question" type="button" aria-expanded="true">
-                      <span>¿Puedo transferir mi inscripción?</span>
-                      <span class="home-faq-icon" aria-hidden="true"></span>
-                    </button>
-                    <div class="home-faq-answer">
-                      <p>No. La inscripción es personal e intransferible. Esto nos ayuda a mantener el control de participantes, kits, resultados y seguridad durante el evento.</p>
-                    </div>
-                  </article>
-
-                  <article class="home-faq-item">
-                    <button class="home-faq-question" type="button" aria-expanded="false">
-                      <span>¿Habrá reembolsos?</span>
-                      <span class="home-faq-icon" aria-hidden="true"></span>
-                    </button>
-                    <div class="home-faq-answer">
-                      <p>No hay reembolsos por cancelación del participante. Te recomendamos revisar bien la fecha, sede y modalidad antes de completar tu registro.</p>
-                    </div>
-                  </article>
-
-                  <article class="home-faq-item">
-                    <button class="home-faq-question" type="button" aria-expanded="false">
-                      <span>¿Qué debo llevar al evento?</span>
-                      <span class="home-faq-icon" aria-hidden="true"></span>
-                    </button>
-                    <div class="home-faq-answer">
-                      <p>Deberás llevar una identificación oficial, tu comprobante de inscripción y, para la modalidad nocturna, una luz frontal o accesorio luminoso recomendado.</p>
-                    </div>
-                  </article>
-
-                  <article class="home-faq-item">
-                    <button class="home-faq-question" type="button" aria-expanded="false">
-                      <span>¿Dónde será la carrera?</span>
-                      <span class="home-faq-icon" aria-hidden="true"></span>
-                    </button>
-                    <div class="home-faq-answer">
-                      <p>La carrera se realizará en la Pista de Canotaje, CDMX. Te recomendamos llegar con anticipación para ubicar accesos y prepararte sin prisas.</p>
-                    </div>
-                  </article>
-
-                  <article class="home-faq-item">
-                    <button class="home-faq-question" type="button" aria-expanded="false">
-                      <span>¿Qué incluye mi inscripción?</span>
-                      <span class="home-faq-icon" aria-hidden="true"></span>
-                    </button>
-                    <div class="home-faq-answer">
-                      <p>Tu inscripción incluye acceso al evento, número de corredor, hidratación básica, medalla conmemorativa y acceso a resultados oficiales.</p>
-                    </div>
-                  </article>
-
-                  <article class="home-faq-item">
-                    <button class="home-faq-question" type="button" aria-expanded="false">
-                      <span>¿Qué distancias estarán disponibles?</span>
-                      <span class="home-faq-icon" aria-hidden="true"></span>
-                    </button>
-                    <div class="home-faq-answer">
-                      <p>Esta edición contará con 5K competitiva.</p>
-                    </div>
-                  </article>
-
-                  <article class="home-faq-item">
-                    <button class="home-faq-question" type="button" aria-expanded="false">
                       <span>¿Puedo participar si es mi primera carrera?</span>
                       <span class="home-faq-icon" aria-hidden="true"></span>
                     </button>
                     <div class="home-faq-answer">
-                      <p>Sí. La Axolote Night Run está pensada para corredores principiantes y participantes con experiencia. Solo elige la distancia adecuada para ti.</p>
+                      <p>Sí. El evento fue diseñado para recibir tanto a runners experimentados como a personas que quieren vivir su primera noche de carrera en un formato bien guiado.</p>
                     </div>
                   </article>
 
                   <article class="home-faq-item">
                     <button class="home-faq-question" type="button" aria-expanded="false">
-                      <span>¿A qué hora debo llegar?</span>
+                      <span>¿Cómo elijo entre 3K y 5K?</span>
                       <span class="home-faq-icon" aria-hidden="true"></span>
                     </button>
                     <div class="home-faq-answer">
-                      <p>Te recomendamos llegar al menos 60 minutos antes del arranque para recoger indicaciones, hacer calentamiento y evitar prisas.</p>
+                      <p>Seleccionas tu modalidad durante el proceso de registro. Ambas rutas comparten atmósfera y servicios, pero 5K incluye enfoque competitivo con cronometraje oficial.</p>
                     </div>
                   </article>
 
                   <article class="home-faq-item">
                     <button class="home-faq-question" type="button" aria-expanded="false">
-                      <span>¿Dónde podré ver mis resultados?</span>
+                      <span>¿La talla de playera se elige al pagar?</span>
                       <span class="home-faq-icon" aria-hidden="true"></span>
                     </button>
                     <div class="home-faq-answer">
-                      <p>Después del evento podrás consultar tus resultados desde la plataforma de Kinetic Hub o desde el enlace oficial que se comparta.</p>
+                      <p>Sí. Durante el checkout te pediremos correo y talla de playera disponible para apartar tu kit con la información correcta.</p>
                     </div>
                   </article>
 
                   <article class="home-faq-item">
                     <button class="home-faq-question" type="button" aria-expanded="false">
-                      <span>¿Habrá próximas ediciones?</span>
+                      <span>¿Hay guardarropa?</span>
                       <span class="home-faq-icon" aria-hidden="true"></span>
                     </button>
                     <div class="home-faq-answer">
-                      <p>Sí. Las próximas fechas se anunciarán al cierre de esta edición para mantener calidad operativa y una buena experiencia del corredor.</p>
+                      <p>Por ahora no contemplamos guardarropa en esta edición inaugural. Recomendamos llegar con lo esencial para moverte con facilidad antes y después de la salida.</p>
+                    </div>
+                  </article>
+
+                  <article class="home-faq-item">
+                    <button class="home-faq-question" type="button" aria-expanded="false">
+                      <span>¿Puedo transferir mi lugar a otra persona?</span>
+                      <span class="home-faq-icon" aria-hidden="true"></span>
+                    </button>
+                    <div class="home-faq-answer">
+                      <p>No. La inscripción es personal e intransferible por control operativo, asignación de kit y seguridad del evento.</p>
+                    </div>
+                  </article>
+
+                  <article class="home-faq-item">
+                    <button class="home-faq-question" type="button" aria-expanded="false">
+                      <span>¿Cuándo recibiré mi exoneración y confirmación?</span>
+                      <span class="home-faq-icon" aria-hidden="true"></span>
+                    </button>
+                    <div class="home-faq-answer">
+                      <p>Al completar el pago recibirás confirmación por correo. Ahí mismo te indicaremos siguientes pasos, kit y documentación necesaria para recoger tu paquete.</p>
+                    </div>
+                  </article>
+
+                  <article class="home-faq-item">
+                    <button class="home-faq-question" type="button" aria-expanded="false">
+                      <span>¿Los resultados estarán disponibles el mismo día?</span>
+                      <span class="home-faq-icon" aria-hidden="true"></span>
+                    </button>
+                    <div class="home-faq-answer">
+                      <p>Publicaremos resultados oficiales dentro de las 24 horas posteriores al evento y también los comunicaremos por nuestros canales oficiales.</p>
+                    </div>
+                  </article>
+
+                  <article class="home-faq-item">
+                    <button class="home-faq-question" type="button" aria-expanded="false">
+                      <span>¿Habrá fotos y contenido post evento?</span>
+                      <span class="home-faq-icon" aria-hidden="true"></span>
+                    </button>
+                    <div class="home-faq-answer">
+                      <p>Sí. Compartiremos galería y contenido oficial en redes durante los días posteriores para que revivas la edición y descargues tus momentos favoritos.</p>
+                    </div>
+                  </article>
+
+                  <article class="home-faq-item">
+                    <button class="home-faq-question" type="button" aria-expanded="false">
+                      <span>¿Qué pasa si se agota la etapa regular?</span>
+                      <span class="home-faq-icon" aria-hidden="true"></span>
+                    </button>
+                    <div class="home-faq-answer">
+                      <p>Si todavía hay aforo disponible, se abrirá automáticamente la etapa extemporánea con la tarifa final. Si el cupo se agota por completo, se cerrarán inscripciones.</p>
+                    </div>
+                  </article>
+
+                  <article class="home-faq-item">
+                    <button class="home-faq-question" type="button" aria-expanded="false">
+                      <span>¿Puedo resolver dudas antes de pagar?</span>
+                      <span class="home-faq-icon" aria-hidden="true"></span>
+                    </button>
+                    <div class="home-faq-answer">
+                      <p>Sí. Puedes escribirnos por WhatsApp o desde contacto para resolver logística, registro, métodos de pago y operación general antes de asegurar tu lugar.</p>
                     </div>
                   </article>
                 </div>
 
-
+                <article class="home-faq-cta">
+                  <div>
+                    <strong>¿Tienes otra duda antes de registrarte?</strong>
+                    <p>Te respondemos por WhatsApp para ayudarte a elegir modalidad, revisar pagos o resolver temas de logística.</p>
+                  </div>
+                  <a class="btn btn-primary" href="https://wa.me/525530790944?text=Hola%2C%20quiero%20informacion%20de%20Axolote%20Night%20Run" target="_blank" rel="noopener noreferrer">Hablar con el equipo</a>
+                </article>
               </div>
             </article>
 
-            <article class="ax-section-card reveal" style="background:linear-gradient(135deg,#08121d 0%,#0c1829 55%,#0d1f35 100%);border-color:rgba(0,208,132,0.2);box-shadow:0 24px 46px rgba(5,10,18,0.28),0 0 40px rgba(0,255,156,0.06);">
-              <div style="display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:20px;">
-                <div>
-                  <h2 style="margin:0 0 8px;font-family:'Sora',sans-serif;font-size:1.6rem;color:#ffffff;">¿Todavía tienes dudas?</h2>
-                  <p style="margin:0;color:#c4d8ee;max-width:50ch;line-height:1.65;">Escríbenos y te ayudamos a resolverlas antes de completar tu registro.</p>
+            <article class="ax-section-card reveal">
+              <div class="ax-section-heading">
+                <div class="ax-section-icon" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M5 12h14"></path>
+                    <path d="M12 5l7 7-7 7"></path>
+                  </svg>
                 </div>
-                <a class="btn btn-primary" href="https://wa.me/525530790944?text=Hola%2C%20quiero%20informacion%20de%20Axolote%20Night%20Run" target="_blank" rel="noopener noreferrer" style="white-space:nowrap;min-height:52px;padding:0 28px;font-size:1rem;">
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" style="margin-right:8px;flex-shrink:0;"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"></path></svg>
-                  Contactar a Kinetic Hub
-                </a>
+                <div>
+                  <h2 class="ax-section-title">Listo para correr la noche más divertida del año</h2>
+                  <p class="ax-section-copy">Axolote Night Run está diseñado para agotarse por etapas. Si quieres asegurar tarifa vigente y talla de playera, haz tu registro hoy.</p>
+                </div>
+              </div>
+              <div class="ax-register-actions" style="max-width: 420px; margin-top: 18px;">
+                <a class="btn btn-primary" href="#registro">Inscribirme ahora</a>
+                <a class="ax-register-secondary" href="https://wa.me/525530790944?text=Hola%2C%20quiero%20informacion%20de%20Axolote%20Night%20Run" target="_blank" rel="noopener noreferrer">Resolver dudas por WhatsApp</a>
               </div>
             </article>
           </div>
 
           <aside class="ax-event-sidebar">
             <article class="ax-register-card reveal" id="registro" data-event-register-panel data-register-variant="premium">
-              <p class="ax-register-kicker">Tu próxima carrera te espera</p>
-              <h2 id="eventRegisterTitle">Axolote Night Run 2026</h2>
-              <p class="ax-register-price-label">Precio desde</p>
-              <p class="ax-register-price"><small>$</small>480 <small style="font-size:1rem;color:#9eb8d3;">MXN</small></p>
-              <p class="ax-register-helper" id="eventRegisterText">Early Bird disponible hasta agotar existencias.</p>
+              <p class="ax-register-kicker">Registro premium</p>
+              <h2 id="eventRegisterTitle">Asegura tu lugar esta noche</h2>
+              <p class="ax-register-price-label">Etapa vigente</p>
+              <p class="ax-register-price"><small>$</small>550</p>
+              <p class="ax-register-helper" id="eventRegisterText">Reserva tu inscripción, elige tu talla de playera y recibe confirmación al instante.</p>
 
               <div class="ax-register-actions">
-                <a class="btn btn-primary" id="eventRegisterCta" href="checkout.html">Completar inscripción</a>
-                <a class="ax-register-secondary" href="#ax-flyer-lightbox">Ver flyer</a>
+                <a class="btn btn-primary" id="eventRegisterCta" href="checkout.html">Pagar inscripción</a>
+                <a class="ax-register-secondary" href="#ax-flyer-lightbox">Ver flyer oficial</a>
               </div>
 
               <ul class="ax-register-list">
                 <li>
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="4" width="18" height="18" rx="2"></rect><path d="M16 2v4M8 2v4M3 10h18"></path></svg>
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="8"></circle><path d="M12 8v4l3 2"></path></svg>
                   <div>
                     <strong>Fecha</strong>
                     <p class="ax-register-meta">31 octubre 2026</p>
@@ -1489,60 +1467,44 @@
                 <li>
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 21s6-5.33 6-11a6 6 0 1 0-12 0c0 5.67 6 11 6 11z"></path><circle cx="12" cy="10" r="2.5"></circle></svg>
                   <div>
-                    <strong>Lugar</strong>
-                    <p class="ax-register-meta">Pista de Canotaje, CDMX</p>
+                    <strong>Sede</strong>
+                    <p class="ax-register-meta">Pista de Canotaje, Ciudad de México</p>
                   </div>
                 </li>
                 <li>
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 12h16"></path><path d="M7 6h10"></path><path d="M7 18h10"></path></svg>
                   <div>
-                    <strong>Distancias</strong>
-                    <p class="ax-register-meta">5K Competitiva</p>
-                  </div>
-                </li>
-                <li>
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="8"></circle><path d="M12 8v4l3 2"></path></svg>
-                  <div>
-                    <strong>Inicio del evento</strong>
-                    <p class="ax-register-meta">18:00 h</p>
-                  </div>
-                </li>
-                <li>
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
-                  <div>
-                    <strong>Cupos</strong>
-                    <p class="ax-register-meta">Limitados</p>
+                    <strong>Modalidades</strong>
+                    <p class="ax-register-meta">3K recreativo y 5K competitivo</p>
                   </div>
                 </li>
               </ul>
 
               <ul class="ax-register-trust">
-                <li>
-                  <strong style="display:block;color:#b8ffe3;font-size:0.82rem;text-transform:uppercase;letter-spacing:.04em;">Registro seguro</strong>
-                  Tus datos estarán protegidos. Confirmación inmediata.
-                </li>
+                <li>Checkout seguro y confirmación inmediata por correo.</li>
+                <li>Selección de talla de playera integrada en el registro.</li>
+                <li>Comunicación oficial del evento directo a tu correo.</li>
               </ul>
-
-              <div style="margin-top:18px;padding-top:18px;border-top:1px solid rgba(255,255,255,0.08);">
-                <p style="margin:0 0 10px;color:#9eb8d3;font-size:0.78rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;">Comparte el evento</p>
-                <p style="margin:0 0 12px;color:#c8d8ea;font-size:0.88rem;">¡Corre con alguien! Comparte el link y comiencen juntos.</p>
-                <div style="display:flex;flex-wrap:wrap;gap:8px;">
-                  <a href="https://wa.me/?text=Inscríbete%20en%20Axolote%20Night%20Run%202026%20-%20https://www.kinetichub.com.mx/axolote-night-run.html" target="_blank" rel="noopener noreferrer" style="display:inline-flex;align-items:center;gap:6px;min-height:36px;padding:0 14px;border-radius:10px;border:1px solid rgba(37,211,102,0.35);background:rgba(37,211,102,0.08);color:#25d266;text-decoration:none;font-size:0.84rem;font-weight:700;">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"></path></svg>
-                    WhatsApp
-                  </a>
-                  <a href="https://www.facebook.com/sharer/sharer.php?u=https://www.kinetichub.com.mx/axolote-night-run.html" target="_blank" rel="noopener noreferrer" style="display:inline-flex;align-items:center;gap:6px;min-height:36px;padding:0 14px;border-radius:10px;border:1px solid rgba(24,119,242,0.35);background:rgba(24,119,242,0.08);color:#5b9cf6;text-decoration:none;font-size:0.84rem;font-weight:700;">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"></path></svg>
-                    Facebook
-                  </a>
-                  <button type="button" onclick="navigator.clipboard?.writeText(window.location.href).then(()=>{this.textContent='¡Copiado!';setTimeout(()=>{this.textContent='Copiar enlace'},2000)})" style="display:inline-flex;align-items:center;gap:6px;min-height:36px;padding:0 14px;border-radius:10px;border:1px solid rgba(155,176,203,0.3);background:rgba(255,255,255,0.04);color:#c2d4e6;font-size:0.84rem;font-weight:700;cursor:pointer;">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg>
-                    Copiar enlace
-                  </button>
-                </div>
-              </div>
             </article>
 
+            <article class="ax-side-note reveal">
+              <h3>Organiza tu llegada</h3>
+              <p>La sede estará preparada para operación nocturna. Te recomendamos llegar con al menos 60 minutos de anticipación para estacionamiento, activaciones y foto de salida.</p>
+            </article>
+
+            <article class="ax-side-note reveal">
+              <h3>¿Necesitas ayuda?</h3>
+              <p>Escríbenos a contacto@kinetichub.mx o por WhatsApp al 5530790944. También puedes abrir conversación directa desde <a class="ax-side-inline-link" href="https://wa.me/525530790944?text=Hola%2C%20quiero%20informacion%20de%20Axolote%20Night%20Run" target="_blank" rel="noopener noreferrer">este enlace</a>.</p>
+            </article>
+
+            <article class="ax-side-note reveal">
+              <h3>Compártelo con tu crew</h3>
+              <p>Si vas a correr con amigos, comparte la landing y armen su noche desde ahora.</p>
+              <div class="ax-side-share">
+                <a class="btn btn-small" href="https://www.instagram.com/kinetic.hub" target="_blank" rel="noopener noreferrer">Instagram</a>
+                <a class="btn btn-small" href="https://www.facebook.com/profile.php?id=100065314880446" target="_blank" rel="noopener noreferrer">Facebook</a>
+              </div>
+            </article>
           </aside>
         </div>
       </section>
@@ -1561,7 +1523,7 @@
               </div>
               <div class="ax-related-body">
                 <h3>Urban Pulse 10K</h3>
-                <p>CDMX · 14 junio 2026</p>
+                <p>CDMX · Ruta urbana con pacing, música y salida matutina.</p>
                 <a class="ax-related-cta" href="contacto.html">Notifícame</a>
               </div>
             </article>
@@ -1571,8 +1533,8 @@
                 <span class="ax-related-badge">Próximamente</span>
               </div>
               <div class="ax-related-body">
-                <h3>Trail Experience City</h3>
-                <p>Monterrey · 19 julio 2026</p>
+                <h3>Tri Experience City</h3>
+                <p>Monterrey · Experiencia híbrida para atletas que quieren un nuevo reto.</p>
                 <a class="ax-related-cta" href="contacto.html">Notifícame</a>
               </div>
             </article>
@@ -1583,7 +1545,7 @@
               </div>
               <div class="ax-related-body">
                 <h3>Trail Desafío Norte</h3>
-                <p>Saltillo · 26 julio 2026</p>
+                <p>Saltillo · Ruta técnica, paisaje abierto y desafío de montaña.</p>
                 <a class="ax-related-cta" href="contacto.html">Notifícame</a>
               </div>
             </article>
@@ -1593,8 +1555,8 @@
                 <span class="ax-related-badge">Próximamente</span>
               </div>
               <div class="ax-related-body">
-                <h3>Sunset Run 5K</h3>
-                <p>Guadalajara · 10 agosto 2026</p>
+                <h3>Sunset Social Run</h3>
+                <p>Guadalajara · Un formato social con visuales, comunidad y cierre al atardecer.</p>
                 <a class="ax-related-cta" href="contacto.html">Notifícame</a>
               </div>
             </article>
@@ -1607,38 +1569,6 @@
         <div class="ax-lightbox-content">
           <a class="ax-lightbox-close" href="#" aria-label="Cerrar">Cerrar</a>
           <img src="PosteroficialAxolote.jpeg" alt="Flyer oficial Axolote Night Run en tamaño completo" loading="lazy" />
-        </div>
-      </div>
-
-      <div class="ax-lightbox" id="ax-playera-lightbox" aria-modal="true" role="dialog" aria-label="Playera oficial Axolote Night Run">
-        <a class="ax-lightbox-backdrop" href="#" aria-label="Cerrar"></a>
-        <div class="ax-lightbox-content">
-          <a class="ax-lightbox-close" href="#" aria-label="Cerrar">Cerrar</a>
-          <img src="playeras.jpeg" alt="Playeras oficiales Axolote Night Run en tamaño completo" loading="lazy" />
-        </div>
-      </div>
-
-      <div class="ax-lightbox" id="ax-imagen-lightbox" aria-modal="true" role="dialog" aria-label="Imagen oficial Axolote Night Run">
-        <a class="ax-lightbox-backdrop" href="#" aria-label="Cerrar"></a>
-        <div class="ax-lightbox-content">
-          <a class="ax-lightbox-close" href="#" aria-label="Cerrar">Cerrar</a>
-          <img src="axo_oficial.png" alt="Axolote oficial del evento en tamaño completo" loading="lazy" />
-        </div>
-      </div>
-
-      <div class="ax-lightbox" id="ax-axo3d-lightbox" aria-modal="true" role="dialog" aria-label="Axolote 3D oficial">
-        <a class="ax-lightbox-backdrop" href="#" aria-label="Cerrar"></a>
-        <div class="ax-lightbox-content">
-          <a class="ax-lightbox-close" href="#" aria-label="Cerrar">Cerrar</a>
-          <img src="axo3d_oficial.png" alt="Axolote 3D oficial del evento en tamaño completo" loading="lazy" />
-        </div>
-      </div>
-
-      <div class="ax-lightbox" id="ax-alterno-lightbox" aria-modal="true" role="dialog" aria-label="Flyer alternativo Axolote Night Run">
-        <a class="ax-lightbox-backdrop" href="#" aria-label="Cerrar"></a>
-        <div class="ax-lightbox-content">
-          <a class="ax-lightbox-close" href="#" aria-label="Cerrar">Cerrar</a>
-          <img src="fyler_act1.jpeg" alt="Flyer alternativo Axolote Night Run en tamaño completo" loading="lazy" />
         </div>
       </div>
     </main>
