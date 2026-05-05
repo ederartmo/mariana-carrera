@@ -1256,8 +1256,28 @@ function setupEventDetailAccordions() {
     if (!title) return;
 
     const panelName = normalize(title.textContent);
+    const isFaqPanel = panelName === "faqs";
     const shouldStayOpen = keepExpanded.has(panelName);
     const contentNodes = Array.from(panel.children).filter((node) => node !== title);
+
+    let contentWrapper = panel.querySelector(":scope > .event-panel-body");
+    if (!contentWrapper) {
+      contentWrapper = document.createElement("div");
+      contentWrapper.className = "event-panel-body";
+      contentNodes.forEach((node) => {
+        contentWrapper.appendChild(node);
+      });
+      panel.appendChild(contentWrapper);
+    }
+
+    if (isFaqPanel) {
+      panel.classList.remove("is-collapsible", "is-open");
+      title.removeAttribute("role");
+      title.removeAttribute("tabindex");
+      title.removeAttribute("aria-expanded");
+      contentWrapper.hidden = false;
+      return;
+    }
 
     panel.classList.add("is-collapsible");
     panel.classList.toggle("is-open", shouldStayOpen);
@@ -1265,18 +1285,13 @@ function setupEventDetailAccordions() {
     title.setAttribute("role", "button");
     title.setAttribute("tabindex", "0");
     title.setAttribute("aria-expanded", String(shouldStayOpen));
-
-    contentNodes.forEach((node) => {
-      node.hidden = !shouldStayOpen;
-    });
+    contentWrapper.hidden = !shouldStayOpen;
 
     const togglePanel = () => {
       const nextOpen = !panel.classList.contains("is-open");
       panel.classList.toggle("is-open", nextOpen);
       title.setAttribute("aria-expanded", String(nextOpen));
-      contentNodes.forEach((node) => {
-        node.hidden = !nextOpen;
-      });
+      contentWrapper.hidden = !nextOpen;
     };
 
     title.addEventListener("click", togglePanel);
@@ -1315,6 +1330,41 @@ function setupEventDetailAccordions() {
         event.preventDefault();
         toggleFaq();
       }
+    });
+  });
+}
+
+function setupHomeFaqAccordion() {
+  const faqRoot = document.querySelector(".home-faq");
+  if (!faqRoot) return;
+
+  const faqItems = Array.from(faqRoot.querySelectorAll(".home-faq-item"));
+  if (!faqItems.length) return;
+
+  const setItemState = (item, isOpen) => {
+    const trigger = item.querySelector(".home-faq-question");
+    const panel = item.querySelector(".home-faq-answer");
+    if (!trigger || !panel) return;
+
+    item.classList.toggle("is-open", isOpen);
+    trigger.setAttribute("aria-expanded", String(isOpen));
+    panel.setAttribute("aria-hidden", String(!isOpen));
+  };
+
+  faqItems.forEach((item, index) => {
+    const trigger = item.querySelector(".home-faq-question");
+    if (!trigger) return;
+
+    setItemState(item, index === 0);
+
+    trigger.addEventListener("click", () => {
+      const willOpen = !item.classList.contains("is-open");
+
+      faqItems.forEach((entry) => {
+        setItemState(entry, false);
+      });
+
+      setItemState(item, willOpen);
     });
   });
 }
@@ -1611,6 +1661,7 @@ function setupEventRegistrationPanel() {
   const title = document.getElementById("eventRegisterTitle");
   const text = document.getElementById("eventRegisterText");
   const cta = document.getElementById("eventRegisterCta");
+  const isPremiumVariant = panel.getAttribute("data-register-variant") === "premium";
   const checkoutHref = "checkout.html";
   const authHref = `auth.html?mode=register&returnTo=${encodeURIComponent(`/${checkoutHref}`)}`;
 
@@ -1618,16 +1669,24 @@ function setupEventRegistrationPanel() {
     if (!title || !text || !cta) return;
 
     if (isLoggedIn) {
-      title.textContent = "Continuar registro";
-      text.textContent = "Ya iniciaste sesión. Continúa al checkout para asegurar tu lugar en Axolote Night Run.";
+      if (!isPremiumVariant) {
+        title.textContent = "Continuar registro";
+      }
+      text.textContent = isPremiumVariant
+        ? "Ya iniciaste sesión. Continúa al checkout para asegurar tu lugar en Axolote Night Run."
+        : "Ya iniciaste sesión. Continúa al checkout para asegurar tu lugar en Axolote Night Run.";
       cta.textContent = "Completar inscripción";
       cta.href = checkoutHref;
       return;
     }
 
-    title.textContent = "Regístrate para asegurar tu lugar";
-    text.textContent = "Crea tu cuenta o inicia sesión para continuar con tu inscripción y pago.";
-    cta.textContent = "Iniciar sesión o registrarme";
+    if (!isPremiumVariant) {
+      title.textContent = "Regístrate para asegurar tu lugar";
+    }
+    text.textContent = isPremiumVariant
+      ? "Crea tu cuenta o inicia sesión para continuar con tu inscripción y pago de forma segura."
+      : "Crea tu cuenta o inicia sesión para continuar con tu inscripción y pago.";
+    cta.textContent = isPremiumVariant ? "Completar inscripción" : "Iniciar sesión o registrarme";
     cta.href = authHref;
   };
 
@@ -2279,12 +2338,43 @@ function setupSupabase() {
     const profileRoot = document.querySelector("[data-profile-page]");
     if (profileRoot) {
       client.auth.getSession().then(async ({ data: { session } }) => {
+        const CHECKOUT_EMAIL_KEY = "kinetic_checkout_email";
+        const profileCurrentUrl = new URL(window.location.href);
+        const expectedEmailParam = (profileCurrentUrl.searchParams.get("checkoutEmail") || "")
+          .toLowerCase()
+          .trim();
+        const expectedEmailStorage = (localStorage.getItem(CHECKOUT_EMAIL_KEY) || "")
+          .toLowerCase()
+          .trim();
+        const expectedCheckoutEmail = expectedEmailParam || expectedEmailStorage;
+
         if (!session) {
+          if (expectedCheckoutEmail) {
+            const returnTo = `/perfil.html?race=axolote&paid=1&checkoutEmail=${encodeURIComponent(expectedCheckoutEmail)}`;
+            const loginUrl = `auth.html?mode=login&email=${encodeURIComponent(expectedCheckoutEmail)}&returnTo=${encodeURIComponent(returnTo)}`;
+            window.location.replace(loginUrl);
+            return;
+          }
+
           window.location.replace("auth.html?mode=login");
           return;
         }
 
         const user = session.user;
+        const sessionEmail = (user.email || "").toLowerCase().trim();
+
+        if (expectedCheckoutEmail && sessionEmail && expectedCheckoutEmail !== sessionEmail) {
+          await client.auth.signOut();
+          const returnTo = `/perfil.html?race=axolote&paid=1&checkoutEmail=${encodeURIComponent(expectedCheckoutEmail)}`;
+          const loginUrl = `auth.html?mode=login&email=${encodeURIComponent(expectedCheckoutEmail)}&returnTo=${encodeURIComponent(returnTo)}`;
+          window.location.replace(loginUrl);
+          return;
+        }
+
+        if (expectedCheckoutEmail && sessionEmail === expectedCheckoutEmail) {
+          localStorage.removeItem(CHECKOUT_EMAIL_KEY);
+        }
+
         const meta = user.user_metadata || {};
 
         const usernameEl = document.querySelector(".profile-username");
@@ -3095,6 +3185,7 @@ function setupSupabase() {
           localStorage.removeItem(AXOLOTE_POST_VERIFY_PROMPT_KEY);
           profileUrl.searchParams.delete("race");
           profileUrl.searchParams.delete("paid");
+          profileUrl.searchParams.delete("checkoutEmail");
           window.history.replaceState({}, "", profileUrl.pathname + profileUrl.search + profileUrl.hash);
         }
 
@@ -3102,6 +3193,7 @@ function setupSupabase() {
           writePaymentState("pending");
           profileUrl.searchParams.delete("race");
           profileUrl.searchParams.delete("paid");
+          profileUrl.searchParams.delete("checkoutEmail");
           window.history.replaceState({}, "", profileUrl.pathname + profileUrl.search + profileUrl.hash);
         }
 
@@ -3252,26 +3344,12 @@ function setupSupabase() {
             <div class="modal-overlay" id="legalDocumentsModal" style="display: flex !important; z-index: 100000;  ">
               <div class="modal-dialog modal-dialog-gallery modal-special-dialog" role="dialog" aria-modal="true" aria-labelledby="legalModalTitle"  >
                 <button class="modal-close" type="button" aria-label="Cerrar" data-modal-close>×</button>
-                <h3 id="legalModalTitle">Documentos del Evento</h3>
-                <p id="legalModalParagraf">Debe descargar todas las exoneraciones y traerlas firmadas al evento</p>
+                <h3 id="legalModalTitle">Documento del Evento</h3>
+                <p id="legalModalParagraf">Debe descargar la exoneración oficial y traerla firmada al evento</p>
                 <div class="modal-gallery" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px;">
                 <section style="display:flex;justify-content:center;align-items:center;flex-direction:column;">
-                    <img src="exo.jpeg" alt="Documento legal página 1" style="width:100%; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.2);">
-                    <a href="exo.jpeg" download class="btn"
-                    style="display: inline-block; margin: 8px 8px 8px 0; background: #19c88b; color: white; padding: 10px 20px; border-radius: 999px; text-decoration: none;">
-          📄          Descargar - Exoneración
-                  </a>
-                  </section>
-                  <section style="display:flex;justify-content:center;align-items:center;flex-direction:column;">
-                    <img src="exo.jpeg" alt="Documento legal página 1" style="width:100%; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.2);">
-                    <a href="exo1.jpeg" download class="btn"
-                    style="display: inline-block; margin: 8px 8px 8px 0; background: #19c88b; color: white; padding: 10px 20px; border-radius: 999px; text-decoration: none;">
-          📄          Descargar - Exoneración
-                  </a>
-                  </section>
-                  <section style="display:flex;justify-content:center;align-items:center;flex-direction:column;">
                     <img src="exo3.jpeg" alt="Documento legal página 1" style="width:100%; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.2);">
-                    <a href="exo.jpeg" download class="btn"
+                    <a href="exo3.jpeg" download class="btn"
                     style="display: inline-block; margin: 8px 8px 8px 0; background: #19c88b; color: white; padding: 10px 20px; border-radius: 999px; text-decoration: none;">
           📄          Descargar - Exoneración
                   </a>
@@ -3728,15 +3806,20 @@ function setupCheckoutForm() {
   const form = document.getElementById("checkoutForm");
   if (!form) return;
 
+  const CHECKOUT_EMAIL_KEY = "kinetic_checkout_email";
+
   form.addEventListener("submit", async (e) => {
     e.preventDefault();
 
     const emailInput = document.getElementById("userEmail");
+    const shirtSizeInput = document.getElementById("shirtSize");
     const email = emailInput?.value.trim();
+    const normalizedEmail = (email || "").toLowerCase().trim();
+    const shirtSize = shirtSizeInput?.value.trim().toUpperCase();
     const termsCheck = document.getElementById("termsCheck")?.checked;
 
-    if (!email || !termsCheck) {
-      alert("Por favor ingresa tu correo y acepta los términos.");
+    if (!email || !shirtSize || !termsCheck) {
+      alert("Por favor ingresa tu correo, selecciona talla y acepta los términos.");
       return;
     }
 
@@ -3749,7 +3832,7 @@ function setupCheckoutForm() {
       const response = await fetch("/api/create-checkout-session", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email }),
+        body: JSON.stringify({ email, shirtSize }),
       });
 
       // Leer la respuesta como texto primero para depurar
@@ -3771,6 +3854,9 @@ function setupCheckoutForm() {
 
       // Éxito → redirigir a Stripe
       if (data.url) {
+        if (normalizedEmail) {
+          localStorage.setItem(CHECKOUT_EMAIL_KEY, normalizedEmail);
+        }
         window.location.href = data.url;
       } else {
         alert("No se recibió la URL de pago.");
@@ -3895,6 +3981,7 @@ setupHeroPosterSizing();
 setupRegisterScrollLed();
 setupEventModals();
 setupEventDetailAccordions();
+setupHomeFaqAccordion();
 setupNeonCardGlow();
 setupNeonEventToggle();
 setupWhatsAppButton();
@@ -3908,165 +3995,3 @@ setupCheckoutForm();
 
 // NUEVA LLAMADA
 setupEventBuyButtons();
-
-// ====================== CHECKLIST: ESTADO DE TARJETA "REALIZA TU PAGO" ======================
-async function setupChecklistPaymentCard() {
-  const card = document.getElementById("cl-card-payment");
-  if (!card) return; // Solo aplica en index.html
-
-  // Esperar a que Supabase esté disponible
-  if (typeof window.supabase === "undefined") {
-    await new Promise(resolve => setTimeout(resolve, 800));
-  }
-  if (typeof window.supabase === "undefined") return;
-
-  try {
-    const hasPaid = await checkIfUserHasPaid();
-    if (!hasPaid) return; // Mantener estado Pendiente
-
-    // ─── Actualizar tarjeta a estado "Completado" ───
-    const numEl = card.querySelector(".cl-num");
-    if (numEl) numEl.classList.replace("cl-num-orange", "cl-num-green");
-
-    const badgeEl = card.querySelector(".cl-badge");
-    if (badgeEl) {
-      badgeEl.classList.replace("cl-badge-orange", "cl-badge-green");
-      badgeEl.innerHTML = `
-        <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="#198754" stroke-width="2.5">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
-        </svg>
-        Completado`;
-    }
-
-    const iconEl = card.querySelector(".cl-icon");
-    if (iconEl) {
-      iconEl.classList.replace("cl-icon-orange", "cl-icon-green");
-      const svg = iconEl.querySelector("svg");
-      if (svg) svg.setAttribute("stroke", "#10895B");
-    }
-
-    const btnEl = card.querySelector(".cl-btn");
-    if (btnEl) {
-      btnEl.classList.replace("cl-btn-orange", "cl-btn-done");
-      btnEl.textContent = "\u2713 Pago Completado";
-      btnEl.href = "perfil.html";
-    }
-
-  } catch (err) {
-    console.warn("Error en setupChecklistPaymentCard:", err);
-  }
-}
-
-setupChecklistPaymentCard();
-
-// ====================== CHECKLIST: ESTADO DE TARJETA "COMPLETA TU PERFIL" ======================
-async function setupChecklistProfileCard() {
-  const card = document.getElementById("cl-card-profile");
-  if (!card) return; // Solo aplica en index.html
-
-  // Esperar a que Supabase esté disponible
-  if (typeof window.supabase === "undefined") {
-    await new Promise(resolve => setTimeout(resolve, 800));
-  }
-  if (typeof window.supabase === "undefined") return;
-
-  try {
-    const client = window.supabase.createClient(
-      "https://uycwzhlcnfijjyzkgkem.supabase.co",
-      "sb_publishable_IKwD3YtQwWzzEtE8QkVagA_OJGdV2e4"
-    );
-
-    const { data: { session } } = await client.auth.getSession();
-    if (!session?.user?.id) return; // No hay sesión activa
-
-    const { data, error } = await client
-      .from("user_profiles")
-      .select("emergency_name,emergency_phone,emergency_relation,emergency_email")
-      .eq("user_id", session.user.id)
-      .maybeSingle();
-
-    if (error) {
-      console.warn("Error al verificar perfil para checklist:", error);
-      return;
-    }
-
-    const contact = emergencyContactFromProfile(data || {});
-    if (!hasCompleteEmergencyContact(contact)) return; // Aún incompleto
-
-    // ─── Actualizar tarjeta a estado "Completado" ───
-    // Número
-    const numEl = card.querySelector(".cl-num");
-    if (numEl) {
-      numEl.classList.replace("cl-num-orange", "cl-num-green");
-    }
-
-    // Badge
-    const badgeEl = card.querySelector(".cl-badge");
-    if (badgeEl) {
-      badgeEl.classList.replace("cl-badge-orange", "cl-badge-green");
-      badgeEl.innerHTML = `
-        <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="#198754" stroke-width="2.5">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
-        </svg>
-        Completado`;
-    }
-
-    // Ícono de la tarjeta
-    const iconEl = card.querySelector(".cl-icon");
-    if (iconEl) {
-      iconEl.classList.replace("cl-icon-orange", "cl-icon-green");
-      const svg = iconEl.querySelector("svg");
-      if (svg) svg.setAttribute("stroke", "#10895B");
-    }
-
-    // Botón
-    const btnEl = card.querySelector(".cl-btn");
-    if (btnEl) {
-      btnEl.classList.replace("cl-btn-orange", "cl-btn-done");
-      btnEl.textContent = "✓ Perfil Completado";
-    }
-
-  } catch (err) {
-    console.warn("Error en setupChecklistProfileCard:", err);
-  }
-}
-
-setupChecklistProfileCard();
-
-// ====================== TIPS: REPRODUCIR VIDEO AL HACER HOVER ======================
-(function setupTipsHoverPlay() {
-  let activeCard = null;
-
-  document.querySelectorAll(".tips-card").forEach(card => {
-    card.addEventListener("mouseenter", () => {
-      // Quitar iframe de la tarjeta activa anterior
-      if (activeCard && activeCard !== card) {
-        const oldIframe = activeCard.querySelector(".tips-card-media > iframe");
-        if (oldIframe) oldIframe.remove();
-        activeCard.classList.remove("is-playing");
-      }
-
-      const media = card.querySelector(".tips-card-media");
-      if (!media || media.querySelector("iframe")) return;
-
-      const cfId = card.dataset.cfId;
-      if (!cfId) return;
-
-      const iframe = document.createElement("iframe");
-      iframe.src = `https://iframe.videodelivery.net/${cfId}?autoplay=true&muted=true&loop=true&controls=false&preload=auto`;
-      iframe.allow = "accelerometer; gyroscope; autoplay; encrypted-media; picture-in-picture;";
-      iframe.allowFullscreen = true;
-      media.prepend(iframe);
-      card.classList.add("is-playing");
-
-      activeCard = card;
-    });
-
-    card.addEventListener("mouseleave", () => {
-      const iframe = card.querySelector(".tips-card-media > iframe");
-      if (iframe) iframe.remove();
-      card.classList.remove("is-playing");
-      if (activeCard === card) activeCard = null;
-    });
-  });
-})();

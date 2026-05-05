@@ -1,5 +1,11 @@
 // api/create-checkout-session.js - Versión temporal SOLO STRIPE (funciona)
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
+const { createClient } = require('@supabase/supabase-js');
+
+const supabase = createClient(
+  process.env.SUPABASE_URL,
+  process.env.SUPABASE_SERVICE_ROLE_KEY
+);
 
 function getPriceId() {
   const now = new Date();
@@ -30,7 +36,8 @@ module.exports = async function handler(req, res) {
   }
 
   try {
-    const { email } = req.body;
+    const { email, shirtSize } = req.body;
+    const normalizedShirtSize = String(shirtSize || '').trim().toUpperCase();
 
     if (!email || typeof email !== 'string' || !email.includes('@')) {
       return res.status(400).json({ 
@@ -38,8 +45,35 @@ module.exports = async function handler(req, res) {
       });
     }
 
+    if (!['S', 'M', 'L'].includes(normalizedShirtSize)) {
+      return res.status(400).json({
+        error: 'Selecciona una talla de playera válida (S, M o L).'
+      });
+    }
+
     const cleanEmail = email.toLowerCase().trim();
     console.log(`🔄 Checkout para: ${cleanEmail}`);
+
+    const { data: existingRegistration, error: existingRegistrationError } = await supabase
+      .from('inscripciones')
+      .select('id')
+      .eq('event_slug', 'axolote-night-run')
+      .eq('email', cleanEmail)
+      .eq('payment_status', 'paid')
+      .limit(1);
+
+    if (existingRegistrationError) {
+      console.error('❌ Error validando inscripción existente:', existingRegistrationError);
+      return res.status(500).json({
+        error: 'No se pudo validar tu inscripción actual. Inténtalo de nuevo.'
+      });
+    }
+
+    if (existingRegistration && existingRegistration.length > 0) {
+      return res.status(409).json({
+        error: 'Este correo ya tiene una inscripción pagada para este evento.'
+      });
+    }
 
     const priceId = getPriceId();
     if (!priceId) {
@@ -52,13 +86,14 @@ module.exports = async function handler(req, res) {
       payment_method_types: ['card'],
       mode: 'payment',
       allow_promotion_codes: true,
-      customer_email: email,
+      customer_email: cleanEmail,
       line_items: [{ price: priceId, quantity: 1 }],
       success_url: 'https://www.kinetichub.com.mx/succes.html?session_id={CHECKOUT_SESSION_ID}',
       cancel_url: 'https://www.kinetichub.com.mx/checkout.html',
       metadata: {
         event_slug: 'axolote-night-run',
-        user_email: cleanEmail
+        user_email: cleanEmail,
+        shirt_size: normalizedShirtSize
       }
     });
 
