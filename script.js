@@ -73,7 +73,6 @@ async function checkIfUserHasPaid() {
     }
 
     const isPaid = (data?.payment_status || "").toLowerCase().trim() === "paid";
-    console.log("✅ checkIfUserHasPaid() →", isPaid, "| email:", email);
 
     return isPaid;
 
@@ -82,33 +81,6 @@ async function checkIfUserHasPaid() {
     return false;
   }
 }
-// function setupActiveNavLink() {
-//   const nav = document.getElementById("siteNav");
-//   if (!nav) return;
-
-//   const links = Array.from(nav.querySelectorAll("a[href]"));
-//   if (!links.length) return;
-
-//   const currentPath = window.location.pathname.split("/").pop() || "index.html";
-//   links.forEach((link) => {
-//     const linkPath = (link.getAttribute("href") || "").split("#")[0];
-//     const isHome = currentPath === "" || currentPath === "index.html";
-//     const shouldActivate = linkPath === currentPath || (isHome && linkPath === "index.html");
-
-//     if (shouldActivate) {
-//       link.classList.add("is-active");
-//       link.setAttribute("aria-current", "page");
-//     }
-//   });
-
-//   if (!nav.querySelector(".nav-mobile-cta")) {
-//     const cta = document.createElement("a");
-//     cta.href = "auth.html?mode=register";
-//     cta.className = "nav-mobile-cta";
-//     cta.textContent = "Registrarse";
-//     nav.appendChild(cta);
-//   }
-// }
 function setupActiveNavLink() {
   const nav = document.getElementById("siteNav");
   if (!nav) return;
@@ -213,13 +185,10 @@ function setupActiveNavLink() {
 
 // ====================== OCULTAR BOTONES DE COMPRA SI YA PAGÓ ======================
 async function setupEventBuyButtons() {
-  console.log("🔄 setupEventBuyButtons iniciado...");
-
   // Esperar un poco a que Supabase se inicialice
   await new Promise(resolve => setTimeout(resolve, 800));
 
   const hasPaid = await checkIfUserHasPaid();
-  console.log("¿Usuario ya pagó la inscripción?", hasPaid);
 
   if (!hasPaid) return; // Si no pagó, no hacemos nada
 
@@ -234,7 +203,6 @@ async function setupEventBuyButtons() {
   buySelectors.forEach(selector => {
     document.querySelectorAll(selector).forEach(el => {
       el.style.display = "none";
-      console.log("Botón ocultado:", el.textContent || el.href);
     });
   });
 
@@ -1155,6 +1123,24 @@ function setupAuthPage() {
     showGlobalStatus("Correo confirmado correctamente. Te estamos enviando a tu perfil...");
   }
 
+  if (statusParam === "password-reset-sent") {
+    activateMode("login");
+    showGlobalStatus("Te enviamos un enlace para restablecer tu contraseña. Revisa tu correo.");
+    if (emailParam && loginEmailInput) {
+      loginEmailInput.value = emailParam;
+    }
+  }
+
+  if (statusParam === "password-updated") {
+    activateMode("login");
+    showGlobalStatus("Tu contraseña se actualizó correctamente. Ya puedes iniciar sesión.");
+  }
+
+  if (statusParam === "recovery") {
+    activateMode("login");
+    showGlobalStatus("Valida tu nueva contraseña para completar la recuperación.");
+  }
+
   const rememberedEmail = sessionStorage.getItem(LAST_LOGIN_EMAIL_KEY);
   if (initialMode === "login" && rememberedEmail && loginEmailInput && !emailParam) {
     window.setTimeout(() => {
@@ -1576,8 +1562,6 @@ async function updateProfileBibNumberUI(client, user) {
       if (el) el.textContent = bibNumber;
     });
 
-    console.log(`📍 Bib number mostrado en UI: ${bibNumber}`);
-
   } catch (err) {
     console.warn("No se pudo actualizar bib_number en UI:", err);
   }
@@ -1592,11 +1576,8 @@ async function setupProfilePage() {
     const user = session?.user;
 
     if (!user) {
-      console.log("Usuario no logueado en perfil");
       return;
     }
-
-    console.log("✅ Usuario logueado en perfil:", user.email);
 
     // ====================== SINCRONIZACIÓN DEL BIB_NUMBER ======================
     await syncBibNumberToProfile(client, user);
@@ -1616,8 +1597,6 @@ async function setupProfilePage() {
         panels.forEach((p) => p.classList.toggle("is-active", p.getAttribute("data-section") === section));
       });
     });
-
-    console.log("✅ setupProfilePage completado correctamente");
 
   } catch (error) {
     console.error("Error en setupProfilePage:", error);
@@ -1985,8 +1964,10 @@ function setupSupabase() {
     const authRoot = document.querySelector("[data-auth-page]");
     if (authRoot) {
       const searchParams = new URLSearchParams(window.location.search);
+      const statusParam = searchParams.get("status");
       const hashParams = new URLSearchParams(window.location.hash.replace(/^#/, ""));
       const hasSignupCallback = hashParams.get("type") === "signup" && hashParams.has("access_token");
+      const hasRecoveryCallback = hashParams.get("type") === "recovery" && hashParams.has("access_token");
 
       client.auth.getSession().then(async ({ data: { session } }) => {
         if (!session) return;
@@ -1995,6 +1976,10 @@ function setupSupabase() {
           // Redirigir directamente después de confirmación
           localStorage.removeItem(AXOLOTE_POST_VERIFY_PROMPT_KEY);
           window.location.replace(consumeReturnTarget());
+          return;
+        }
+
+        if (hasRecoveryCallback) {
           return;
         }
 
@@ -2061,6 +2046,10 @@ function setupSupabase() {
       client.auth.getSession().then(async ({ data: { session } }) => {
         if (!session) return;
 
+        if (hasRecoveryCallback) {
+          return;
+        }
+
         if (hasSignupCallback) {
           const url = new URL(window.location.href);
           url.hash = "";
@@ -2110,7 +2099,115 @@ function setupSupabase() {
       });
 
       // Login con email + contraseña
+      const loginEmailInput = document.getElementById("loginEmail");
       const loginForm = document.getElementById("loginForm");
+      const forgotPasswordBtn = document.getElementById("forgotPasswordBtn");
+      const resetPasswordSection = document.getElementById("resetPasswordSection");
+      const resetPasswordForm = document.getElementById("resetPasswordForm");
+      const resetPasswordInput = document.getElementById("resetPassword");
+      const resetPasswordConfirmInput = document.getElementById("resetPasswordConfirm");
+      const resetPasswordStatus = document.getElementById("resetPasswordStatus");
+      const cancelResetPasswordBtn = document.getElementById("cancelResetPasswordBtn");
+
+      const setResetStatus = (message, isError = false) => {
+        if (!resetPasswordStatus) return;
+        resetPasswordStatus.textContent = message || "";
+        resetPasswordStatus.classList.toggle("is-error", isError);
+      };
+
+      const isStrongPassword = (password) => {
+        if (typeof password !== "string") return false;
+        return password.length >= 8 && /[A-Za-z]/.test(password) && /\d/.test(password);
+      };
+
+      const showResetPasswordFlow = () => {
+        if (loginForm) {
+          loginForm.hidden = true;
+        }
+        if (resetPasswordSection) {
+          resetPasswordSection.hidden = false;
+        }
+        setResetStatus("");
+        resetPasswordInput?.focus();
+      };
+
+      if (hasRecoveryCallback) {
+        showResetPasswordFlow();
+      }
+
+      if (forgotPasswordBtn) {
+        forgotPasswordBtn.addEventListener("click", async () => {
+          if (!loginEmailInput) return;
+
+          const email = loginEmailInput.value.trim();
+          if (!email || !loginEmailInput.checkValidity()) {
+            loginEmailInput.reportValidity();
+            return;
+          }
+
+          forgotPasswordBtn.disabled = true;
+
+          const { error } = await client.auth.resetPasswordForEmail(email, {
+            redirectTo: `${SITE}/auth.html?mode=login&status=recovery`,
+          });
+
+          forgotPasswordBtn.disabled = false;
+
+          if (error) {
+            alert(error.message || "No se pudo enviar el correo de recuperación.");
+            return;
+          }
+
+          const sentUrl = new URL(`${SITE}/auth.html`);
+          sentUrl.searchParams.set("mode", "login");
+          sentUrl.searchParams.set("status", "password-reset-sent");
+          sentUrl.searchParams.set("email", email);
+          window.location.href = sentUrl.toString();
+        });
+      }
+
+      if (cancelResetPasswordBtn) {
+        cancelResetPasswordBtn.addEventListener("click", async () => {
+          await client.auth.signOut();
+          window.location.href = "auth.html?mode=login";
+        });
+      }
+
+      if (resetPasswordForm) {
+        resetPasswordForm.addEventListener("submit", async (e) => {
+          e.preventDefault();
+          setResetStatus("");
+
+          const nextPassword = resetPasswordInput?.value || "";
+          const confirmPassword = resetPasswordConfirmInput?.value || "";
+
+          if (!isStrongPassword(nextPassword)) {
+            setResetStatus("La contraseña debe tener al menos 8 caracteres e incluir letras y números.", true);
+            resetPasswordInput?.focus();
+            return;
+          }
+
+          if (nextPassword !== confirmPassword) {
+            setResetStatus("Las contraseñas no coinciden.", true);
+            resetPasswordConfirmInput?.focus();
+            return;
+          }
+
+          const { error } = await client.auth.updateUser({ password: nextPassword });
+          if (error) {
+            setResetStatus(error.message || "No se pudo actualizar la contraseña.", true);
+            return;
+          }
+
+          await client.auth.signOut();
+
+          const updatedUrl = new URL(`${SITE}/auth.html`);
+          updatedUrl.searchParams.set("mode", "login");
+          updatedUrl.searchParams.set("status", "password-updated");
+          window.location.href = updatedUrl.toString();
+        });
+      }
+
       if (loginForm) {
         loginForm.addEventListener("submit", async (e) => {
           e.preventDefault();
@@ -2207,6 +2304,14 @@ function setupSupabase() {
           if (password !== confirm) {
             if (registerStatus) {
               registerStatus.textContent = "Las contraseñas no coinciden.";
+              registerStatus.classList.add("is-error");
+            }
+            return;
+          }
+
+          if (!isStrongPassword(password || "")) {
+            if (registerStatus) {
+              registerStatus.textContent = "La contraseña debe tener al menos 8 caracteres e incluir letras y números.";
               registerStatus.classList.add("is-error");
             }
             return;
@@ -3245,8 +3350,6 @@ function setupSupabase() {
         const renderRaces = (state, bibNumber = null) => {
           if (!racesContainer) return;
 
-          console.log(`Renderizando estado: ${state} | Bib: ${bibNumber || 'null'}`);
-
           const bibHTML = bibNumber
             ? `<p class="profile-race-meta bib-number-display" style="color:#19c88b; font-size:1.15rem; font-weight:800; margin:10px 0 0;">
          Número de corredor: <strong>#${bibNumber}</strong>
@@ -3408,8 +3511,6 @@ function setupSupabase() {
 
           const email = user.email.trim().toLowerCase();
 
-          console.log("🔍 Buscando inscripciones para:", email);
-
           const { data, error } = await client
             .from("inscripciones")
             .select(`
@@ -3432,8 +3533,6 @@ function setupSupabase() {
             return;
           }
 
-          console.log(`✅ Encontradas ${data?.length || 0} inscripciones:`, data);
-
           let finalState = "pending";
           let bibNumber = null;
 
@@ -3441,8 +3540,6 @@ function setupSupabase() {
             const inscription = data[0];
             const dbStatus = (inscription.payment_status || "").toLowerCase().trim();
             bibNumber = inscription.bib_number || null;   // ← Ahora sí se recupera
-
-            console.log("Estado en la base de datos:", dbStatus, "| Bib:", bibNumber);
 
             if (dbStatus === "paid") {
               finalState = "paid";
@@ -3533,6 +3630,93 @@ function setupSupabase() {
 
             isEditing = false;
             setReadOnlyMode(currentProfile);
+          });
+        }
+
+        // ── CAMBIAR CONTRASEÑA ──
+        const changePasswordForm = document.getElementById("changePasswordForm");
+        const changePasswordStatus = document.getElementById("changePasswordStatus");
+
+        const setChangePasswordStatus = (message, isError = false) => {
+          if (!changePasswordStatus) return;
+          changePasswordStatus.textContent = message || "";
+          changePasswordStatus.classList.toggle("is-error", isError);
+        };
+
+        const isStrongPassword = (password) => {
+          if (typeof password !== "string") return false;
+          return password.length >= 8 && /[A-Za-z]/.test(password) && /\d/.test(password);
+        };
+
+        if (changePasswordForm) {
+          changePasswordForm.addEventListener("submit", async (e) => {
+            e.preventDefault();
+            setChangePasswordStatus("");
+
+            const currentPassword = document.getElementById("currentPassword")?.value || "";
+            const newPassword = document.getElementById("newPassword")?.value || "";
+            const confirmPassword = document.getElementById("confirmPassword")?.value || "";
+
+            if (!currentPassword) {
+              setChangePasswordStatus("Ingresa tu contraseña actual.", true);
+              document.getElementById("currentPassword")?.focus();
+              return;
+            }
+
+            if (!isStrongPassword(newPassword)) {
+              setChangePasswordStatus("La nueva contraseña debe tener al menos 8 caracteres e incluir letras y números.", true);
+              document.getElementById("newPassword")?.focus();
+              return;
+            }
+
+            if (newPassword !== confirmPassword) {
+              setChangePasswordStatus("Las contraseñas no coinciden.", true);
+              document.getElementById("confirmPassword")?.focus();
+              return;
+            }
+
+            const submitBtn = changePasswordForm.querySelector('button[type="submit"]');
+            const originalText = submitBtn?.textContent || "Cambiar contraseña";
+
+            if (submitBtn) {
+              submitBtn.disabled = true;
+              submitBtn.textContent = "Cambiando...";
+            }
+
+            try {
+              const { error: signInError } = await client.auth.signInWithPassword({
+                email: user.email,
+                password: currentPassword
+              });
+
+              if (signInError) {
+                setChangePasswordStatus("La contraseña actual es incorrecta.", true);
+                if (submitBtn) {
+                  submitBtn.disabled = false;
+                  submitBtn.textContent = originalText;
+                }
+                return;
+              }
+
+              const { error: updateError } = await client.auth.updateUser({
+                password: newPassword
+              });
+
+              if (updateError) {
+                setChangePasswordStatus(updateError.message || "No se pudo cambiar la contraseña.", true);
+              } else {
+                setChangePasswordStatus("Contraseña cambiada correctamente. 🎉");
+                changePasswordForm.reset();
+              }
+
+            } catch (err) {
+              setChangePasswordStatus(err.message || "Ocurrió un error.", true);
+            } finally {
+              if (submitBtn) {
+                submitBtn.disabled = false;
+                submitBtn.textContent = originalText;
+              }
+            }
           });
         }
       });
@@ -3885,8 +4069,6 @@ async function generateNextBibNumber(client) {
 
     const nextNumber = (count || 0) + 1;
     const formattedBib = String(nextNumber).padStart(3, '0');
-
-    console.log(`📍 Nuevo bib_number generado: ${formattedBib} (inscripciones previas: ${count})`);
     return formattedBib;
 
   } catch (err) {
@@ -3923,7 +4105,6 @@ async function syncBibNumberToProfile(client, user) {
         }, { onConflict: 'user_id' });
 
       if (!error) {
-        console.log(`✅ Bib number sincronizado a perfil: ${inscription.bib_number}`);
       }
     }
   } catch (err) {
@@ -3958,7 +4139,6 @@ async function syncBibNumberToProfile(client, user) {
         }, { onConflict: 'user_id' });
 
       if (!error) {
-        console.log(`✅ Bib number sincronizado a perfil: ${inscription.bib_number}`);
       }
     }
   } catch (err) {
