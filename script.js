@@ -1123,24 +1123,6 @@ function setupAuthPage() {
     showGlobalStatus("Correo confirmado correctamente. Te estamos enviando a tu perfil...");
   }
 
-  if (statusParam === "password-reset-sent") {
-    activateMode("login");
-    showGlobalStatus("Te enviamos un enlace para restablecer tu contraseña. Revisa tu correo.");
-    if (emailParam && loginEmailInput) {
-      loginEmailInput.value = emailParam;
-    }
-  }
-
-  if (statusParam === "password-updated") {
-    activateMode("login");
-    showGlobalStatus("Tu contraseña se actualizó correctamente. Ya puedes iniciar sesión.");
-  }
-
-  if (statusParam === "recovery") {
-    activateMode("login");
-    showGlobalStatus("Valida tu nueva contraseña para completar la recuperación.");
-  }
-
   const rememberedEmail = sessionStorage.getItem(LAST_LOGIN_EMAIL_KEY);
   if (initialMode === "login" && rememberedEmail && loginEmailInput && !emailParam) {
     window.setTimeout(() => {
@@ -1964,10 +1946,8 @@ function setupSupabase() {
     const authRoot = document.querySelector("[data-auth-page]");
     if (authRoot) {
       const searchParams = new URLSearchParams(window.location.search);
-      const statusParam = searchParams.get("status");
       const hashParams = new URLSearchParams(window.location.hash.replace(/^#/, ""));
       const hasSignupCallback = hashParams.get("type") === "signup" && hashParams.has("access_token");
-      const hasRecoveryCallback = hashParams.get("type") === "recovery" && hashParams.has("access_token");
 
       client.auth.getSession().then(async ({ data: { session } }) => {
         if (!session) return;
@@ -1976,10 +1956,6 @@ function setupSupabase() {
           // Redirigir directamente después de confirmación
           localStorage.removeItem(AXOLOTE_POST_VERIFY_PROMPT_KEY);
           window.location.replace(consumeReturnTarget());
-          return;
-        }
-
-        if (hasRecoveryCallback) {
           return;
         }
 
@@ -2046,10 +2022,6 @@ function setupSupabase() {
       client.auth.getSession().then(async ({ data: { session } }) => {
         if (!session) return;
 
-        if (hasRecoveryCallback) {
-          return;
-        }
-
         if (hasSignupCallback) {
           const url = new URL(window.location.href);
           url.hash = "";
@@ -2099,115 +2071,7 @@ function setupSupabase() {
       });
 
       // Login con email + contraseña
-      const loginEmailInput = document.getElementById("loginEmail");
       const loginForm = document.getElementById("loginForm");
-      const forgotPasswordBtn = document.getElementById("forgotPasswordBtn");
-      const resetPasswordSection = document.getElementById("resetPasswordSection");
-      const resetPasswordForm = document.getElementById("resetPasswordForm");
-      const resetPasswordInput = document.getElementById("resetPassword");
-      const resetPasswordConfirmInput = document.getElementById("resetPasswordConfirm");
-      const resetPasswordStatus = document.getElementById("resetPasswordStatus");
-      const cancelResetPasswordBtn = document.getElementById("cancelResetPasswordBtn");
-
-      const setResetStatus = (message, isError = false) => {
-        if (!resetPasswordStatus) return;
-        resetPasswordStatus.textContent = message || "";
-        resetPasswordStatus.classList.toggle("is-error", isError);
-      };
-
-      const isStrongPassword = (password) => {
-        if (typeof password !== "string") return false;
-        return password.length >= 8 && /[A-Za-z]/.test(password) && /\d/.test(password);
-      };
-
-      const showResetPasswordFlow = () => {
-        if (loginForm) {
-          loginForm.hidden = true;
-        }
-        if (resetPasswordSection) {
-          resetPasswordSection.hidden = false;
-        }
-        setResetStatus("");
-        resetPasswordInput?.focus();
-      };
-
-      if (hasRecoveryCallback) {
-        showResetPasswordFlow();
-      }
-
-      if (forgotPasswordBtn) {
-        forgotPasswordBtn.addEventListener("click", async () => {
-          if (!loginEmailInput) return;
-
-          const email = loginEmailInput.value.trim();
-          if (!email || !loginEmailInput.checkValidity()) {
-            loginEmailInput.reportValidity();
-            return;
-          }
-
-          forgotPasswordBtn.disabled = true;
-
-          const { error } = await client.auth.resetPasswordForEmail(email, {
-            redirectTo: `${SITE}/auth.html?mode=login&status=recovery`,
-          });
-
-          forgotPasswordBtn.disabled = false;
-
-          if (error) {
-            alert(error.message || "No se pudo enviar el correo de recuperación.");
-            return;
-          }
-
-          const sentUrl = new URL(`${SITE}/auth.html`);
-          sentUrl.searchParams.set("mode", "login");
-          sentUrl.searchParams.set("status", "password-reset-sent");
-          sentUrl.searchParams.set("email", email);
-          window.location.href = sentUrl.toString();
-        });
-      }
-
-      if (cancelResetPasswordBtn) {
-        cancelResetPasswordBtn.addEventListener("click", async () => {
-          await client.auth.signOut();
-          window.location.href = "auth.html?mode=login";
-        });
-      }
-
-      if (resetPasswordForm) {
-        resetPasswordForm.addEventListener("submit", async (e) => {
-          e.preventDefault();
-          setResetStatus("");
-
-          const nextPassword = resetPasswordInput?.value || "";
-          const confirmPassword = resetPasswordConfirmInput?.value || "";
-
-          if (!isStrongPassword(nextPassword)) {
-            setResetStatus("La contraseña debe tener al menos 8 caracteres e incluir letras y números.", true);
-            resetPasswordInput?.focus();
-            return;
-          }
-
-          if (nextPassword !== confirmPassword) {
-            setResetStatus("Las contraseñas no coinciden.", true);
-            resetPasswordConfirmInput?.focus();
-            return;
-          }
-
-          const { error } = await client.auth.updateUser({ password: nextPassword });
-          if (error) {
-            setResetStatus(error.message || "No se pudo actualizar la contraseña.", true);
-            return;
-          }
-
-          await client.auth.signOut();
-
-          const updatedUrl = new URL(`${SITE}/auth.html`);
-          updatedUrl.searchParams.set("mode", "login");
-          updatedUrl.searchParams.set("status", "password-updated");
-          window.location.href = updatedUrl.toString();
-        });
-      }
-
       if (loginForm) {
         loginForm.addEventListener("submit", async (e) => {
           e.preventDefault();
@@ -2304,14 +2168,6 @@ function setupSupabase() {
           if (password !== confirm) {
             if (registerStatus) {
               registerStatus.textContent = "Las contraseñas no coinciden.";
-              registerStatus.classList.add("is-error");
-            }
-            return;
-          }
-
-          if (!isStrongPassword(password || "")) {
-            if (registerStatus) {
-              registerStatus.textContent = "La contraseña debe tener al menos 8 caracteres e incluir letras y números.";
               registerStatus.classList.add("is-error");
             }
             return;
@@ -3451,8 +3307,7 @@ function setupSupabase() {
                 <p id="legalModalParagraf">Debe descargar la exoneración oficial y traerla firmada al evento</p>
                 <div class="modal-gallery" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px;">
                 <section style="display:flex;justify-content:center;align-items:center;flex-direction:column;">
-                    <img src="exo3.jpeg" alt="Documento legal página 1" style="width:100%; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.2);">
-                    <a href="exo3.jpeg" download class="btn"
+                  <a href="exoneracion-axolote-night-run.pdf" download class="btn"
                     style="display: inline-block; margin: 8px 8px 8px 0; background: #19c88b; color: white; padding: 10px 20px; border-radius: 999px; text-decoration: none;">
           📄          Descargar - Exoneración
                   </a>
@@ -3630,93 +3485,6 @@ function setupSupabase() {
 
             isEditing = false;
             setReadOnlyMode(currentProfile);
-          });
-        }
-
-        // ── CAMBIAR CONTRASEÑA ──
-        const changePasswordForm = document.getElementById("changePasswordForm");
-        const changePasswordStatus = document.getElementById("changePasswordStatus");
-
-        const setChangePasswordStatus = (message, isError = false) => {
-          if (!changePasswordStatus) return;
-          changePasswordStatus.textContent = message || "";
-          changePasswordStatus.classList.toggle("is-error", isError);
-        };
-
-        const isStrongPassword = (password) => {
-          if (typeof password !== "string") return false;
-          return password.length >= 8 && /[A-Za-z]/.test(password) && /\d/.test(password);
-        };
-
-        if (changePasswordForm) {
-          changePasswordForm.addEventListener("submit", async (e) => {
-            e.preventDefault();
-            setChangePasswordStatus("");
-
-            const currentPassword = document.getElementById("currentPassword")?.value || "";
-            const newPassword = document.getElementById("newPassword")?.value || "";
-            const confirmPassword = document.getElementById("confirmPassword")?.value || "";
-
-            if (!currentPassword) {
-              setChangePasswordStatus("Ingresa tu contraseña actual.", true);
-              document.getElementById("currentPassword")?.focus();
-              return;
-            }
-
-            if (!isStrongPassword(newPassword)) {
-              setChangePasswordStatus("La nueva contraseña debe tener al menos 8 caracteres e incluir letras y números.", true);
-              document.getElementById("newPassword")?.focus();
-              return;
-            }
-
-            if (newPassword !== confirmPassword) {
-              setChangePasswordStatus("Las contraseñas no coinciden.", true);
-              document.getElementById("confirmPassword")?.focus();
-              return;
-            }
-
-            const submitBtn = changePasswordForm.querySelector('button[type="submit"]');
-            const originalText = submitBtn?.textContent || "Cambiar contraseña";
-
-            if (submitBtn) {
-              submitBtn.disabled = true;
-              submitBtn.textContent = "Cambiando...";
-            }
-
-            try {
-              const { error: signInError } = await client.auth.signInWithPassword({
-                email: user.email,
-                password: currentPassword
-              });
-
-              if (signInError) {
-                setChangePasswordStatus("La contraseña actual es incorrecta.", true);
-                if (submitBtn) {
-                  submitBtn.disabled = false;
-                  submitBtn.textContent = originalText;
-                }
-                return;
-              }
-
-              const { error: updateError } = await client.auth.updateUser({
-                password: newPassword
-              });
-
-              if (updateError) {
-                setChangePasswordStatus(updateError.message || "No se pudo cambiar la contraseña.", true);
-              } else {
-                setChangePasswordStatus("Contraseña cambiada correctamente. 🎉");
-                changePasswordForm.reset();
-              }
-
-            } catch (err) {
-              setChangePasswordStatus(err.message || "Ocurrió un error.", true);
-            } finally {
-              if (submitBtn) {
-                submitBtn.disabled = false;
-                submitBtn.textContent = originalText;
-              }
-            }
           });
         }
       });
