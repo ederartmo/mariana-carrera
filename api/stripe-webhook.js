@@ -241,7 +241,7 @@ module.exports = async (req, res) => {
                     <!-- BOTÓN -->
                     <tr>
                         <td style="padding:0 25px 30px 25px;text-align:center;">
-                            <a href="https://www.kinetichub.com.mx/exoneracion-axolote-night-run.pdf"
+                            <a href="https://www.kinetichub.com.mx/Expediente%20Axolote%20Night%20Run%20.pdf"
                                style="display:inline-block;background-color:#19c88b;color:#000000;padding:13px 28px;border-radius:999px;text-decoration:none;font-weight:bold;font-size:14px;">
                                 📄 Hoja 1 - Exoneración
                             </a>
