@@ -2468,13 +2468,21 @@ function setupSupabase() {
       client.auth.getSession().then(async ({ data: { session } }) => {
         const CHECKOUT_EMAIL_KEY = "kinetic_checkout_email";
         const profileCurrentUrl = new URL(window.location.href);
+        const hasCheckoutParams =
+          profileCurrentUrl.searchParams.get("race") === "axolote" &&
+          profileCurrentUrl.searchParams.get("paid") === "1";
         const expectedEmailParam = (profileCurrentUrl.searchParams.get("checkoutEmail") || "")
           .toLowerCase()
           .trim();
-        const expectedEmailStorage = (localStorage.getItem(CHECKOUT_EMAIL_KEY) || "")
-          .toLowerCase()
-          .trim();
+        const expectedEmailStorage = hasCheckoutParams
+          ? (localStorage.getItem(CHECKOUT_EMAIL_KEY) || "").toLowerCase().trim()
+          : "";
         const expectedCheckoutEmail = expectedEmailParam || expectedEmailStorage;
+
+        // Si no estamos en el regreso inmediato de checkout, no forzamos coherencia por email guardado.
+        if (!hasCheckoutParams && !expectedEmailParam) {
+          localStorage.removeItem(CHECKOUT_EMAIL_KEY);
+        }
 
         if (!session) {
           if (expectedCheckoutEmail) {
