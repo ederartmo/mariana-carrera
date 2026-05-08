@@ -15,18 +15,28 @@ function getPriceId() {
 
   // TEST MODE: usar price de prueba
   if (process.env.STRIPE_SECRET_KEY && process.env.STRIPE_SECRET_KEY.startsWith('sk_test_')) {
-    return 'price_1TRmV3IXKIIcpa3Qn0BUOdxn'; // Test price
+    return 'price_1TRmV3IXKIIcpa3Qn0BUOdxn'; // Test price ($480-ish)
   }
 
-  if (year < 2026 || (year === 2026 && month <= 5)) {
-    return 'price_1TMJT7IXKIIcpa3QGMfn9Ww4'; // Early Bird
+  // EARLY BIRD: hasta 31 de mayo 2026 - $480 MXN
+  if (year < 2026 || (year === 2026 && month < 6)) {
+    return 'price_1TMJT7IXKIIcpa3QGMfn9Ww4'; // Early Bird - $480
   }
-  if (year === 2026 && month <= 7) {
-    return 'price_1TPS8dIXKIIcpa3QtPe4BzQS';
+  if (year === 2026 && month === 5 && day <= 31) {
+    return 'price_1TMJT7IXKIIcpa3QGMfn9Ww4'; // Early Bird - $480
   }
-  if (year === 2026 && (month <= 9 || (month === 10 && day <= 10))) {
-    return 'price_1TPSEKIXKIIcpa3QsyDngV4h';
+
+  // REGULAR: 1 de junio - 31 de julio 2026 - $550 MXN
+  if (year === 2026 && month >= 6 && month <= 7) {
+    return 'price_1TPS8dIXKIIcpa3QtPe4BzQS'; // Regular - $550
   }
+
+  // EXTEMPORÁNEA: 1 de agosto - 10 de octubre 2026 - $600 MXN
+  if (year === 2026 && (month === 8 || month === 9 || (month === 10 && day <= 10))) {
+    return 'price_1TPSEKIXKIIcpa3QsyDngV4h'; // Extemporánea - $600
+  }
+
+  // Inscripciones cerradas después del 10 de octubre
   return null;
 }
 
@@ -36,18 +46,11 @@ module.exports = async function handler(req, res) {
   }
 
   try {
-    const { email, shirtSize } = req.body;
-    const normalizedShirtSize = String(shirtSize || '').trim().toUpperCase();
+    const { email } = req.body;
 
     if (!email || typeof email !== 'string' || !email.includes('@')) {
       return res.status(400).json({ 
         error: 'Por favor ingresa un correo electrónico válido.' 
-      });
-    }
-
-    if (!['S', 'M', 'L'].includes(normalizedShirtSize)) {
-      return res.status(400).json({
-        error: 'Selecciona una talla de playera válida (S, M o L).'
       });
     }
 
@@ -88,12 +91,11 @@ module.exports = async function handler(req, res) {
       allow_promotion_codes: true,
       customer_email: cleanEmail,
       line_items: [{ price: priceId, quantity: 1 }],
-      success_url: 'https://www.kinetichub.com.mx/succes.html?session_id={CHECKOUT_SESSION_ID}',
+      success_url: 'https://www.kinetichub.com.mx/succes.html?v=20260508&session_id={CHECKOUT_SESSION_ID}',
       cancel_url: 'https://www.kinetichub.com.mx/checkout.html',
       metadata: {
         event_slug: 'axolote-night-run',
-        user_email: cleanEmail,
-        shirt_size: normalizedShirtSize
+        user_email: cleanEmail
       }
     });
 

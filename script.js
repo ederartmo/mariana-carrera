@@ -1535,6 +1535,7 @@ async function updateProfileBibNumberUI(client, user) {
 
   try {
     const email = user.email.trim().toLowerCase();
+    let bibNumber = null;
 
     const { data: profile } = await client
       .from('user_profiles')
@@ -1542,11 +1543,28 @@ async function updateProfileBibNumberUI(client, user) {
       .eq('email', email)
       .maybeSingle();
 
-    const bibNumber = profile?.bib_number || '—';
+    bibNumber = profile?.bib_number || null;
+
+    if (!bibNumber) {
+      const { data: inscription } = await client
+        .from('inscripciones')
+        .select('bib_number')
+        .eq('email', email)
+        .eq('payment_status', 'paid')
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      bibNumber = inscription?.bib_number || null;
+    }
+
+    const formattedBib = bibNumber
+      ? String(bibNumber).replace(/\D/g, '').padStart(3, '0')
+      : '---';
 
     // Actualiza todos los elementos que muestren el número de corredor
     document.querySelectorAll('#bibNumberDisplay, .bib-number, [data-bib-number]').forEach(el => {
-      if (el) el.textContent = bibNumber;
+      if (el) el.textContent = formattedBib;
     });
 
   } catch (err) {
@@ -2450,13 +2468,21 @@ function setupSupabase() {
       client.auth.getSession().then(async ({ data: { session } }) => {
         const CHECKOUT_EMAIL_KEY = "kinetic_checkout_email";
         const profileCurrentUrl = new URL(window.location.href);
+        const hasCheckoutParams =
+          profileCurrentUrl.searchParams.get("race") === "axolote" &&
+          profileCurrentUrl.searchParams.get("paid") === "1";
         const expectedEmailParam = (profileCurrentUrl.searchParams.get("checkoutEmail") || "")
           .toLowerCase()
           .trim();
-        const expectedEmailStorage = (localStorage.getItem(CHECKOUT_EMAIL_KEY) || "")
-          .toLowerCase()
-          .trim();
+        const expectedEmailStorage = hasCheckoutParams
+          ? (localStorage.getItem(CHECKOUT_EMAIL_KEY) || "").toLowerCase().trim()
+          : "";
         const expectedCheckoutEmail = expectedEmailParam || expectedEmailStorage;
+
+        // Si no estamos en el regreso inmediato de checkout, no forzamos coherencia por email guardado.
+        if (!hasCheckoutParams && !expectedEmailParam) {
+          localStorage.removeItem(CHECKOUT_EMAIL_KEY);
+        }
 
         if (!session) {
           if (expectedCheckoutEmail) {
@@ -3456,7 +3482,7 @@ function setupSupabase() {
                 <p id="legalModalParagraf">Debe descargar la exoneración oficial y traerla firmada al evento</p>
                 <div class="modal-gallery" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px;">
                 <section style="display:flex;justify-content:center;align-items:center;flex-direction:column;">
-                  <a href="Expediente%20Axolote%20Night%20Run%20.pdf" download class="btn"
+                  <a href="exoneracion.pdf" download class="btn"
                     style="display: inline-block; margin: 8px 8px 8px 0; background: #19c88b; color: white; padding: 10px 20px; border-radius: 999px; text-decoration: none;">
           📄          Descargar - Exoneración
                   </a>
