@@ -55,6 +55,10 @@
       const maxAttempts = 8;
       const delayMs = 1500;
 
+      // Estado inicial mientras consultamos en Supabase
+      bibValue.textContent = 'Pendiente';
+      bibHint.textContent = 'Estamos validando tu dorsal...';
+
       for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
         const registration = await fetchRegistrationBySessionId(client, sessionId);
 
@@ -64,8 +68,14 @@
           return;
         }
 
+        if (registration && (registration.payment_status || '').toLowerCase() === 'paid' && !registration.bib_number) {
+          bibValue.textContent = 'Pendiente';
+          bibHint.textContent = '✉️ Tu dorsal lo encontrarás en tu correo de confirmación y en tu perfil de Kinetic Hub. Asegúrate de registrarte con el mismo email. 👇';
+          return;
+        }
+
         if (registration && (registration.payment_status || '').toLowerCase() === 'refunded') {
-          bibValue.textContent = '---';
+          bibValue.textContent = 'Reembolsado';
           bibHint.textContent = 'Esta inscripción aparece como reembolsada.';
           return;
         }
@@ -76,7 +86,7 @@
         }
       }
 
-      bibValue.textContent = '---';
+      bibValue.textContent = 'Pendiente';
       bibHint.textContent = '✉️ Tu dorsal lo encontrarás en tu correo de confirmación y en tu perfil de Kinetic Hub. Asegúrate de registrarte con el mismo email. 👇';
     }
 
@@ -172,7 +182,7 @@
       <div
         style="background: linear-gradient(135deg, #1a1f3a, #10172b); border-radius: 14px; padding: 24px; margin-bottom: 24px; text-align: center; border: 1px solid rgba(255,255,255,0.1);">
         <p style="margin: 0 0 6px; color: #9cb2ff; font-size: 0.9rem; text-transform: uppercase; letter-spacing: 1px; font-weight: 700;">Tu dorsal</p>
-        <p id="bibNumberValue" style="margin: 0; color: #ffffff; font-size: 3rem; font-weight: 800; letter-spacing: 4px; font-family: 'Sora', sans-serif;">---</p>
+        <p id="bibNumberValue" style="margin: 0; color: #ffffff; font-size: 3rem; font-weight: 800; letter-spacing: 2px; font-family: 'Sora', sans-serif;">Pendiente</p>
         <p id="bibNumberHint" style="margin: 10px 0 0; color: #d1d5db; font-size: 0.95rem;">Estamos validando tu número...</p>
       </div>
 
