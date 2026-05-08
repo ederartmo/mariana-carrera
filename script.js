@@ -1643,14 +1643,58 @@ function setupEventRegistrationPanel() {
   if (!panel) return;
 
   const title = document.getElementById("eventRegisterTitle");
+  const stageLabel = document.getElementById("eventRegisterStageLabel");
+  const price = document.getElementById("eventRegisterPrice");
   const text = document.getElementById("eventRegisterText");
   const cta = document.getElementById("eventRegisterCta");
   const isPremiumVariant = panel.getAttribute("data-register-variant") === "premium";
   const checkoutHref = "checkout.html";
   const authHref = `auth.html?mode=register&returnTo=${encodeURIComponent(`/${checkoutHref}`)}`;
+  const contactHref = "contacto.html";
+
+  const getCurrentStage = () => {
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = now.getMonth() + 1;
+    const day = now.getDate();
+
+    // Early Bird: hasta 31 de mayo
+    if (year < 2026 || (year === 2026 && month < 6) || (year === 2026 && month === 5 && day <= 31)) {
+      return { label: "Etapa Early Bird", price: 480, isOpen: true };
+    }
+
+    // Regular: 1 junio - 31 julio
+    if (year === 2026 && month >= 6 && month <= 7) {
+      return { label: "Etapa Regular", price: 550, isOpen: true };
+    }
+
+    // Extemporánea: 1 agosto - 10 octubre
+    if (year === 2026 && (month === 8 || month === 9 || (month === 10 && day <= 10))) {
+      return { label: "Etapa Extemporánea", price: 600, isOpen: true };
+    }
+
+    return { label: "Inscripciones cerradas", price: null, isOpen: false };
+  };
+
+  const stage = getCurrentStage();
+
+  if (stageLabel) {
+    stageLabel.textContent = stage.label;
+  }
+  if (price) {
+    price.innerHTML = stage.price ? `<small>$</small>${stage.price}` : "Cerrado";
+  }
 
   const applyState = (isLoggedIn) => {
     if (!title || !text || !cta) return;
+
+    if (!stage.isOpen) {
+      title.textContent = "Inscripciones cerradas";
+      text.textContent = "La convocatoria cerró para esta edición. Si necesitas apoyo, contáctanos y te avisamos próximas fechas.";
+      cta.textContent = "Contactar al equipo";
+      cta.href = contactHref;
+      return;
+    }
 
     if (isLoggedIn) {
       if (!isPremiumVariant) {
