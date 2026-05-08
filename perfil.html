@@ -129,6 +129,7 @@
           <a class="profile-nav-item" data-section="resultados" href="#">Mis resultados</a>
           <a class="profile-nav-item" data-section="fotos" href="#">Mis fotos</a>
           <a class="profile-nav-item" data-section="emergencia" href="#">Contacto de emergencia</a>
+          <a class="profile-nav-item" data-section="seguridad" href="#">Seguridad</a>
           <a class="profile-nav-item" id="sidebarLogout" href="#" style="margin-top:auto;color:#f87171;">Cerrar sesión</a>
         </aside>
 
@@ -272,7 +273,33 @@
               </div>
             </div>
           </section>
+            <!-- ── SEGURIDAD ── -->
+            <section class="profile-panel" data-section="seguridad">
+              <h2 class="profile-section-title">Seguridad de tu cuenta</h2>
+              <div class="profile-card">
+                <form class="profile-form" id="changePasswordForm" action="#" method="post" novalidate>
+                  <div class="profile-field">
+                    <label for="currentPassword">Contraseña actual</label>
+                    <input id="currentPassword" name="currentPassword" type="password" placeholder="Ingresa tu contraseña actual" autocomplete="current-password" required />
+                  </div>
 
+                  <div class="profile-field">
+                    <label for="newPassword">Nueva contraseña</label>
+                    <input id="newPassword" name="newPassword" type="password" placeholder="Mínimo 8 caracteres (letras y números)" autocomplete="new-password" minlength="8" required />
+                  </div>
+
+                  <div class="profile-field">
+                    <label for="confirmPassword">Confirmar contraseña</label>
+                    <input id="confirmPassword" name="confirmPassword" type="password" placeholder="Repite tu nueva contraseña" autocomplete="new-password" minlength="8" required />
+                  </div>
+
+                  <div class="profile-form-actions">
+                    <button class="profile-save-btn" type="submit">Cambiar contraseña</button>
+                  </div>
+                  <p class="profile-save-status" id="changePasswordStatus" aria-live="polite"></p>
+                </form>
+              </div>
+            </section>
           <!-- ── CONTACTO DE EMERGENCIA ── -->
           <section class="profile-panel" data-section="emergencia">
             <h2 class="profile-section-title">Contacto de emergencia</h2>

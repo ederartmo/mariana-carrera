@@ -82,12 +82,28 @@
                   <input type="checkbox" name="rememberMe" />
                   <span>Recordarme</span>
                 </label>
-                <a href="#" class="auth-inline-link">¿Olvidaste tu contraseña?</a>
+                <button type="button" id="forgotPasswordBtn" class="auth-inline-link">¿Olvidaste tu contraseña?</button>
               </div>
 
               <button class="auth-submit" type="submit">Iniciar Sesión</button>
             </div>
           </form>
+
+          <section id="resetPasswordSection" hidden>
+            <h2>Restablecer contraseña</h2>
+            <p>Escribe tu nueva contraseña para completar la recuperación.</p>
+            <form class="auth-form" id="resetPasswordForm" action="#" method="post" novalidate>
+              <label for="resetPassword">Nueva contraseña</label>
+              <input id="resetPassword" name="resetPassword" type="password" placeholder="********" minlength="8" required />
+
+              <label for="resetPasswordConfirm">Confirmar nueva contraseña</label>
+              <input id="resetPasswordConfirm" name="resetPasswordConfirm" type="password" placeholder="********" minlength="8" required />
+
+              <button class="auth-submit" type="submit">Actualizar contraseña</button>
+              <button class="auth-link-inline" type="button" id="cancelResetPasswordBtn">Volver al login</button>
+              <p class="auth-form-status" id="resetPasswordStatus" aria-live="polite"></p>
+            </form>
+          </section>
 
           <p class="auth-switch-copy">
             ¿No tienes cuenta?
@@ -134,12 +150,12 @@
             <div class="auth-grid-2">
               <div>
                 <label for="registerPassword">Contraseña</label>
-                <input id="registerPassword" name="registerPassword" type="password" placeholder="********" required />
+                <input id="registerPassword" name="registerPassword" type="password" placeholder="********" minlength="8" required />
               </div>
               <div>
                 <label for="registerConfirmPassword">Confirmar contraseña</label>
                 <input id="registerConfirmPassword" name="registerConfirmPassword" type="password"
-                  placeholder="********" required />
+                  placeholder="********" minlength="8" required />
               </div>
             </div>
 

@@ -73,7 +73,6 @@ async function checkIfUserHasPaid() {
     }
 
     const isPaid = (data?.payment_status || "").toLowerCase().trim() === "paid";
-    console.log("✅ checkIfUserHasPaid() →", isPaid, "| email:", email);
 
     return isPaid;
 
@@ -82,33 +81,6 @@ async function checkIfUserHasPaid() {
     return false;
   }
 }
-// function setupActiveNavLink() {
-//   const nav = document.getElementById("siteNav");
-//   if (!nav) return;
-
-//   const links = Array.from(nav.querySelectorAll("a[href]"));
-//   if (!links.length) return;
-
-//   const currentPath = window.location.pathname.split("/").pop() || "index.html";
-//   links.forEach((link) => {
-//     const linkPath = (link.getAttribute("href") || "").split("#")[0];
-//     const isHome = currentPath === "" || currentPath === "index.html";
-//     const shouldActivate = linkPath === currentPath || (isHome && linkPath === "index.html");
-
-//     if (shouldActivate) {
-//       link.classList.add("is-active");
-//       link.setAttribute("aria-current", "page");
-//     }
-//   });
-
-//   if (!nav.querySelector(".nav-mobile-cta")) {
-//     const cta = document.createElement("a");
-//     cta.href = "auth.html?mode=register";
-//     cta.className = "nav-mobile-cta";
-//     cta.textContent = "Registrarse";
-//     nav.appendChild(cta);
-//   }
-// }
 function setupActiveNavLink() {
   const nav = document.getElementById("siteNav");
   if (!nav) return;
@@ -213,13 +185,10 @@ function setupActiveNavLink() {
 
 // ====================== OCULTAR BOTONES DE COMPRA SI YA PAGÓ ======================
 async function setupEventBuyButtons() {
-  console.log("🔄 setupEventBuyButtons iniciado...");
-
   // Esperar un poco a que Supabase se inicialice
   await new Promise(resolve => setTimeout(resolve, 800));
 
   const hasPaid = await checkIfUserHasPaid();
-  console.log("¿Usuario ya pagó la inscripción?", hasPaid);
 
   if (!hasPaid) return; // Si no pagó, no hacemos nada
 
@@ -234,7 +203,6 @@ async function setupEventBuyButtons() {
   buySelectors.forEach(selector => {
     document.querySelectorAll(selector).forEach(el => {
       el.style.display = "none";
-      console.log("Botón ocultado:", el.textContent || el.href);
     });
   });
 
@@ -1576,8 +1544,6 @@ async function updateProfileBibNumberUI(client, user) {
       if (el) el.textContent = bibNumber;
     });
 
-    console.log(`📍 Bib number mostrado en UI: ${bibNumber}`);
-
   } catch (err) {
     console.warn("No se pudo actualizar bib_number en UI:", err);
   }
@@ -1592,11 +1558,8 @@ async function setupProfilePage() {
     const user = session?.user;
 
     if (!user) {
-      console.log("Usuario no logueado en perfil");
       return;
     }
-
-    console.log("✅ Usuario logueado en perfil:", user.email);
 
     // ====================== SINCRONIZACIÓN DEL BIB_NUMBER ======================
     await syncBibNumberToProfile(client, user);
@@ -1616,8 +1579,6 @@ async function setupProfilePage() {
         panels.forEach((p) => p.classList.toggle("is-active", p.getAttribute("data-section") === section));
       });
     });
-
-    console.log("✅ setupProfilePage completado correctamente");
 
   } catch (error) {
     console.error("Error en setupProfilePage:", error);
@@ -3245,8 +3206,6 @@ function setupSupabase() {
         const renderRaces = (state, bibNumber = null) => {
           if (!racesContainer) return;
 
-          console.log(`Renderizando estado: ${state} | Bib: ${bibNumber || 'null'}`);
-
           const bibHTML = bibNumber
             ? `<p class="profile-race-meta bib-number-display" style="color:#19c88b; font-size:1.15rem; font-weight:800; margin:10px 0 0;">
          Número de corredor: <strong>#${bibNumber}</strong>
@@ -3348,8 +3307,7 @@ function setupSupabase() {
                 <p id="legalModalParagraf">Debe descargar la exoneración oficial y traerla firmada al evento</p>
                 <div class="modal-gallery" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px;">
                 <section style="display:flex;justify-content:center;align-items:center;flex-direction:column;">
-                    <img src="exo3.jpeg" alt="Documento legal página 1" style="width:100%; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.2);">
-                    <a href="exo3.jpeg" download class="btn"
+                  <a href="Expediente%20Axolote%20Night%20Run%20.pdf" download class="btn"
                     style="display: inline-block; margin: 8px 8px 8px 0; background: #19c88b; color: white; padding: 10px 20px; border-radius: 999px; text-decoration: none;">
           📄          Descargar - Exoneración
                   </a>
@@ -3408,8 +3366,6 @@ function setupSupabase() {
 
           const email = user.email.trim().toLowerCase();
 
-          console.log("🔍 Buscando inscripciones para:", email);
-
           const { data, error } = await client
             .from("inscripciones")
             .select(`
@@ -3432,8 +3388,6 @@ function setupSupabase() {
             return;
           }
 
-          console.log(`✅ Encontradas ${data?.length || 0} inscripciones:`, data);
-
           let finalState = "pending";
           let bibNumber = null;
 
@@ -3441,8 +3395,6 @@ function setupSupabase() {
             const inscription = data[0];
             const dbStatus = (inscription.payment_status || "").toLowerCase().trim();
             bibNumber = inscription.bib_number || null;   // ← Ahora sí se recupera
-
-            console.log("Estado en la base de datos:", dbStatus, "| Bib:", bibNumber);
 
             if (dbStatus === "paid") {
               finalState = "paid";
@@ -3885,8 +3837,6 @@ async function generateNextBibNumber(client) {
 
     const nextNumber = (count || 0) + 1;
     const formattedBib = String(nextNumber).padStart(3, '0');
-
-    console.log(`📍 Nuevo bib_number generado: ${formattedBib} (inscripciones previas: ${count})`);
     return formattedBib;
 
   } catch (err) {
@@ -3923,7 +3873,6 @@ async function syncBibNumberToProfile(client, user) {
         }, { onConflict: 'user_id' });
 
       if (!error) {
-        console.log(`✅ Bib number sincronizado a perfil: ${inscription.bib_number}`);
       }
     }
   } catch (err) {
@@ -3958,7 +3907,6 @@ async function syncBibNumberToProfile(client, user) {
         }, { onConflict: 'user_id' });
 
       if (!error) {
-        console.log(`✅ Bib number sincronizado a perfil: ${inscription.bib_number}`);
       }
     }
   } catch (err) {
