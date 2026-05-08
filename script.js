@@ -1638,6 +1638,91 @@ function setupBlogTabs() {
   });
 }
 
+function getAxoloteStageByDate(date = new Date()) {
+  const year = date.getFullYear();
+  const month = date.getMonth() + 1;
+  const day = date.getDate();
+
+  // Early Bird: hasta 31 de mayo 2026
+  if (year < 2026 || (year === 2026 && month < 6) || (year === 2026 && month === 5 && day <= 31)) {
+    return { key: "early", label: "Etapa Early Bird", price: 480, isOpen: true };
+  }
+
+  // Regular: 1 de junio - 31 de julio 2026
+  if (year === 2026 && month >= 6 && month <= 7) {
+    return { key: "regular", label: "Etapa Regular", price: 550, isOpen: true };
+  }
+
+  // Extemporánea: 1 de agosto - 10 de octubre 2026
+  if (year === 2026 && (month === 8 || month === 9 || (month === 10 && day <= 10))) {
+    return { key: "extemporanea", label: "Etapa Extemporánea", price: 600, isOpen: true };
+  }
+
+  return { key: "closed", label: "Inscripciones cerradas", price: null, isOpen: false };
+}
+
+function setupEventStageCards() {
+  const earlyCard = document.getElementById("stageCardEarly");
+  const regularCard = document.getElementById("stageCardRegular");
+  const extemporaneaCard = document.getElementById("stageCardExtemporanea");
+  if (!earlyCard || !regularCard || !extemporaneaCard) return;
+
+  const badgeEarly = document.getElementById("stageBadgeEarly");
+  const badgeRegular = document.getElementById("stageBadgeRegular");
+  const badgeExtemporanea = document.getElementById("stageBadgeExtemporanea");
+  const stateEarly = document.getElementById("stageStateEarly");
+  const stateRegular = document.getElementById("stageStateRegular");
+  const stateExtemporanea = document.getElementById("stageStateExtemporanea");
+  const hintEarly = document.getElementById("stageHintEarly");
+  const hintRegular = document.getElementById("stageHintRegular");
+
+  [earlyCard, regularCard, extemporaneaCard].forEach((card) => card.classList.remove("featured"));
+
+  if (badgeEarly) badgeEarly.textContent = "Etapa 1";
+  if (badgeRegular) badgeRegular.textContent = "Etapa 2";
+  if (badgeExtemporanea) badgeExtemporanea.textContent = "Última llamada";
+  if (hintEarly) hintEarly.textContent = "Cupo limitado";
+  if (hintRegular) hintRegular.textContent = "Tarifa intermedia oficial";
+  if (stateEarly) stateEarly.textContent = "Disponible por temporada";
+  if (stateRegular) stateRegular.textContent = "Disponible por temporada";
+  if (stateExtemporanea) stateExtemporanea.textContent = "Disponible por temporada";
+
+  const stage = getAxoloteStageByDate();
+
+  if (stage.key === "early") {
+    earlyCard.classList.add("featured");
+    if (badgeEarly) badgeEarly.textContent = "Etapa vigente";
+    if (hintEarly) hintEarly.textContent = "Disponible hoy";
+    if (stateEarly) stateEarly.textContent = "Inscripciones abiertas";
+    if (stateRegular) stateRegular.textContent = "Próximamente";
+    if (stateExtemporanea) stateExtemporanea.textContent = "Próximamente";
+    return;
+  }
+
+  if (stage.key === "regular") {
+    regularCard.classList.add("featured");
+    if (badgeRegular) badgeRegular.textContent = "Etapa vigente";
+    if (hintRegular) hintRegular.textContent = "Disponible hoy";
+    if (stateEarly) stateEarly.textContent = "Agotado";
+    if (stateRegular) stateRegular.textContent = "Inscripciones abiertas";
+    if (stateExtemporanea) stateExtemporanea.textContent = "Próximamente";
+    return;
+  }
+
+  if (stage.key === "extemporanea") {
+    extemporaneaCard.classList.add("featured");
+    if (badgeExtemporanea) badgeExtemporanea.textContent = "Etapa vigente";
+    if (stateEarly) stateEarly.textContent = "Agotado";
+    if (stateRegular) stateRegular.textContent = "Agotado";
+    if (stateExtemporanea) stateExtemporanea.textContent = "Inscripciones abiertas";
+    return;
+  }
+
+  if (stateEarly) stateEarly.textContent = "Agotado";
+  if (stateRegular) stateRegular.textContent = "Agotado";
+  if (stateExtemporanea) stateExtemporanea.textContent = "Cerrado";
+}
+
 function setupEventRegistrationPanel() {
   const panel = document.querySelector("[data-event-register-panel]");
   if (!panel) return;
@@ -1647,36 +1732,9 @@ function setupEventRegistrationPanel() {
   const price = document.getElementById("eventRegisterPrice");
   const text = document.getElementById("eventRegisterText");
   const cta = document.getElementById("eventRegisterCta");
-  const isPremiumVariant = panel.getAttribute("data-register-variant") === "premium";
   const checkoutHref = "checkout.html";
-  const authHref = `auth.html?mode=register&returnTo=${encodeURIComponent(`/${checkoutHref}`)}`;
   const contactHref = "contacto.html";
-
-  const getCurrentStage = () => {
-    const now = new Date();
-    const year = now.getFullYear();
-    const month = now.getMonth() + 1;
-    const day = now.getDate();
-
-    // Early Bird: hasta 31 de mayo
-    if (year < 2026 || (year === 2026 && month < 6) || (year === 2026 && month === 5 && day <= 31)) {
-      return { label: "Etapa Early Bird", price: 480, isOpen: true };
-    }
-
-    // Regular: 1 junio - 31 julio
-    if (year === 2026 && month >= 6 && month <= 7) {
-      return { label: "Etapa Regular", price: 550, isOpen: true };
-    }
-
-    // Extemporánea: 1 agosto - 10 octubre
-    if (year === 2026 && (month === 8 || month === 9 || (month === 10 && day <= 10))) {
-      return { label: "Etapa Extemporánea", price: 600, isOpen: true };
-    }
-
-    return { label: "Inscripciones cerradas", price: null, isOpen: false };
-  };
-
-  const stage = getCurrentStage();
+  const stage = getAxoloteStageByDate();
 
   if (stageLabel) {
     stageLabel.textContent = stage.label;
@@ -1685,7 +1743,7 @@ function setupEventRegistrationPanel() {
     price.innerHTML = stage.price ? `<small>$</small>${stage.price}` : "Cerrado";
   }
 
-  const applyState = (isLoggedIn) => {
+  const applyState = () => {
     if (!title || !text || !cta) return;
 
     if (!stage.isOpen) {
@@ -1696,29 +1754,13 @@ function setupEventRegistrationPanel() {
       return;
     }
 
-    if (isLoggedIn) {
-      if (!isPremiumVariant) {
-        title.textContent = "Continuar registro";
-      }
-      text.textContent = isPremiumVariant
-        ? "Ya iniciaste sesión. Continúa al checkout para asegurar tu lugar en Axolote Night Run."
-        : "Ya iniciaste sesión. Continúa al checkout para asegurar tu lugar en Axolote Night Run.";
-      cta.textContent = "Completar inscripción";
-      cta.href = checkoutHref;
-      return;
-    }
-
-    if (!isPremiumVariant) {
-      title.textContent = "Regístrate para asegurar tu lugar";
-    }
-    text.textContent = isPremiumVariant
-      ? "Crea tu cuenta o inicia sesión para continuar con tu inscripción y pago de forma segura."
-      : "Crea tu cuenta o inicia sesión para continuar con tu inscripción y pago.";
-    cta.textContent = isPremiumVariant ? "Completar inscripción" : "Iniciar sesión o registrarme";
-    cta.href = authHref;
+    title.textContent = "Asegura tu lugar esta noche";
+    text.textContent = "Reserva tu inscripción, elige tu talla de playera y recibe confirmación al instante.";
+    cta.textContent = "Completar inscripción";
+    cta.href = checkoutHref;
   };
 
-  applyState(false);
+  applyState();
 
   const SUPABASE_URL = "https://uycwzhlcnfijjyzkgkem.supabase.co";
   const SUPABASE_KEY = "sb_publishable_IKwD3YtQwWzzEtE8QkVagA_OJGdV2e4";
@@ -1728,12 +1770,12 @@ function setupEventRegistrationPanel() {
 
     const client = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-    client.auth.getSession().then(({ data: { session } }) => {
-      applyState(Boolean(session));
+    client.auth.getSession().then(() => {
+      applyState();
     });
 
-    client.auth.onAuthStateChange((_event, session) => {
-      applyState(Boolean(session));
+    client.auth.onAuthStateChange(() => {
+      applyState();
     });
   };
 
@@ -4234,6 +4276,7 @@ setupHomeFaqAccordion();
 setupNeonCardGlow();
 setupNeonEventToggle();
 setupWhatsAppButton();
+setupEventStageCards();
 setupEventRegistrationPanel();
 setupAuthPage();
 setupProfilePage();
