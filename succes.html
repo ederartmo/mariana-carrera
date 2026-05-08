@@ -24,6 +24,45 @@
     const SUPABASE_KEY = "sb_publishable_IKwD3YtQwWzzEtE8QkVagA_OJGdV2e4";
 
     // Detectar si el usuario viene de un pago exitoso
+    async function renderBibNumber(sessionId) {
+      const dorsalCard = document.getElementById('successBibCard');
+      const dorsalValue = document.getElementById('successBibValue');
+      const dorsalHint = document.getElementById('successBibHint');
+
+      if (!dorsalCard || !dorsalValue) return;
+
+      try {
+        const client = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+        const { data, error } = await client
+          .from('inscripciones')
+          .select('bib_number,payment_status')
+          .eq('stripe_session_id', sessionId)
+          .maybeSingle();
+
+        if (error) {
+          console.warn('No se pudo consultar dorsal en succes:', error);
+          dorsalCard.style.display = 'none';
+          return;
+        }
+
+        const bib = String(data?.bib_number || '').trim();
+        const status = String(data?.payment_status || '').toLowerCase().trim();
+
+        if (!bib) {
+          dorsalCard.style.display = 'none';
+          return;
+        }
+
+        dorsalValue.textContent = `#${bib.padStart(3, '0')}`;
+        if (dorsalHint && status === 'paid') {
+          dorsalHint.textContent = 'Este es tu número de dorsal para Axolote Night Run 2026.';
+        }
+      } catch (err) {
+        console.warn('Error mostrando dorsal:', err);
+        dorsalCard.style.display = 'none';
+      }
+    }
+
     function checkPaymentSuccess() {
       const urlParams = new URLSearchParams(window.location.search);
       const sessionId = urlParams.get('session_id');
@@ -78,6 +117,8 @@
         // Limpiar la URL (opcional, para que quede más limpia)
         window.history.replaceState({}, document.title, window.location.pathname);
 
+        renderBibNumber(sessionId);
+
         console.log('✅ Pago confirmado - Session ID:', sessionId);
       } else {
         window.location.href = "index.html";
@@ -101,6 +142,13 @@
       <p style="font-size: 1.1rem; color: #374151; margin-bottom: 32px;">
         Gracias por tu pago. Ya estás inscrito en <strong>Axolote Night Run 2026</strong>.
       </p>
+
+      <div id="successBibCard"
+        style="display:flex; justify-content: center; align-items: center;flex-direction: column;background: #f8faf9; border-radius: 12px; padding: 24px; margin-bottom: 20px; text-align: center; border:1px solid #d7efe2;">
+        <h3 style="margin: 0 0 10px; color: #19c88b;">🏁 Tu número de dorsal</h3>
+        <p id="successBibValue" style="margin: 0; font-family: 'Sora', sans-serif; font-size: 2rem; font-weight: 800; color:#0f172a;">--</p>
+        <p id="successBibHint" style="margin: 10px 0 0; color:#4b5563; font-size: 0.95rem;">Estamos confirmando tu dorsal...</p>
+      </div>
 
       <div
         style="display:flex; justify-content: center; align-items: center;flex-direction: column;background: #f8faf9; border-radius: 12px; padding: 24px; margin-bottom: 32px; text-align: left;">
