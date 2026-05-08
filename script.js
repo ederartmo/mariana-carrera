@@ -3482,7 +3482,7 @@ function setupSupabase() {
                 <p id="legalModalParagraf">Debe descargar la exoneración oficial y traerla firmada al evento</p>
                 <div class="modal-gallery" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px;">
                 <section style="display:flex;justify-content:center;align-items:center;flex-direction:column;">
-                  <a href="Expediente%20Axolote%20Night%20Run%20.pdf" download class="btn"
+                  <a href="exoneracion.pdf" download class="btn"
                     style="display: inline-block; margin: 8px 8px 8px 0; background: #19c88b; color: white; padding: 10px 20px; border-radius: 999px; text-decoration: none;">
           📄          Descargar - Exoneración
                   </a>

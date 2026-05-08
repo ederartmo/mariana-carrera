@@ -465,8 +465,8 @@
                   <strong>5K</strong>
                 </div>
                 <div class="summary-item">
-                  <span>Etapa Early Bird</span>
-                  <strong>$480 MXN</strong>
+                  <span id="stageLabel">Etapa Early Bird</span>
+                  <strong id="stagePrice">$480 MXN</strong>
                 </div>
                 <div class="summary-item">
                   <span>Incluye</span>
@@ -552,5 +552,50 @@
     </footer>
 
     <script src="script.js?v=__ASSET_VERSION__"></script>
+    <script>
+      // Detectar etapa actual y actualizar UI dinámicamente
+      function updateStageOnCheckout() {
+        const now = new Date();
+        const year = now.getFullYear();
+        const month = now.getMonth() + 1;
+        const day = now.getDate();
+
+        let stageName = 'Etapa Early Bird';
+        let stagePrice = '$480 MXN';
+        let stageDates = 'Hasta 31 de mayo';
+
+        // REGULAR: 1 de junio - 31 de julio
+        if (year === 2026 && month >= 6 && month <= 7) {
+          stageName = 'Etapa Regular';
+          stagePrice = '$550 MXN';
+          stageDates = '1 de junio - 31 de julio';
+        }
+
+        // EXTEMPORÁNEA: 1 de agosto - 10 de octubre
+        if (year === 2026 && (month === 8 || month === 9 || (month === 10 && day <= 10))) {
+          stageName = 'Etapa Extemporánea';
+          stagePrice = '$600 MXN';
+          stageDates = '1 de agosto - 10 de octubre';
+        }
+
+        // Actualizar UI
+        const stageLabelEl = document.getElementById('stageLabel');
+        const stagePriceEl = document.getElementById('stagePrice');
+        
+        if (stageLabelEl) {
+          stageLabelEl.textContent = stageName;
+          stageLabelEl.title = stageDates;
+        }
+        if (stagePriceEl) {
+          stagePriceEl.textContent = stagePrice;
+        }
+      }
+
+      // Ejecutar cuando el DOM esté listo
+      document.addEventListener('DOMContentLoaded', updateStageOnCheckout);
+      
+      // También ejecutar inmediatamente si el script carga tarde
+      updateStageOnCheckout();
+    </script>
   </body>
 </html>
