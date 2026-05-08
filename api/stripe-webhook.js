@@ -63,6 +63,32 @@ async function findCheckoutSessionByPaymentIntent(paymentIntentId) {
   }
 }
 
+async function resolvePaymentIntentIdFromRefund(refund) {
+  if (!refund) return null;
+
+  const directPaymentIntentId = typeof refund.payment_intent === 'string'
+    ? refund.payment_intent
+    : refund.payment_intent?.id;
+
+  if (directPaymentIntentId) return directPaymentIntentId;
+
+  const chargeId = typeof refund.charge === 'string'
+    ? refund.charge
+    : refund.charge?.id;
+
+  if (!chargeId) return null;
+
+  try {
+    const charge = await stripe.charges.retrieve(chargeId);
+    return typeof charge.payment_intent === 'string'
+      ? charge.payment_intent
+      : charge.payment_intent?.id || null;
+  } catch (error) {
+    console.error(`❌ Error resolviendo payment_intent desde charge ${chargeId}:`, error);
+    return null;
+  }
+}
+
 module.exports = async (req, res) => {
   if (req.method !== 'POST') {
     return res.status(405).json({ message: 'Método no permitido' });
@@ -323,12 +349,31 @@ module.exports = async (req, res) => {
     }
   }
 
-  // ==================== CHARGE REFUNDED ====================
-  if (event.type === 'charge.refunded') {
-    const charge = event.data.object;
-    const paymentIntentId = typeof charge.payment_intent === 'string'
-      ? charge.payment_intent
-      : charge.payment_intent?.id;
+  // ==================== REFUNDS ====================
+  if (event.type === 'charge.refunded' || event.type === 'refund.created' || event.type === 'refund.updated') {
+    let paymentIntentId = null;
+
+    if (event.type === 'charge.refunded') {
+      const charge = event.data.object;
+      paymentIntentId = typeof charge.payment_intent === 'string'
+        ? charge.payment_intent
+        : charge.payment_intent?.id;
+    }
+
+    if (event.type === 'refund.created' || event.type === 'refund.updated') {
+      const refund = event.data.object;
+
+      if (refund.status && refund.status !== 'succeeded') {
+        console.warn(`ℹ️ Refund recibido con estado ${refund.status}; aún no se marca como reembolsado.`);
+      } else {
+        paymentIntentId = await resolvePaymentIntentIdFromRefund(refund);
+      }
+    }
+
+    if (!paymentIntentId) {
+      console.warn(`⚠️ No se pudo resolver payment_intent para evento ${event.type}`);
+      return res.status(200).json({ received: true });
+    }
 
     const checkoutSession = await findCheckoutSessionByPaymentIntent(paymentIntentId);
 
@@ -336,9 +381,9 @@ module.exports = async (req, res) => {
       await updateRegistrationBySessionId(checkoutSession.id, {
         payment_status: 'refunded'
       });
-      console.warn(`↩️ Reembolso registrado | session_id=${checkoutSession.id}`);
+      console.warn(`↩️ Reembolso registrado | session_id=${checkoutSession.id} | event=${event.type}`);
     } else {
-      console.warn(`⚠️ Reembolso sin sesión relacionada | payment_intent=${paymentIntentId}`);
+      console.warn(`⚠️ Reembolso sin sesión relacionada | payment_intent=${paymentIntentId} | event=${event.type}`);
     }
   }
 
