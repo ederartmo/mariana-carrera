@@ -1123,6 +1123,11 @@ function setupAuthPage() {
     showGlobalStatus("Correo confirmado correctamente. Te estamos enviando a tu perfil...");
   }
 
+  if (statusParam === "password-updated") {
+    activateMode("login");
+    showGlobalStatus("Contraseña actualizada correctamente. Inicia sesión con tu nueva contraseña.");
+  }
+
   const rememberedEmail = sessionStorage.getItem(LAST_LOGIN_EMAIL_KEY);
   if (initialMode === "login" && rememberedEmail && loginEmailInput && !emailParam) {
     window.setTimeout(() => {
@@ -1530,6 +1535,7 @@ async function updateProfileBibNumberUI(client, user) {
 
   try {
     const email = user.email.trim().toLowerCase();
+    let bibNumber = null;
 
     const { data: profile } = await client
       .from('user_profiles')
@@ -1537,11 +1543,28 @@ async function updateProfileBibNumberUI(client, user) {
       .eq('email', email)
       .maybeSingle();
 
-    const bibNumber = profile?.bib_number || '—';
+    bibNumber = profile?.bib_number || null;
+
+    if (!bibNumber) {
+      const { data: inscription } = await client
+        .from('inscripciones')
+        .select('bib_number')
+        .eq('email', email)
+        .eq('payment_status', 'paid')
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      bibNumber = inscription?.bib_number || null;
+    }
+
+    const formattedBib = bibNumber
+      ? String(bibNumber).replace(/\D/g, '').padStart(3, '0')
+      : '---';
 
     // Actualiza todos los elementos que muestren el número de corredor
     document.querySelectorAll('#bibNumberDisplay, .bib-number, [data-bib-number]').forEach(el => {
-      if (el) el.textContent = bibNumber;
+      if (el) el.textContent = formattedBib;
     });
 
   } catch (err) {
@@ -1947,10 +1970,57 @@ function setupSupabase() {
     if (authRoot) {
       const searchParams = new URLSearchParams(window.location.search);
       const hashParams = new URLSearchParams(window.location.hash.replace(/^#/, ""));
+      const statusParam = searchParams.get("status");
       const hasSignupCallback = hashParams.get("type") === "signup" && hashParams.has("access_token");
+      const hasRecoveryCallback = hashParams.get("type") === "recovery" && hashParams.has("access_token");
+
+      const loginFormNode = document.getElementById("loginForm");
+      const resetPasswordSection = document.getElementById("resetPasswordSection");
+      const resetPasswordForm = document.getElementById("resetPasswordForm");
+      const resetPasswordStatus = document.getElementById("resetPasswordStatus");
+      const forgotPasswordBtn = document.getElementById("forgotPasswordBtn");
+      const cancelResetPasswordBtn = document.getElementById("cancelResetPasswordBtn");
+      const loginEmailInputNode = document.getElementById("loginEmail");
+      const loginPasswordInputNode = document.getElementById("loginPassword");
+
+      const showResetPasswordFlow = (message = "") => {
+        if (loginFormNode) {
+          loginFormNode.style.display = "none";
+        }
+        if (resetPasswordSection) {
+          resetPasswordSection.hidden = false;
+        }
+        if (resetPasswordStatus) {
+          resetPasswordStatus.textContent = message;
+          resetPasswordStatus.classList.remove("is-error");
+        }
+      };
+
+      const hideResetPasswordFlow = () => {
+        if (resetPasswordSection) {
+          resetPasswordSection.hidden = true;
+        }
+        if (loginFormNode) {
+          loginFormNode.style.display = "";
+        }
+        if (resetPasswordStatus) {
+          resetPasswordStatus.textContent = "";
+          resetPasswordStatus.classList.remove("is-error");
+        }
+      };
+
+      if (hasRecoveryCallback) {
+        showResetPasswordFlow("Confirma tu nueva contraseña para completar la recuperación.");
+      } else {
+        hideResetPasswordFlow();
+      }
 
       client.auth.getSession().then(async ({ data: { session } }) => {
         if (!session) return;
+
+        if (hasRecoveryCallback) {
+          return;
+        }
 
         if (hasSignupCallback || statusParam === "confirmed") {
           // Redirigir directamente después de confirmación
@@ -2031,6 +2101,11 @@ function setupSupabase() {
           return;
         }
 
+        if (hasRecoveryCallback) {
+          showResetPasswordFlow("Confirma tu nueva contraseña para completar la recuperación.");
+          return;
+        }
+
         if (searchParams.get("status") === "confirmed") {
           localStorage.setItem(AXOLOTE_POST_VERIFY_PROMPT_KEY, "1");
           window.setTimeout(() => {
@@ -2085,6 +2160,98 @@ function setupSupabase() {
             sessionStorage.setItem(LAST_LOGIN_EMAIL_KEY, email);
             window.location.href = consumeReturnTarget();
           }
+        });
+      }
+
+      if (forgotPasswordBtn) {
+        forgotPasswordBtn.addEventListener("click", async () => {
+          const email = (loginEmailInputNode?.value || "").trim().toLowerCase();
+
+          if (!email || !email.includes("@")) {
+            alert("Ingresa tu correo en el paso 1 para enviarte el enlace de recuperación.");
+            loginEmailInputNode?.focus();
+            return;
+          }
+
+          forgotPasswordBtn.disabled = true;
+          const previousText = forgotPasswordBtn.textContent;
+          forgotPasswordBtn.textContent = "Enviando...";
+
+          const { error } = await client.auth.resetPasswordForEmail(email, {
+            redirectTo: `${SITE}/auth.html?mode=login`,
+          });
+
+          forgotPasswordBtn.disabled = false;
+          forgotPasswordBtn.textContent = previousText;
+
+          if (error) {
+            alert(error.message || "No se pudo enviar el enlace de recuperación.");
+            return;
+          }
+
+          alert("Te enviamos un enlace para restablecer tu contraseña. Revisa tu correo.");
+        });
+      }
+
+      if (cancelResetPasswordBtn) {
+        cancelResetPasswordBtn.addEventListener("click", async () => {
+          hideResetPasswordFlow();
+          if (window.location.hash) {
+            const cleanUrl = new URL(window.location.href);
+            cleanUrl.hash = "";
+            window.history.replaceState({}, "", cleanUrl.toString());
+          }
+          loginPasswordInputNode?.focus();
+        });
+      }
+
+      if (resetPasswordForm) {
+        resetPasswordForm.addEventListener("submit", async (event) => {
+          event.preventDefault();
+
+          const newPassword = (document.getElementById("resetPassword")?.value || "").trim();
+          const confirmPassword = (document.getElementById("resetPasswordConfirm")?.value || "").trim();
+
+          if (newPassword.length < 8) {
+            if (resetPasswordStatus) {
+              resetPasswordStatus.textContent = "La nueva contraseña debe tener al menos 8 caracteres.";
+              resetPasswordStatus.classList.add("is-error");
+            }
+            return;
+          }
+
+          if (newPassword !== confirmPassword) {
+            if (resetPasswordStatus) {
+              resetPasswordStatus.textContent = "Las contraseñas no coinciden.";
+              resetPasswordStatus.classList.add("is-error");
+            }
+            return;
+          }
+
+          const submitBtn = resetPasswordForm.querySelector('button[type="submit"]');
+          const originalText = submitBtn?.textContent || "Actualizar contraseña";
+          if (submitBtn) {
+            submitBtn.disabled = true;
+            submitBtn.textContent = "Actualizando...";
+          }
+
+          const { error } = await client.auth.updateUser({ password: newPassword });
+
+          if (submitBtn) {
+            submitBtn.disabled = false;
+            submitBtn.textContent = originalText;
+          }
+
+          if (error) {
+            if (resetPasswordStatus) {
+              resetPasswordStatus.textContent = error.message || "No se pudo actualizar la contraseña.";
+              resetPasswordStatus.classList.add("is-error");
+            }
+            return;
+          }
+
+          await client.auth.signOut();
+          window.location.href = "auth.html?mode=login&status=password-updated";
         });
       }
       const registerForm = document.querySelector('[data-auth-panel="register"] form');
@@ -3485,6 +3652,88 @@ function setupSupabase() {
 
             isEditing = false;
             setReadOnlyMode(currentProfile);
+          });
+        }
+
+        const changePasswordForm = document.getElementById("changePasswordForm");
+        const changePasswordStatus = document.getElementById("changePasswordStatus");
+
+        const showChangePasswordStatus = (message, isError = false) => {
+          if (!changePasswordStatus) return;
+          changePasswordStatus.textContent = message;
+          changePasswordStatus.style.color = isError ? "#ff8a65" : "#34d399";
+        };
+
+        if (changePasswordForm) {
+          changePasswordForm.addEventListener("submit", async (event) => {
+            event.preventDefault();
+
+            const currentPassword = (document.getElementById("currentPassword")?.value || "").trim();
+            const newPassword = (document.getElementById("newPassword")?.value || "").trim();
+            const confirmPassword = (document.getElementById("confirmPassword")?.value || "").trim();
+
+            showChangePasswordStatus("");
+
+            if (!currentPassword || !newPassword || !confirmPassword) {
+              showChangePasswordStatus("Completa todos los campos para cambiar tu contraseña.", true);
+              return;
+            }
+
+            if (newPassword.length < 8) {
+              showChangePasswordStatus("La nueva contraseña debe tener al menos 8 caracteres.", true);
+              return;
+            }
+
+            if (newPassword !== confirmPassword) {
+              showChangePasswordStatus("La confirmación no coincide con la nueva contraseña.", true);
+              return;
+            }
+
+            if (currentPassword === newPassword) {
+              showChangePasswordStatus("La nueva contraseña debe ser diferente a la actual.", true);
+              return;
+            }
+
+            const submitBtn = changePasswordForm.querySelector('button[type="submit"]');
+            const originalText = submitBtn?.textContent || "Cambiar contraseña";
+            if (submitBtn) {
+              submitBtn.disabled = true;
+              submitBtn.textContent = "Actualizando...";
+            }
+
+            const { error: signInError } = await client.auth.signInWithPassword({
+              email: user.email || "",
+              password: currentPassword,
+            });
+
+            if (signInError) {
+              if (submitBtn) {
+                submitBtn.disabled = false;
+                submitBtn.textContent = originalText;
+              }
+              showChangePasswordStatus("La contraseña actual no es correcta.", true);
+              return;
+            }
+
+            const { error: updatePasswordError } = await client.auth.updateUser({
+              password: newPassword,
+            });
+
+            if (submitBtn) {
+              submitBtn.disabled = false;
+              submitBtn.textContent = originalText;
+            }
+
+            if (updatePasswordError) {
+              showChangePasswordStatus(
+                updatePasswordError.message || "No se pudo actualizar la contraseña.",
+                true
+              );
+              return;
+            }
+
+            changePasswordForm.reset();
+            showChangePasswordStatus("Contraseña actualizada correctamente.");
           });
         }
       });

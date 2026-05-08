@@ -23,6 +23,62 @@
     const SUPABASE_URL = "https://uycwzhlcnfijjyzkgkem.supabase.co";
     const SUPABASE_KEY = "sb_publishable_IKwD3YtQwWzzEtE8QkVagA_OJGdV2e4";
 
+    function formatBibNumber(value) {
+      if (value === null || value === undefined || value === '') return '---';
+      const digits = String(value).replace(/\D/g, '');
+      if (!digits) return String(value);
+      return digits.padStart(3, '0');
+    }
+
+    async function fetchRegistrationBySessionId(client, sessionId) {
+      const { data, error } = await client
+        .from('inscripciones')
+        .select('bib_number, payment_status')
+        .eq('stripe_session_id', sessionId)
+        .maybeSingle();
+
+      if (error) {
+        console.warn('Error consultando dorsal en Supabase:', error);
+        return null;
+      }
+
+      return data || null;
+    }
+
+    async function renderBibNumber(sessionId) {
+      const bibValue = document.getElementById('bibNumberValue');
+      const bibHint = document.getElementById('bibNumberHint');
+      if (!bibValue || !bibHint || typeof window.supabase === 'undefined') return;
+
+      const client = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+      const maxAttempts = 8;
+      const delayMs = 1500;
+
+      for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
+        const registration = await fetchRegistrationBySessionId(client, sessionId);
+
+        if (registration && registration.bib_number) {
+          bibValue.textContent = formatBibNumber(registration.bib_number);
+          bibHint.textContent = 'Tu dorsal ya está confirmado.';
+          return;
+        }
+
+        if (registration && (registration.payment_status || '').toLowerCase() === 'refunded') {
+          bibValue.textContent = '---';
+          bibHint.textContent = 'Esta inscripción aparece como reembolsada.';
+          return;
+        }
+
+        if (attempt < maxAttempts) {
+          bibHint.textContent = 'Estamos generando tu dorsal. Esto puede tardar unos segundos...';
+          await new Promise(resolve => setTimeout(resolve, delayMs));
+        }
+      }
+
+      bibValue.textContent = '---';
+      bibHint.textContent = 'Aún no se refleja tu dorsal. Recarga en unos segundos.';
+    }
+
     // Detectar si el usuario viene de un pago exitoso
     function checkPaymentSuccess() {
       const urlParams = new URLSearchParams(window.location.search);
@@ -79,6 +135,7 @@
         window.history.replaceState({}, document.title, window.location.pathname);
 
         console.log('✅ Pago confirmado - Session ID:', sessionId);
+        renderBibNumber(sessionId);
       } else {
         window.location.href = "index.html";
       }
@@ -101,6 +158,13 @@
       <p style="font-size: 1.1rem; color: #374151; margin-bottom: 32px;">
         Gracias por tu pago. Ya estás inscrito en <strong>Axolote Night Run 2026</strong>.
       </p>
+
+      <div
+        style="background: linear-gradient(135deg, #1a1f3a, #10172b); border-radius: 14px; padding: 24px; margin-bottom: 24px; text-align: center; border: 1px solid rgba(255,255,255,0.1);">
+        <p style="margin: 0 0 6px; color: #9cb2ff; font-size: 0.9rem; text-transform: uppercase; letter-spacing: 1px; font-weight: 700;">Tu dorsal</p>
+        <p id="bibNumberValue" style="margin: 0; color: #ffffff; font-size: 3rem; font-weight: 800; letter-spacing: 4px; font-family: 'Sora', sans-serif;">---</p>
+        <p id="bibNumberHint" style="margin: 10px 0 0; color: #d1d5db; font-size: 0.95rem;">Estamos validando tu número...</p>
+      </div>
 
       <div
         style="display:flex; justify-content: center; align-items: center;flex-direction: column;background: #f8faf9; border-radius: 12px; padding: 24px; margin-bottom: 32px; text-align: left;">

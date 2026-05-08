@@ -32,7 +32,9 @@ async function generateNextBibNumber() {
 }
 
 async function updateRegistrationBySessionId(sessionId, payload) {
-  if (!sessionId) return;
+  if (!sessionId) {
+    return { ok: false, reason: 'missing_session_id' };
+  }
 
   const { error } = await supabase
     .from('inscripciones')
@@ -45,7 +47,55 @@ async function updateRegistrationBySessionId(sessionId, payload) {
 
   if (error) {
     console.error(`❌ Error actualizando inscripción para sesión ${sessionId}:`, error);
+    return { ok: false, error };
   }
+
+  return { ok: true };
+}
+
+async function updateLatestPaidRegistrationByEmailAndAmount(email, amountPaid, payload) {
+  if (!email) {
+    return { ok: false, reason: 'missing_email' };
+  }
+
+  const cleanEmail = email.toLowerCase().trim();
+
+  let query = supabase
+    .from('inscripciones')
+    .select('id, created_at, amount_paid, payment_status')
+    .eq('email', cleanEmail)
+    .in('payment_status', ['paid', 'paid_no_email'])
+    .order('created_at', { ascending: false })
+    .limit(5);
+
+  // Si tenemos monto del charge/refund, intentamos acotar más la coincidencia.
+  if (typeof amountPaid === 'number' && Number.isFinite(amountPaid)) {
+    query = query.eq('amount_paid', amountPaid);
+  }
+
+  const { data, error } = await query;
+
+  if (error) {
+    console.error(`❌ Error buscando inscripción por email ${cleanEmail}:`, error);
+    return { ok: false, error };
+  }
+
+  const target = data?.[0];
+  if (!target?.id) {
+    return { ok: false, reason: 'not_found' };
+  }
+
+  const { error: updateError } = await supabase
+    .from('inscripciones')
+    .update(payload)
+    .eq('id', target.id);
+
+  if (updateError) {
+    console.error(`❌ Error actualizando inscripción id=${target.id}:`, updateError);
+    return { ok: false, error: updateError };
+  }
+
+  return { ok: true, id: target.id };
 }
 
 async function findCheckoutSessionByPaymentIntent(paymentIntentId) {
@@ -61,6 +111,69 @@ async function findCheckoutSessionByPaymentIntent(paymentIntentId) {
     console.error(`❌ Error buscando checkout session por payment_intent ${paymentIntentId}:`, error);
     return null;
   }
+}
+
+async function resolvePaymentIntentId(input) {
+  if (!input) return null;
+  if (typeof input === 'string') return input;
+  if (typeof input === 'object' && input.id) return input.id;
+  return null;
+}
+
+async function findCheckoutSessionByRefund(refund) {
+  let paymentIntentId = await resolvePaymentIntentId(refund?.payment_intent);
+
+  if (!paymentIntentId) {
+    const chargeId = await resolvePaymentIntentId(refund?.charge);
+    if (chargeId) {
+      try {
+        const charge = await stripe.charges.retrieve(chargeId);
+        paymentIntentId = await resolvePaymentIntentId(charge?.payment_intent);
+      } catch (error) {
+        console.error(`❌ Error obteniendo charge ${chargeId} para refund ${refund?.id || 'N/A'}:`, error);
+      }
+    }
+  }
+
+  if (!paymentIntentId) return null;
+  return findCheckoutSessionByPaymentIntent(paymentIntentId);
+}
+
+async function markRefundedFromCharge(charge, sourceEventType) {
+  const paymentIntentId = typeof charge?.payment_intent === 'string'
+    ? charge.payment_intent
+    : charge?.payment_intent?.id;
+  const checkoutSession = await findCheckoutSessionByPaymentIntent(paymentIntentId);
+
+  if (checkoutSession?.id) {
+    const updateResult = await updateRegistrationBySessionId(checkoutSession.id, {
+      payment_status: 'refunded'
+    });
+
+    if (updateResult.ok) {
+      console.warn(`↩️ Reembolso registrado por ${sourceEventType} | session_id=${checkoutSession.id}`);
+      return true;
+    }
+
+    console.warn(`⚠️ ${sourceEventType} encontró sesión pero no pudo actualizar | session_id=${checkoutSession.id}`);
+  }
+
+  const refundEmail = charge?.billing_details?.email || charge?.receipt_email || null;
+  const refundAmount = typeof charge?.amount_refunded === 'number'
+    ? charge.amount_refunded / 100
+    : (typeof charge?.amount === 'number' ? charge.amount / 100 : null);
+
+  const fallbackResult = await updateLatestPaidRegistrationByEmailAndAmount(refundEmail, refundAmount, {
+    payment_status: 'refunded'
+  });
+
+  if (fallbackResult.ok) {
+    console.warn(`↩️ Reembolso registrado por fallback (${sourceEventType}) | inscripción_id=${fallbackResult.id} email=${refundEmail}`);
+    return true;
+  }
+
+  console.warn(`⚠️ ${sourceEventType} sin match en Supabase | payment_intent=${paymentIntentId} email=${refundEmail} amount=${refundAmount}`);
+  return false;
 }
 
 module.exports = async (req, res) => {
@@ -326,19 +439,44 @@ module.exports = async (req, res) => {
   // ==================== CHARGE REFUNDED ====================
   if (event.type === 'charge.refunded') {
     const charge = event.data.object;
-    const paymentIntentId = typeof charge.payment_intent === 'string'
-      ? charge.payment_intent
-      : charge.payment_intent?.id;
+    await markRefundedFromCharge(charge, event.type);
+  }
 
-    const checkoutSession = await findCheckoutSessionByPaymentIntent(paymentIntentId);
+  // ==================== REFUND EVENTS (fallback robusto) ====================
+  if (event.type === 'refund.created' || event.type === 'refund.updated') {
+    const refund = event.data.object;
+
+    // En refund.updated solo persistimos cuando Stripe confirma éxito.
+    if (event.type === 'refund.updated' && refund.status !== 'succeeded') {
+      console.warn(`ℹ️ Refund actualizado sin éxito final | refund_id=${refund.id} status=${refund.status}`);
+      return res.status(200).json({ received: true });
+    }
+
+    const checkoutSession = await findCheckoutSessionByRefund(refund);
 
     if (checkoutSession?.id) {
-      await updateRegistrationBySessionId(checkoutSession.id, {
+      const updateResult = await updateRegistrationBySessionId(checkoutSession.id, {
         payment_status: 'refunded'
       });
-      console.warn(`↩️ Reembolso registrado | session_id=${checkoutSession.id}`);
+
+      if (updateResult.ok) {
+        console.warn(`↩️ Reembolso registrado por ${event.type} | session_id=${checkoutSession.id} refund_id=${refund.id}`);
+      } else {
+        console.warn(`⚠️ ${event.type} encontró sesión pero no pudo actualizar | session_id=${checkoutSession.id} refund_id=${refund.id}`);
+      }
+      return res.status(200).json({ received: true });
+    }
+
+    const chargeId = typeof refund.charge === 'string' ? refund.charge : refund.charge?.id;
+    if (chargeId) {
+      try {
+        const charge = await stripe.charges.retrieve(chargeId);
+        await markRefundedFromCharge(charge, event.type);
+      } catch (error) {
+        console.error(`❌ Error al recuperar charge ${chargeId} para ${event.type}:`, error);
+      }
     } else {
-      console.warn(`⚠️ Reembolso sin sesión relacionada | payment_intent=${paymentIntentId}`);
+      console.warn(`⚠️ ${event.type} sin charge asociado | refund_id=${refund.id}`);
     }
   }
 
