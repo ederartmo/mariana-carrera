@@ -7,33 +7,40 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY
 );
 
-function getPriceId() {
+function getCurrentStage() {
   const now = new Date();
   const year = now.getFullYear();
   const month = now.getMonth() + 1;
   const day = now.getDate();
 
-  // TEST MODE: usar price de prueba
-  if (process.env.STRIPE_SECRET_KEY && process.env.STRIPE_SECRET_KEY.startsWith('sk_test_')) {
-    return 'price_1TRmV3IXKIIcpa3Qn0BUOdxn'; // Test price ($480-ish)
-  }
-
   // EARLY BIRD: hasta 31 de mayo 2026 - $480 MXN
-  if (year < 2026 || (year === 2026 && month < 6)) {
-    return 'price_1TMJT7IXKIIcpa3QGMfn9Ww4'; // Early Bird - $480
-  }
-  if (year === 2026 && month === 5 && day <= 31) {
-    return 'price_1TMJT7IXKIIcpa3QGMfn9Ww4'; // Early Bird - $480
+  if (year < 2026 || (year === 2026 && month < 6) || (year === 2026 && month === 5 && day <= 31)) {
+    return {
+      key: 'early',
+      label: 'Early Bird',
+      amount: 480,
+      period: 'Hasta 31 de mayo de 2026'
+    };
   }
 
   // REGULAR: 1 de junio - 31 de julio 2026 - $550 MXN
   if (year === 2026 && month >= 6 && month <= 7) {
-    return 'price_1TPS8dIXKIIcpa3QtPe4BzQS'; // Regular - $550
+    return {
+      key: 'regular',
+      label: 'Regular',
+      amount: 550,
+      period: '1 de junio al 31 de julio de 2026'
+    };
   }
 
   // EXTEMPORÁNEA: 1 de agosto - 10 de octubre 2026 - $600 MXN
   if (year === 2026 && (month === 8 || month === 9 || (month === 10 && day <= 10))) {
-    return 'price_1TPSEKIXKIIcpa3QsyDngV4h'; // Extemporánea - $600
+    return {
+      key: 'extemporanea',
+      label: 'Extemporánea',
+      amount: 600,
+      period: '1 de agosto al 10 de octubre de 2026'
+    };
   }
 
   // Inscripciones cerradas después del 10 de octubre
@@ -78,24 +85,39 @@ module.exports = async function handler(req, res) {
       });
     }
 
-    const priceId = getPriceId();
-    if (!priceId) {
+    const stage = getCurrentStage();
+    if (!stage) {
       return res.status(400).json({ 
         error: 'Las inscripciones están cerradas.' 
       });
     }
+
+    console.log(`🧾 Etapa seleccionada: ${stage.label} | ${stage.amount} MXN`);
 
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ['card'],
       mode: 'payment',
       allow_promotion_codes: true,
       customer_email: cleanEmail,
-      line_items: [{ price: priceId, quantity: 1 }],
+      line_items: [{
+        quantity: 1,
+        price_data: {
+          currency: 'mxn',
+          unit_amount: Math.round(stage.amount * 100),
+          product_data: {
+            name: `Axolote Night Run 2026 - ${stage.label}`,
+            description: `Inscripción modalidad 5K | ${stage.period}`
+          }
+        }
+      }],
       success_url: 'https://www.kinetichub.com.mx/succes.html?v=20260508&session_id={CHECKOUT_SESSION_ID}',
       cancel_url: 'https://www.kinetichub.com.mx/checkout.html',
       metadata: {
         event_slug: 'axolote-night-run',
-        user_email: cleanEmail
+        user_email: cleanEmail,
+        stage_key: stage.key,
+        stage_label: stage.label,
+        stage_amount: String(stage.amount)
       }
     });
 
