@@ -59,28 +59,49 @@ async function updateLatestPaidRegistrationByEmailAndAmount(email, amountPaid, p
   }
 
   const cleanEmail = email.toLowerCase().trim();
+  const hasAmount = typeof amountPaid === 'number' && Number.isFinite(amountPaid);
 
-  let query = supabase
-    .from('inscripciones')
-    .select('id, created_at, amount_paid, payment_status')
-    .eq('email', cleanEmail)
-    .in('payment_status', ['paid', 'paid_no_email'])
-    .order('created_at', { ascending: false })
-    .limit(5);
+  const buildQuery = (withAmountFilter) => {
+    let query = supabase
+      .from('inscripciones')
+      .select('id, created_at, amount_paid, payment_status')
+      .eq('email', cleanEmail)
+      .in('payment_status', ['paid', 'paid_no_email'])
+      .order('created_at', { ascending: false })
+      .limit(5);
 
-  // Si tenemos monto del charge/refund, intentamos acotar más la coincidencia.
-  if (typeof amountPaid === 'number' && Number.isFinite(amountPaid)) {
-    query = query.eq('amount_paid', amountPaid);
+    if (withAmountFilter && hasAmount) {
+      query = query.eq('amount_paid', amountPaid);
+    }
+
+    return query;
+  };
+
+  const { data: strictData, error: strictError } = await buildQuery(true);
+
+  if (strictError) {
+    console.error(`❌ Error buscando inscripción (match estricto) por email ${cleanEmail}:`, strictError);
+    return { ok: false, error: strictError, reason: 'query_error_strict' };
   }
 
-  const { data, error } = await query;
+  let target = strictData?.[0] || null;
+  let strategy = hasAmount ? 'email+amount' : 'email_only';
 
-  if (error) {
-    console.error(`❌ Error buscando inscripción por email ${cleanEmail}:`, error);
-    return { ok: false, error };
+  // Si no hubo match estricto por monto, relajar a email para no perder el refund.
+  if (!target?.id && hasAmount) {
+    const { data: relaxedData, error: relaxedError } = await buildQuery(false);
+
+    if (relaxedError) {
+      console.error(`❌ Error buscando inscripción (fallback email) por email ${cleanEmail}:`, relaxedError);
+      return { ok: false, error: relaxedError, reason: 'query_error_relaxed' };
+    }
+
+    target = relaxedData?.[0] || null;
+    if (target?.id) {
+      strategy = 'email_fallback';
+    }
   }
 
-  const target = data?.[0];
   if (!target?.id) {
     return { ok: false, reason: 'not_found' };
   }
@@ -92,10 +113,16 @@ async function updateLatestPaidRegistrationByEmailAndAmount(email, amountPaid, p
 
   if (updateError) {
     console.error(`❌ Error actualizando inscripción id=${target.id}:`, updateError);
-    return { ok: false, error: updateError };
+    return { ok: false, error: updateError, reason: 'update_error' };
   }
 
-  return { ok: true, id: target.id };
+  return {
+    ok: true,
+    id: target.id,
+    strategy,
+    matchedAmount: target.amount_paid,
+    email: cleanEmail
+  };
 }
 
 async function findCheckoutSessionByPaymentIntent(paymentIntentId) {
@@ -168,11 +195,15 @@ async function markRefundedFromCharge(charge, sourceEventType) {
   });
 
   if (fallbackResult.ok) {
-    console.warn(`↩️ Reembolso registrado por fallback (${sourceEventType}) | inscripción_id=${fallbackResult.id} email=${refundEmail}`);
+    console.warn(
+      `↩️ Reembolso registrado por fallback (${sourceEventType}) | inscripción_id=${fallbackResult.id} email=${refundEmail} strategy=${fallbackResult.strategy} matched_amount=${fallbackResult.matchedAmount}`
+    );
     return true;
   }
 
-  console.warn(`⚠️ ${sourceEventType} sin match en Supabase | payment_intent=${paymentIntentId} email=${refundEmail} amount=${refundAmount}`);
+  console.warn(
+    `⚠️ ${sourceEventType} sin match en Supabase | payment_intent=${paymentIntentId} email=${refundEmail} amount=${refundAmount} reason=${fallbackResult.reason || 'unknown'}`
+  );
   return false;
 }
 
