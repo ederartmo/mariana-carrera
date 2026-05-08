@@ -36,14 +36,11 @@ async function updateRegistrationBySessionId(sessionId, payload) {
     return { ok: false, reason: 'missing_session_id' };
   }
 
+  // Usamos update (no upsert) para no violar índices únicos parciales en inscripciones.
   const { error } = await supabase
     .from('inscripciones')
-    .upsert({
-      stripe_session_id: sessionId,
-      ...payload
-    }, {
-      onConflict: 'stripe_session_id'
-    });
+    .update(payload)
+    .eq('stripe_session_id', sessionId);
 
   if (error) {
     console.error(`❌ Error actualizando inscripción para sesión ${sessionId}:`, error);
