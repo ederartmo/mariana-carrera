@@ -81,8 +81,18 @@
   </div>
 
   <script>
+    // Lista de admins autorizados para este panel.
+    // Agrega o quita correos aquí según sea necesario.
+    window.ADMIN_EMAILS = [
+      "mariana@kinetichub.com.mx"
+    ];
+  </script>
+
+  <script>
     // ====================== CONFIG ======================
-    const ADMIN_EMAIL = "mariana@kinetichub.com.mx";
+    const ADMIN_EMAILS = (window.ADMIN_EMAILS || ["mariana@kinetichub.com.mx"])
+      .map(email => String(email).trim().toLowerCase())
+      .filter(Boolean);
     const SUPABASE_URL = "https://uycwzhlcnfijjyzkgkem.supabase.co";
     const SUPABASE_KEY = "sb_publishable_IKwD3YtQwWzzEtE8QkVagA_OJGdV2e4";
 
@@ -107,13 +117,12 @@
 
       const userEmail = session.user.email.trim().toLowerCase();
 
-      if (userEmail !== ADMIN_EMAIL.toLowerCase()) {
+      if (!ADMIN_EMAILS.includes(userEmail)) {
         alert("No tienes permisos para acceder a esta página.");
         window.location.href = "perfil.html";
         return null;
       }
 
-      console.log("✅ Acceso admin concedido a:", userEmail);
       return client;
     }
 
