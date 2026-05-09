@@ -4287,3 +4287,65 @@ setupCheckoutForm();
 
 // NUEVA LLAMADA
 setupEventBuyButtons();
+// ============= CHECKLIST PAYMENT STATUS UPDATE =============
+function setupChecklistPaymentStatus() {
+  const SUPABASE_URL = "https://uycwzhlcnfijjyzkgkem.supabase.co";
+  const SUPABASE_KEY = "sb_publishable_IKwD3YtQwWzzEtE8QkVagA_OJGdV2e4";
+
+  if (typeof window.supabase === "undefined") return;
+
+  const checkAndUpdatePaymentStatus = async () => {
+    try {
+      const client = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+      const { data: { session } } = await client.auth.getSession();
+
+      if (!session?.user?.email) return;
+
+      // Buscar si el usuario tiene algún pago confirmado
+      const { data: inscripcion } = await client
+        .from('inscripciones')
+        .select('id, payment_status')
+        .eq('email', session.user.email.toLowerCase().trim())
+        .eq('payment_status', 'paid')
+        .limit(1)
+        .maybeSingle();
+
+      if (inscripcion?.id) {
+        // El usuario pago - actualizar el checklist
+        const badge = document.getElementById('cl-payment-badge');
+        const title = document.getElementById('cl-payment-title');
+        const desc = document.getElementById('cl-payment-desc');
+        const btn = document.getElementById('cl-payment-btn');
+
+        if (badge) {
+          badge.className = 'cl-badge cl-badge-completed';
+          badge.innerHTML = '<svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="9"/><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4"/></svg> Completado';
+        }
+
+        if (title) title.textContent = 'Tu pago esta confirmado';
+        if (desc) desc.textContent = 'Ya estas inscrito en la carrera. Revisa tu correo para mas detalles.';
+
+        if (btn) {
+          btn.textContent = 'Ver evento';
+          btn.href = 'axolote-night-run.html';
+        }
+
+        // Actualizar estilo de la tarjeta
+        const card = document.getElementById('cl-card-payment');
+        if (card) card.classList.add('cl-card-completed');
+      }
+    } catch (err) {
+      console.warn('No se pudo verificar estado de pago:', err);
+    }
+  };
+
+  // Ejecutar cuando supabase este listo
+  setTimeout(checkAndUpdatePaymentStatus, 500);
+}
+
+// Llamar la funcion cuando el DOM este listo
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', setupChecklistPaymentStatus);
+} else {
+  setupChecklistPaymentStatus();
+}

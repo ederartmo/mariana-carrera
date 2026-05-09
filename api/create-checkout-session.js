@@ -53,7 +53,7 @@ module.exports = async function handler(req, res) {
   }
 
   try {
-    const { email } = req.body;
+    const { email, shirtSize } = req.body;
 
     if (!email || typeof email !== 'string' || !email.includes('@')) {
       return res.status(400).json({ 
@@ -61,7 +61,14 @@ module.exports = async function handler(req, res) {
       });
     }
 
+    if (!shirtSize || !['S', 'M', 'L'].includes(shirtSize.toUpperCase())) {
+      return res.status(400).json({ 
+        error: 'Por favor selecciona una talla válida.' 
+      });
+    }
+
     const cleanEmail = email.toLowerCase().trim();
+    const cleanShirtSize = shirtSize.toUpperCase();
     console.log(`🔄 Checkout para: ${cleanEmail}`);
 
     const { data: existingRegistration, error: existingRegistrationError } = await supabase
@@ -117,7 +124,8 @@ module.exports = async function handler(req, res) {
         user_email: cleanEmail,
         stage_key: stage.key,
         stage_label: stage.label,
-        stage_amount: String(stage.amount)
+        stage_amount: String(stage.amount),
+        shirt_size: cleanShirtSize
       }
     });
 
