@@ -412,7 +412,11 @@
                   <strong>1</strong> Tu evento
                 </h2>
                 <div class="event-info-card">
-                  <img src="banner.png" alt="Axolote Night Run" />
+                  <picture>
+                    <source srcset="banner.avif" type="image/avif" />
+                    <source srcset="banner.webp" type="image/webp" />
+                    <img src="banner.png" alt="Axolote Night Run" loading="lazy" decoding="async" />
+                  </picture>
                   <div class="event-info-content">
                     <h3>Axolote Night Run</h3>
                     <p>🏃 Distancia: 5K</p>
