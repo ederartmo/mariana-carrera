@@ -133,7 +133,7 @@
       try {
         const { data, error } = await client
           .from("inscripciones")
-          .select("id, full_name, email, event_slug, amount_paid, payment_status, bib_number, created_at")
+          .select("id, full_name, email, event_slug, amount_paid, payment_status, bib_number, shirt_size, created_at")
           .eq("payment_status", "paid")
           .order("created_at", { ascending: false });
 
@@ -153,6 +153,7 @@
                 <th>Email</th>
                 <th>Evento</th>
                 <th>Monto Pagado</th>
+                <th>Talla de Playera</th>
                 <th>Numero de corredor</th>
                 <th>Fecha</th>
               </tr>
@@ -172,6 +173,7 @@
               <td>${row.email}</td>
               <td>${row.event_slug || 'Axolote Night Run'}</td>
               <td><strong>$${parseFloat(row.amount_paid || 0).toLocaleString('es-MX')}</strong></td>
+              <td style="font-weight:700; color:#ff8c42;">${row.shirt_size || '—'}</td>
               <td style="font-weight:800; color:#19c88b;">${row.bib_number ? '#' + row.bib_number : '—'}</td>
               <td>${date}</td>
             </tr>

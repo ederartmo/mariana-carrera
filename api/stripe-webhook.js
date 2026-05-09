@@ -332,7 +332,7 @@ module.exports = async (req, res) => {
                             <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:#1a1a2e;border:2px solid #00f5ff;border-radius:12px;">
                                 <tr>
                                     <td style="padding:20px;text-align:center;">
-                                        <p style="margin:0 0 8px 0;color:#00f5ff;font-size:16px;">Tu número de dorsal es:</p>
+                                        <p style="margin:0 0 8px 0;color:#00f5ff;font-size:16px;">Tu número de corredor es:</p>
                                         <p class="bib-num" style="margin:0;font-size:52px;font-weight:bold;color:#00f5ff;letter-spacing:6px;">${String(bibNumber).padStart(3,'0')}</p>
                                     </td>
                                 </tr>

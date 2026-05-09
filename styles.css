@@ -3507,7 +3507,7 @@ body[data-page="series"] .page-hero .container {
 .event-detail-hero.axolote-hero {
   background-image:
     linear-gradient(to bottom, rgba(6, 10, 18, 0.05) 0%, rgba(6, 10, 18, 0.82) 100%),
-    url("banner.png");
+    url("banner3.png");
   background-position: center top;
 }
 
@@ -7114,4 +7114,24 @@ body[data-page="series"] .page-hero .container {
   .cl-desc {
     font-size: 1rem;
   }
+}
+
+/* ============= CHECKLIST PAYMENT STATUS ============= */
+.cl-badge-completed {
+  background: #f0fdf4 !important;
+  color: #16a34a !important;
+  border: 1px solid rgba(22, 163, 74, 0.2);
+}
+
+.cl-badge-completed svg {
+  stroke: #16a34a !important;
+}
+
+.cl-card-completed {
+  opacity: 0.85;
+  border-color: rgba(22, 163, 74, 0.2) !important;
+}
+
+.cl-card-completed .cl-icon-orange {
+  color: #16a34a;
 }
