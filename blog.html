@@ -92,7 +92,11 @@
         <div class="container">
           <div class="bfb-inner">
             <div class="bfb-image">
-              <img src="post1blog.png" alt="Corredor en ruta nocturna" />
+              <picture>
+                <source srcset="post1blog.avif" type="image/avif" />
+                <source srcset="post1blog.webp" type="image/webp" />
+                <img src="post1blog.png" alt="Corredor en ruta nocturna" loading="lazy" decoding="async" />
+              </picture>
             </div>
             <div class="bfb-content">
               <span class="bfb-badge">ARTÍCULO DESTACADO</span>
