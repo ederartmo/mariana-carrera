@@ -5356,6 +5356,30 @@ body[data-page="series"] .page-hero .container {
   padding-bottom: 6px;
 }
 
+.profile-pending-banner {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  background: #fff7ed;
+  border: 1.5px solid #f97316;
+  border-radius: 10px;
+  padding: 14px 18px;
+  margin-bottom: 20px;
+  color: #92400e;
+  font-size: 0.93rem;
+  line-height: 1.5;
+  cursor: pointer;
+}
+.profile-pending-banner svg {
+  flex-shrink: 0;
+  margin-top: 2px;
+  stroke: #f97316;
+}
+.profile-pending-banner strong {
+  color: #c2410c;
+  text-decoration: underline;
+}
+
 .profile-card {
   background: #ffffff;
   border-radius: 12px;

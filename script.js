@@ -1594,14 +1594,43 @@ async function setupProfilePage() {
     const navItems = Array.from(document.querySelectorAll(".profile-nav-item[data-section]"));
     const panels = Array.from(document.querySelectorAll(".profile-panel[data-section]"));
 
+    const activateSection = (section) => {
+      navItems.forEach((n) => n.classList.toggle("is-active", n.getAttribute("data-section") === section));
+      panels.forEach((p) => p.classList.toggle("is-active", p.getAttribute("data-section") === section));
+    };
+
     navItems.forEach((item) => {
       item.addEventListener("click", (e) => {
         e.preventDefault();
-        const section = item.getAttribute("data-section");
-        navItems.forEach((n) => n.classList.toggle("is-active", n === item));
-        panels.forEach((p) => p.classList.toggle("is-active", p.getAttribute("data-section") === section));
+        activateSection(item.getAttribute("data-section"));
       });
     });
+
+    // Navegar a sección por parámetro URL (?seccion=emergencia)
+    const seccionParam = new URLSearchParams(window.location.search).get("seccion");
+    if (seccionParam && navItems.some((n) => n.getAttribute("data-section") === seccionParam)) {
+      activateSection(seccionParam);
+    }
+
+    // Mostrar banner de emergencia pendiente si faltan datos
+    const emergencyBanner = document.getElementById("emergency-pending-banner");
+    if (emergencyBanner) {
+      try {
+        const { data: profileCheck } = await client
+          .from("user_profiles")
+          .select("emergency_name, emergency_phone, emergency_relation")
+          .eq("id", user.id)
+          .maybeSingle();
+        const isComplete =
+          profileCheck?.emergency_name?.trim() &&
+          profileCheck?.emergency_phone?.trim() &&
+          profileCheck?.emergency_relation?.trim();
+        if (!isComplete) {
+          emergencyBanner.hidden = false;
+          emergencyBanner.querySelector("span").addEventListener("click", () => activateSection("emergencia"), { once: true });
+        }
+      } catch (_) {}
+    }
 
   } catch (error) {
     console.error("Error en setupProfilePage:", error);
@@ -1851,7 +1880,9 @@ const ensureSupabaseClient = async () => {
 function setupSupabase() {
   const SUPABASE_URL = "https://uycwzhlcnfijjyzkgkem.supabase.co";
   const SUPABASE_KEY = "sb_publishable_IKwD3YtQwWzzEtE8QkVagA_OJGdV2e4";
-  const SITE = window.location.origin;
+  const SITE = (window.location.hostname === "localhost" || window.location.hostname.includes("github.dev") || window.location.hostname.includes("app.github.dev"))
+    ? window.location.origin
+    : "https://www.kinetichub.com.mx";
   const PROFILE_TABLE = "user_profiles";
   const AXOLOTE_PAYMENT_URL = "checkout.html";
   const AXOLOTE_EVENT_URL = "axolote-night-run.html";
@@ -4365,3 +4396,77 @@ function setupChecklistPaymentStatus() {
 }
 
 setupChecklistPaymentStatus();
+
+// ============= CHECKLIST PROFILE STATUS UPDATE =============
+function setupChecklistProfileStatus() {
+  const SUPABASE_URL = "https://uycwzhlcnfijjyzkgkem.supabase.co";
+  const SUPABASE_KEY = "sb_publishable_IKwD3YtQwWzzEtE8QkVagA_OJGdV2e4";
+
+  const badge = document.getElementById("cl-profile-badge");
+  const title = document.getElementById("cl-profile-title");
+  const desc = document.getElementById("cl-profile-desc");
+  const btn = document.getElementById("cl-profile-btn");
+  const card = document.getElementById("cl-card-profile");
+
+  if (!badge || !title || !desc || !btn || !card) return;
+
+  const applyCompletedState = () => {
+    badge.className = "cl-badge cl-badge-completed";
+    badge.innerHTML = '<svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="9"/><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4"/></svg> Completado';
+    title.textContent = "Perfil completado";
+    desc.textContent = "Tu información personal y contacto de emergencia ya están registrados.";
+    btn.textContent = "Ver perfil";
+    btn.classList.remove("cl-btn-orange");
+    btn.classList.add("cl-btn-dark");
+    btn.href = "perfil.html";
+    card.classList.add("cl-card-completed");
+  };
+
+  const waitForSupabase = (maxAttempts = 24, intervalMs = 250) =>
+    new Promise((resolve) => {
+      let attempts = 0;
+      const timer = setInterval(() => {
+        attempts += 1;
+        if (typeof window.supabase !== "undefined") {
+          clearInterval(timer);
+          resolve(window.supabase);
+          return;
+        }
+        if (attempts >= maxAttempts) {
+          clearInterval(timer);
+          resolve(null);
+        }
+      }, intervalMs);
+    });
+
+  const checkAndUpdateProfileStatus = async () => {
+    try {
+      const supabaseSdk = await waitForSupabase();
+      if (!supabaseSdk) return;
+
+      const client = supabaseSdk.createClient(SUPABASE_URL, SUPABASE_KEY);
+      const { data: { session } } = await client.auth.getSession();
+      if (!session?.user?.id) return;
+
+      const { data: profile } = await client
+        .from("user_profiles")
+        .select("emergency_name, emergency_phone, emergency_relation")
+        .eq("id", session.user.id)
+        .maybeSingle();
+
+      if (
+        profile?.emergency_name?.trim() &&
+        profile?.emergency_phone?.trim() &&
+        profile?.emergency_relation?.trim()
+      ) {
+        applyCompletedState();
+      }
+    } catch (err) {
+      console.warn("No se pudo verificar estado del perfil:", err);
+    }
+  };
+
+  checkAndUpdateProfileStatus();
+}
+
+setupChecklistProfileStatus();
