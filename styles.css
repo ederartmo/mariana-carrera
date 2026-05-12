@@ -1401,6 +1401,105 @@ body.theme-light .hero-white-bridge {
   margin-top: 28px;
 }
 
+.neon-rewards-panel {
+  margin-top: 24px;
+  padding: 22px;
+  border-radius: 20px;
+  background:
+    radial-gradient(circle at top right, rgba(255, 44, 191, 0.14), transparent 30%),
+    radial-gradient(circle at bottom left, rgba(29, 217, 255, 0.14), transparent 34%),
+    rgba(8, 14, 30, 0.86);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.03) inset, 0 0 24px rgba(29, 217, 255, 0.08);
+}
+
+.neon-rewards-head {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 18px;
+  margin-bottom: 18px;
+}
+
+.neon-rewards-kicker {
+  display: inline-block;
+  margin-bottom: 8px;
+  color: #43e0ff;
+  font-size: 0.76rem;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.neon-rewards-head h3 {
+  margin: 0;
+  color: #ffffff;
+  font-size: clamp(1.45rem, 2.2vw, 2rem);
+  font-weight: 800;
+}
+
+.neon-rewards-head p {
+  margin: 8px 0 0;
+  max-width: 60ch;
+  color: rgba(255, 255, 255, 0.76);
+  line-height: 1.65;
+}
+
+.neon-rewards-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  padding: 0 18px;
+  border-radius: 999px;
+  text-decoration: none;
+  color: #08111d;
+  font-weight: 800;
+  white-space: nowrap;
+  background: linear-gradient(90deg, #f8d35f, #ff9b4a);
+  box-shadow: 0 10px 22px rgba(255, 155, 74, 0.24);
+}
+
+.neon-rewards-link:hover {
+  transform: translateY(-1px);
+}
+
+.neon-rewards-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.neon-reward-card {
+  padding: 12px;
+  border-radius: 18px;
+  background: rgba(10, 17, 33, 0.86);
+  border: 1px solid rgba(67, 224, 255, 0.16);
+  box-shadow: 0 0 18px rgba(255, 44, 191, 0.08);
+}
+
+.neon-reward-card img {
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  object-fit: cover;
+  border-radius: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.neon-reward-card strong {
+  display: block;
+  margin-top: 12px;
+  color: #ffffff;
+  font-size: 1rem;
+}
+
+.neon-reward-card p {
+  margin: 6px 0 0;
+  color: rgba(255, 255, 255, 0.7);
+  line-height: 1.55;
+  font-size: 0.92rem;
+}
+
 .neon-cta {
   display: inline-flex;
   align-items: center;
@@ -1593,8 +1692,18 @@ body.theme-light .hero-white-bridge {
   }
 
   .neon-card,
-  .neon-legal {
+  .neon-legal,
+  .neon-rewards-panel {
     padding: 20px;
+  }
+
+  .neon-rewards-head {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .neon-rewards-grid {
+    grid-template-columns: 1fr;
   }
 
   .neon-legal-layout {
