@@ -1851,10 +1851,7 @@ const ensureSupabaseClient = async () => {
 function setupSupabase() {
   const SUPABASE_URL = "https://uycwzhlcnfijjyzkgkem.supabase.co";
   const SUPABASE_KEY = "sb_publishable_IKwD3YtQwWzzEtE8QkVagA_OJGdV2e4";
-  const SITE =
-    window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1"
-      ? window.location.origin
-      : "https://www.kinetichub.com.mx";
+  const SITE = window.location.origin;
   const PROFILE_TABLE = "user_profiles";
   const AXOLOTE_PAYMENT_URL = "checkout.html";
   const AXOLOTE_EVENT_URL = "axolote-night-run.html";
@@ -2632,7 +2629,6 @@ function setupSupabase() {
         const emergencySaveBtn = document.getElementById("emergencyContactSaveBtn");
         const emergencySavedCard = document.getElementById("profileEmergencySavedCard");
         const emergencySavedActions = document.getElementById("profileEmergencySavedActions");
-        const emergencyIntro = document.querySelector(".profile-emergency-intro");
         const emergencyEditBtn = document.getElementById("emergencyEditBtn");
         const emergencyCancelBtn = document.getElementById("emergencyCancelBtn");
 
@@ -2931,27 +2927,22 @@ function setupSupabase() {
 
         const toggleEmergencyMode = ({ showForm, contact = null }) => {
           if (!emergencyForm) return;
-          const hasSavedEmergency = hasCompleteEmergencyContact(contact || {});
 
           emergencyForm.hidden = !showForm;
 
-          if (emergencyIntro) {
-            emergencyIntro.hidden = hasSavedEmergency;
-          }
-
           if (emergencySavedActions) {
-            emergencySavedActions.hidden = showForm || !hasSavedEmergency;
+            emergencySavedActions.hidden = showForm || !hasCompleteEmergencyContact(contact || {});
           }
 
           if (emergencySavedCard) {
-            emergencySavedCard.hidden = showForm || !hasSavedEmergency;
+            emergencySavedCard.hidden = showForm || !hasCompleteEmergencyContact(contact || {});
             if (!emergencySavedCard.hidden && contact) {
               renderSavedEmergencyCard(contact);
             }
           }
 
           if (emergencyCancelBtn) {
-            emergencyCancelBtn.hidden = !showForm || !hasSavedEmergency;
+            emergencyCancelBtn.hidden = !showForm || !hasCompleteEmergencyContact(contact || {});
           }
 
           if (!showForm) {
