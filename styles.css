@@ -547,7 +547,7 @@ body.theme-light .hero-white-bridge {
   border: 1px solid rgba(0, 255, 156, 0.24);
   background:
     linear-gradient(155deg, rgba(0, 255, 156, 0.2), rgba(8, 18, 26, 0.35)),
-    url("axo3d_oficial.png");
+    url("santa3.jpeg");
   background-size: cover;
   background-repeat: no-repeat;
   background-position: center;
@@ -2058,6 +2058,12 @@ body.theme-light .hero-white-bridge {
   background-image:
     linear-gradient(145deg, rgba(52, 74, 69, 0.34), rgba(52, 74, 69, 0.34)),
     url("correr.jpg");
+}
+
+.media-santa {
+  background-image:
+    linear-gradient(145deg, rgba(52, 74, 69, 0.34), rgba(52, 74, 69, 0.34)),
+    url("santa1.jpeg");
 }
 
 .media-axolote {
@@ -5463,30 +5469,6 @@ body[data-page="series"] .page-hero .container {
   color: #0f172a;
   border-bottom: 1px solid #e2e5ea;
   padding-bottom: 6px;
-}
-
-.profile-pending-banner {
-  display: flex;
-  align-items: flex-start;
-  gap: 10px;
-  background: #fff7ed;
-  border: 1.5px solid #f97316;
-  border-radius: 10px;
-  padding: 14px 18px;
-  margin-bottom: 20px;
-  color: #92400e;
-  font-size: 0.93rem;
-  line-height: 1.5;
-  cursor: pointer;
-}
-.profile-pending-banner svg {
-  flex-shrink: 0;
-  margin-top: 2px;
-  stroke: #f97316;
-}
-.profile-pending-banner strong {
-  color: #c2410c;
-  text-decoration: underline;
 }
 
 .profile-card {
