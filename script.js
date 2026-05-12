@@ -1880,9 +1880,10 @@ const ensureSupabaseClient = async () => {
 function setupSupabase() {
   const SUPABASE_URL = "https://uycwzhlcnfijjyzkgkem.supabase.co";
   const SUPABASE_KEY = "sb_publishable_IKwD3YtQwWzzEtE8QkVagA_OJGdV2e4";
-  const SITE = (window.location.hostname === "localhost" || window.location.hostname.includes("github.dev") || window.location.hostname.includes("app.github.dev"))
-    ? window.location.origin
-    : "https://www.kinetichub.com.mx";
+  const SITE =
+    window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1"
+      ? window.location.origin
+      : "https://www.kinetichub.com.mx";
   const PROFILE_TABLE = "user_profiles";
   const AXOLOTE_PAYMENT_URL = "checkout.html";
   const AXOLOTE_EVENT_URL = "axolote-night-run.html";
