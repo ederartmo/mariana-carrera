@@ -4402,17 +4402,20 @@ function setupChecklistProfileStatus() {
   const SUPABASE_URL = "https://uycwzhlcnfijjyzkgkem.supabase.co";
   const SUPABASE_KEY = "sb_publishable_IKwD3YtQwWzzEtE8QkVagA_OJGdV2e4";
 
-  const badge = document.getElementById("cl-profile-badge");
-  const title = document.getElementById("cl-profile-title");
-  const desc = document.getElementById("cl-profile-desc");
-  const btn = document.getElementById("cl-profile-btn");
   const card = document.getElementById("cl-card-profile");
+  if (!card) return;
 
-  if (!badge || !title || !desc || !btn || !card) return;
+  const badge = card.querySelector(".cl-badge");
+  const title = card.querySelector(".cl-card-title");
+  const desc = card.querySelector(".cl-card-desc");
+  const btn = card.querySelector(".cl-btn");
+
+  if (!badge || !title || !desc || !btn) return;
 
   const applyCompletedState = () => {
     badge.className = "cl-badge cl-badge-completed";
-    badge.innerHTML = '<svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="9"/><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4"/></svg> Completado';
+    badge.innerHTML =
+      '<svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="9"/><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4"/></svg> Completado';
     title.textContent = "Perfil completado";
     desc.textContent = "Tu información personal y contacto de emergencia ya están registrados.";
     btn.textContent = "Ver perfil";
@@ -4439,26 +4442,47 @@ function setupChecklistProfileStatus() {
       }, intervalMs);
     });
 
+  const readProfile = async (client, userId) => {
+    const byUserId = await client
+      .from("user_profiles")
+      .select("emergency_name, emergency_phone, emergency_relation, emergency_email")
+      .eq("user_id", userId)
+      .maybeSingle();
+
+    if (byUserId.data) return byUserId.data;
+
+    if (byUserId.error && byUserId.error.code !== "PGRST116") {
+      return null;
+    }
+
+    const byId = await client
+      .from("user_profiles")
+      .select("emergency_name, emergency_phone, emergency_relation, emergency_email")
+      .eq("id", userId)
+      .maybeSingle();
+
+    return byId.data || null;
+  };
+
   const checkAndUpdateProfileStatus = async () => {
     try {
       const supabaseSdk = await waitForSupabase();
       if (!supabaseSdk) return;
 
       const client = supabaseSdk.createClient(SUPABASE_URL, SUPABASE_KEY);
-      const { data: { session } } = await client.auth.getSession();
+      const {
+        data: { session },
+      } = await client.auth.getSession();
+
       if (!session?.user?.id) return;
 
-      const { data: profile } = await client
-        .from("user_profiles")
-        .select("emergency_name, emergency_phone, emergency_relation")
-        .eq("id", session.user.id)
-        .maybeSingle();
-
-      if (
+      const profile = await readProfile(client, session.user.id);
+      const isComplete =
         profile?.emergency_name?.trim() &&
         profile?.emergency_phone?.trim() &&
-        profile?.emergency_relation?.trim()
-      ) {
+        profile?.emergency_relation?.trim();
+
+      if (isComplete) {
         applyCompletedState();
       }
     } catch (err) {
