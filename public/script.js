@@ -533,7 +533,7 @@ function setupContactFormSubmission() {
 
   const SUPABASE_URL = "https://uycwzhlcnfijjyzkgkem.supabase.co";
   const SUPABASE_KEY = "sb_publishable_IKwD3YtQwWzzEtE8QkVagA_OJGdV2e4";
-  const CONTACT_CONFIRM_ENDPOINT = `${SUPABASE_URL}/functions/v1/gracias-por-contactarnos`;
+  const CONTACT_CONFIRM_ENDPOINT = "/api/contact-notify";
 
   const ensureSupabaseClient = async () => {
     if (typeof window.supabase !== "undefined") {
@@ -584,13 +584,14 @@ function setupContactFormSubmission() {
     eventName,
     reason,
     message,
+    phone,
+    attachmentUrl,
   }) => {
     try {
       const response = await fetch(CONTACT_CONFIRM_ENDPOINT, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          apikey: SUPABASE_KEY,
         },
         body: JSON.stringify({
           email,
@@ -599,6 +600,8 @@ function setupContactFormSubmission() {
           event_slug: eventName,
           reason,
           message,
+          phone,
+          attachment_url: attachmentUrl,
         }),
       });
 
@@ -673,28 +676,6 @@ function setupContactFormSubmission() {
       attachmentUrl = fileData?.publicUrl || null;
     }
 
-    const { error } = await client.from("contact_messages").insert({
-      event_slug: eventName,
-      reason,
-      full_name: fullName,
-      email,
-      phone,
-      subject,
-      message,
-      attachment_url: attachmentUrl,
-    });
-
-    if (error) {
-      console.error("Error insert contact_messages:", error);
-      const isPolicyError = error.code === "42501" || /row-level security|permission denied/i.test(error.message || "");
-      statusNode.textContent = isPolicyError
-        ? "No hay permisos para guardar en contact_messages. Revisa las políticas RLS de Supabase."
-        : `No se pudo enviar tu solicitud: ${error.message || "error desconocido"}`;
-      statusNode.style.color = "#ff8a65";
-      resetSubmit(originalText);
-      return;
-    }
-
     const confirmationSent = await sendContactConfirmation({
       email,
       fullName,
@@ -702,6 +683,8 @@ function setupContactFormSubmission() {
       eventName,
       reason,
       message,
+      phone,
+      attachmentUrl,
     });
 
     form.innerHTML = `
@@ -1851,7 +1834,10 @@ const ensureSupabaseClient = async () => {
 function setupSupabase() {
   const SUPABASE_URL = "https://uycwzhlcnfijjyzkgkem.supabase.co";
   const SUPABASE_KEY = "sb_publishable_IKwD3YtQwWzzEtE8QkVagA_OJGdV2e4";
-  const SITE = window.location.origin;
+  const SITE =
+    window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1"
+      ? window.location.origin
+      : "https://www.kinetichub.com.mx";
   const PROFILE_TABLE = "user_profiles";
   const AXOLOTE_PAYMENT_URL = "checkout.html";
   const AXOLOTE_EVENT_URL = "axolote-night-run.html";
@@ -2629,6 +2615,7 @@ function setupSupabase() {
         const emergencySaveBtn = document.getElementById("emergencyContactSaveBtn");
         const emergencySavedCard = document.getElementById("profileEmergencySavedCard");
         const emergencySavedActions = document.getElementById("profileEmergencySavedActions");
+        const emergencyIntro = document.querySelector(".profile-emergency-intro");
         const emergencyEditBtn = document.getElementById("emergencyEditBtn");
         const emergencyCancelBtn = document.getElementById("emergencyCancelBtn");
 
@@ -2927,22 +2914,27 @@ function setupSupabase() {
 
         const toggleEmergencyMode = ({ showForm, contact = null }) => {
           if (!emergencyForm) return;
+          const hasSavedEmergency = hasCompleteEmergencyContact(contact || {});
 
           emergencyForm.hidden = !showForm;
 
+          if (emergencyIntro) {
+            emergencyIntro.hidden = hasSavedEmergency;
+          }
+
           if (emergencySavedActions) {
-            emergencySavedActions.hidden = showForm || !hasCompleteEmergencyContact(contact || {});
+            emergencySavedActions.hidden = showForm || !hasSavedEmergency;
           }
 
           if (emergencySavedCard) {
-            emergencySavedCard.hidden = showForm || !hasCompleteEmergencyContact(contact || {});
+            emergencySavedCard.hidden = showForm || !hasSavedEmergency;
             if (!emergencySavedCard.hidden && contact) {
               renderSavedEmergencyCard(contact);
             }
           }
 
           if (emergencyCancelBtn) {
-            emergencyCancelBtn.hidden = !showForm || !hasCompleteEmergencyContact(contact || {});
+            emergencyCancelBtn.hidden = !showForm || !hasSavedEmergency;
           }
 
           if (!showForm) {

@@ -1,0 +1,415 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Kinetic Hub | Mi perfil</title>
+    <meta
+      name="description"
+      content="Gestiona tu perfil, tus inscripciones y datos personales en Kinetic Hub."
+    />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Sora:wght@500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="styles.min.css?v=1779123059672" />
+    <link rel="icon" type="image/png" href="icon.png" />
+  </head>
+  <body class="profile-page" data-profile-page>
+
+    <!-- NAV HEADER -->
+    <header class="site-header">
+      <div class="container nav-shell">
+        <a href="index.html" class="brand" aria-label="Ir al inicio de Kinetic Hub">
+          <img class="brand-mascot" src="Logo_kinect.png" alt="Ajolote Kinetic Hub" />
+          <span class="brand-copy">
+            <strong>Kinetic Hub</strong>
+            <small>Run your next challenge</small>
+          </span>
+        </a>
+
+        <button class="menu-toggle" id="menuToggle" aria-expanded="false" aria-controls="siteNav">
+          Menú
+        </button>
+
+        <nav class="site-nav" id="siteNav" aria-label="Navegación principal">
+          <a href="eventos.html">Explorar eventos</a>
+          <a href="blog.html">Blog</a>
+          <a href="nosotros.html">Nosotros</a>
+          <a href="contacto.html">Contacto</a>
+        </nav>
+
+        <div class="nav-actions">
+          <a class="ghost-link" href="auth.html?mode=login">Iniciar Sesión</a>
+          <a class="btn btn-primary" href="auth.html?mode=register">Registrarse</a>
+        </div>
+      </div>
+    </header>
+
+    <section class="profile-reminder-shell" id="profileRaceReminder" hidden aria-live="polite">
+      <div class="container profile-reminder-inner">
+        <div>
+          <p class="profile-reminder-title">Carrera pendiente de pago</p>
+          <p class="profile-reminder-copy">Axolote Night Run 2026 · Categoría única 5K · 31 OCT 2026</p>
+        </div>
+        <a class="profile-reminder-cta" id="profileRaceReminderPay" href="checkout.html">Pagar ahora</a>
+      </div>
+    </section>
+
+    <!-- COVER BANNER con identidad integrada -->
+    <div class="profile-cover" id="profileCover">
+      <label class="profile-cover-btn" for="coverUpload">
+        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path
+            d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"
+            stroke="currentColor"
+            stroke-width="1.7"
+            stroke-linejoin="round"
+          />
+          <circle cx="12" cy="13" r="4" stroke="currentColor" stroke-width="1.7" />
+        </svg>
+        Personalizar cover
+      </label>
+      <button class="profile-cover-adjust-btn" id="coverAdjustToggle" type="button" hidden>
+        Ajustar portada
+      </button>
+      <input type="file" id="coverUpload" accept="image/*" class="profile-file-hidden" />
+
+      <!-- IDENTITY dentro del banner -->
+      <div class="profile-identity">
+        <div class="profile-avatar-wrap">
+          <div class="profile-avatar" id="profileAvatarInner">
+            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <circle cx="12" cy="8" r="4" stroke="currentColor" stroke-width="1.7" />
+              <path
+                d="M4 20c0-4 3.6-7 8-7s8 3 8 7"
+                stroke="currentColor"
+                stroke-width="1.7"
+                stroke-linecap="round"
+              />
+            </svg>
+          </div>
+          <label class="profile-avatar-edit-btn" for="avatarUpload" title="Cambiar foto de perfil">
+            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path
+                d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+              <path
+                d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+            </svg>
+          </label>
+          <input type="file" id="avatarUpload" accept="image/*" class="profile-file-hidden" />
+        </div>
+        <div class="profile-ident-info">
+          <span class="profile-username">Nombre de usuario</span>
+          <span class="profile-ident-meta">correo@ejemplo.com</span>
+          <span class="profile-ident-meta">55 0000 0000</span>
+          <span class="profile-ident-meta">
+            Número de corredor: <strong data-bib-number>---</strong>
+          </span>
+        </div>
+      </div>
+    </div>
+
+      <!-- TWO-COLUMN LAYOUT -->
+      <div class="profile-layout">
+
+        <!-- SIDEBAR NAV -->
+        <aside class="profile-sidebar">
+          <a class="profile-nav-item is-active" data-section="datos" href="#">Mis datos personales</a>
+          <a class="profile-nav-item" data-section="inscripciones" href="#">Mis carreras</a>
+          <a class="profile-nav-item" data-section="resultados" href="#">Mis resultados</a>
+          <a class="profile-nav-item" data-section="fotos" href="#">Mis fotos</a>
+          <a class="profile-nav-item" data-section="emergencia" href="#">Contacto de emergencia</a>
+          <a class="profile-nav-item" data-section="seguridad" href="#">Seguridad</a>
+          <a class="profile-nav-item" id="sidebarLogout" href="#" style="margin-top:auto;color:#f87171;">Cerrar sesión</a>
+        </aside>
+
+        <!-- CONTENT PANELS -->
+        <main class="profile-content">
+
+          <!-- ── DATOS PERSONALES ── -->
+          <section class="profile-panel is-active" data-section="datos">
+            <h2 class="profile-section-title">Información personal</h2>
+            <div class="profile-card">
+              <form class="profile-form" action="#" method="post" novalidate>
+                <div class="profile-form-grid">
+                  <div class="profile-field">
+                    <label for="pfNombre">Nombre</label>
+                    <input id="pfNombre" name="nombre" type="text" placeholder="Tu nombre" />
+                  </div>
+                  <div class="profile-field">
+                    <label for="pfApPat">Apellido Paterno</label>
+                    <input id="pfApPat" name="apellidoPat" type="text" placeholder="Apellido paterno" />
+                  </div>
+                </div>
+
+                <div class="profile-form-grid">
+                  <div class="profile-field">
+                    <label for="pfApMat">Apellido Materno</label>
+                    <input id="pfApMat" name="apellidoMat" type="text" placeholder="Apellido materno" />
+                  </div>
+                  <div class="profile-field">
+                    <label for="pfNacimiento">Fecha de nacimiento</label>
+                    <input id="pfNacimiento" name="nacimiento" type="date" />
+                  </div>
+                </div>
+
+                <div class="profile-form-grid">
+                  <div class="profile-field">
+                    <label for="pfGenero">Género</label>
+                    <select id="pfGenero" name="genero">
+                      <option value="">Selecciona</option>
+                      <option value="hombre">Hombre</option>
+                      <option value="mujer">Mujer</option>
+                      <option value="otro">Prefiero no decir</option>
+                    </select>
+                  </div>
+                  <div class="profile-field">
+                    <label for="pfTelefono">Teléfono celular</label>
+                    <input id="pfTelefono" name="telefono" type="tel" placeholder="55 0000 0000" />
+                  </div>
+                </div>
+
+                <div class="profile-form-grid">
+                  <div class="profile-field">
+                    <label for="pfPeso">Peso</label>
+                    <div class="profile-input-suffix">
+                      <input id="pfPeso" name="peso" type="number" placeholder="0" min="0" max="500" />
+                      <span>kg</span>
+                    </div>
+                  </div>
+                  <div class="profile-field">
+                    <label for="pfEstatura">Estatura</label>
+                    <div class="profile-input-suffix">
+                      <input id="pfEstatura" name="estatura" type="number" placeholder="0" min="0" max="300" />
+                      <span>cm</span>
+                    </div>
+                  </div>
+                </div>
+
+                <h3 class="profile-sub-title">Dirección</h3>
+
+                <div class="profile-form-grid">
+                  <div class="profile-field">
+                    <label for="pfPais">País</label>
+                    <select id="pfPais" name="pais">
+                      <option value="mx">México</option>
+                      <option value="us">Estados Unidos</option>
+                      <option value="co">Colombia</option>
+                      <option value="ar">Argentina</option>
+                    </select>
+                  </div>
+                  <div class="profile-field">
+                    <label for="pfEstado">Estado</label>
+                    <select id="pfEstado" name="estado">
+                      <option value="">Selecciona</option>
+                      <option value="cdmx">Ciudad de México</option>
+                      <option value="jal">Jalisco</option>
+                      <option value="nl">Nuevo León</option>
+                      <option value="mex">Estado de México</option>
+                      <option value="pue">Puebla</option>
+                      <option value="qro">Querétaro</option>
+                      <option value="gto">Guanajuato</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div class="profile-form-actions">
+                  <button class="profile-save-btn" type="submit">Editar información</button>
+                </div>
+              </form>
+            </div>
+          </section>
+
+          <!-- ── INSCRIPCIONES ── -->
+          <section class="profile-panel" data-section="inscripciones">
+            <h2 class="profile-section-title">Mis carreras</h2>
+            <div id="profileRacesContainer"></div>
+          </section>
+
+          <!-- ── RESULTADOS ── -->
+          <section class="profile-panel" data-section="resultados">
+            <h2 class="profile-section-title">Mis resultados</h2>
+            <div class="profile-card">
+              <div class="profile-empty-state">
+                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <polyline
+                    points="22 12 18 12 15 21 9 3 6 12 2 12"
+                    stroke="currentColor"
+                    stroke-width="1.7"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  />
+                </svg>
+                <p>Cuando completes tu primera carrera, tus tiempos y posición aparecerán aquí.</p>
+              </div>
+            </div>
+          </section>
+
+          <!-- ── FOTOS ── -->
+          <section class="profile-panel" data-section="fotos">
+            <h2 class="profile-section-title">Mis fotos</h2>
+            <div class="profile-card">
+              <div class="profile-empty-state">
+                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path
+                    d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"
+                    stroke="currentColor"
+                    stroke-width="1.7"
+                    stroke-linejoin="round"
+                  />
+                  <circle cx="12" cy="13" r="4" stroke="currentColor" stroke-width="1.7" />
+                </svg>
+                <p>Las fotos de tu carrera aparecerán aquí una vez que el fotógrafo oficial las publique.</p>
+              </div>
+            </div>
+          </section>
+            <!-- ── SEGURIDAD ── -->
+            <section class="profile-panel" data-section="seguridad">
+              <h2 class="profile-section-title">Seguridad de tu cuenta</h2>
+              <div class="profile-card">
+                <form class="profile-form" id="changePasswordForm" action="#" method="post" novalidate>
+                  <div class="profile-field">
+                    <label for="currentPassword">Contraseña actual</label>
+                    <input id="currentPassword" name="currentPassword" type="password" placeholder="Ingresa tu contraseña actual" autocomplete="current-password" required />
+                  </div>
+
+                  <div class="profile-field">
+                    <label for="newPassword">Nueva contraseña</label>
+                    <input id="newPassword" name="newPassword" type="password" placeholder="Mínimo 8 caracteres (letras y números)" autocomplete="new-password" minlength="8" required />
+                  </div>
+
+                  <div class="profile-field">
+                    <label for="confirmPassword">Confirmar contraseña</label>
+                    <input id="confirmPassword" name="confirmPassword" type="password" placeholder="Repite tu nueva contraseña" autocomplete="new-password" minlength="8" required />
+                  </div>
+
+                  <div class="profile-form-actions">
+                    <button class="profile-save-btn" type="submit">Cambiar contraseña</button>
+                  </div>
+                  <p class="profile-save-status" id="changePasswordStatus" aria-live="polite"></p>
+                </form>
+              </div>
+            </section>
+          <!-- ── CONTACTO DE EMERGENCIA ── -->
+          <section class="profile-panel" data-section="emergencia">
+            <h2 class="profile-section-title">Contacto de emergencia</h2>
+            <div class="profile-card">
+              <div class="profile-emergency-intro">
+                <p>
+                  Agrega tu contacto de emergencia.
+                </p>
+              </div>
+
+              <div id="profileEmergencySavedCard" hidden></div>
+
+              <div class="profile-emergency-saved-actions" id="profileEmergencySavedActions" hidden>
+                <button class="profile-secondary-btn" id="emergencyEditBtn" type="button">Editar contacto</button>
+              </div>
+
+              <form class="profile-form" id="emergencyContactForm" action="#" method="post" novalidate>
+                <div class="profile-form-grid">
+                  <div class="profile-field">
+                    <label for="emergencyContactName">Nombre completo</label>
+                    <input id="emergencyContactName" name="emergencyContactName" type="text" placeholder="Nombre y apellidos" />
+                  </div>
+                  <div class="profile-field">
+                    <label for="emergencyContactPhone">Teléfono celular</label>
+                    <input id="emergencyContactPhone" name="emergencyContactPhone" type="tel" placeholder="55 0000 0000" />
+                  </div>
+                </div>
+
+                <div class="profile-form-grid">
+                  <div class="profile-field">
+                    <label for="emergencyContactRelation">Relación</label>
+                    <select id="emergencyContactRelation" name="emergencyContactRelation">
+                      <option value="">Selecciona</option>
+                      <option value="madre">Madre</option>
+                      <option value="padre">Padre</option>
+                      <option value="hermano">Hermano/a</option>
+                      <option value="pareja">Pareja</option>
+                      <option value="amigo">Amigo/a</option>
+                      <option value="otro">Otro</option>
+                    </select>
+                  </div>
+                  <div class="profile-field">
+                    <label for="emergencyContactEmail">Correo electrónico</label>
+                    <input id="emergencyContactEmail" name="emergencyContactEmail" type="email" placeholder="correo@ejemplo.com" />
+                  </div>
+                </div>
+
+                <div class="profile-form-actions">
+                  <button class="profile-secondary-btn" id="emergencyCancelBtn" type="button" hidden>Cancelar</button>
+                  <button class="profile-save-btn" id="emergencyContactSaveBtn" type="submit">Guardar contacto</button>
+                </div>
+                <p class="profile-save-status" id="emergencyContactStatus" aria-live="polite"></p>
+              </form>
+            </div>
+          </section>
+
+        </main>
+      </div>
+    </div>
+
+    <!-- FOOTER -->
+    <footer class="site-footer">
+      <div class="container footer-grid">
+        <div>
+          <a href="index.html" class="footer-brand" aria-label="Inicio Kinetic Hub">
+            <img class="brand-logo" src="KineticHUB.png" alt="Kinetic Hub" />
+          </a>
+        </div>
+
+        <div>
+          <h3>Navegación</h3>
+          <a href="eventos.html">Explorar eventos</a>
+          <a href="blog.html">Blog</a>
+        </div>
+
+        <div>
+          <h3>Comunidad</h3>
+          <a href="nosotros.html">Nosotros</a>
+          <a href="contacto.html">Contacto</a>
+          <a href="index.html#future">FAQ del evento</a>
+          <a href="https://www.instagram.com/kinetic.hub" target="_blank" rel="noopener noreferrer">Instagram</a>
+        </div>
+
+        <div>
+          <h3>Newsletter</h3>
+          <p>Te notificamos próxima carrera, resultados y tu posición oficial al cierre del evento.</p>
+          <form class="footer-newsletter" action="#" method="post">
+            <label for="footerMail" class="sr-only">Correo</label>
+            <input id="footerMail" type="email" placeholder="Correo para notificaciones" required />
+            <button class="btn btn-small" type="submit">Quiero avisos</button>
+          </form>
+        </div>
+      </div>
+
+      <div class="footer-bottom">
+        <div class="container footer-bottom-shell">
+          <small>© <span id="yearNow"></span> Kinetic Hub. Todos los derechos reservados.</small>
+          <div class="footer-links">
+            <a href="#">Privacidad</a>
+            <a href="#">Términos</a>
+            <a href="#">Cookies</a>
+          </div>
+        </div>
+      </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="script.min.js?v=1779123059672"></script>
+  </body>
+</html>
