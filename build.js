@@ -87,15 +87,10 @@ function minifyCSS(content) {
     .trim();
 }
 
-// Función simple para minificar JS (básico)
+// Minificación JS deshabilitada: el enfoque previo rompía URLs y plantillas.
+// Mantener el JS intacto evita regresiones funcionales en producción.
 function minifyJS(content) {
-  return content
-    .replace(/\/\*[\s\S]*?\*\//g, '') // Remover comentarios block
-    .replace(/\/\/.*$/gm, '') // Remover comentarios línea
-    .replace(/\n\s*\n/g, '\n') // Remover líneas en blanco múltiples
-    .replace(/\s+/g, ' ') // Normalizar espacios
-    .replace(/\s*([{}()[\];:,=<>!&|?+\-%*/])\s*/g, '$1') // Remover espacios alrededor de operadores
-    .trim();
+  return content;
 }
 
 // Minificar CSS

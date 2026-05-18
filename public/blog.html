@@ -1,0 +1,250 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Kinetic Hub | Blog y noticias</title>
+    <meta
+      name="description"
+      content="Contenido de entrenamiento, nutrición y noticias para la comunidad deportiva de Kinetic Hub."
+    />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Sora:wght@500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="styles.min.css?v=1779123059672" />
+      <link rel="icon" type="image/png" href="icon.png" />
+  </head>
+  <body data-page="blog">
+    <header class="site-header">
+      <div class="container nav-shell">
+        <a href="index.html" class="brand" aria-label="Ir al inicio de Kinetic Hub">
+          <img class="brand-mascot" src="Logo_kinect.png" alt="Ajolote Kinetic Hub" />
+          <span class="brand-copy">
+            <strong>Kinetic Hub</strong>
+            <small>Run your next challenge</small>
+          </span>
+        </a>
+
+        <button class="menu-toggle" id="menuToggle" aria-expanded="false" aria-controls="siteNav">
+          Menú
+        </button>
+
+        <nav class="site-nav" id="siteNav" aria-label="Navegación principal">
+          <a href="eventos.html">Explorar eventos</a>
+          <a href="blog.html">Blog</a>
+          <a href="nosotros.html">Nosotros</a>
+          <a href="contacto.html">Contacto</a>
+        </nav>
+
+        <div class="nav-actions">
+          <a class="ghost-link" href="auth.html?mode=login">Iniciar Sesión</a>
+          <a class="btn btn-primary" href="auth.html?mode=register">Registrarse</a>
+        </div>
+      </div>
+    </header>
+
+    <main>
+      <section class="blog-hero">
+        <div class="container">
+          <div class="blog-hero-content">
+            <p class="eyebrow">CENTRO DE ENTRENAMIENTO</p>
+            <h1>
+              Todo lo que necesitas<br>
+              para correr <em>mejor</em>.
+            </h1>
+            <div class="blog-hero-line"></div>
+            <p class="blog-hero-subtitle">Entrenamientos, nutrición y consejos para correr mejor<br>antes, durante y después de cada meta.</p>
+          </div>
+          <div class="blog-hero-grid">
+            <div class="blog-hero-image-card">
+              <img src="https://images.unsplash.com/photo-1571008887538-b36bb32f4571?auto=format&fit=crop&w=600&q=80" alt="Corredor en ruta" />
+              <div class="image-overlay">
+                <span>Entrena continuo</span>
+              </div>
+            </div>
+            <div class="blog-hero-image-card">
+              <img src="https://images.unsplash.com/photo-1476480862126-209bfaa8edc8?auto=format&fit=crop&w=600&q=80" alt="Trail running en naturaleza" />
+              <div class="image-overlay">
+                <span>Corre en comunidad</span>
+              </div>
+            </div>
+            <div class="blog-hero-image-card">
+              <img src="https://images.unsplash.com/photo-1461896836934-ffe607ba8211?auto=format&fit=crop&w=600&q=80" alt="Atletismo en estadio" />
+              <div class="image-overlay">
+                <span>Vence límites</span>
+              </div>
+            </div>
+            <div class="blog-hero-image-card">
+              <img src="https://images.unsplash.com/photo-1483721310020-03333e577078?auto=format&fit=crop&w=600&q=80" alt="Maratón urbano" />
+              <div class="image-overlay">
+                <span>Alcanza tus metas</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Banner artículo destacado -->
+      <section class="blog-featured-banner reveal">
+        <div class="container">
+          <div class="bfb-inner">
+            <div class="bfb-image">
+              <picture>
+                <source srcset="post1blog.avif" type="image/avif" />
+                <source srcset="post1blog.webp" type="image/webp" />
+                <img src="post1blog.png" alt="Corredor en ruta nocturna" loading="lazy" decoding="async" />
+              </picture>
+            </div>
+            <div class="bfb-content">
+              <span class="bfb-badge">ARTÍCULO DESTACADO</span>
+              <h2 class="bfb-title">Cómo preparar tu cuerpo para correr de noche sin perder rendimiento</h2>
+              <p class="bfb-desc">La carrera nocturna tiene reglas propias. Descubre cómo ajustar tu entrenamiento, nutrición y equipo para rendir al máximo cuando el sol ya se puso.</p>
+              <div class="bfb-meta">
+                <span class="bfb-meta-item">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                  7 min lectura
+                </span>
+                <span class="bfb-meta-item">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                  Por Carlos Ruiz
+                </span>
+              </div>
+              <a href="#" class="bfb-btn">Leer más <span aria-hidden="true">→</span></a>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="section">
+        <div class="container blog-list">
+          <article class="blog-entry reveal">
+            <div class="blog-cover" style="background-image:url('https://images.unsplash.com/photo-1552674605-db6ffd4facb5?auto=format&fit=crop&w=700&q=80')"></div>
+            <div class="blog-body">
+              <p class="blog-cat">Entrenamiento</p>
+              <h3>Cómo construir base aeróbica para tu primer 21K</h3>
+              <p>Plan de 8 semanas para mejorar resistencia sin sobrecarga.</p>
+              <div class="blog-footer-row">
+                <span class="blog-read-time">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                  6 min
+                </span>
+                <a class="blog-cta" href="#">Leer más</a>
+              </div>
+            </div>
+          </article>
+
+          <article class="blog-entry reveal">
+            <div class="blog-cover"></div>
+            <div class="blog-body">
+              <p class="blog-cat">Nutrición</p>
+              <h3>Hidratación inteligente para carreras de calor</h3>
+              <p>Estrategia simple para antes, durante y después del evento.</p>
+              <div class="blog-footer-row">
+                <span class="blog-read-time">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                  4 min
+                </span>
+                <a class="blog-cta" href="#">Leer más</a>
+              </div>
+            </div>
+          </article>
+
+          <article class="blog-entry reveal">
+            <div class="blog-cover" style="background-image:url('https://images.unsplash.com/photo-1594737625785-a6cbdabd333c?auto=format&fit=crop&w=700&q=80')"></div>
+            <div class="blog-body">
+              <p class="blog-cat">Comunidad</p>
+              <h3>5 clubes de running para empezar acompañado</h3>
+              <p>Opciones para encontrar comunidad y mantener constancia.</p>
+              <div class="blog-footer-row">
+                <span class="blog-read-time">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                  5 min
+                </span>
+                <a class="blog-cta" href="#">Leer más</a>
+              </div>
+            </div>
+          </article>
+        </div>
+      </section>
+
+    <section class="blog-cta-section">
+      <div class="container">
+        <div class="blog-cta-banner">
+        <div class="blog-cta-content">
+          <h2>¿Listo para ponerlo en práctica?</h2>
+
+          <p>
+            Encuentra tu próxima carrera, entrena con una meta real
+            y vive la experiencia Kinetic Hub.
+          </p>
+
+          <div class="blog-cta-actions">
+            <a href="eventos.html" class="btn btn-primary">
+              Explorar eventos
+              <span>→</span>
+            </a>
+
+            <a href="blog.html" class="btn btn-secondary">
+              Ver guía para principiantes
+            </a>
+          </div>
+        </div>
+        </div>
+      </div>
+    </section>
+    </main>
+
+    <footer class="site-footer">
+      <div class="container footer-grid">
+        <div>
+          <a href="index.html" class="footer-brand" aria-label="Inicio Kinetic Hub">
+            <img class="brand-logo" src="KineticHUB.png" alt="Kinetic Hub" />
+            
+          </a>
+        </div>
+
+        <div>
+          <h3>Navegación</h3>
+          <a href="eventos.html">Explorar eventos</a>
+          <a href="blog.html">Blog</a>
+        </div>
+
+        <div>
+          <h3>Comunidad</h3>
+          <a href="nosotros.html">Nosotros</a>
+          <a href="contacto.html">Contacto</a>
+          <a href="index.html#future">Módulos futuros</a>
+          <a href="https://www.instagram.com/kinetic.hub" target="_blank" rel="noopener noreferrer">Instagram</a>
+          <a href="https://www.facebook.com/profile.php?id=100065314880446&mibextid=wwXIfr&rdid=KDtMnE3lJn9aQZkB&share_url=https%3A%2F%2Fwww.facebook.com%2Fshare%2F18ER76xC2i%2F%3Fmibextid%3DwwXIfr#" target="_blank" rel="noopener noreferrer">Facebook</a>
+          <a href="https://x.com/kinetichubmx?s=21" target="_blank" rel="noopener noreferrer">X (Twitter)</a>
+        </div>
+
+        <div>
+          <h3>Newsletter</h3>
+          <p>Recibe lanzamientos, promociones y contenido semanal.</p>
+          <form class="footer-newsletter" action="#" method="post">
+            <label for="footerMail" class="sr-only">Correo</label>
+            <input id="footerMail" type="email" placeholder="Correo" required />
+            <button class="btn btn-small" type="submit">Suscribirme</button>
+          </form>
+        </div>
+      </div>
+
+      <div class="footer-bottom">
+        <div class="container footer-bottom-shell">
+          <small>© <span id="yearNow"></span> Kinetic Hub. Todos los derechos reservados.</small>
+          <div class="footer-links">
+            <a href="#">Privacidad</a>
+            <a href="#">Términos</a>
+            <a href="#">Cookies</a>
+          </div>
+        </div>
+      </div>
+    </footer>
+
+    <script src="script.min.js?v=1779123059672"></script>
+  </body>
+</html>

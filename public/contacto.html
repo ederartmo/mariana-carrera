@@ -1,0 +1,194 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Kinetic Hub | Contacto</title>
+    <meta
+      name="description"
+      content="Contacto Kinetic Hub para alianzas, organización de eventos y soporte comercial."
+    />
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Contacto | Kinetic Hub" />
+    <meta property="og:description" content="Ponte en contacto con Kinetic Hub para consultas y alianzas." />
+    <meta property="og:image" content="https://www.kinetichub.com.mx/banner.avif" />
+    <meta property="og:url" content="https://www.kinetichub.com.mx/contacto.html" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Contacto | Kinetic Hub" />
+    <meta name="twitter:description" content="Ponte en contacto con Kinetic Hub para consultas y alianzas." />
+    <meta name="theme-color" content="#000000" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Sora:wght@500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="styles.min.css?v=1779123059672" />
+      <link rel="icon" type="image/png" href="icon.png" />
+  </head>
+  <body class="contact-page">
+    <header class="site-header">
+      <div class="container nav-shell">
+        <a href="index.html" class="brand" aria-label="Ir al inicio de Kinetic Hub">
+          <img class="brand-mascot" src="Logo_kinect.png" alt="Ajolote Kinetic Hub" />
+          <span class="brand-copy">
+            <strong>Kinetic Hub</strong>
+            <small>Run your next challenge</small>
+          </span>
+        </a>
+
+        <button class="menu-toggle" id="menuToggle" aria-expanded="false" aria-controls="siteNav">
+          Menú
+        </button>
+
+        <nav class="site-nav" id="siteNav" aria-label="Navegación principal">
+          <a href="eventos.html">Explorar eventos</a>
+          <a href="blog.html">Blog</a>
+          <a href="nosotros.html">Nosotros</a>
+          <a href="contacto.html">Contacto</a>
+        </nav>
+
+        <div class="nav-actions">
+          <a class="ghost-link" href="auth.html?mode=login">Iniciar Sesión</a>
+          <a class="btn btn-primary" href="auth.html?mode=register">Registrarse</a>
+        </div>
+      </div>
+    </header>
+
+    <main>
+      <section class="contact-hero">
+        <div class="container contact-hero-panel reveal">
+          <p class="eyebrow">CENTRO DE SOPORTE</p>
+          <h1>
+            Estamos aquí para<br>
+            <em>ayudarte</em>.
+          </h1>
+          <div class="contact-hero-line"></div>
+          <p>
+            Ponte en contacto con nosotros. Estamos listos para ayudarte con dudas,
+            procesos de inscripción y seguimiento de eventos.
+          </p>
+        </div>
+      </section>
+
+      <section class="contact-shell-section">
+        <div class="container">
+          <form id="contactForm" class="contact-form-shell reveal" action="#" method="post" enctype="multipart/form-data" novalidate>
+            <div class="contact-form-grid">
+              <label for="eventName">
+                Evento <span class="required-mark">*</span>
+              </label>
+              <select id="eventName" name="eventName" required>
+                <option value="">Selecciona tu evento</option>
+                <option value="axolote-night-run">Axolote Night Run</option>
+              </select>
+
+              <label for="contactReason">
+                Motivo de contacto <span class="required-mark">*</span>
+              </label>
+              <select id="contactReason" name="contactReason" required>
+                <option value="">Selecciona una opción</option>
+                <option value="inscripcion">Duda de inscripción</option>
+                <option value="pago">Aclaración de pago</option>
+                <option value="resultados">Soporte de resultados</option>
+                <option value="facturacion">Facturación</option>
+                <option value="otro">Otro</option>
+              </select>
+
+              <label for="fullName">
+                Nombre completo <span class="required-mark">*</span>
+              </label>
+              <input id="fullName" name="fullName" type="text" placeholder="Escribe tu nombre completo" required />
+
+              <div class="contact-row-two">
+                <div>
+                  <label for="email">
+                    Correo con el que te inscribiste <span class="required-mark">*</span>
+                  </label>
+                  <input id="email" name="email" type="email" placeholder="tu@correo.com" required />
+                </div>
+                <div>
+                  <label for="phone">
+                    Número de teléfono móvil <span class="required-mark">*</span>
+                  </label>
+                  <input id="phone" name="phone" type="tel" placeholder="5530790944" required />
+                </div>
+              </div>
+
+              <label for="subject">
+                Asunto <span class="required-mark">*</span>
+              </label>
+              <input id="subject" name="subject" type="text" placeholder="Escribe el asunto de tu solicitud" required />
+
+              <label for="requestDetails">
+                Detalla tu solicitud <span class="required-mark">*</span>
+              </label>
+              <textarea
+                id="requestDetails"
+                name="requestDetails"
+                placeholder="Incluye toda la información posible para ayudarte más rápido"
+                required
+              ></textarea>
+
+              <label for="supportFile">Cargar un archivo</label>
+              <input id="supportFile" name="supportFile" type="file" />
+            </div>
+
+            <button class="btn btn-primary contact-submit" type="submit">Enviar</button>
+          </form>
+        </div>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <div class="container footer-grid">
+        <div>
+          <a href="index.html" class="footer-brand" aria-label="Inicio Kinetic Hub">
+            <img class="brand-logo" src="KineticHUB.png" alt="Kinetic Hub" />
+            
+          </a>
+        </div>
+
+        <div>
+          <h3>Navegación</h3>
+          <a href="eventos.html">Explorar eventos</a>
+          <a href="blog.html">Blog</a>
+        </div>
+
+        <div>
+          <h3>Comunidad</h3>
+          <a href="nosotros.html">Nosotros</a>
+          <a href="contacto.html">Contacto</a>
+          <a href="index.html#future">Módulos futuros</a>
+          <a href="https://www.instagram.com/kinetic.hub" target="_blank" rel="noopener noreferrer">Instagram</a>
+          <a href="https://www.facebook.com/profile.php?id=100065314880446&mibextid=wwXIfr&rdid=KDtMnE3lJn9aQZkB&share_url=https%3A%2F%2Fwww.facebook.com%2Fshare%2F18ER76xC2i%2F%3Fmibextid%3DwwXIfr#" target="_blank" rel="noopener noreferrer">Facebook</a>
+          <a href="https://x.com/kinetichubmx?s=21" target="_blank" rel="noopener noreferrer">X (Twitter)</a>
+        </div>
+
+        <div>
+          <h3>Newsletter</h3>
+          <p>Recibe lanzamientos, promociones y contenido semanal.</p>
+          <form class="footer-newsletter" action="#" method="post">
+            <label for="footerMail" class="sr-only">Correo</label>
+            <input id="footerMail" type="email" placeholder="Correo" required />
+            <button class="btn btn-small" type="submit">Suscribirme</button>
+          </form>
+        </div>
+      </div>
+
+      <div class="footer-bottom">
+        <div class="container footer-bottom-shell">
+          <small>© <span id="yearNow"></span> Kinetic Hub. Todos los derechos reservados.</small>
+          <div class="footer-links">
+            <a href="privacidad.html">Privacidad</a>
+            <a href="terminos.html">Términos</a>
+            <a href="cookies.html">Cookies</a>
+          </div>
+        </div>
+      </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="script.min.js?v=1779123059672"></script>
+  </body>
+</html>
