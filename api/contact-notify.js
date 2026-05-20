@@ -1,5 +1,6 @@
 const { Resend } = require('resend');
 const { createClient } = require('@supabase/supabase-js');
+const { trackMetaEvent } = require('./_meta-capi');
 
 const resendApiKey = process.env.RESEND_API_KEY;
 const adminEmail = process.env.CONTACT_ADMIN_EMAIL || 'hola@kinetichub.com.mx';
@@ -23,6 +24,17 @@ function escapeHtml(value) {
 
 function formatMultiline(value) {
   return escapeHtml(value).replace(/\r?\n/g, '<br>');
+}
+
+function splitName(fullName) {
+  const value = sanitize(fullName);
+  if (!value) return { firstName: '', lastName: '' };
+  const parts = value.split(/\s+/).filter(Boolean);
+  if (parts.length === 1) return { firstName: parts[0], lastName: '' };
+  return {
+    firstName: parts[0],
+    lastName: parts.slice(1).join(' '),
+  };
 }
 
 async function sendEmailOrThrow(resend, payload, label) {
@@ -215,6 +227,28 @@ module.exports = async function handler(req, res) {
       subject: 'Recibimos tu solicitud - Kinetic Hub',
       html: userHtml,
     }, 'Fallo envio usuario');
+
+    const { firstName, lastName } = splitName(cleanName);
+    const contactTrack = await trackMetaEvent({
+      req,
+      eventName: 'Contact',
+      userData: {
+        email: cleanEmail,
+        phone: cleanPhone !== 'No proporcionado' ? cleanPhone : '',
+        firstName,
+        lastName,
+        externalId: cleanEmail,
+      },
+      customData: {
+        event_slug: cleanEvent,
+        reason: cleanReason,
+      },
+      testEventCode: process.env.META_TEST_EVENT_CODE,
+    });
+
+    if (!contactTrack.ok && !contactTrack.skipped) {
+      console.error('Error enviando Contact a Meta CAPI:', contactTrack.error || contactTrack);
+    }
 
     return res.status(200).json({ ok: true });
   } catch (error) {
