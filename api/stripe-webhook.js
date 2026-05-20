@@ -2,6 +2,7 @@
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 const { Resend } = require('resend');
 const { createClient } = require('@supabase/supabase-js');
+const { trackMetaEvent } = require('./_meta-capi');
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 const supabase = createClient(
@@ -236,6 +237,11 @@ module.exports = async (req, res) => {
     const sessionId = session.id;
     const amountTotal = (session.amount_total || 0) / 100;
     const shirtSize = (session.metadata?.shirt_size || '').trim().toUpperCase();
+    const metaFbp = (session.metadata?.meta_fbp || '').trim();
+    const metaFbc = (session.metadata?.meta_fbc || '').trim();
+    const metaExternalId = (session.metadata?.meta_external_id || '').trim();
+    const purchaseEventId = `purchase_${sessionId}`;
+    const registrationEventId = `complete_registration_${sessionId}`;
 
     if (!email) {
       console.error(`❌ PAGO SIN EMAIL: session_id=${sessionId} amount=${amountTotal}`);
@@ -408,6 +414,52 @@ module.exports = async (req, res) => {
         console.log(`📧 Email enviado a ${cleanEmail}`);
       } catch (emailError) {
         console.error("❌ Error al enviar email con Resend:", emailError);
+      }
+
+      const purchaseTrack = await trackMetaEvent({
+        req,
+        eventName: 'Purchase',
+        eventId: purchaseEventId,
+        userData: {
+          email: cleanEmail,
+          externalId: metaExternalId || cleanEmail,
+          fbp: metaFbp,
+          fbc: metaFbc,
+        },
+        customData: {
+          currency: 'MXN',
+          value: amountTotal,
+          content_name: 'Axolote Night Run 2026',
+          content_type: 'product',
+        },
+        eventSourceUrl: 'https://www.kinetichub.com.mx/succes.html',
+        testEventCode: process.env.META_TEST_EVENT_CODE,
+      });
+
+      if (!purchaseTrack.ok && !purchaseTrack.skipped) {
+        console.error('Error enviando Purchase a Meta CAPI:', purchaseTrack.error || purchaseTrack);
+      }
+
+      const completeRegistrationTrack = await trackMetaEvent({
+        req,
+        eventName: 'CompleteRegistration',
+        eventId: registrationEventId,
+        userData: {
+          email: cleanEmail,
+          externalId: metaExternalId || cleanEmail,
+          fbp: metaFbp,
+          fbc: metaFbc,
+        },
+        customData: {
+          status: 'completed',
+          shirt_size: ['S', 'M', 'L', 'XL', 'XXL'].includes(shirtSize) ? shirtSize : 'unknown',
+        },
+        eventSourceUrl: 'https://www.kinetichub.com.mx/succes.html',
+        testEventCode: process.env.META_TEST_EVENT_CODE,
+      });
+
+      if (!completeRegistrationTrack.ok && !completeRegistrationTrack.skipped) {
+        console.error('Error enviando CompleteRegistration a Meta CAPI:', completeRegistrationTrack.error || completeRegistrationTrack);
       }
 
     } catch (dbError) {
