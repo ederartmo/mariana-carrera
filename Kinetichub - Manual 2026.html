@@ -1,0 +1,1627 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Kit de Entrega — Kinetic Hub</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700;800&family=Manrope:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+/* ===================================================
+   ROOT VARIABLES — KINETIC HUB
+=================================================== */
+:root {
+  /* Colors */
+  --bg:            #f2f4f7;
+  --surface:       #ffffff;
+  --text:          #1a232f;
+  --text-sec:      #5f6f84;
+  --border:        #d2dae6;
+  --primary:       #344a45;
+  --primary-dk:    #263733;
+  --ink:           #0d1118;
+  --orange:        #de6f20;
+  --orange-dk:     #bb5c18;
+  --green:         #00d084;
+  --green-br:      #00ff9c;
+
+  /* Print-safe tints */
+  --orange-tint:   #fdf0e8;
+  --green-tint:    #e6faf4;
+  --primary-tint:  #eaf0ef;
+  --red-tint:      #fdecea;
+  --red:           #d0342c;
+
+  /* Type */
+  --font-head:     'Sora', sans-serif;
+  --font-body:     'Manrope', sans-serif;
+
+  /* Spacing */
+  --gap-xs:  4px;
+  --gap-sm:  8px;
+  --gap-md:  16px;
+  --gap-lg:  24px;
+  --gap-xl:  40px;
+
+  /* Radius */
+  --r-sm:  6px;
+  --r-md:  10px;
+  --r-lg:  16px;
+
+  /* Shadows (light for print) */
+  --shadow-sm: 0 1px 4px rgba(0,0,0,0.06);
+  --shadow-md: 0 2px 12px rgba(0,0,0,0.08);
+}
+
+/* ===================================================
+   RESET & BASE
+=================================================== */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html { font-size: 11pt; }
+
+body {
+  font-family: var(--font-body);
+  color: var(--text);
+  background: var(--bg);
+  line-height: 1.65;
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+}
+
+/* ===================================================
+   PRINT RULES
+=================================================== */
+@page {
+  size: A4;
+  margin: 18mm 18mm 22mm 18mm;
+}
+
+@page :first {
+  margin: 0;
+}
+
+@media print {
+  body { background: white; font-size: 10.5pt; }
+  .page-cover { page-break-after: always; }
+  .section { page-break-before: always; }
+  .section:first-of-type { page-break-before: auto; }
+  .no-break { page-break-inside: avoid; }
+  table { page-break-inside: avoid; }
+  .card { page-break-inside: avoid; }
+  .flow-step { page-break-inside: avoid; }
+  h2 { page-break-after: avoid; }
+  h3 { page-break-after: avoid; }
+  .callout { page-break-inside: avoid; }
+  .page-footer { display: block; }
+  a { color: inherit; text-decoration: none; }
+}
+
+@media screen {
+  body { max-width: 794px; margin: 0 auto; padding: 0; }
+  .page-footer { display: none; }
+}
+
+/* ===================================================
+   COVER PAGE
+=================================================== */
+.page-cover {
+  width: 100%;
+  min-height: 297mm;
+  background: var(--primary-dk);
+  color: white;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 0;
+  position: relative;
+  overflow: hidden;
+}
+
+.cover-accent-bar {
+  height: 6px;
+  background: var(--orange);
+  width: 100%;
+}
+
+.cover-inner {
+  padding: 48px 52px;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.cover-badge {
+  display: inline-block;
+  border: 1.5px solid var(--orange);
+  color: var(--orange);
+  font-family: var(--font-body);
+  font-size: 9pt;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  padding: 5px 14px;
+  border-radius: 20px;
+  margin-bottom: 32px;
+}
+
+.cover-title {
+  font-family: var(--font-head);
+  font-size: 42pt;
+  font-weight: 800;
+  line-height: 1.1;
+  color: #ffffff;
+  margin-bottom: 12px;
+}
+
+.cover-subtitle {
+  font-family: var(--font-body);
+  font-size: 14pt;
+  font-weight: 300;
+  color: rgba(255,255,255,0.6);
+  margin-bottom: 48px;
+}
+
+.cover-divider {
+  width: 60px;
+  height: 3px;
+  background: var(--orange);
+  margin-bottom: 36px;
+  border-radius: 2px;
+}
+
+.cover-meta {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+  margin-top: 24px;
+}
+
+.cover-meta-item label {
+  display: block;
+  font-size: 7.5pt;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.4);
+  margin-bottom: 4px;
+  font-weight: 600;
+}
+
+.cover-meta-item span {
+  font-size: 11pt;
+  font-weight: 500;
+  color: rgba(255,255,255,0.9);
+}
+
+.cover-footer {
+  padding: 24px 52px;
+  border-top: 1px solid rgba(255,255,255,0.1);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.cover-footer-brand {
+  font-family: var(--font-head);
+  font-weight: 700;
+  font-size: 13pt;
+  color: var(--green);
+}
+
+.cover-footer-note {
+  font-size: 8.5pt;
+  color: rgba(255,255,255,0.35);
+}
+
+.cover-decoration {
+  position: absolute;
+  right: -60px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 320px;
+  height: 320px;
+  border-radius: 50%;
+  border: 60px solid rgba(0,208,132,0.06);
+}
+
+.cover-decoration-2 {
+  position: absolute;
+  right: 40px;
+  bottom: 80px;
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  border: 30px solid rgba(222,111,32,0.08);
+}
+
+/* ===================================================
+   PAGE CONTENT WRAPPER
+=================================================== */
+.section {
+  background: var(--surface);
+  padding: 40px 52px;
+  margin-bottom: 0;
+  min-height: 297mm;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+}
+
+.section-inner {
+  flex: 1;
+}
+
+/* ===================================================
+   SECTION HEADERS
+=================================================== */
+.section-label {
+  font-size: 7.5pt;
+  font-weight: 700;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--orange);
+  margin-bottom: 8px;
+  font-family: var(--font-body);
+}
+
+h2.section-title {
+  font-family: var(--font-head);
+  font-size: 22pt;
+  font-weight: 700;
+  color: var(--ink);
+  margin-bottom: 6px;
+  line-height: 1.2;
+}
+
+.section-lead {
+  font-size: 11.5pt;
+  color: var(--text-sec);
+  max-width: 520px;
+  margin-bottom: 28px;
+  line-height: 1.6;
+}
+
+.section-divider {
+  width: 40px;
+  height: 3px;
+  background: var(--orange);
+  border-radius: 2px;
+  margin-bottom: 28px;
+}
+
+h3 {
+  font-family: var(--font-head);
+  font-size: 13pt;
+  font-weight: 600;
+  color: var(--primary-dk);
+  margin: 24px 0 10px;
+}
+
+p {
+  margin-bottom: 10px;
+  color: var(--text);
+}
+
+ul, ol {
+  padding-left: 20px;
+  margin-bottom: 12px;
+}
+
+li {
+  margin-bottom: 5px;
+  color: var(--text);
+}
+
+/* ===================================================
+   CARDS
+=================================================== */
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  padding: var(--gap-lg);
+  margin-bottom: var(--gap-md);
+  box-shadow: var(--shadow-sm);
+}
+
+.card-compact {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--r-sm);
+  padding: 12px 16px;
+  margin-bottom: 8px;
+}
+
+.card-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.card-accent-left {
+  border-left: 4px solid var(--orange);
+}
+
+.card-title {
+  font-family: var(--font-head);
+  font-size: 11pt;
+  font-weight: 600;
+  color: var(--primary-dk);
+  margin-bottom: 6px;
+}
+
+.card-body {
+  font-size: 10pt;
+  color: var(--text-sec);
+  line-height: 1.55;
+}
+
+/* ===================================================
+   CALLOUTS
+=================================================== */
+.callout {
+  display: flex;
+  gap: 12px;
+  border-radius: var(--r-md);
+  padding: 14px 16px;
+  margin-bottom: 14px;
+  border: 1px solid transparent;
+}
+
+.callout-icon {
+  font-size: 15pt;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+.callout-body strong {
+  display: block;
+  font-size: 10pt;
+  font-weight: 700;
+  margin-bottom: 3px;
+}
+
+.callout-body p {
+  font-size: 9.5pt;
+  margin: 0;
+  line-height: 1.5;
+}
+
+.callout-ok {
+  background: var(--green-tint);
+  border-color: #b3eedd;
+}
+.callout-ok .callout-icon { color: #00a368; }
+.callout-ok strong { color: #006b44; }
+
+.callout-pending {
+  background: var(--orange-tint);
+  border-color: #f5cba7;
+}
+.callout-pending .callout-icon { color: var(--orange); }
+.callout-pending strong { color: var(--orange-dk); }
+
+.callout-risk {
+  background: var(--red-tint);
+  border-color: #f5b7b1;
+}
+.callout-risk .callout-icon { color: var(--red); }
+.callout-risk strong { color: #9b1c1c; }
+
+.callout-info {
+  background: var(--primary-tint);
+  border-color: #c2d4d1;
+}
+.callout-info .callout-icon { color: var(--primary); }
+.callout-info strong { color: var(--primary-dk); }
+
+/* ===================================================
+   TABLES
+=================================================== */
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 9.5pt;
+  margin-bottom: 16px;
+}
+
+thead th {
+  background: var(--primary);
+  color: white;
+  font-family: var(--font-head);
+  font-weight: 600;
+  font-size: 8.5pt;
+  letter-spacing: 0.04em;
+  padding: 10px 14px;
+  text-align: left;
+}
+
+thead th:first-child { border-radius: var(--r-sm) 0 0 0; }
+thead th:last-child  { border-radius: 0 var(--r-sm) 0 0; }
+
+tbody tr:nth-child(even) td { background: #f8f9fb; }
+tbody tr:last-child td:first-child { border-radius: 0 0 0 var(--r-sm); }
+tbody tr:last-child td:last-child  { border-radius: 0 0 var(--r-sm) 0; }
+
+td {
+  padding: 9px 14px;
+  border-bottom: 1px solid var(--border);
+  color: var(--text);
+  vertical-align: top;
+}
+
+/* ===================================================
+   CHECKLIST TABLE
+=================================================== */
+.checklist-table td:first-child {
+  width: 28px;
+  text-align: center;
+  font-size: 11pt;
+}
+
+.check-item-done td:first-child { color: #00a368; }
+.check-item-done td { color: var(--text); }
+
+.check-item-pending td:first-child { color: var(--orange); }
+.check-item-pending td { color: var(--text-sec); }
+
+.check-item-risk td:first-child { color: var(--red); }
+.check-item-risk td { color: var(--text); }
+
+/* ===================================================
+   STATUS BADGES
+=================================================== */
+.badge {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 20px;
+  font-size: 8pt;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.badge-ok      { background: var(--green-tint); color: #006b44; border: 1px solid #b3eedd; }
+.badge-pending { background: var(--orange-tint); color: var(--orange-dk); border: 1px solid #f5cba7; }
+.badge-risk    { background: var(--red-tint); color: #9b1c1c; border: 1px solid #f5b7b1; }
+
+/* ===================================================
+   FLOW TIMELINE
+=================================================== */
+.flow-timeline {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  margin: 20px 0;
+}
+
+.flow-step {
+  display: flex;
+  gap: 16px;
+  align-items: flex-start;
+}
+
+.flow-step-left {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex-shrink: 0;
+  width: 36px;
+}
+
+.flow-step-number {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: var(--primary);
+  color: white;
+  font-family: var(--font-head);
+  font-size: 10pt;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  z-index: 1;
+  position: relative;
+}
+
+.flow-step-number.accent {
+  background: var(--orange);
+}
+
+.flow-step-line {
+  width: 2px;
+  flex: 1;
+  min-height: 20px;
+  background: var(--border);
+  margin: 2px 0;
+}
+
+.flow-step-content {
+  flex: 1;
+  padding-bottom: 16px;
+}
+
+.flow-step-title {
+  font-family: var(--font-head);
+  font-weight: 600;
+  font-size: 11pt;
+  color: var(--ink);
+  margin-bottom: 3px;
+}
+
+.flow-step-desc {
+  font-size: 9.5pt;
+  color: var(--text-sec);
+  line-height: 1.5;
+}
+
+.flow-step:last-child .flow-step-line {
+  display: none;
+}
+
+/* ===================================================
+   CREDENTIALS BOX
+=================================================== */
+.credentials-box {
+  background: var(--primary-dk);
+  border-radius: var(--r-md);
+  padding: 20px 24px;
+  margin-bottom: 14px;
+  color: white;
+}
+
+.credentials-box label {
+  display: block;
+  font-size: 7.5pt;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.45);
+  margin-bottom: 4px;
+  font-weight: 600;
+}
+
+.credentials-box .cred-value {
+  font-family: 'Courier New', monospace;
+  font-size: 11pt;
+  color: var(--green);
+  word-break: break-all;
+}
+
+.credentials-box .cred-note {
+  font-size: 8.5pt;
+  color: rgba(255,255,255,0.4);
+  margin-top: 8px;
+  line-height: 1.4;
+}
+
+/* ===================================================
+   EMAIL TEMPLATES
+=================================================== */
+.email-template {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-left: 4px solid var(--orange);
+  border-radius: var(--r-sm);
+  padding: 16px 20px;
+  font-size: 9.5pt;
+  line-height: 1.65;
+  margin-bottom: 14px;
+  white-space: pre-wrap;
+  font-family: var(--font-body);
+  color: var(--text);
+}
+
+/* ===================================================
+   PAGE FOOTER (print)
+=================================================== */
+.page-footer {
+  margin-top: auto;
+  padding-top: 20px;
+  border-top: 1px solid var(--border);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 8pt;
+  color: var(--text-sec);
+}
+
+.page-footer strong {
+  color: var(--primary);
+  font-family: var(--font-head);
+}
+
+/* ===================================================
+   ACCEPTANCE SECTION
+=================================================== */
+.signature-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 32px;
+  margin-top: 32px;
+}
+
+.signature-block {
+  border-top: 2px solid var(--ink);
+  padding-top: 12px;
+}
+
+.signature-block .sig-name {
+  font-weight: 600;
+  font-size: 10pt;
+  color: var(--ink);
+  margin-bottom: 2px;
+}
+
+.signature-block .sig-role {
+  font-size: 8.5pt;
+  color: var(--text-sec);
+}
+
+.signature-line {
+  height: 48px;
+}
+
+/* ===================================================
+   UTILITY
+=================================================== */
+.mt-sm { margin-top: 8px; }
+.mt-md { margin-top: 16px; }
+.mt-lg { margin-top: 28px; }
+.mb-sm { margin-bottom: 8px; }
+.mb-md { margin-bottom: 16px; }
+.text-sm { font-size: 9pt; color: var(--text-sec); }
+.text-orange { color: var(--orange); font-weight: 600; }
+.text-green { color: #00a368; font-weight: 600; }
+.mono { font-family: 'Courier New', monospace; font-size: 9.5pt; }
+.two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.highlight-row { background: var(--primary-tint) !important; font-weight: 600; }
+</style>
+</head>
+<body>
+
+<!-- ============================================================ -->
+<!-- COVER -->
+<!-- ============================================================ -->
+<div class="page-cover">
+  <div class="cover-accent-bar"></div>
+  <div class="cover-decoration"></div>
+  <div class="cover-decoration-2"></div>
+
+  <div class="cover-inner">
+    <div class="cover-badge">Kit de Entrega Digital · 2026</div>
+    <h1 class="cover-title">Kinetic Hub</h1>
+    <p class="cover-subtitle">Manual de Entrega para Cliente Final</p>
+    <div class="cover-divider"></div>
+
+    <div class="cover-meta">
+      <div class="cover-meta-item">
+        <label>Sitio web</label>
+        <span>kinetichub.com.mx</span>
+      </div>
+      <div class="cover-meta-item">
+        <label>Versión del documento</label>
+        <span>1.1 — Entrega inicial + medición de conversiones</span>
+      </div>
+      <div class="cover-meta-item">
+        <label>Responsable de la cuenta</label>
+        <span>Mariana · Kinetic Hub</span>
+      </div>
+      <div class="cover-meta-item">
+        <label>Fecha de entrega</label>
+        <span>6 de mayo de 2026</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="cover-footer">
+    <div class="cover-footer-brand">KINETIC HUB</div>
+    <div style="display:flex; flex-direction:column; align-items:flex-end; gap:2px;">
+      <div style="font-size:8.5pt; color:rgba(255,255,255,0.55); font-family:var(--font-body);">Implementado por</div>
+      <div style="font-family:var(--font-head); font-weight:700; font-size:11pt; color:var(--orange);">EderCreaWebs</div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- SECCIÓN 1 — RESUMEN EJECUTIVO -->
+<!-- ============================================================ -->
+<div class="section">
+<div class="section-inner">
+  <div class="section-label">Sección 01</div>
+  <h2 class="section-title">Resumen ejecutivo</h2>
+  <p class="section-lead">Esto es lo que se entregó, cómo funciona el sistema y qué automatiza por ti.</p>
+  <div class="section-divider"></div>
+
+  <p>Kinetic Hub es una plataforma web completa para eventos deportivos. No es solo una página: es un sistema que cobra, registra, asigna números de corredor y envía correos de forma automática, sin que tú tengas que intervenir en cada inscripción.</p>
+
+  <div class="callout callout-ok no-break">
+    <span class="callout-icon">✅</span>
+    <div class="callout-body">
+      <strong>Sistema completamente funcional desde el día de la entrega</strong>
+      <p>Pagos, registros, asignación de números de corredor, correos y panel de administración están activos y listos para operar con participantes reales.</p>
+    </div>
+  </div>
+
+  <h3>¿Qué hace el sistema por ti de forma automática?</h3>
+
+  <div class="card-grid no-break">
+    <div class="card card-accent-left">
+      <div class="card-title">💳 Pagos</div>
+      <div class="card-body">Recibe pagos con tarjeta a través de Stripe. El dinero va directo a tu cuenta, sin intermediarios adicionales.</div>
+    </div>
+    <div class="card card-accent-left">
+      <div class="card-title">🏷️ Números de corredor</div>
+      <div class="card-body">Asigna un número de número de corredor único a cada participante al confirmar el pago. Sin duplicados, sin trabajo manual.</div>
+    </div>
+    <div class="card card-accent-left">
+      <div class="card-title">📧 Correos</div>
+      <div class="card-body">Envía confirmación de inscripción al participante y te notifica a ti cuando entra un pago nuevo.</div>
+    </div>
+    <div class="card card-accent-left">
+      <div class="card-title">🗂️ Registros</div>
+      <div class="card-body">Guarda todos los datos del participante en una base de datos. Puedes consultar la lista completa desde el panel admin.</div>
+    </div>
+  </div>
+
+  <h3>Stack tecnológico (en términos simples)</h3>
+  <table class="no-break">
+    <thead>
+      <tr>
+        <th>Herramienta</th>
+        <th>Para qué sirve</th>
+        <th>¿Lo necesitas operar?</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>Vercel</strong></td>
+        <td>Es donde vive el sitio web y el backend seguro que procesa las funciones críticas del sistema</td>
+        <td>No tocar sin soporte técnico</td>
+      </tr>
+      <tr>
+        <td><strong>Hostinger</strong></td>
+        <td>Gestiona el dominio y la configuración de correos institucionales</td>
+        <td>Solo para revisar o modificar correos institucionales</td>
+      </tr>
+      <tr>
+        <td><strong>Stripe</strong></td>
+        <td>Procesa los pagos con tarjeta de forma segura</td>
+        <td>Solo para revisar pagos</td>
+      </tr>
+      <tr>
+        <td><strong>Supabase</strong></td>
+        <td>Base de datos donde se guardan inscripciones, contactos y suscriptores</td>
+        <td>Solo en casos técnicos</td>
+      </tr>
+      <tr>
+        <td><strong>Resend</strong></td>
+        <td>Servicio que envía los correos automáticos (confirmaciones, notificaciones)</td>
+        <td>No, funciona solo</td>
+      </tr>
+      <tr>
+        <td><strong>Webhook</strong></td>
+        <td>Es la "conexión" entre Stripe y tu base de datos. Cuando alguien paga, Stripe le avisa a tu sistema automáticamente</td>
+        <td>No tocar</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+<div class="page-footer">
+  <strong>Kinetic Hub</strong> · Kit de Entrega Digital
+  <span>Sección 01 — Resumen ejecutivo</span>
+</div>
+</div>
+
+<!-- ============================================================ -->
+<!-- SECCIÓN 2 — ACCESOS Y RESPONSABLES -->
+<!-- ============================================================ -->
+<div class="section">
+<div class="section-inner">
+  <div class="section-label">Sección 02</div>
+  <h2 class="section-title">Accesos y responsables</h2>
+  <p class="section-lead">Todo lo que necesitas para entrar y operar tu plataforma desde el primer día.</p>
+  <div class="section-divider"></div>
+
+  <div class="callout callout-risk no-break">
+    <span class="callout-icon">🔒</span>
+    <div class="callout-body">
+      <strong>Importante: seguridad de accesos</strong>
+      <p>No compartas estas credenciales por WhatsApp ni correo ordinario. Si necesitas dar acceso a alguien más, crea un usuario separado. La contraseña temporal debe cambiarse en el primer acceso.</p>
+    </div>
+  </div>
+
+  <h3>Sitio web público</h3>
+  <div class="credentials-box no-break">
+    <label>URL principal</label>
+    <div class="cred-value">https://www.kinetichub.com.mx/</div>
+    <div class="cred-note">La web fue movida a Vercel para poder operar con un backend seguro.</div>
+  </div>
+
+  <h3>Acceso a Hostinger — configuración de correos</h3>
+  <div class="credentials-box no-break">
+    <label>Uso de este acceso</label>
+    <div class="cred-value">Configuración y administración de correos institucionales</div>
+    <div style="height:14px;"></div>
+    <label>Usuario / Correo de acceso</label>
+    <div class="cred-value">kinecthub@edercreawebs.com</div>
+    <div style="height:14px;"></div>
+    <label>Contraseña</label>
+    <div class="cred-value">0427_66743Tk</div>
+    <div class="cred-note">⚠️ Este acceso es para Hostinger, donde está la configuración de sus correos. Se recomienda cambiar la contraseña cuando puedan y guardar la nueva en un lugar seguro.</div>
+  </div>
+
+  <h3>Panel de administración</h3>
+  <div class="credentials-box no-break">
+    <label>URL del panel admin</label>
+    <div class="cred-value">https://www.kinetichub.com.mx/admin-inscripciones.html</div>
+    <div style="height:14px;"></div>
+    <label>Usuario / Correo de acceso</label>
+    <div class="cred-value">mariana@kinetichub.com.mx</div>
+    <div style="height:14px;"></div>
+    <label>Contraseña</label>
+    <div class="cred-value">0427_66743Tk</div>
+    <div class="cred-note">⚠️ Esta es una contraseña temporal compartida para los accesos entregados. Cámbiala cuando puedas desde Configuración → Cambiar contraseña.</div>
+  </div>
+
+  <h3 class="mt-md">Correos institucionales activos</h3>
+  <table class="no-break">
+    <thead>
+      <tr>
+        <th>Correo</th>
+        <th>Uso recomendado</th>
+        <th>Contraseña temporal</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr><td class="mono">hola@kinetichub.com.mx</td><td>Notificaciones del sistema (inscripciones, contactos)</td><td class="mono">0427_66743Tk</td></tr>
+      <tr><td class="mono">direccion@kinetichub.com.mx</td><td>Comunicaciones de dirección y toma de decisiones</td><td class="mono">0427_66743Tk</td></tr>
+      <tr><td class="mono">alianzas@kinetichub.com.mx</td><td>Patrocinadores, marcas y colaboraciones</td><td class="mono">0427_66743Tk</td></tr>
+      <tr><td class="mono">soporte@kinetichub.com.mx</td><td>Dudas y problemas de participantes</td><td class="mono">0427_66743Tk</td></tr>
+      <tr><td class="mono">ventas@kinetichub.com.mx</td><td>Cierre de ventas e inscripciones especiales</td><td class="mono">0427_66743Tk</td></tr>
+      <tr><td class="mono">facturas@kinetichub.com.mx</td><td>Solicitudes de facturación y comprobantes</td><td class="mono">0427_66743Tk</td></tr>
+      <tr><td class="mono">talento@kinetichub.com.mx</td><td>Reclutamiento y equipo interno</td><td class="mono">0427_66743Tk</td></tr>
+      <tr><td class="mono">legal@kinetichub.com.mx</td><td>Contratos, privacidad y asuntos legales</td><td class="mono">0427_66743Tk</td></tr>
+    </tbody>
+  </table>
+
+  <div class="callout callout-pending no-break">
+    <span class="callout-icon">🔑</span>
+    <div class="callout-body">
+      <strong>Contraseña temporal visible</strong>
+      <p>Todos los correos quedaron documentados con la contraseña temporal visible para facilitar el primer acceso. Cuando puedan, reemplacen esta contraseña por una nueva y segura desde Hostinger.</p>
+    </div>
+  </div>
+
+  <div class="callout callout-info no-break">
+    <span class="callout-icon">💡</span>
+    <div class="callout-body">
+      <strong>Recomendación operativa</strong>
+      <p>Mantener los correos separados por área te permitirá delegar fácilmente en el futuro. Por ejemplo, un asistente puede revisar <strong>soporte@</strong> sin tener acceso a <strong>facturas@</strong> o <strong>legal@</strong>.</p>
+    </div>
+  </div>
+
+  <h3 class="mt-md">Responsable principal del sistema</h3>
+  <table class="no-break">
+    <thead>
+      <tr><th>Rol</th><th>Nombre</th><th>Canal de contacto</th></tr>
+    </thead>
+    <tbody>
+      <tr class="highlight-row">
+        <td>Administradora de la plataforma</td>
+        <td>Mariana</td>
+        <td class="mono">mariana@kinetichub.com.mx</td>
+      </tr>
+      <tr>
+        <td>Soporte técnico (proveedor)</td>
+        <td>Eder Arteaga · EderCreaWebs</td>
+        <td class="mono">clientes@edercreawebs.com</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+<div class="page-footer">
+  <strong>Kinetic Hub</strong> · Kit de Entrega Digital
+  <span>Sección 02 — Accesos y responsables</span>
+</div>
+</div>
+
+<!-- ============================================================ -->
+<!-- SECCIÓN 3 — FLUJO COMPLETO DEL USUARIO -->
+<!-- ============================================================ -->
+<div class="section">
+<div class="section-inner">
+  <div class="section-label">Sección 03</div>
+  <h2 class="section-title">Flujo completo del usuario</h2>
+  <p class="section-lead">De ver un anuncio a recibir su número de corredor: todo lo que pasa paso a paso.</p>
+  <div class="section-divider"></div>
+
+  <p>Este es el camino completo que sigue cada participante. Los pasos marcados con <span class="badge badge-ok">AUTO</span> los ejecuta el sistema sin que intervengas tú.</p>
+
+  <div class="flow-timeline mt-md">
+    <div class="flow-step no-break">
+      <div class="flow-step-left">
+        <div class="flow-step-number">1</div>
+        <div class="flow-step-line"></div>
+      </div>
+      <div class="flow-step-content">
+        <div class="flow-step-title">Ve el anuncio en Instagram o TikTok</div>
+        <div class="flow-step-desc">El participante descubre el evento desde redes sociales y da clic en el link del anuncio o de la bio.</div>
+      </div>
+    </div>
+
+    <div class="flow-step no-break">
+      <div class="flow-step-left">
+        <div class="flow-step-number">2</div>
+        <div class="flow-step-line"></div>
+      </div>
+      <div class="flow-step-content">
+        <div class="flow-step-title">Entra al sitio y lee el evento</div>
+        <div class="flow-step-desc">Navega por la landing, revisa distancias, precios, fecha, beneficios del kit y condiciones de la carrera.</div>
+      </div>
+    </div>
+
+    <div class="flow-step no-break">
+      <div class="flow-step-left">
+        <div class="flow-step-number">3</div>
+        <div class="flow-step-line"></div>
+      </div>
+      <div class="flow-step-content">
+        <div class="flow-step-title">Da clic en "Inscribirse" o el CTA del evento</div>
+        <div class="flow-step-desc">Entra a la página de checkout donde llena su correo, talla de playera y contacto de emergencia.</div>
+      </div>
+    </div>
+
+    <div class="flow-step no-break">
+      <div class="flow-step-left">
+        <div class="flow-step-number accent">4</div>
+        <div class="flow-step-line"></div>
+      </div>
+      <div class="flow-step-content">
+        <div class="flow-step-title">El sistema detecta el precio activo <span class="badge badge-ok">AUTO</span></div>
+        <div class="flow-step-desc">Según la fecha actual, el sistema aplica el precio de la etapa correspondiente (early bird, precio general, etc.) sin intervención manual.</div>
+      </div>
+    </div>
+
+    <div class="flow-step no-break">
+      <div class="flow-step-left">
+        <div class="flow-step-number">5</div>
+        <div class="flow-step-line"></div>
+      </div>
+      <div class="flow-step-content">
+        <div class="flow-step-title">Paga con tarjeta en Stripe Checkout</div>
+        <div class="flow-step-desc">Es redirigido a la pantalla de pago de Stripe, que es 100% segura y familiar para el usuario (como Amazon o Mercado Pago).</div>
+      </div>
+    </div>
+
+    <div class="flow-step no-break">
+      <div class="flow-step-left">
+        <div class="flow-step-number accent">6</div>
+        <div class="flow-step-line"></div>
+      </div>
+      <div class="flow-step-content">
+        <div class="flow-step-title">Stripe confirma el pago al sistema <span class="badge badge-ok">AUTO</span></div>
+        <div class="flow-step-desc">El webhook de Stripe le avisa a tu plataforma en segundos que el pago fue exitoso. Sin este paso, la inscripción no se activa.</div>
+      </div>
+    </div>
+
+    <div class="flow-step no-break">
+      <div class="flow-step-left">
+        <div class="flow-step-number accent">7</div>
+        <div class="flow-step-line"></div>
+      </div>
+      <div class="flow-step-content">
+        <div class="flow-step-title">El registro se guarda en la base de datos <span class="badge badge-ok">AUTO</span></div>
+        <div class="flow-step-desc">Supabase guarda nombre, email, talla, número de corredor asignado y todos los datos del participante. Tú los puedes ver desde el panel admin.</div>
+      </div>
+    </div>
+
+    <div class="flow-step no-break">
+      <div class="flow-step-left">
+        <div class="flow-step-number accent">8</div>
+        <div class="flow-step-line"></div>
+      </div>
+      <div class="flow-step-content">
+        <div class="flow-step-title">El sistema asigna el número de corredor <span class="badge badge-ok">AUTO</span></div>
+        <div class="flow-step-desc">Se genera un número de número de corredor único, sin duplicados. El algoritmo garantiza que dos personas nunca reciban el mismo número.</div>
+      </div>
+    </div>
+
+    <div class="flow-step no-break">
+      <div class="flow-step-left">
+        <div class="flow-step-number accent">9</div>
+        <div class="flow-step-line"></div>
+      </div>
+      <div class="flow-step-content">
+        <div class="flow-step-title">El participante recibe su confirmación por correo <span class="badge badge-ok">AUTO</span></div>
+        <div class="flow-step-desc">Resend envía un correo de confirmación con el número de número de corredor, los datos de la carrera y la información que el participante necesita.</div>
+      </div>
+    </div>
+
+    <div class="flow-step no-break">
+      <div class="flow-step-left">
+        <div class="flow-step-number accent">10</div>
+        <div class="flow-step-line"></div>
+      </div>
+      <div class="flow-step-content">
+        <div class="flow-step-title">Tú recibes notificación del pago <span class="badge badge-ok">AUTO</span></div>
+        <div class="flow-step-desc">Tu correo hola@kinetichub.com.mx recibe un aviso automático cada vez que entra una inscripción pagada.</div>
+      </div>
+    </div>
+
+    <div class="flow-step no-break">
+      <div class="flow-step-left">
+        <div class="flow-step-number">11</div>
+      </div>
+      <div class="flow-step-content">
+        <div class="flow-step-title">El participante puede ver su perfil</div>
+        <div class="flow-step-desc">Al iniciar sesión en el sitio, el usuario ve su número de corredor, datos de inscripción y confirmación. Si ya tiene una inscripción activa, los botones de compra se ocultan automáticamente.</div>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="page-footer">
+  <strong>Kinetic Hub</strong> · Kit de Entrega Digital
+  <span>Sección 03 — Flujo del usuario</span>
+</div>
+</div>
+
+<!-- ============================================================ -->
+<!-- SECCIÓN 4 — LEADS Y FORMULARIOS -->
+<!-- ============================================================ -->
+<div class="section">
+<div class="section-inner">
+  <div class="section-label">Sección 04</div>
+  <h2 class="section-title">Cómo revisar formularios y leads</h2>
+  <p class="section-lead">Tu plataforma captura contactos de tres formas. Aquí te explicamos cómo funciona cada una.</p>
+  <div class="section-divider"></div>
+
+  <table class="no-break">
+    <thead>
+      <tr>
+        <th>Fuente</th>
+        <th>Qué captura</th>
+        <th>A dónde va</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>Formulario de contacto</strong></td>
+        <td>Nombre, correo, teléfono, motivo, asunto, mensaje y archivo adjunto</td>
+        <td>Supabase + correo al admin + confirmación al usuario</td>
+      </tr>
+      <tr>
+        <td><strong>Newsletter (footer)</strong></td>
+        <td>Correo electrónico</td>
+        <td>Supabase tabla suscriptores + correo de bienvenida</td>
+      </tr>
+      <tr>
+        <td><strong>WhatsApp directo</strong></td>
+        <td>Conversación libre</td>
+        <td>+52 55 3079 0944</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h3>¿Qué revisar diariamente?</h3>
+
+  <div class="two-col no-break">
+    <div class="card">
+      <div class="card-title">📬 hola@kinetichub.com.mx</div>
+      <div class="card-body">Aquí llegan todas las notificaciones del sistema: nuevas inscripciones, nuevos contactos del formulario y alertas automáticas. Es tu punto central de atención diaria.</div>
+    </div>
+    <div class="card">
+      <div class="card-title">🖥️ Panel admin</div>
+      <div class="card-body">Lista completa de inscritos con estatus de pago, número de corredor asignado y datos del participante. Entra al menos una vez al día durante períodos de inscripción activa.</div>
+    </div>
+  </div>
+
+  <h3>Prioridades de atención</h3>
+  <table class="no-break">
+    <thead>
+      <tr><th>Motivo</th><th>Prioridad</th><th>Tiempo recomendado de respuesta</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>Problema con pago</td><td><span class="badge badge-risk">Alta</span></td><td>Lo antes posible</td></tr>
+      <tr><td>Duda de inscripción</td><td><span class="badge badge-pending">Media-alta</span></td><td>Menos de 24 horas</td></tr>
+      <tr><td>Solicitud de factura</td><td><span class="badge badge-pending">Media</span></td><td>Menos de 48 horas</td></tr>
+      <tr><td>Consulta de resultados</td><td><span class="badge badge-ok">Normal</span></td><td>24 a 48 horas</td></tr>
+      <tr><td>Otros temas</td><td><span class="badge badge-ok">Normal</span></td><td>Según el caso</td></tr>
+    </tbody>
+  </table>
+
+  <h3 class="mt-md">Plantilla de respuesta por WhatsApp</h3>
+  <div class="email-template no-break">Hola [Nombre], soy del equipo Kinetic Hub.
+
+Vi tu mensaje sobre [motivo del contacto].
+
+¿Me puedes confirmar el correo electrónico con el que te inscribiste para revisarlo en nuestro sistema?
+
+Quedo al pendiente 🙌</div>
+
+  <h3>Plantilla de respuesta por correo</h3>
+  <div class="email-template no-break">Asunto: Re: Tu solicitud — Kinetic Hub
+
+Hola [Nombre],
+
+Recibimos tu mensaje sobre "[Asunto de la solicitud]".
+
+Estamos revisando tu caso y te respondemos en menos de 24 horas.
+
+Si necesitas ayuda inmediata, también puedes escribirnos por WhatsApp:
+https://wa.me/525530790944
+
+¡Gracias por ser parte de Kinetic Hub!
+
+El equipo de Kinetic Hub
+soporte@kinetichub.com.mx</div>
+
+  <div class="callout callout-pending no-break">
+    <span class="callout-icon">⚠️</span>
+    <div class="callout-body">
+      <strong>Si no llegan correos de notificación</strong>
+      <p>Revisa primero la carpeta de spam. Si el problema persiste, puede ser una configuración de DNS o un problema con el servicio de correo. Avisa al equipo técnico antes de hacer cualquier cambio.</p>
+    </div>
+  </div>
+</div>
+<div class="page-footer">
+  <strong>Kinetic Hub</strong> · Kit de Entrega Digital
+  <span>Sección 04 — Leads y formularios</span>
+</div>
+</div>
+
+<!-- ============================================================ -->
+<!-- SECCIÓN 5 — CHECKLIST DE ENTREGA -->
+<!-- ============================================================ -->
+<div class="section">
+<div class="section-inner">
+  <div class="section-label">Sección 05</div>
+  <h2 class="section-title">Checklist de entrega</h2>
+  <p class="section-lead">Todo lo que se construyó, configuró y verificó antes de esta entrega.</p>
+  <div class="section-divider"></div>
+
+  <h3>Infraestructura</h3>
+  <table class="checklist-table no-break">
+    <thead>
+      <tr><th width="36"></th><th>Elemento</th><th>Estado</th></tr>
+    </thead>
+    <tbody>
+      <tr class="check-item-done"><td>✓</td><td>Sitio web publicado en Vercel con backend seguro</td><td><span class="badge badge-ok">Listo</span></td></tr>
+      <tr class="check-item-done"><td>✓</td><td>Dominio conectado: kinetichub.com.mx</td><td><span class="badge badge-ok">Listo</span></td></tr>
+      <tr class="check-item-done"><td>✓</td><td>SSL/HTTPS activo (candado verde en el navegador)</td><td><span class="badge badge-ok">Listo</span></td></tr>
+      <tr class="check-item-done"><td>✓</td><td>Cache busting activo con assets versionados</td><td><span class="badge badge-ok">Listo</span></td></tr>
+      <tr class="check-item-done"><td>✓</td><td>Favicon configurado en todas las páginas</td><td><span class="badge badge-ok">Listo</span></td></tr>
+    </tbody>
+  </table>
+
+  <h3>Funcionalidad del sistema</h3>
+  <table class="checklist-table no-break">
+    <thead>
+      <tr><th width="36"></th><th>Elemento</th><th>Estado</th></tr>
+    </thead>
+    <tbody>
+      <tr class="check-item-done"><td>✓</td><td>Flujo de pago completo con Stripe Checkout</td><td><span class="badge badge-ok">Listo</span></td></tr>
+      <tr class="check-item-done"><td>✓</td><td>Webhook de Stripe conectado y verificado</td><td><span class="badge badge-ok">Listo</span></td></tr>
+      <tr class="check-item-done"><td>✓</td><td>Registro de inscritos en Supabase</td><td><span class="badge badge-ok">Listo</span></td></tr>
+      <tr class="check-item-done"><td>✓</td><td>Precios automáticos por fecha (early bird / general)</td><td><span class="badge badge-ok">Listo</span></td></tr>
+      <tr class="check-item-done"><td>✓</td><td>Asignación de número de corredor automática sin duplicados</td><td><span class="badge badge-ok">Listo</span></td></tr>
+      <tr class="check-item-done"><td>✓</td><td>Formulario de contacto funcional con archivo adjunto</td><td><span class="badge badge-ok">Listo</span></td></tr>
+      <tr class="check-item-done"><td>✓</td><td>Newsletter con confirmación automática</td><td><span class="badge badge-ok">Listo</span></td></tr>
+      <tr class="check-item-done"><td>✓</td><td>Registro e inicio de sesión con Supabase Auth</td><td><span class="badge badge-ok">Listo</span></td></tr>
+      <tr class="check-item-done"><td>✓</td><td>Perfil de usuario con datos de inscripción y número de corredor</td><td><span class="badge badge-ok">Listo</span></td></tr>
+      <tr class="check-item-done"><td>✓</td><td>Botones de compra ocultos si el usuario ya está inscrito</td><td><span class="badge badge-ok">Listo</span></td></tr>
+      <tr class="check-item-done"><td>✓</td><td>Panel admin con lista de inscritos y estatus</td><td><span class="badge badge-ok">Listo</span></td></tr>
+    </tbody>
+  </table>
+
+  <h3>Correos automáticos</h3>
+  <table class="checklist-table no-break">
+    <thead>
+      <tr><th width="36"></th><th>Correo automático</th><th>Estado</th></tr>
+    </thead>
+    <tbody>
+      <tr class="check-item-done"><td>✓</td><td>Confirmación de inscripción al participante</td><td><span class="badge badge-ok">Listo</span></td></tr>
+      <tr class="check-item-done"><td>✓</td><td>Correo con número de número de corredor asignado</td><td><span class="badge badge-ok">Listo</span></td></tr>
+      <tr class="check-item-done"><td>✓</td><td>Notificación al admin cuando entra un pago</td><td><span class="badge badge-ok">Listo</span></td></tr>
+      <tr class="check-item-done"><td>✓</td><td>Alerta si un pago llega sin email detectado</td><td><span class="badge badge-ok">Listo</span></td></tr>
+      <tr class="check-item-done"><td>✓</td><td>Confirmación automática del formulario de contacto</td><td><span class="badge badge-ok">Listo</span></td></tr>
+      <tr class="check-item-done"><td>✓</td><td>Confirmación de suscripción al newsletter</td><td><span class="badge badge-ok">Listo</span></td></tr>
+    </tbody>
+  </table>
+
+  <h3>Diseño y experiencia de usuario</h3>
+  <table class="checklist-table no-break">
+    <thead>
+      <tr><th width="36"></th><th>Elemento</th><th>Estado</th></tr>
+    </thead>
+    <tbody>
+      <tr class="check-item-done"><td>✓</td><td>Diseño responsive revisado (celular, tablet y computadora)</td><td><span class="badge badge-ok">Listo</span></td></tr>
+      <tr class="check-item-done"><td>✓</td><td>Viewport configurado correctamente</td><td><span class="badge badge-ok">Listo</span></td></tr>
+      <tr class="check-item-done"><td>✓</td><td>Idioma del sitio configurado en español</td><td><span class="badge badge-ok">Listo</span></td></tr>
+      <tr class="check-item-done"><td>✓</td><td>Páginas legales creadas (privacidad, términos)</td><td><span class="badge badge-ok">Listo</span></td></tr>
+      <tr class="check-item-done"><td>✓</td><td>Página de error 404 personalizada</td><td><span class="badge badge-ok">Listo</span></td></tr>
+    </tbody>
+  </table>
+</div>
+<div class="page-footer">
+  <strong>Kinetic Hub</strong> · Kit de Entrega Digital
+  <span>Sección 05 — Checklist de entrega</span>
+</div>
+</div>
+
+<!-- ============================================================ -->
+<!-- SECCIÓN 6 — QUÉ NO TOCAR + MONITOREO DIARIO -->
+<!-- ============================================================ -->
+<div class="section">
+<div class="section-inner">
+  <div class="section-label">Sección 06</div>
+  <h2 class="section-title">Qué monitorear y qué no tocar</h2>
+  <p class="section-lead">Tu operación diaria es simple. Estas son las reglas clave para que todo funcione correctamente.</p>
+  <div class="section-divider"></div>
+
+  <h3>Revisión diaria recomendada</h3>
+  <table class="no-break">
+    <thead>
+      <tr><th>Dónde</th><th>Qué revisar</th><th>Frecuencia</th></tr>
+    </thead>
+    <tbody>
+      <tr><td><strong>hola@kinetichub.com.mx</strong></td><td>Nuevas inscripciones, contactos del formulario y alertas del sistema</td><td>Diario</td></tr>
+      <tr><td><strong>Panel admin</strong></td><td>Lista de inscritos, estatus de pago, números de corredor asignados</td><td>Diario</td></tr>
+      <tr><td><strong>Stripe Dashboard</strong></td><td>Pagos confirmados, pagos fallidos, reembolsos solicitados</td><td>Diario</td></tr>
+      <tr><td><strong>Supabase</strong></td><td>Registros, contactos y suscriptores (solo si hay un caso técnico)</td><td>Solo si necesario</td></tr>
+    </tbody>
+  </table>
+
+  <div class="callout callout-ok no-break">
+    <span class="callout-icon">💡</span>
+    <div class="callout-body">
+      <strong>En resumen: tu operación diaria</strong>
+      <p>El sistema ya automatiza pagos, números de corredor, registros y correos. Tu trabajo consiste en revisar notificaciones, responder contactos y validar casos especiales. Todo lo demás ya funciona solo.</p>
+    </div>
+  </div>
+
+  <h3 class="mt-md">Lo que NO se debe modificar</h3>
+
+  <div class="callout callout-risk no-break">
+    <span class="callout-icon">🚫</span>
+    <div class="callout-body">
+      <strong>Estas configuraciones son sensibles. Un cambio incorrecto puede afectar pagos, registros o correos automáticos.</strong>
+      <p>Si algo no funciona bien, avisa al equipo técnico antes de intentar cambiarlo.</p>
+    </div>
+  </div>
+
+  <div class="two-col no-break">
+    <div>
+      <div class="card-compact">🚫 Configuración de Stripe (claves de API)</div>
+      <div class="card-compact">🚫 Webhook de pagos</div>
+      <div class="card-compact">🚫 Variables de entorno de Vercel / backend</div>
+      <div class="card-compact">🚫 Funciones de Supabase</div>
+    </div>
+    <div>
+      <div class="card-compact">🚫 Configuración de Resend (correos)</div>
+      <div class="card-compact">🚫 Código fuente del sitio y configuración de Vercel</div>
+      <div class="card-compact">🚫 Tablas de base de datos sin respaldo previo</div>
+      <div class="card-compact">🚫 Políticas de seguridad de Supabase</div>
+    </div>
+  </div>
+
+  <h3 class="mt-md">Sí puedes hacer sin soporte técnico</h3>
+  <div class="two-col no-break">
+    <div>
+      <div class="card-compact">✅ Revisar y exportar lista de inscritos</div>
+      <div class="card-compact">✅ Responder correos y formularios de contacto</div>
+      <div class="card-compact">✅ Verificar pagos en Stripe Dashboard</div>
+    </div>
+    <div>
+      <div class="card-compact">✅ Gestionar correos institucionales</div>
+      <div class="card-compact">✅ Cambiar tu contraseña de acceso al panel</div>
+      <div class="card-compact">✅ Usar la lista de newsletter para campañas</div>
+    </div>
+  </div>
+</div>
+<div class="page-footer">
+  <strong>Kinetic Hub</strong> · Kit de Entrega Digital
+  <span>Sección 06 — Monitoreo y reglas de operación</span>
+</div>
+</div>
+
+<!-- ============================================================ -->
+<!-- SECCIÓN 7 — PRÓXIMOS PASOS (30 DÍAS) -->
+<!-- ============================================================ -->
+<div class="section">
+<div class="section-inner">
+  <div class="section-label">Sección 07</div>
+  <h2 class="section-title">Próximos pasos recomendados</h2>
+  <p class="section-lead">Lo que conviene activar en los primeros 30 días para que tu plataforma rinda al máximo.</p>
+  <div class="section-divider"></div>
+
+  <div class="card-grid no-break">
+    <div class="card">
+      <div class="card-title">📊 Google Analytics 4</div>
+      <div class="card-body">Conectar GA4 te permitirá ver cuántas personas visitan tu sitio, desde dónde llegan y qué páginas ven. Esencial para medir el retorno de tus anuncios.</div>
+    </div>
+    <div class="card">
+      <div class="card-title">🎯 Meta Pixel</div>
+      <div class="card-body">Instalar el Pixel de Meta (Facebook/Instagram) te permite crear públicos de remarketing y medir exactamente cuántas inscripciones vienen de tus anuncios pagados.</div>
+    </div>
+    <div class="card">
+      <div class="card-title">🔍 Google Search Console</div>
+      <div class="card-body">Registrar tu sitio en Search Console ayuda a que Google te indexe correctamente. Empiezas a aparecer en búsquedas relacionadas con tu evento.</div>
+    </div>
+    <div class="card">
+      <div class="card-title">📧 Primera campaña de newsletter</div>
+      <div class="card-body">Tu lista de suscriptores ya está lista. El primer correo ideal es el anuncio oficial del evento con fecha de apertura de inscripciones y precio early bird.</div>
+    </div>
+    <div class="card">
+      <div class="card-title">📱 Activar WhatsApp Business</div>
+      <div class="card-body">Configura respuestas automáticas y un perfil de negocio completo en WhatsApp Business para atender consultas rápidas de forma más profesional.</div>
+    </div>
+    <div class="card">
+      <div class="card-title">🗓️ Calendario de publicaciones</div>
+      <div class="card-body">Planifica al menos 4 semanas de contenido previo al evento: conteos regresivos, testimonios, detalles del kit y beneficios de participar.</div>
+    </div>
+  </div>
+
+  <h3>Plan de mantenimiento sugerido</h3>
+  <p>Para que el sistema funcione de forma estable durante eventos activos, se recomienda un plan de mantenimiento mensual.</p>
+
+  <div class="two-col no-break">
+    <div class="card">
+      <div class="card-title">✅ Incluye</div>
+      <div class="card-body" style="font-size:9.5pt; line-height:1.8;">
+        · Revisión de formularios y correos automáticos<br>
+        · Validación de pagos y webhook<br>
+        · Ajustes menores de textos o precios<br>
+        · Soporte ante errores de inscripción<br>
+        · Revisión de panel admin<br>
+        · Cambios menores de contenido del evento<br>
+        · Apoyo en fechas críticas de inscripción
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">🚫 No incluye</div>
+      <div class="card-body" style="font-size:9.5pt; line-height:1.8;">
+        · Nuevas funcionalidades grandes<br>
+        · Rediseño completo del sitio<br>
+        · Creación de eventos con lógica nueva<br>
+        · Integraciones con plataformas externas<br>
+        · Automatizaciones nuevas<br>
+        · Campañas publicitarias<br>
+        · Atención diaria al cliente final
+      </div>
+    </div>
+  </div>
+</div>
+<div class="page-footer">
+  <strong>Kinetic Hub</strong> · Kit de Entrega Digital
+  <span>Sección 07 — Próximos pasos</span>
+</div>
+</div>
+
+<!-- ============================================================ -->
+<!-- SECCIÓN 8 — ACEPTACIÓN DE ENTREGA -->
+<!-- ============================================================ -->
+<div class="section">
+<div class="section-inner">
+  <div class="section-label">Sección 08</div>
+  <h2 class="section-title">Aceptación de entrega</h2>
+  <p class="section-lead">Con la firma de este documento se confirma que el proyecto fue revisado, entregado y aceptado en conformidad.</p>
+  <div class="section-divider"></div>
+
+  <div class="callout callout-info no-break">
+    <span class="callout-icon">📋</span>
+    <div class="callout-body">
+      <strong>¿Qué significa firmar este documento?</strong>
+      <p>Al firmar se confirma que el cliente ha revisado el sitio web, los accesos fueron entregados, el checklist de entrega fue validado y el proyecto entra en fase operativa. No implica renuncia a garantías sobre funcionalidad acordada.</p>
+    </div>
+  </div>
+
+  <h3>Declaración de entrega</h3>
+  <p>El equipo proveedor declara haber concluido el desarrollo, configuración y pruebas del sistema descrito en este documento, correspondiente al proyecto <strong>Kinetic Hub — Plataforma web de eventos deportivos</strong>, incluyendo todos los elementos listados en el checklist de la Sección 05.</p>
+  <p>El cliente declara haber recibido los accesos, la documentación y la capacitación necesaria para operar el sistema de forma autónoma.</p>
+
+  <div style="margin-top:40px;">
+    <table class="no-break" style="margin-bottom:0;">
+      <thead>
+        <tr>
+          <th>Concepto</th>
+          <th>Detalle</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td>Proyecto</td><td>Kinetic Hub — Plataforma web de eventos deportivos</td></tr>
+        <tr><td>URL del sitio</td><td>https://www.kinetichub.com.mx/</td></tr>
+        <tr><td>Fecha de entrega</td><td>6 de mayo de 2026</td></tr>
+        <tr><td>Versión del documento</td><td>1.1 — Entrega inicial + medición de conversiones</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="signature-grid mt-lg no-break">
+    <div class="signature-block">
+      <div class="signature-line"></div>
+      <div class="sig-name">Mariana</div>
+      <div class="sig-role">Cliente · Kinetic Hub</div>
+      <div class="sig-role" style="margin-top:4px;">mariana@kinetichub.com.mx</div>
+      <div class="sig-role" style="margin-top:12px;">Fecha: 6 de mayo de 2026</div>
+    </div>
+    <div class="signature-block">
+      <div class="signature-line"></div>
+      <div class="sig-name">Eder Arteaga</div>
+      <div class="sig-role">Proveedor de servicios digitales</div>
+      <div class="sig-role" style="margin-top:4px;">clientes@edercreawebs.com</div>
+      <div class="sig-role" style="margin-top:12px;">Fecha: 6 de mayo de 2026</div>
+    </div>
+  </div>
+
+  <!-- Estado del proyecto -->
+  <div style="margin-top:32px; background:var(--primary-tint); border:1px solid #c2d4d1; border-radius:var(--r-md); padding:20px 24px;" class="no-break">
+    <div style="font-size:7.5pt; font-weight:700; letter-spacing:0.12em; text-transform:uppercase; color:var(--orange); margin-bottom:12px; font-family:var(--font-body);">Estado del proyecto</div>
+    <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:16px;">
+      <div>
+        <div style="font-size:7.5pt; letter-spacing:0.08em; text-transform:uppercase; color:var(--text-sec); margin-bottom:4px; font-weight:600;">Estado de entrega</div>
+        <div style="font-weight:700; font-size:10.5pt; color:#006b44;">✅ Listo para operación</div>
+      </div>
+      <div>
+        <div style="font-size:7.5pt; letter-spacing:0.08em; text-transform:uppercase; color:var(--text-sec); margin-bottom:4px; font-weight:600;">Fase actual</div>
+        <div style="font-weight:600; font-size:10.5pt; color:var(--primary-dk);">Entrega inicial</div>
+      </div>
+      <div>
+        <div style="font-size:7.5pt; letter-spacing:0.08em; text-transform:uppercase; color:var(--text-sec); margin-bottom:4px; font-weight:600;">Siguiente fase recomendada</div>
+        <div style="font-weight:600; font-size:10.5pt; color:var(--primary-dk);">Monitoreo + mantenimiento mensual</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Garantía y soporte post-entrega -->
+  <div style="margin-top:20px;" class="no-break">
+    <h3>Garantía y soporte post-entrega</h3>
+    <div class="callout callout-info">
+      <span class="callout-icon">🛡️</span>
+      <div class="callout-body">
+        <strong>Período de garantía: 7 días naturales a partir de la fecha de entrega</strong>
+        <p>Durante este período se atenderán sin costo adicional los errores relacionados directamente con las funcionalidades previamente acordadas y desarrolladas.</p>
+      </div>
+    </div>
+    <div class="two-col no-break">
+      <div class="card">
+        <div class="card-title">✅ Cubre la garantía</div>
+        <div class="card-body" style="font-size:9.5pt; line-height:1.8;">
+          · Corrección de errores de funcionalidad acordada<br>
+          · Fallas en formularios o flujos de inscripción<br>
+          · Problemas con correos automáticos entregados<br>
+          · Errores en asignación de números de corredor<br>
+          · Accesos que no funcionen correctamente
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">🚫 No cubre la garantía</div>
+        <div class="card-body" style="font-size:9.5pt; line-height:1.8;">
+          · Cambios nuevos de diseño o funcionalidad<br>
+          · Ajustes de contenido (textos, precios, fechas)<br>
+          · Nuevas secciones o páginas adicionales<br>
+          · Integraciones no incluidas en el proyecto<br>
+          · Errores causados por modificaciones del cliente
+        </div>
+      </div>
+    </div>
+    <p style="font-size:9pt; color:var(--text-sec);">Cualquier trabajo fuera del alcance de la garantía o solicitado después del período se cotiza por separado. Para iniciar una solicitud de soporte escribe a <strong>clientes@edercreawebs.com</strong>.</p>
+  </div>
+
+</div>
+<div class="page-footer">
+  <strong>Kinetic Hub</strong> · Kit de Entrega Digital
+  <span>Sección 08 — Aceptación de entrega · Documento confidencial</span>
+</div>
+</div>
+
+<!-- ============================================================ -->
+<!-- SECCIÓN 9 — ACTUALIZACIÓN DE MARKETING Y MEDICIÓN -->
+<!-- ============================================================ -->
+<div class="section">
+<div class="section-inner">
+
+  <div class="section-label">Sección 09</div>
+  <h2 class="section-title">Actualización de marketing y medición</h2>
+  <p class="section-lead">Resumen de mejoras implementadas para medir conversiones, optimizar campañas y mejorar la atribución de resultados.</p>
+  <div class="section-divider"></div>
+
+  <div class="callout callout-ok no-break">
+    <span class="callout-icon">📈</span>
+    <div class="callout-body">
+      <strong>Implementación completada: Meta Pixel + API de conversiones (CAPI)</strong>
+      <p>El sitio ahora mide eventos tanto desde navegador como desde servidor para mejorar la calidad de datos, la deduplicación y la atribución de anuncios.</p>
+    </div>
+  </div>
+
+  <h3>Qué se implementó</h3>
+  <table class="no-break">
+    <thead>
+      <tr>
+        <th>Componente</th>
+        <th>Alcance</th>
+        <th>Resultado</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>Meta Pixel</strong></td>
+        <td>Instalado en todas las páginas HTML del sitio (raíz y public)</td>
+        <td>PageView y actividad base disponibles para campañas</td>
+      </tr>
+      <tr>
+        <td><strong>CAPI · Contact</strong></td>
+        <td>Evento enviado desde backend al completar formulario de contacto</td>
+        <td>Mejor seguimiento de leads reales</td>
+      </tr>
+      <tr>
+        <td><strong>CAPI · InitiateCheckout</strong></td>
+        <td>Evento enviado al crear sesión de pago en Stripe</td>
+        <td>Mayor visibilidad del inicio de intención de compra</td>
+      </tr>
+      <tr>
+        <td><strong>CAPI · Purchase</strong></td>
+        <td>Evento enviado cuando Stripe confirma pago en webhook</td>
+        <td>Conversión de compra medida con fuente servidor</td>
+      </tr>
+      <tr>
+        <td><strong>CAPI · CompleteRegistration</strong></td>
+        <td>Evento enviado al finalizar registro exitoso</td>
+        <td>Atribución de registros completos para optimización</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h3>Buenas prácticas activadas en la integración</h3>
+  <div class="two-col no-break">
+    <div class="card">
+      <div class="card-title">🧩 Deduplicación correcta</div>
+      <div class="card-body">Se integró event_id en eventos de servidor para facilitar deduplicación entre Pixel y CAPI cuando aplique el mismo evento y nombre.</div>
+    </div>
+    <div class="card">
+      <div class="card-title">🔐 Privacidad y seguridad</div>
+      <div class="card-body">Datos de cliente sensibles se preparan con hash SHA-256 en backend antes de enviarse a Meta, y no se exponen en frontend.</div>
+    </div>
+    <div class="card">
+      <div class="card-title">🍪 Señales de atribución</div>
+      <div class="card-body">Se capturan y propagan fbp/fbc en flujo de checkout para mejorar match quality y atribución de conversiones.</div>
+    </div>
+    <div class="card">
+      <div class="card-title">🧪 Modo de pruebas</div>
+      <div class="card-body">Se habilitó soporte para test_event_code por variable de entorno para validar eventos en Events Manager sin afectar operación.</div>
+    </div>
+  </div>
+
+  <h3>Checklist operativo recomendado</h3>
+  <table class="checklist-table no-break">
+    <thead>
+      <tr><th width="36"></th><th>Validación</th><th>Estado esperado</th></tr>
+    </thead>
+    <tbody>
+      <tr class="check-item-done"><td>✓</td><td>Ver Contact en Test Events al enviar formulario</td><td><span class="badge badge-ok">Debe aparecer</span></td></tr>
+      <tr class="check-item-done"><td>✓</td><td>Ver InitiateCheckout al iniciar pago</td><td><span class="badge badge-ok">Debe aparecer</span></td></tr>
+      <tr class="check-item-done"><td>✓</td><td>Ver Purchase y CompleteRegistration tras pago exitoso</td><td><span class="badge badge-ok">Debe aparecer</span></td></tr>
+      <tr class="check-item-pending"><td>◔</td><td>Revisar Event Match Quality después de tráfico real</td><td><span class="badge badge-pending">Monitorear semanal</span></td></tr>
+      <tr class="check-item-pending"><td>◔</td><td>Revisar tasa de deduplicación Pixel + CAPI</td><td><span class="badge badge-pending">Monitorear semanal</span></td></tr>
+    </tbody>
+  </table>
+
+  <div class="callout callout-info no-break">
+    <span class="callout-icon">🗓️</span>
+    <div class="callout-body">
+      <strong>Fecha de actualización técnica</strong>
+      <p>20 de mayo de 2026. Esta actualización complementa la entrega inicial para fortalecer medición de campañas y optimización de conversiones.</p>
+    </div>
+  </div>
+</div>
+<div class="page-footer">
+  <strong>Kinetic Hub</strong> · Kit de Entrega Digital
+  <span>Sección 09 — Actualización de marketing y medición</span>
+</div>
+</div>
+
+</body>
+</html>
