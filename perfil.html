@@ -14,10 +14,27 @@
       href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Sora:wght@500;600;700;800&display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="styles.css?v=__ASSET_VERSION__" />
+    <link rel="stylesheet" href="styles.min.css?v=__ASSET_VERSION__" />
     <link rel="icon" type="image/png" href="icon.png" />
-  </head>
+  <!-- Meta Pixel Code -->
+<script>
+!function(f,b,e,v,n,t,s)
+{if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+n.callMethod.apply(n,arguments):n.queue.push(arguments)};
+if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
+n.queue=[];t=b.createElement(e);t.async=!0;
+t.src=v;s=b.getElementsByTagName(e)[0];
+s.parentNode.insertBefore(t,s)}(window, document,'script',
+'https://connect.facebook.net/en_US/fbevents.js');
+fbq('init', '1270330985141001');
+fbq('track', 'PageView');
+</script>
+</head>
   <body class="profile-page" data-profile-page>
+<noscript><img height="1" width="1" style="display:none"
+src="https://www.facebook.com/tr?id=1270330985141001&ev=PageView&noscript=1"
+/></noscript>
+<!-- End Meta Pixel Code -->
 
     <!-- NAV HEADER -->
     <header class="site-header">
@@ -138,12 +155,6 @@
 
         <!-- CONTENT PANELS -->
         <main class="profile-content">
-
-          <!-- Banner aviso emergencia pendiente -->
-          <div id="emergency-pending-banner" class="profile-pending-banner" hidden>
-            <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v4m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/></svg>
-            <span>Tu perfil está incompleto. Por favor llena tu <strong>contacto de emergencia</strong> para completar tu registro.</span>
-          </div>
 
           <!-- ── DATOS PERSONALES ── -->
           <section class="profile-panel is-active" data-section="datos">
@@ -416,6 +427,6 @@
     </footer>
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="script.js?v=__ASSET_VERSION__"></script>
+    <script src="script.min.js?v=__ASSET_VERSION__"></script>
   </body>
 </html>
