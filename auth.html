@@ -7,25 +7,33 @@
   <title>Kinetic Hub | Acceso</title>
   <meta name="description"
     content="Inicia sesión o crea tu cuenta en Kinetic Hub para registrarte y recibir tus resultados." />
-  <meta property="og:type" content="website" />
-  <meta property="og:title" content="Acceso | Kinetic Hub" />
-  <meta property="og:description" content="Inicia sesión o regístrate en Kinetic Hub." />
-  <meta property="og:image" content="https://www.kinetichub.com.mx/banner.avif" />
-  <meta property="og:url" content="https://www.kinetichub.com.mx/auth.html" />
-  <meta name="twitter:card" content="summary_large_image" />
-  <meta name="twitter:title" content="Acceso | Kinetic Hub" />
-  <meta name="twitter:description" content="Inicia sesión o regístrate en Kinetic Hub." />
-  <meta name="theme-color" content="#000000" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link
     href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Sora:wght@500;600;700;800&display=swap"
     rel="stylesheet" />
-  <link rel="stylesheet" href="styles.css?v=__ASSET_VERSION__" />
+  <link rel="stylesheet" href="styles.min.css?v=__ASSET_VERSION__" />
   <link rel="icon" type="image/png" href="icon.png" />
+<!-- Meta Pixel Code -->
+<script>
+!function(f,b,e,v,n,t,s)
+{if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+n.callMethod.apply(n,arguments):n.queue.push(arguments)};
+if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
+n.queue=[];t=b.createElement(e);t.async=!0;
+t.src=v;s=b.getElementsByTagName(e)[0];
+s.parentNode.insertBefore(t,s)}(window, document,'script',
+'https://connect.facebook.net/en_US/fbevents.js');
+fbq('init', '1270330985141001');
+fbq('track', 'PageView');
+</script>
 </head>
 
 <body class="auth-page" data-auth-page data-google-login-url="#" data-google-register-url="#">
+<noscript><img height="1" width="1" style="display:none"
+src="https://www.facebook.com/tr?id=1270330985141001&ev=PageView&noscript=1"
+/></noscript>
+<!-- End Meta Pixel Code -->
   <header class="site-header">
     <div class="container nav-shell">
       <a href="index.html" class="brand" aria-label="Ir al inicio de Kinetic Hub">
@@ -187,7 +195,7 @@
   </main>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="script.js?v=__ASSET_VERSION__"></script>
+  <script src="script.min.js?v=__ASSET_VERSION__"></script>
 </body>
 
 </html>
