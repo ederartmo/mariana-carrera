@@ -1,7 +1,4 @@
 {
-  "name": "kinetic-hub",
-  "version": "1.0.0",
-  "description": "Plataforma de eventos deportivos Kinetic Hub",
   "scripts": {
     "build": "node build.js"
   },
