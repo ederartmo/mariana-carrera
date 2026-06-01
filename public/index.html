@@ -13,7 +13,7 @@
     href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Sora:wght@500;600;700;800&display=swap"
     rel="stylesheet" />
   <link rel="preload" as="image" href="banner.avif" type="image/avif" fetchpriority="high" />
-  <link rel="stylesheet" href="styles.min.css?v=1779123059672" />
+  <link rel="stylesheet" href="styles.min.css?v=1780328274590" />
   <link rel="icon" type="image/png" href="icon.png" />
 <!-- Meta Pixel Code -->
 <script>
@@ -131,7 +131,7 @@ src="https://www.facebook.com/tr?id=1270330985141001&ev=PageView&noscript=1"
 
           <div class="event-spotlight-pricing">
             <p class="event-spotlight-price-label">Precio desde</p>
-            <p class="event-spotlight-price">$480 MXN</p>
+            <p class="event-spotlight-price" id="homeSpotlightPrice">$550 MXN</p>
             <div class="event-spotlight-actions" id="spotlightActions">
               <a id="spotlightBuyBtn" class="event-spotlight-cta" href="checkout.html">Comprar</a>
               <button class="event-spotlight-more" type="button" data-neon-toggle aria-expanded="false"
@@ -155,7 +155,7 @@ src="https://www.facebook.com/tr?id=1270330985141001&ev=PageView&noscript=1"
           <p class="event-sticky-distance">Categoría única 5K</p>
           <p class="event-sticky-meta">31 OCT 2026 · Pista de Remo y Canotaje Virgilio Uribe, CDMX</p>
         </div>
-        <p class="event-sticky-price">Desde $480 MXN</p>
+        <p class="event-sticky-price" id="homeStickyPrice">Desde $550 MXN</p>
         <a class="event-sticky-cta" href="checkout.html">Comprar</a>
       </div>
     </aside>
@@ -208,7 +208,7 @@ src="https://www.facebook.com/tr?id=1270330985141001&ev=PageView&noscript=1"
           <div class="neon-category">
             <span>Distancia disponible</span>
             <strong>Categoría única 5K</strong>
-            <p class="neon-note">Etapas: Early Bird $480 · Regular $550 · Extemporánea $600.</p>
+            <p class="neon-note" id="homeStageNote">Etapa vigente: Regular $550 MXN.</p>
           </div>
 
           <div class="neon-rewards-panel">
@@ -260,8 +260,8 @@ src="https://www.facebook.com/tr?id=1270330985141001&ev=PageView&noscript=1"
                     entregar el kit.
                   </li>
                   <li>
-                    Uso de luz frontal obligatorio para Night Run y firma de exoneración al recoger el
-                    kit.
+                    Firma de exoneración al recoger el kit y seguimiento a indicaciones de seguridad
+                    del staff.
                   </li>
                 </ol>
                 <button class="neon-inline-action" type="button" data-modal-open="legalModal">
@@ -862,7 +862,7 @@ src="https://www.facebook.com/tr?id=1270330985141001&ev=PageView&noscript=1"
             </button>
             <div class="home-faq-answer" id="homeFaqPanel3" role="region" aria-labelledby="homeFaqButton3" aria-hidden="true">
               <div class="home-faq-answer-inner">
-                <p>Deberás llevar una identificación oficial, tu comprobante de inscripción y, para la modalidad Night Run, una luz frontal o accesorio luminoso recomendado para correr con mayor seguridad.</p>
+                <p>Deberás llevar una identificación oficial, tu comprobante de inscripción y tu exoneración firmada para agilizar la entrega de kit y el acceso al evento.</p>
               </div>
             </div>
           </article>
@@ -1050,7 +1050,8 @@ src="https://www.facebook.com/tr?id=1270330985141001&ev=PageView&noscript=1"
     </div>
   </footer>
 
-  <script src="script.min.js?v=1779123059672"></script>
+  <script src="axolote-stage-config.js?v=1780328274590"></script>
+  <script src="script.min.js?v=1780328274590"></script>
 </body>
 
 </html>

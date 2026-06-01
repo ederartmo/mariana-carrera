@@ -9,6 +9,7 @@ const supabase = createClient(
   process.env.SUPABASE_URL,
   process.env.SUPABASE_SERVICE_ROLE_KEY
 );
+const ALLOWED_SHIRT_SIZES = ['S', 'M', 'L'];
 
 // Función para obtener el raw body (necesario para verificar la firma de Stripe)
 const getRawBody = (req) => {
@@ -38,14 +39,21 @@ async function updateRegistrationBySessionId(sessionId, payload) {
   }
 
   // Usamos update (no upsert) para no violar índices únicos parciales en inscripciones.
-  const { error } = await supabase
+  const { data, error } = await supabase
     .from('inscripciones')
     .update(payload)
-    .eq('stripe_session_id', sessionId);
+    .eq('stripe_session_id', sessionId)
+    .select('id')
+    .limit(1);
 
   if (error) {
     console.error(`❌ Error actualizando inscripción para sesión ${sessionId}:`, error);
     return { ok: false, error };
+  }
+
+  if (!data || data.length === 0) {
+    console.warn(`⚠️ No se encontró inscripción para sesión ${sessionId} al intentar actualizar.`);
+    return { ok: false, reason: 'not_found' };
   }
 
   return { ok: true };
@@ -283,7 +291,7 @@ module.exports = async (req, res) => {
           event_slug: 'axolote-night-run',
           amount_paid: amountTotal,
           payment_status: 'paid',
-          shirt_size: ['S', 'M', 'L', 'XL', 'XXL'].includes(shirtSize) ? shirtSize : null,
+          shirt_size: ALLOWED_SHIRT_SIZES.includes(shirtSize) ? shirtSize : null,
           bib_number: bibNumber,
           created_at: new Date().toISOString()
         }, {
@@ -367,7 +375,7 @@ module.exports = async (req, res) => {
                                 </tr>
                                 <tr>
                                     <td style="padding:10px 0;border-bottom:1px solid #333;color:#aaaaaa;font-size:14px;">Talla de playera</td>
-                                    <td style="padding:10px 0;border-bottom:1px solid #333;color:#ffffff;font-weight:600;font-size:14px;text-align:right;">${['S','M','L','XL','XXL'].includes(shirtSize) ? shirtSize : 'Por confirmar'}</td>
+                                  <td style="padding:10px 0;border-bottom:1px solid #333;color:#ffffff;font-weight:600;font-size:14px;text-align:right;">${ALLOWED_SHIRT_SIZES.includes(shirtSize) ? shirtSize : 'Por confirmar'}</td>
                                 </tr>
                                 <tr>
                                     <td style="padding:10px 0;color:#aaaaaa;font-size:14px;">Estado</td>
@@ -452,7 +460,7 @@ module.exports = async (req, res) => {
         },
         customData: {
           status: 'completed',
-          shirt_size: ['S', 'M', 'L', 'XL', 'XXL'].includes(shirtSize) ? shirtSize : 'unknown',
+          shirt_size: ALLOWED_SHIRT_SIZES.includes(shirtSize) ? shirtSize : 'unknown',
         },
         eventSourceUrl: 'https://www.kinetichub.com.mx/succes.html',
         testEventCode: process.env.META_TEST_EVENT_CODE,
@@ -482,7 +490,7 @@ module.exports = async (req, res) => {
       event_slug: session.metadata?.event_slug || 'axolote-night-run',
       amount_paid: amountTotal,
       payment_status: 'payment_failed',
-      shirt_size: ['S', 'M', 'L', 'XL', 'XXL'].includes(shirtSize) ? shirtSize : null,
+      shirt_size: ALLOWED_SHIRT_SIZES.includes(shirtSize) ? shirtSize : null,
       created_at: new Date().toISOString()
     });
 
@@ -506,7 +514,7 @@ module.exports = async (req, res) => {
         event_slug: checkoutSession.metadata?.event_slug || 'axolote-night-run',
         amount_paid: amountTotal,
         payment_status: 'payment_failed',
-        shirt_size: ['S', 'M', 'L', 'XL', 'XXL'].includes(shirtSize) ? shirtSize : null,
+        shirt_size: ALLOWED_SHIRT_SIZES.includes(shirtSize) ? shirtSize : null,
         created_at: new Date().toISOString()
       });
 

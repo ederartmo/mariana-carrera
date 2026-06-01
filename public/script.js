@@ -1622,26 +1622,57 @@ function setupBlogTabs() {
 }
 
 function getAxoloteStageByDate(date = new Date()) {
-  const year = date.getFullYear();
-  const month = date.getMonth() + 1;
-  const day = date.getDate();
+  if (
+    typeof window !== "undefined" &&
+    window.KineticHubStageConfig &&
+    typeof window.KineticHubStageConfig.getAxoloteStageByDate === "function"
+  ) {
+    return window.KineticHubStageConfig.getAxoloteStageByDate(date);
+  }
 
-  // Early Bird: hasta 31 de mayo 2026
+  // Fallback defensivo por si el archivo de configuración no carga.
+  const fallbackDate = new Date(date);
+  const year = fallbackDate.getFullYear();
+  const month = fallbackDate.getMonth() + 1;
+  const day = fallbackDate.getDate();
+
   if (year < 2026 || (year === 2026 && month < 6) || (year === 2026 && month === 5 && day <= 31)) {
-    return { key: "early", label: "Etapa Early Bird", price: 480, isOpen: true };
+    return { key: "early", label: "Etapa Early Bird", displayName: "Early Bird", price: 480, amount: 480, period: "Hasta 31 de mayo de 2026", isOpen: true };
   }
 
-  // Regular: 1 de junio - 31 de julio 2026
   if (year === 2026 && month >= 6 && month <= 7) {
-    return { key: "regular", label: "Etapa Regular", price: 550, isOpen: true };
+    return { key: "regular", label: "Etapa Regular", displayName: "Regular", price: 550, amount: 550, period: "1 de junio al 31 de julio de 2026", isOpen: true };
   }
 
-  // Extemporánea: 1 de agosto - 10 de octubre 2026
   if (year === 2026 && (month === 8 || month === 9 || (month === 10 && day <= 10))) {
-    return { key: "extemporanea", label: "Etapa Extemporánea", price: 600, isOpen: true };
+    return { key: "extemporanea", label: "Etapa Extemporánea", displayName: "Extemporánea", price: 600, amount: 600, period: "1 de agosto al 10 de octubre de 2026", isOpen: true };
   }
 
-  return { key: "closed", label: "Inscripciones cerradas", price: null, isOpen: false };
+  return { key: "closed", label: "Inscripciones cerradas", displayName: "Inscripciones cerradas", price: null, amount: null, period: "Convocatoria cerrada", isOpen: false };
+}
+
+function setupHomeStagePricing() {
+  const spotlightPrice = document.getElementById("homeSpotlightPrice");
+  const stickyPrice = document.getElementById("homeStickyPrice");
+  const stageNote = document.getElementById("homeStageNote");
+
+  if (!spotlightPrice && !stickyPrice && !stageNote) return;
+
+  const stage = getAxoloteStageByDate();
+
+  if (!stage.isOpen || !stage.price) {
+    if (spotlightPrice) spotlightPrice.textContent = "Inscripciones cerradas";
+    if (stickyPrice) stickyPrice.textContent = "Inscripciones cerradas";
+    if (stageNote) stageNote.textContent = "Convocatoria cerrada para esta edición.";
+    return;
+  }
+
+  const formattedPrice = `$${stage.price} MXN`;
+  if (spotlightPrice) spotlightPrice.textContent = formattedPrice;
+  if (stickyPrice) stickyPrice.textContent = `Desde ${formattedPrice}`;
+  if (stageNote) {
+    stageNote.textContent = `Etapa vigente: ${stage.displayName || stage.label.replace("Etapa ", "")} ${formattedPrice}.`;
+  }
 }
 
 function setupEventStageCards() {
@@ -4270,6 +4301,7 @@ setupNeonEventToggle();
 setupWhatsAppButton();
 setupEventStageCards();
 setupEventRegistrationPanel();
+setupHomeStagePricing();
 setupAuthPage();
 setupProfilePage();
 setupBlogTabs();
