@@ -3,6 +3,7 @@ const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 const { createClient } = require('@supabase/supabase-js');
 const crypto = require('crypto');
 const { trackMetaEvent } = require('./_meta-capi');
+const { getAxoloteStageByDate } = require('../axolote-stage-config');
 
 const supabase = createClient(
   process.env.SUPABASE_URL,
@@ -23,43 +24,18 @@ function getCookieValue(req, name) {
 }
 
 function getCurrentStage() {
-  const now = new Date();
-  const year = now.getFullYear();
-  const month = now.getMonth() + 1;
-  const day = now.getDate();
+  const stage = getAxoloteStageByDate(new Date());
 
-  // EARLY BIRD: hasta 31 de mayo 2026 - $480 MXN
-  if (year < 2026 || (year === 2026 && month < 6) || (year === 2026 && month === 5 && day <= 31)) {
-    return {
-      key: 'early',
-      label: 'Early Bird',
-      amount: 480,
-      period: 'Hasta 31 de mayo de 2026'
-    };
+  if (!stage?.isOpen) {
+    return null;
   }
 
-  // REGULAR: 1 de junio - 31 de julio 2026 - $550 MXN
-  if (year === 2026 && month >= 6 && month <= 7) {
-    return {
-      key: 'regular',
-      label: 'Regular',
-      amount: 550,
-      period: '1 de junio al 31 de julio de 2026'
-    };
-  }
-
-  // EXTEMPORÁNEA: 1 de agosto - 10 de octubre 2026 - $600 MXN
-  if (year === 2026 && (month === 8 || month === 9 || (month === 10 && day <= 10))) {
-    return {
-      key: 'extemporanea',
-      label: 'Extemporánea',
-      amount: 600,
-      period: '1 de agosto al 10 de octubre de 2026'
-    };
-  }
-
-  // Inscripciones cerradas después del 10 de octubre
-  return null;
+  return {
+    key: stage.key,
+    label: stage.displayName,
+    amount: stage.amount,
+    period: stage.period,
+  };
 }
 
 module.exports = async function handler(req, res) {
@@ -152,6 +128,29 @@ module.exports = async function handler(req, res) {
     });
 
     console.log(`✅ Sesión creada: ${session.id}`);
+
+    const { error: pendingUpsertError } = await supabase
+      .from('inscripciones')
+      .upsert({
+        stripe_session_id: session.id,
+        email: cleanEmail,
+        event_slug: 'axolote-night-run',
+        amount_paid: stage.amount,
+        payment_status: 'pending',
+        shirt_size: cleanShirtSize,
+        created_at: new Date().toISOString(),
+      }, {
+        onConflict: 'stripe_session_id',
+      });
+
+    if (pendingUpsertError) {
+      console.error('❌ Error guardando inscripción pending:', pendingUpsertError);
+      return res.status(500).json({
+        error: 'No se pudo preparar tu inscripción. Inténtalo de nuevo.',
+      });
+    }
+
+    console.log(`📝 Inscripción pending creada/actualizada | session_id=${session.id}`);
 
     const initiateTrack = await trackMetaEvent({
       req,

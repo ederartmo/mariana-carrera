@@ -14,7 +14,7 @@
       href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Sora:wght@500;600;700;800&display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="styles.min.css?v=1779123059672" />
+    <link rel="stylesheet" href="styles.min.css?v=1780328274590" />
     <link rel="icon" type="image/png" href="icon.png" />
     <style>
       .checkout-page {
@@ -486,8 +486,8 @@ src="https://www.facebook.com/tr?id=1270330985141001&ev=PageView&noscript=1"
                   <strong>5K</strong>
                 </div>
                 <div class="summary-item">
-                  <span id="stageLabel">Etapa Early Bird</span>
-                  <strong id="stagePrice">$480 MXN</strong>
+                  <span id="stageLabel">Etapa Regular</span>
+                  <strong id="stagePrice">$550 MXN</strong>
                 </div>
                 <div class="summary-item">
                   <span>Incluye</span>
@@ -497,13 +497,13 @@ src="https://www.facebook.com/tr?id=1270330985141001&ev=PageView&noscript=1"
 
               <div class="summary-item total">
                 <span>Total</span>
-                <strong id="totalPrice">$480 MXN</strong>
+                <strong id="totalPrice">$550 MXN</strong>
               </div>
 
               <p style="font-size: 0.8rem; color: #999; margin: 12px 0 14px; line-height: 1.4;">
                 ✓ Inscripción individual e intransferible<br />
                 ✓ No hay reembolso por cancelación<br />
-                ✓ Uso de linterna obligatoria<br />
+                ✓ Sigue las recomendaciones de seguridad del evento<br />
                 ✓ Recibirás exoneración automática por correo al confirmar tu pago
               </p>
 
@@ -572,39 +572,26 @@ src="https://www.facebook.com/tr?id=1270330985141001&ev=PageView&noscript=1"
       </div>
     </footer>
 
-    <script src="script.min.js?v=1779123059672"></script>
+    <script src="axolote-stage-config.js?v=1780328274590"></script>
+    <script src="script.min.js?v=1780328274590"></script>
     <script>
       // Detectar etapa actual y actualizar UI dinámicamente
       function updateStageOnCheckout() {
-        const now = new Date();
-        const year = now.getFullYear();
-        const month = now.getMonth() + 1;
-        const day = now.getDate();
+        const stageProvider = window.KineticHubStageConfig;
+        const stageData = stageProvider && typeof stageProvider.getAxoloteStageByDate === 'function'
+          ? stageProvider.getAxoloteStageByDate(new Date())
+          : null;
 
-        let stageName = 'Etapa Early Bird';
-        let stagePrice = '$480 MXN';
-        let stageDates = 'Hasta 31 de mayo';
+        let stageName = 'Etapa Regular';
+        let stagePrice = '$550 MXN';
+        let stageDates = '1 de junio al 31 de julio de 2026';
         let checkoutOpen = true;
 
-        // REGULAR: 1 de junio - 31 de julio
-        if (year === 2026 && month >= 6 && month <= 7) {
-          stageName = 'Etapa Regular';
-          stagePrice = '$550 MXN';
-          stageDates = '1 de junio - 31 de julio';
-        }
-
-        // EXTEMPORÁNEA: 1 de agosto - 10 de octubre
-        if (year === 2026 && (month === 8 || month === 9 || (month === 10 && day <= 10))) {
-          stageName = 'Etapa Extemporánea';
-          stagePrice = '$600 MXN';
-          stageDates = '1 de agosto - 10 de octubre';
-        }
-
-        if (year > 2026 || (year === 2026 && (month > 10 || (month === 10 && day > 10)))) {
-          stageName = 'Inscripciones cerradas';
-          stagePrice = 'Cerrado';
-          stageDates = 'Convocatoria cerrada';
-          checkoutOpen = false;
+        if (stageData) {
+          stageName = stageData.label || stageName;
+          stagePrice = stageData.price ? `$${stageData.price} MXN` : 'Cerrado';
+          stageDates = stageData.period || stageDates;
+          checkoutOpen = Boolean(stageData.isOpen);
         }
 
         // Actualizar UI
