@@ -4126,6 +4126,13 @@ function setupCheckoutForm() {
 
   const CHECKOUT_EMAIL_KEY = "kinetic_checkout_email";
 
+  function buildInitiateCheckoutEventId() {
+    if (typeof window !== "undefined" && window.crypto?.randomUUID) {
+      return `ic_${window.crypto.randomUUID()}`;
+    }
+    return `ic_${Date.now()}_${Math.random().toString(36).slice(2, 10)}`;
+  }
+
   form.addEventListener("submit", async (e) => {
     e.preventDefault();
 
@@ -4145,12 +4152,32 @@ function setupCheckoutForm() {
     const originalText = submitBtn.textContent;
     submitBtn.disabled = true;
     submitBtn.textContent = "Procesando...";
+    const initiateCheckoutEventId = buildInitiateCheckoutEventId();
+
+    if (typeof window.fbq === "function") {
+      window.fbq(
+        "track",
+        "InitiateCheckout",
+        {
+          content_name: "Inscripción carrera",
+          content_category: "Checkout",
+          currency: "MXN",
+        },
+        {
+          eventID: initiateCheckoutEventId,
+        }
+      );
+    }
 
     try {
       const response = await fetch("/api/create-checkout-session", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, shirtSize }),
+        body: JSON.stringify({
+          email,
+          shirtSize,
+          metaEventId: initiateCheckoutEventId,
+        }),
       });
 
       // Leer la respuesta como texto primero para depurar

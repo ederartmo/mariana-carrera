@@ -44,7 +44,7 @@ module.exports = async function handler(req, res) {
   }
 
   try {
-    const { email, shirtSize } = req.body;
+    const { email, shirtSize, metaEventId } = req.body;
 
     if (!email || typeof email !== 'string' || !email.includes('@')) {
       return res.status(400).json({ 
@@ -62,7 +62,10 @@ module.exports = async function handler(req, res) {
     const cleanShirtSize = shirtSize.toUpperCase();
     const fbp = getCookieValue(req, '_fbp');
     const fbc = getCookieValue(req, '_fbc');
-    const initiateCheckoutEventId = `ic_${crypto.randomUUID()}`;
+    const initiateCheckoutEventId =
+      typeof metaEventId === 'string' && metaEventId.trim().length > 0
+        ? metaEventId.trim().slice(0, 120)
+        : `ic_${crypto.randomUUID()}`;
     console.log(`🔄 Checkout para: ${cleanEmail}`);
 
     const { data: existingRegistration, error: existingRegistrationError } = await supabase
