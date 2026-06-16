@@ -3,6 +3,7 @@ const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 const { createClient } = require('@supabase/supabase-js');
 const crypto = require('crypto');
 const { trackMetaEvent } = require('./_meta-capi');
+const { resolvePromotionCode } = require('./_stripe-promo');
 const { getAxoloteStageByDate } = require('../axolote-stage-config');
 
 const supabase = createClient(
@@ -106,7 +107,7 @@ module.exports = async function handler(req, res) {
   }
 
   try {
-    const { email, buyerEmail, shirtSize, tickets, metaEventId } = req.body;
+    const { email, buyerEmail, shirtSize, tickets, metaEventId, promoCode } = req.body;
     const rawEmail = buyerEmail || email;
 
     if (!rawEmail || typeof rawEmail !== 'string' || !rawEmail.includes('@')) {
@@ -146,11 +147,25 @@ module.exports = async function handler(req, res) {
 
     const participantsMetadata = buildParticipantsMetadata(normalizedTickets);
     const totalAmount = Number((stage.amount * ticketCount).toFixed(2));
+    const promoResolution = await resolvePromotionCode({
+      promoCode,
+      subtotalAmount: totalAmount,
+      currency: 'mxn',
+    });
+
+    if (promoResolution.error) {
+      return res.status(400).json({ error: promoResolution.error });
+    }
 
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ['card'],
       mode: 'payment',
       allow_promotion_codes: true,
+      ...(promoResolution.promotionCodeId
+        ? {
+            discounts: [{ promotion_code: promoResolution.promotionCodeId }],
+          }
+        : {}),
       customer_email: cleanEmail,
       line_items: [{
         quantity: ticketCount,
@@ -179,6 +194,7 @@ module.exports = async function handler(req, res) {
         meta_fbc: fbc || '',
         meta_external_id: cleanEmail,
         meta_initiate_checkout_event_id: initiateCheckoutEventId,
+        discount_code: promoResolution.cleanCode || '',
         ...participantsMetadata,
       }
     });
