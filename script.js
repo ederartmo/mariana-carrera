@@ -4125,6 +4125,103 @@ function setupCheckoutForm() {
   if (!form) return;
 
   const CHECKOUT_EMAIL_KEY = "kinetic_checkout_email";
+  const MAX_TICKETS_PER_ORDER = 5;
+  const ticketsList = document.getElementById("ticketsList");
+  const addTicketBtn = document.getElementById("addTicketBtn");
+  const stagePriceEl = document.getElementById("stagePrice");
+  const totalPriceEl = document.getElementById("totalPrice");
+  const ticketCountLabel = document.getElementById("ticketCountLabel");
+  let tickets = [{ fullName: "", shirtSize: "" }];
+
+  if (!ticketsList || !addTicketBtn || !stagePriceEl || !totalPriceEl || !ticketCountLabel) return;
+
+  function parseMXNPrice(text) {
+    if (!text) return 0;
+    const normalized = String(text).replace(/[^0-9.,]/g, "").replace(/,/g, "");
+    const parsed = Number.parseFloat(normalized);
+    return Number.isFinite(parsed) ? parsed : 0;
+  }
+
+  function formatMXN(amount) {
+    return `$${Math.round(amount)} MXN`;
+  }
+
+  function getUnitAmount() {
+    return parseMXNPrice(stagePriceEl.textContent);
+  }
+
+  function updateSummary() {
+    const quantity = tickets.length;
+    const unitAmount = getUnitAmount();
+    const totalAmount = unitAmount * quantity;
+    totalPriceEl.textContent = formatMXN(totalAmount);
+    ticketCountLabel.textContent = `${quantity} ticket${quantity > 1 ? "s" : ""}`;
+  }
+
+  function renderTickets() {
+    ticketsList.innerHTML = tickets
+      .map((ticket, index) => {
+        const ticketNumber = index + 1;
+        const canRemove = tickets.length > 1;
+        return `
+          <div class="ticket-card" data-ticket-index="${index}">
+            <div class="ticket-card-head">
+              <span>Ticket ${ticketNumber}</span>
+              ${canRemove ? `<button type="button" class="ticket-remove-btn" data-remove-ticket="${index}">Quitar</button>` : ""}
+            </div>
+            <div class="checkout-form-grid">
+              <label for="ticketName${ticketNumber}">
+                Nombre completo <span class="required-mark">*</span>
+              </label>
+              <input
+                id="ticketName${ticketNumber}"
+                type="text"
+                maxlength="80"
+                placeholder="Nombre del corredor"
+                data-ticket-field="fullName"
+                data-ticket-index="${index}"
+                value="${escapeAttr(ticket.fullName || "")}"
+                required
+              />
+              <label for="ticketShirt${ticketNumber}">
+                Talla de playera <span class="required-mark">*</span>
+              </label>
+              <select
+                id="ticketShirt${ticketNumber}"
+                data-ticket-field="shirtSize"
+                data-ticket-index="${index}"
+                required
+              >
+                <option value="" ${!ticket.shirtSize ? "selected" : ""} disabled>Selecciona una talla</option>
+                <option value="S" ${ticket.shirtSize === "S" ? "selected" : ""}>S</option>
+                <option value="M" ${ticket.shirtSize === "M" ? "selected" : ""}>M</option>
+                <option value="L" ${ticket.shirtSize === "L" ? "selected" : ""}>L</option>
+              </select>
+            </div>
+          </div>
+        `;
+      })
+      .join("");
+
+    addTicketBtn.disabled = tickets.length >= MAX_TICKETS_PER_ORDER;
+    addTicketBtn.textContent =
+      tickets.length >= MAX_TICKETS_PER_ORDER
+        ? `Límite de ${MAX_TICKETS_PER_ORDER} tickets`
+        : "+ Agregar ticket";
+    updateSummary();
+  }
+
+  function normalizeName(value) {
+    return String(value || "").trim().replace(/\s+/g, " ");
+  }
+
+  function escapeAttr(value) {
+    return String(value || "")
+      .replaceAll("&", "&amp;")
+      .replaceAll("\"", "&quot;")
+      .replaceAll("<", "&lt;")
+      .replaceAll(">", "&gt;");
+  }
 
   function buildInitiateCheckoutEventId() {
     if (typeof window !== "undefined" && window.crypto?.randomUUID) {
@@ -4133,18 +4230,60 @@ function setupCheckoutForm() {
     return `ic_${Date.now()}_${Math.random().toString(36).slice(2, 10)}`;
   }
 
+  addTicketBtn.addEventListener("click", () => {
+    if (tickets.length >= MAX_TICKETS_PER_ORDER) return;
+    tickets.push({ fullName: "", shirtSize: "" });
+    renderTickets();
+  });
+
+  ticketsList.addEventListener("click", (event) => {
+    const removeIndex = event.target?.getAttribute("data-remove-ticket");
+    if (removeIndex === null) return;
+
+    const index = Number(removeIndex);
+    if (!Number.isInteger(index)) return;
+    if (tickets.length <= 1) return;
+
+    tickets.splice(index, 1);
+    renderTickets();
+  });
+
+  ticketsList.addEventListener("input", (event) => {
+    const target = event.target;
+    if (!(target instanceof HTMLElement)) return;
+
+    const index = Number(target.getAttribute("data-ticket-index"));
+    const field = target.getAttribute("data-ticket-field");
+    if (!Number.isInteger(index) || !field || !tickets[index]) return;
+
+    if (field === "fullName") {
+      tickets[index].fullName = target.value;
+    }
+    if (field === "shirtSize") {
+      tickets[index].shirtSize = String(target.value || "").toUpperCase();
+    }
+  });
+
+  renderTickets();
+
   form.addEventListener("submit", async (e) => {
     e.preventDefault();
 
     const emailInput = document.getElementById("userEmail");
-    const shirtSizeInput = document.getElementById("shirtSize");
     const email = emailInput?.value.trim();
     const normalizedEmail = (email || "").toLowerCase().trim();
-    const shirtSize = shirtSizeInput?.value.trim().toUpperCase();
     const termsCheck = document.getElementById("termsCheck")?.checked;
+    const normalizedTickets = tickets.map((ticket) => ({
+      fullName: normalizeName(ticket.fullName),
+      shirtSize: String(ticket.shirtSize || "").trim().toUpperCase(),
+    }));
 
-    if (!email || !shirtSize || !termsCheck) {
-      alert("Por favor ingresa tu correo, selecciona talla y acepta los términos.");
+    const hasInvalidTicket = normalizedTickets.some(
+      (ticket) => !ticket.fullName || ticket.fullName.length < 3 || !["S", "M", "L"].includes(ticket.shirtSize)
+    );
+
+    if (!email || !termsCheck || hasInvalidTicket) {
+      alert("Completa el correo, nombre y talla de cada ticket, y acepta los términos.");
       return;
     }
 
@@ -4162,6 +4301,7 @@ function setupCheckoutForm() {
           content_name: "Inscripción carrera",
           content_category: "Checkout",
           currency: "MXN",
+          value: getUnitAmount() * normalizedTickets.length,
         },
         {
           eventID: initiateCheckoutEventId,
@@ -4175,7 +4315,8 @@ function setupCheckoutForm() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           email,
-          shirtSize,
+          buyerEmail: normalizedEmail,
+          tickets: normalizedTickets,
           metaEventId: initiateCheckoutEventId,
         }),
       });
@@ -4205,6 +4346,8 @@ function setupCheckoutForm() {
         window.location.href = data.url;
       } else {
         alert("No se recibió la URL de pago.");
+        submitBtn.disabled = false;
+        submitBtn.textContent = originalText;
       }
 
     } catch (error) {

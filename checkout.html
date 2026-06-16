@@ -228,6 +228,52 @@
         box-shadow: 0 0 0 3px rgba(13, 199, 133, 0.1);
       }
 
+      .tickets-list {
+        display: grid;
+        gap: 12px;
+      }
+
+      .ticket-card {
+        border: 1px solid #dbe4df;
+        border-radius: 8px;
+        padding: 12px;
+        background: #fcfdfc;
+      }
+
+      .ticket-card-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 10px;
+        font-size: 0.85rem;
+        color: #60716b;
+        font-weight: 700;
+      }
+
+      .ticket-remove-btn {
+        border: 0;
+        background: transparent;
+        color: #b44f4f;
+        cursor: pointer;
+        font-weight: 700;
+        font-size: 0.8rem;
+      }
+
+      .ticket-actions {
+        margin-top: 12px;
+      }
+
+      .ticket-add-btn {
+        border: 1px dashed #0dc785;
+        color: #0f7c5a;
+        background: rgba(13, 199, 133, 0.08);
+        border-radius: 8px;
+        padding: 10px 12px;
+        font-size: 0.88rem;
+        font-weight: 700;
+        cursor: pointer;
+      }
+
       /* ─── Sidebar ────────────────────────────── */
       .checkout-sidebar {
         background: #fff;
@@ -457,15 +503,18 @@ src="https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1"
                     placeholder="correo@ejemplo.com"
                     required
                   />
-                  <label for="shirtSize">
-                    Talla de playera <span class="required-mark">*</span>
-                  </label>
-                  <select id="shirtSize" name="shirtSize" required>
-                    <option value="" selected disabled>Selecciona una talla</option>
-                    <option value="S">S</option>
-                    <option value="M">M</option>
-                    <option value="L">L</option>
-                  </select>
+                </div>
+              </div>
+              <div class="checkout-section">
+                <h2 class="checkout-section-title">
+                  <strong>3</strong> Tickets
+                </h2>
+                <p style="font-size: 0.85rem; color: #6b7774; margin: 0 0 12px;">
+                  Cada ticket se asocia al correo principal. Captura nombre y talla por corredor.
+                </p>
+                <div id="ticketsList" class="tickets-list"></div>
+                <div class="ticket-actions">
+                  <button type="button" id="addTicketBtn" class="ticket-add-btn">+ Agregar ticket</button>
                 </div>
               </div>
               <div class="checkout-section" style="margin-top: 24px;">
@@ -488,6 +537,10 @@ src="https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1"
                 <div class="summary-item">
                   <span id="stageLabel">Etapa Regular</span>
                   <strong id="stagePrice">$550 MXN</strong>
+                </div>
+                <div class="summary-item">
+                  <span>Cantidad</span>
+                  <strong id="ticketCountLabel">1 ticket</strong>
                 </div>
                 <div class="summary-item">
                   <span>Incluye</span>
