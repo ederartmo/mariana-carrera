@@ -166,12 +166,11 @@ module.exports = async function handler(req, res) {
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ['card'],
       mode: 'payment',
-      allow_promotion_codes: true,
+      // allow_promotion_codes y discounts son mutuamente exclusivos en Stripe:
+      // si ya hay un descuento aplicado, no se puede activar la caja de promociones.
       ...(stripeDiscount
-        ? {
-            discounts: [stripeDiscount],
-          }
-        : {}),
+        ? { discounts: [stripeDiscount] }
+        : { allow_promotion_codes: true }),
       customer_email: cleanEmail,
       line_items: [{
         quantity: ticketCount,
