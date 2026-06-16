@@ -10,6 +10,9 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY
 );
 
+const ALLOWED_SHIRT_SIZES = ['S', 'M', 'L'];
+const MAX_TICKETS_PER_ORDER = 5;
+
 function getCookieValue(req, name) {
   const raw = req.headers.cookie || '';
   if (!raw) return '';
@@ -38,56 +41,99 @@ function getCurrentStage() {
   };
 }
 
+function normalizeFullName(value) {
+  if (typeof value !== 'string') return '';
+  return value.trim().replace(/\s+/g, ' ').slice(0, 80);
+}
+
+function normalizeTickets({ tickets, legacyShirtSize }) {
+  if (Array.isArray(tickets) && tickets.length > 0) {
+    if (tickets.length > MAX_TICKETS_PER_ORDER) {
+      return {
+        error: `Puedes comprar hasta ${MAX_TICKETS_PER_ORDER} tickets por operación.`,
+      };
+    }
+
+    const normalizedTickets = [];
+    for (let i = 0; i < tickets.length; i += 1) {
+      const ticket = tickets[i] || {};
+      const fullName = normalizeFullName(ticket.fullName);
+      const shirtSize = String(ticket.shirtSize || '').trim().toUpperCase();
+
+      if (!fullName || fullName.length < 3) {
+        return {
+          error: `El ticket ${i + 1} debe incluir un nombre válido.`,
+        };
+      }
+
+      if (!ALLOWED_SHIRT_SIZES.includes(shirtSize)) {
+        return {
+          error: `El ticket ${i + 1} debe incluir una talla válida (S, M o L).`,
+        };
+      }
+
+      normalizedTickets.push({ fullName, shirtSize });
+    }
+
+    return { tickets: normalizedTickets };
+  }
+
+  const fallbackSize = String(legacyShirtSize || '').trim().toUpperCase();
+  if (!ALLOWED_SHIRT_SIZES.includes(fallbackSize)) {
+    return {
+      error: 'Por favor agrega al menos un ticket con nombre y talla válida.',
+    };
+  }
+
+  return {
+    tickets: [{ fullName: 'Participante 1', shirtSize: fallbackSize }],
+  };
+}
+
+function buildParticipantsMetadata(tickets) {
+  const metadata = {};
+  tickets.forEach((ticket, index) => {
+    const position = index + 1;
+    metadata[`participant_${position}_name`] = ticket.fullName;
+    metadata[`participant_${position}_shirt`] = ticket.shirtSize;
+  });
+  return metadata;
+}
+
 module.exports = async function handler(req, res) {
   if (req.method !== 'POST') {
     return res.status(405).json({ message: 'Método no permitido' });
   }
 
   try {
-    const { email, shirtSize, metaEventId } = req.body;
+    const { email, buyerEmail, shirtSize, tickets, metaEventId } = req.body;
+    const rawEmail = buyerEmail || email;
 
-    if (!email || typeof email !== 'string' || !email.includes('@')) {
+    if (!rawEmail || typeof rawEmail !== 'string' || !rawEmail.includes('@')) {
       return res.status(400).json({ 
         error: 'Por favor ingresa un correo electrónico válido.' 
       });
     }
 
-    if (!shirtSize || !['S', 'M', 'L'].includes(shirtSize.toUpperCase())) {
-      return res.status(400).json({ 
-        error: 'Por favor selecciona una talla válida.' 
+    const normalized = normalizeTickets({ tickets, legacyShirtSize: shirtSize });
+    if (normalized.error) {
+      return res.status(400).json({
+        error: normalized.error,
       });
     }
 
-    const cleanEmail = email.toLowerCase().trim();
-    const cleanShirtSize = shirtSize.toUpperCase();
+    const normalizedTickets = normalized.tickets;
+    const ticketCount = normalizedTickets.length;
+
+    const cleanEmail = rawEmail.toLowerCase().trim();
+    const primaryTicket = normalizedTickets[0];
     const fbp = getCookieValue(req, '_fbp');
     const fbc = getCookieValue(req, '_fbc');
     const initiateCheckoutEventId =
       typeof metaEventId === 'string' && metaEventId.trim().length > 0
         ? metaEventId.trim().slice(0, 120)
         : `ic_${crypto.randomUUID()}`;
-    console.log(`🔄 Checkout para: ${cleanEmail}`);
-
-    const { data: existingRegistration, error: existingRegistrationError } = await supabase
-      .from('inscripciones')
-      .select('id')
-      .eq('event_slug', 'axolote-night-run')
-      .eq('email', cleanEmail)
-      .eq('payment_status', 'paid')
-      .limit(1);
-
-    if (existingRegistrationError) {
-      console.error('❌ Error validando inscripción existente:', existingRegistrationError);
-      return res.status(500).json({
-        error: 'No se pudo validar tu inscripción actual. Inténtalo de nuevo.'
-      });
-    }
-
-    if (existingRegistration && existingRegistration.length > 0) {
-      return res.status(409).json({
-        error: 'Este correo ya tiene una inscripción pagada para este evento.'
-      });
-    }
+    console.log(`🔄 Checkout para: ${cleanEmail} | tickets=${ticketCount}`);
 
     const stage = getCurrentStage();
     if (!stage) {
@@ -96,7 +142,10 @@ module.exports = async function handler(req, res) {
       });
     }
 
-    console.log(`🧾 Etapa seleccionada: ${stage.label} | ${stage.amount} MXN`);
+    console.log(`🧾 Etapa seleccionada: ${stage.label} | ${stage.amount} MXN | tickets=${ticketCount}`);
+
+    const participantsMetadata = buildParticipantsMetadata(normalizedTickets);
+    const totalAmount = Number((stage.amount * ticketCount).toFixed(2));
 
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ['card'],
@@ -104,13 +153,13 @@ module.exports = async function handler(req, res) {
       allow_promotion_codes: true,
       customer_email: cleanEmail,
       line_items: [{
-        quantity: 1,
+        quantity: ticketCount,
         price_data: {
           currency: 'mxn',
           unit_amount: Math.round(stage.amount * 100),
           product_data: {
             name: `Axolote Night Run 2026 - ${stage.label}`,
-            description: `Inscripción modalidad 5K | ${stage.period}`
+            description: `Inscripción modalidad 5K | ${stage.period} | ${ticketCount} ticket(s)`
           }
         }
       }],
@@ -119,14 +168,18 @@ module.exports = async function handler(req, res) {
       metadata: {
         event_slug: 'axolote-night-run',
         user_email: cleanEmail,
+        buyer_email: cleanEmail,
         stage_key: stage.key,
         stage_label: stage.label,
         stage_amount: String(stage.amount),
-        shirt_size: cleanShirtSize,
+        ticket_count: String(ticketCount),
+        shirt_size: primaryTicket.shirtSize,
+        full_name: primaryTicket.fullName,
         meta_fbp: fbp || '',
         meta_fbc: fbc || '',
         meta_external_id: cleanEmail,
-        meta_initiate_checkout_event_id: initiateCheckoutEventId
+        meta_initiate_checkout_event_id: initiateCheckoutEventId,
+        ...participantsMetadata,
       }
     });
 
@@ -136,11 +189,16 @@ module.exports = async function handler(req, res) {
       .from('inscripciones')
       .upsert({
         stripe_session_id: session.id,
+        order_session_id: session.id,
+        buyer_email: cleanEmail,
         email: cleanEmail,
+        full_name: primaryTicket.fullName,
         event_slug: 'axolote-night-run',
-        amount_paid: stage.amount,
+        amount_paid: totalAmount,
         payment_status: 'pending',
-        shirt_size: cleanShirtSize,
+        shirt_size: primaryTicket.shirtSize,
+        ticket_index: 1,
+        ticket_count: ticketCount,
         created_at: new Date().toISOString(),
       }, {
         onConflict: 'stripe_session_id',
@@ -167,7 +225,7 @@ module.exports = async function handler(req, res) {
       },
       customData: {
         currency: 'MXN',
-        value: stage.amount,
+        value: totalAmount,
         content_name: `Axolote Night Run 2026 - ${stage.label}`,
         content_type: 'product',
       },

@@ -11,6 +11,38 @@ const supabase = createClient(
 );
 const ALLOWED_SHIRT_SIZES = ['S', 'M', 'L'];
 
+function normalizeParticipantName(value, fallbackLabel) {
+  const normalized = String(value || '').trim().replace(/\s+/g, ' ');
+  if (normalized.length >= 3) return normalized.slice(0, 80);
+  return fallbackLabel;
+}
+
+function readParticipantsFromMetadata(metadata) {
+  const rawCount = Number.parseInt(String(metadata?.ticket_count || '1'), 10);
+  const ticketCount = Number.isInteger(rawCount) && rawCount > 0 ? Math.min(rawCount, 10) : 1;
+  const participants = [];
+
+  for (let i = 1; i <= ticketCount; i += 1) {
+    const rawName = metadata?.[`participant_${i}_name`] || '';
+    const rawShirt = String(metadata?.[`participant_${i}_shirt`] || '').trim().toUpperCase();
+    participants.push({
+      fullName: normalizeParticipantName(rawName, `Participante ${i}`),
+      shirtSize: ALLOWED_SHIRT_SIZES.includes(rawShirt) ? rawShirt : null,
+    });
+  }
+
+  if (participants.length === 0) {
+    const legacyShirt = String(metadata?.shirt_size || '').trim().toUpperCase();
+    const legacyName = normalizeParticipantName(metadata?.full_name || '', 'Participante 1');
+    participants.push({
+      fullName: legacyName,
+      shirtSize: ALLOWED_SHIRT_SIZES.includes(legacyShirt) ? legacyShirt : null,
+    });
+  }
+
+  return participants;
+}
+
 // Función para obtener el raw body (necesario para verificar la firma de Stripe)
 const getRawBody = (req) => {
   return new Promise((resolve, reject) => {
@@ -57,6 +89,46 @@ async function updateRegistrationBySessionId(sessionId, payload) {
   }
 
   return { ok: true };
+}
+
+async function updateRegistrationsByCheckoutSessionId(sessionId, payload) {
+  if (!sessionId) {
+    return { ok: false, reason: 'missing_session_id' };
+  }
+
+  let updatedCount = 0;
+
+  const { data: primaryData, error: primaryError } = await supabase
+    .from('inscripciones')
+    .update(payload)
+    .eq('stripe_session_id', sessionId)
+    .select('id');
+
+  if (primaryError) {
+    console.error(`❌ Error actualizando inscripción principal para sesión ${sessionId}:`, primaryError);
+    return { ok: false, error: primaryError };
+  }
+
+  updatedCount += primaryData?.length || 0;
+
+  const { data: childData, error: childError } = await supabase
+    .from('inscripciones')
+    .update(payload)
+    .like('stripe_session_id', `${sessionId}::%`)
+    .select('id');
+
+  if (childError) {
+    console.error(`❌ Error actualizando inscripciones hijas para sesión ${sessionId}:`, childError);
+    return { ok: false, error: childError };
+  }
+
+  updatedCount += childData?.length || 0;
+
+  if (updatedCount === 0) {
+    return { ok: false, reason: 'not_found' };
+  }
+
+  return { ok: true, updatedCount };
 }
 
 async function updateLatestPaidRegistrationByEmailAndAmount(email, amountPaid, payload) {
@@ -179,12 +251,12 @@ async function markRefundedFromCharge(charge, sourceEventType) {
   const checkoutSession = await findCheckoutSessionByPaymentIntent(paymentIntentId);
 
   if (checkoutSession?.id) {
-    const updateResult = await updateRegistrationBySessionId(checkoutSession.id, {
+    const updateResult = await updateRegistrationsByCheckoutSessionId(checkoutSession.id, {
       payment_status: 'refunded'
     });
 
     if (updateResult.ok) {
-      console.warn(`↩️ Reembolso registrado por ${sourceEventType} | session_id=${checkoutSession.id}`);
+      console.warn(`↩️ Reembolso registrado por ${sourceEventType} | session_id=${checkoutSession.id} | rows=${updateResult.updatedCount}`);
       return true;
     }
 
@@ -244,7 +316,9 @@ module.exports = async (req, res) => {
     const fullName = session.customer_details?.name || "Atleta";
     const sessionId = session.id;
     const amountTotal = (session.amount_total || 0) / 100;
-    const shirtSize = (session.metadata?.shirt_size || '').trim().toUpperCase();
+    const participants = readParticipantsFromMetadata(session.metadata || {});
+    const primaryParticipant = participants[0] || { fullName, shirtSize: null };
+    const shirtSize = (primaryParticipant.shirtSize || '').trim().toUpperCase();
     const metaFbp = (session.metadata?.meta_fbp || '').trim();
     const metaFbc = (session.metadata?.meta_fbc || '').trim();
     const metaExternalId = (session.metadata?.meta_external_id || '').trim();
@@ -256,13 +330,17 @@ module.exports = async (req, res) => {
       // Guardar el pago en DB sin email para no perder el registro
       await supabase.from('inscripciones').upsert({
         stripe_session_id: sessionId,
+        order_session_id: sessionId,
+        buyer_email: null,
         email: null,
-        full_name: fullName.trim(),
+        full_name: primaryParticipant.fullName || fullName.trim(),
         event_slug: 'axolote-night-run',
         amount_paid: amountTotal,
         payment_status: 'paid_no_email',
         shirt_size: null,
         bib_number: null,
+        ticket_index: 1,
+        ticket_count: participants.length || 1,
         created_at: new Date().toISOString()
       }, { onConflict: 'stripe_session_id' });
       // Alertar al admin
@@ -276,34 +354,50 @@ module.exports = async (req, res) => {
     }
 
     const cleanEmail = email.toLowerCase().trim();
-    console.log(`✅ Pago confirmado: ${fullName} (${cleanEmail}) - ${sessionId}`);
+    console.log(`✅ Pago confirmado: ${fullName} (${cleanEmail}) - ${sessionId} | tickets=${participants.length}`);
 
     try {
-      const bibNumber = await generateNextBibNumber();
+      const safeParticipants = participants.length > 0
+        ? participants
+        : [{ fullName: normalizeParticipantName(fullName, 'Participante 1'), shirtSize: null }];
+      const amountPerTicket = Number((amountTotal / safeParticipants.length).toFixed(2));
+      const bibNumbers = [];
 
-      // Guardar / actualizar inscripción en Supabase
-      const { error: upsertError } = await supabase
-        .from('inscripciones')
-        .upsert({
-          stripe_session_id: sessionId,
-          email: cleanEmail,
-          full_name: fullName.trim(),
-          event_slug: 'axolote-night-run',
-          amount_paid: amountTotal,
-          payment_status: 'paid',
-          shirt_size: ALLOWED_SHIRT_SIZES.includes(shirtSize) ? shirtSize : null,
-          bib_number: bibNumber,
-          created_at: new Date().toISOString()
-        }, {
-          onConflict: 'stripe_session_id'
-        });
+      for (let index = 0; index < safeParticipants.length; index += 1) {
+        const participant = safeParticipants[index];
+        const bibNumber = await generateNextBibNumber();
+        const participantSessionId = index === 0 ? sessionId : `${sessionId}::${index + 1}`;
 
-      if (upsertError) {
-        console.error("❌ Error al guardar en Supabase:", upsertError);
-        return res.status(200).json({ received: true });
+        const { error: upsertError } = await supabase
+          .from('inscripciones')
+          .upsert({
+            stripe_session_id: participantSessionId,
+            order_session_id: sessionId,
+            buyer_email: cleanEmail,
+            email: cleanEmail,
+            full_name: participant.fullName,
+            event_slug: 'axolote-night-run',
+            amount_paid: amountPerTicket,
+            payment_status: 'paid',
+            shirt_size: participant.shirtSize,
+            bib_number: bibNumber,
+            ticket_index: index + 1,
+            ticket_count: safeParticipants.length,
+            created_at: new Date().toISOString()
+          }, {
+            onConflict: 'stripe_session_id'
+          });
+
+        if (upsertError) {
+          console.error(`❌ Error al guardar participante ${index + 1}:`, upsertError);
+          return res.status(200).json({ received: true });
+        }
+
+        bibNumbers.push(bibNumber);
       }
 
-      console.log(`✅ Inscripción guardada correctamente | Bib: ${bibNumber}`);
+      const primaryBibNumber = bibNumbers[0];
+      console.log(`✅ Inscripciones guardadas correctamente | total=${safeParticipants.length} | bib_inicio=${primaryBibNumber}`);
 
       // Enviar email de confirmación solo si la DB se guardó correctamente
       try {
@@ -347,7 +441,7 @@ module.exports = async (req, res) => {
                                 <tr>
                                     <td style="padding:20px;text-align:center;">
                                         <p style="margin:0 0 8px 0;color:#00f5ff;font-size:16px;">Tu número de corredor es:</p>
-                                        <p class="bib-num" style="margin:0;font-size:52px;font-weight:bold;color:#00f5ff;letter-spacing:6px;">${String(bibNumber).padStart(3,'0')}</p>
+                                  <p class="bib-num" style="margin:0;font-size:52px;font-weight:bold;color:#00f5ff;letter-spacing:6px;">${String(primaryBibNumber).padStart(3,'0')}</p>
                                     </td>
                                 </tr>
                             </table>
@@ -367,11 +461,15 @@ module.exports = async (req, res) => {
                                 </tr>
                                 <tr>
                                     <td style="padding:10px 0;border-bottom:1px solid #333;color:#aaaaaa;font-size:14px;">Nombre</td>
-                                    <td style="padding:10px 0;border-bottom:1px solid #333;color:#ffffff;font-weight:600;font-size:14px;text-align:right;">${fullName}</td>
+                                  <td style="padding:10px 0;border-bottom:1px solid #333;color:#ffffff;font-weight:600;font-size:14px;text-align:right;">${primaryParticipant.fullName}</td>
                                 </tr>
                                 <tr>
                                     <td style="padding:10px 0;border-bottom:1px solid #333;color:#aaaaaa;font-size:14px;">Monto pagado</td>
                                     <td style="padding:10px 0;border-bottom:1px solid #333;color:#ffffff;font-weight:600;font-size:14px;text-align:right;">$${amountTotal} MXN</td>
+                                </tr>
+                                <tr>
+                                  <td style="padding:10px 0;border-bottom:1px solid #333;color:#aaaaaa;font-size:14px;">Tickets</td>
+                                  <td style="padding:10px 0;border-bottom:1px solid #333;color:#ffffff;font-weight:600;font-size:14px;text-align:right;">${safeParticipants.length}</td>
                                 </tr>
                                 <tr>
                                     <td style="padding:10px 0;border-bottom:1px solid #333;color:#aaaaaa;font-size:14px;">Talla de playera</td>
@@ -484,7 +582,7 @@ module.exports = async (req, res) => {
     const amountTotal = (session.amount_total || 0) / 100;
     const shirtSize = (session.metadata?.shirt_size || '').trim().toUpperCase();
 
-    await updateRegistrationBySessionId(sessionId, {
+    await updateRegistrationsByCheckoutSessionId(sessionId, {
       email,
       full_name: fullName,
       event_slug: session.metadata?.event_slug || 'axolote-night-run',
@@ -508,7 +606,7 @@ module.exports = async (req, res) => {
       const amountTotal = (checkoutSession.amount_total || paymentIntent.amount || 0) / 100;
       const shirtSize = (checkoutSession.metadata?.shirt_size || '').trim().toUpperCase();
 
-      await updateRegistrationBySessionId(checkoutSession.id, {
+      await updateRegistrationsByCheckoutSessionId(checkoutSession.id, {
         email,
         full_name: fullName,
         event_slug: checkoutSession.metadata?.event_slug || 'axolote-night-run',
@@ -543,7 +641,7 @@ module.exports = async (req, res) => {
     const checkoutSession = await findCheckoutSessionByRefund(refund);
 
     if (checkoutSession?.id) {
-      const updateResult = await updateRegistrationBySessionId(checkoutSession.id, {
+      const updateResult = await updateRegistrationsByCheckoutSessionId(checkoutSession.id, {
         payment_status: 'refunded'
       });
 
