@@ -69,6 +69,102 @@
       padding: 40px;
       color: #19c88b;
     }
+    .admin-card {
+      background: #11181f;
+      border: 1px solid #243041;
+      border-radius: 12px;
+      padding: 18px;
+      margin: 0 0 16px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.35);
+    }
+    .admin-card h2 {
+      margin: 0 0 12px;
+      color: #d3f7ea;
+      font-size: 1.08rem;
+    }
+    .manual-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+    .manual-grid label {
+      display: block;
+      font-size: 0.82rem;
+      color: #9fb1c5;
+      margin-bottom: 4px;
+      font-weight: 700;
+    }
+    .manual-grid input,
+    .manual-grid select {
+      width: 100%;
+      background: #0b1118;
+      color: #e8edf3;
+      border: 1px solid #2a3a4b;
+      border-radius: 8px;
+      padding: 9px 10px;
+      box-sizing: border-box;
+    }
+    .tickets-wrap {
+      display: grid;
+      gap: 10px;
+    }
+    .ticket-row {
+      display: grid;
+      grid-template-columns: 1fr 130px auto;
+      gap: 10px;
+      align-items: end;
+      background: #0c121a;
+      border: 1px solid #233243;
+      border-radius: 8px;
+      padding: 10px;
+    }
+    .ticket-row button {
+      background: #2b3a4d;
+      color: #d8e7f7;
+      border: 0;
+      border-radius: 8px;
+      padding: 9px 10px;
+      cursor: pointer;
+      font-weight: 700;
+    }
+    .ticket-row button:hover {
+      background: #34475f;
+    }
+    .manual-actions {
+      display: flex;
+      gap: 10px;
+      margin-top: 12px;
+      flex-wrap: wrap;
+    }
+    .btn-primary {
+      background: #19c88b;
+      color: #02140e;
+      border: 0;
+      border-radius: 8px;
+      padding: 10px 14px;
+      cursor: pointer;
+      font-weight: 800;
+    }
+    .btn-secondary {
+      background: #202b3a;
+      color: #dce7f3;
+      border: 0;
+      border-radius: 8px;
+      padding: 10px 14px;
+      cursor: pointer;
+      font-weight: 700;
+    }
+    .manual-feedback {
+      margin-top: 10px;
+      font-size: 0.9rem;
+    }
+    .manual-feedback.ok {
+      color: #6af1c0;
+    }
+    .manual-feedback.err {
+      color: #ff7f88;
+    }
   </style>
 <!-- Meta Pixel Code -->
 <script>
@@ -92,6 +188,31 @@ src="https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1"
   <div class="container">
     <h1>Panel Admin - Inscripciones Pagadas</h1>
     <p>Los Usuarios con numero 000 son de uso de pruebas de creacion y edicion de la web</p>
+    <section class="admin-card">
+      <h2>Registrar pago por transferencia</h2>
+      <form id="manualTransferForm" novalidate>
+        <div class="manual-grid">
+          <div>
+            <label for="buyerEmail">Correo comprador principal</label>
+            <input id="buyerEmail" type="email" placeholder="cliente@correo.com" required />
+          </div>
+          <div>
+            <label for="totalAmount">Monto total (MXN)</label>
+            <input id="totalAmount" type="number" min="1" step="0.01" placeholder="1100" required />
+          </div>
+          <div>
+            <label for="transferReference">Referencia (opcional)</label>
+            <input id="transferReference" type="text" maxlength="80" placeholder="Folio SPEI" />
+          </div>
+        </div>
+        <div id="manualTickets" class="tickets-wrap"></div>
+        <div class="manual-actions">
+          <button type="button" id="addManualTicketBtn" class="btn-secondary">+ Agregar ticket</button>
+          <button type="submit" id="saveManualTransferBtn" class="btn-primary">Guardar transferencia</button>
+        </div>
+        <div id="manualTransferFeedback" class="manual-feedback"></div>
+      </form>
+    </section>
     <div style="display:flex; gap:10px; align-items:center; margin: 0 0 14px;">
       <label for="statusFilter" style="font-weight:700; color:#b7c4d4;">Estado:</label>
       <select id="statusFilter" style="background:#11181f; color:#e0e0e0; border:1px solid #2a3a4b; border-radius:8px; padding:8px 10px;">
@@ -160,7 +281,7 @@ src="https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1"
       try {
         let query = client
           .from("inscripciones")
-          .select("id, full_name, email, event_slug, amount_paid, payment_status, bib_number, shirt_size, created_at")
+          .select("id, full_name, email, buyer_email, order_session_id, ticket_index, ticket_count, event_slug, amount_paid, payment_status, bib_number, shirt_size, created_at")
           .order("created_at", { ascending: false });
 
         if (statusFilter !== "all") {
@@ -183,11 +304,13 @@ src="https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1"
                 <th>ID</th>
                 <th>Nombre Completo</th>
                 <th>Email</th>
+                <th>Comprador</th>
                 <th>Evento</th>
                 <th>Estado</th>
                 <th>Monto Pagado</th>
                 <th>Talla de Playera</th>
                 <th>Numero de corredor</th>
+                <th>Orden</th>
                 <th>Fecha</th>
               </tr>
             </thead>
@@ -204,11 +327,13 @@ src="https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1"
               <td>${row.id}</td>
               <td><strong>${row.full_name || '-'}</strong></td>
               <td>${row.email}</td>
+              <td>${row.buyer_email || row.email || '-'}</td>
               <td>${row.event_slug || 'Axolote Night Run'}</td>
               <td>${row.payment_status || '-'}</td>
               <td><strong>$${parseFloat(row.amount_paid || 0).toLocaleString('es-MX')}</strong></td>
               <td style="font-weight:700; color:#ff8c42;">${row.shirt_size || '—'}</td>
               <td style="font-weight:800; color:#19c88b;">${row.bib_number ? '#' + row.bib_number : '—'}</td>
+              <td>${row.order_session_id || '—'}${row.ticket_index ? ` · T${row.ticket_index}/${row.ticket_count || 1}` : ''}</td>
               <td>${date}</td>
             </tr>
           `;
@@ -223,12 +348,203 @@ src="https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1"
       }
     }
 
+    // ====================== TRANSFERENCIAS MANUALES ======================
+    const MAX_MANUAL_TICKETS = 5;
+    let manualTickets = [{ fullName: '', shirtSize: '' }];
+
+    function escapeHtml(value) {
+      return String(value || '')
+        .replaceAll('&', '&amp;')
+        .replaceAll('<', '&lt;')
+        .replaceAll('>', '&gt;')
+        .replaceAll('"', '&quot;');
+    }
+
+    function renderManualTickets() {
+      const wrap = document.getElementById('manualTickets');
+      const addBtn = document.getElementById('addManualTicketBtn');
+      if (!wrap || !addBtn) return;
+
+      wrap.innerHTML = manualTickets.map((ticket, index) => {
+        const ticketNum = index + 1;
+        const removeBtn = manualTickets.length > 1
+          ? `<button type="button" data-remove-manual-ticket="${index}">Quitar</button>`
+          : `<div></div>`;
+
+        return `
+          <div class="ticket-row">
+            <div>
+              <label for="manualTicketName${ticketNum}" style="display:block; font-size:0.8rem; color:#9fb1c5; margin-bottom:4px; font-weight:700;">Nombre ticket ${ticketNum}</label>
+              <input
+                id="manualTicketName${ticketNum}"
+                type="text"
+                maxlength="80"
+                placeholder="Nombre completo"
+                data-manual-field="fullName"
+                data-manual-index="${index}"
+                value="${escapeHtml(ticket.fullName)}"
+              />
+            </div>
+            <div>
+              <label for="manualTicketShirt${ticketNum}" style="display:block; font-size:0.8rem; color:#9fb1c5; margin-bottom:4px; font-weight:700;">Talla</label>
+              <select
+                id="manualTicketShirt${ticketNum}"
+                data-manual-field="shirtSize"
+                data-manual-index="${index}"
+              >
+                <option value="" ${!ticket.shirtSize ? 'selected' : ''}>Selecciona</option>
+                <option value="S" ${ticket.shirtSize === 'S' ? 'selected' : ''}>S</option>
+                <option value="M" ${ticket.shirtSize === 'M' ? 'selected' : ''}>M</option>
+                <option value="L" ${ticket.shirtSize === 'L' ? 'selected' : ''}>L</option>
+              </select>
+            </div>
+            ${removeBtn}
+          </div>
+        `;
+      }).join('');
+
+      addBtn.disabled = manualTickets.length >= MAX_MANUAL_TICKETS;
+      addBtn.textContent = manualTickets.length >= MAX_MANUAL_TICKETS
+        ? `Límite ${MAX_MANUAL_TICKETS} tickets`
+        : '+ Agregar ticket';
+    }
+
+    function setupManualTransferForm(client) {
+      const form = document.getElementById('manualTransferForm');
+      const ticketsWrap = document.getElementById('manualTickets');
+      const addBtn = document.getElementById('addManualTicketBtn');
+      const feedback = document.getElementById('manualTransferFeedback');
+      const saveBtn = document.getElementById('saveManualTransferBtn');
+      const statusFilter = document.getElementById('statusFilter');
+      if (!form || !ticketsWrap || !addBtn || !feedback || !saveBtn) return;
+
+      const setFeedback = (message, type) => {
+        feedback.textContent = message || '';
+        feedback.className = `manual-feedback ${type || ''}`;
+      };
+
+      renderManualTickets();
+
+      addBtn.addEventListener('click', () => {
+        if (manualTickets.length >= MAX_MANUAL_TICKETS) return;
+        manualTickets.push({ fullName: '', shirtSize: '' });
+        renderManualTickets();
+      });
+
+      ticketsWrap.addEventListener('click', (event) => {
+        const indexAttr = event.target?.getAttribute('data-remove-manual-ticket');
+        if (indexAttr === null) return;
+
+        const index = Number(indexAttr);
+        if (!Number.isInteger(index)) return;
+        if (manualTickets.length <= 1) return;
+
+        manualTickets.splice(index, 1);
+        renderManualTickets();
+      });
+
+      ticketsWrap.addEventListener('input', (event) => {
+        const index = Number(event.target?.getAttribute('data-manual-index'));
+        const field = event.target?.getAttribute('data-manual-field');
+        if (!Number.isInteger(index) || !field || !manualTickets[index]) return;
+
+        if (field === 'fullName') {
+          manualTickets[index].fullName = String(event.target.value || '');
+        }
+
+        if (field === 'shirtSize') {
+          manualTickets[index].shirtSize = String(event.target.value || '').toUpperCase();
+        }
+      });
+
+      form.addEventListener('submit', async (event) => {
+        event.preventDefault();
+        setFeedback('', '');
+
+        const buyerEmail = String(document.getElementById('buyerEmail')?.value || '').trim().toLowerCase();
+        const totalAmount = Number(document.getElementById('totalAmount')?.value || '0');
+        const transferReference = String(document.getElementById('transferReference')?.value || '').trim();
+
+        const tickets = manualTickets.map((ticket) => ({
+          fullName: String(ticket.fullName || '').trim().replace(/\s+/g, ' '),
+          shirtSize: String(ticket.shirtSize || '').trim().toUpperCase(),
+        }));
+
+        const invalidTicket = tickets.some((ticket) => (
+          ticket.fullName.length < 3 || !['S', 'M', 'L'].includes(ticket.shirtSize)
+        ));
+
+        if (!buyerEmail || !buyerEmail.includes('@')) {
+          setFeedback('Ingresa un correo principal válido.', 'err');
+          return;
+        }
+
+        if (!Number.isFinite(totalAmount) || totalAmount <= 0) {
+          setFeedback('Ingresa un monto total válido.', 'err');
+          return;
+        }
+
+        if (invalidTicket) {
+          setFeedback('Completa nombre y talla válida para cada ticket.', 'err');
+          return;
+        }
+
+        saveBtn.disabled = true;
+        saveBtn.textContent = 'Guardando...';
+
+        try {
+          const { data: { session } } = await client.auth.getSession();
+          const token = session?.access_token;
+          if (!token) {
+            throw new Error('Sesión no válida, vuelve a iniciar sesión.');
+          }
+
+          const response = await fetch('/api/admin-manual-transfer', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: `Bearer ${token}`,
+            },
+            body: JSON.stringify({
+              buyerEmail,
+              totalAmount,
+              transferReference,
+              tickets,
+              eventSlug: 'axolote-night-run',
+            }),
+          });
+
+          const data = await response.json();
+          if (!response.ok) {
+            throw new Error(data?.error || 'No se pudo guardar la transferencia.');
+          }
+
+          const bibList = Array.isArray(data.tickets)
+            ? data.tickets.map((t) => `#${t.bib_number}`).join(', ')
+            : '';
+          setFeedback(`Transferencia guardada. Orden: ${data.orderSessionId}. Bibs: ${bibList}`, 'ok');
+
+          form.reset();
+          manualTickets = [{ fullName: '', shirtSize: '' }];
+          renderManualTickets();
+
+          await loadPaidInscriptions(client, statusFilter?.value || 'paid');
+        } catch (err) {
+          setFeedback(err.message || 'Error guardando transferencia.', 'err');
+        } finally {
+          saveBtn.disabled = false;
+          saveBtn.textContent = 'Guardar transferencia';
+        }
+      });
+    }
+
     // ====================== INICIALIZACIÓN ======================
     async function initAdminPage() {
       const client = await checkAdminAccess();
       if (!client) return;
 
       const statusFilter = document.getElementById("statusFilter");
+      setupManualTransferForm(client);
       await loadPaidInscriptions(client, statusFilter?.value || "paid");
 
       statusFilter?.addEventListener("change", async () => {
