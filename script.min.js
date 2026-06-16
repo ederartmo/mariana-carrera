@@ -4131,7 +4131,16 @@ function setupCheckoutForm() {
   const stagePriceEl = document.getElementById("stagePrice");
   const totalPriceEl = document.getElementById("totalPrice");
   const ticketCountLabel = document.getElementById("ticketCountLabel");
+  const promoCodeInput = document.getElementById("promoCode");
+  const applyPromoBtn = document.getElementById("applyPromoBtn");
+  const promoFeedback = document.getElementById("promoFeedback");
+  const discountRow = document.getElementById("discountRow");
+  const discountLabel = document.getElementById("discountLabel");
+  const discountValue = document.getElementById("discountValue");
+  const finalTotalRow = document.getElementById("finalTotalRow");
+  const finalTotalPrice = document.getElementById("finalTotalPrice");
   let tickets = [{ fullName: "", shirtSize: "" }];
+  let promoState = null;
 
   if (!ticketsList || !addTicketBtn || !stagePriceEl || !totalPriceEl || !ticketCountLabel) return;
 
@@ -4146,8 +4155,27 @@ function setupCheckoutForm() {
     return `$${Math.round(amount)} MXN`;
   }
 
+  function formatDiscount(amount) {
+    return `-$${Math.round(amount)} MXN`;
+  }
+
   function getUnitAmount() {
     return parseMXNPrice(stagePriceEl.textContent);
+  }
+
+  function setPromoFeedback(message, type) {
+    if (!promoFeedback) return;
+    promoFeedback.textContent = message || "";
+    promoFeedback.className = `promo-feedback ${type || ""}`;
+  }
+
+  function clearPromoState(options = {}) {
+    promoState = null;
+    if (discountRow) discountRow.style.display = "none";
+    if (finalTotalRow) finalTotalRow.style.display = "none";
+    if (!options.keepMessage) {
+      setPromoFeedback("", "");
+    }
   }
 
   function updateSummary() {
@@ -4156,6 +4184,25 @@ function setupCheckoutForm() {
     const totalAmount = unitAmount * quantity;
     totalPriceEl.textContent = formatMXN(totalAmount);
     ticketCountLabel.textContent = `${quantity} ticket${quantity > 1 ? "s" : ""}`;
+
+    if (promoState?.preview) {
+      const preview = promoState.preview;
+      if (discountRow) {
+        discountRow.style.display = "flex";
+      }
+      if (finalTotalRow) {
+        finalTotalRow.style.display = "flex";
+      }
+      if (discountLabel) {
+        discountLabel.textContent = `Descuento (${preview.code})`;
+      }
+      if (discountValue) {
+        discountValue.textContent = formatDiscount(preview.discountAmount);
+      }
+      if (finalTotalPrice) {
+        finalTotalPrice.textContent = formatMXN(preview.finalTotal);
+      }
+    }
   }
 
   function renderTickets() {
@@ -4230,9 +4277,65 @@ function setupCheckoutForm() {
     return `ic_${Date.now()}_${Math.random().toString(36).slice(2, 10)}`;
   }
 
+  async function validatePromoCode() {
+    const promoCode = String(promoCodeInput?.value || "").trim().toUpperCase();
+    if (!promoCode) {
+      clearPromoState();
+      setPromoFeedback("Ingresa un código para validarlo.", "err");
+      return false;
+    }
+
+    if (applyPromoBtn) {
+      applyPromoBtn.disabled = true;
+      applyPromoBtn.textContent = "Validando...";
+    }
+
+    try {
+      const response = await fetch("/api/validate-promo-code", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          promoCode,
+          ticketCount: tickets.length,
+        }),
+      });
+
+      const data = await response.json();
+      if (!response.ok) {
+        clearPromoState({ keepMessage: true });
+        setPromoFeedback(data.error || "No se pudo validar el código.", "err");
+        return false;
+      }
+
+      promoState = {
+        code: data.code,
+        preview: {
+          ...(data.preview || {}),
+          code: data.code,
+        },
+      };
+      setPromoFeedback(`Código aplicado: ${data.preview?.description || data.code}.`, "ok");
+      updateSummary();
+      return true;
+    } catch (error) {
+      clearPromoState({ keepMessage: true });
+      setPromoFeedback("No se pudo validar el código en este momento.", "err");
+      return false;
+    } finally {
+      if (applyPromoBtn) {
+        applyPromoBtn.disabled = false;
+        applyPromoBtn.textContent = "Aplicar";
+      }
+    }
+  }
+
   addTicketBtn.addEventListener("click", () => {
     if (tickets.length >= MAX_TICKETS_PER_ORDER) return;
     tickets.push({ fullName: "", shirtSize: "" });
+    if (promoState) {
+      clearPromoState({ keepMessage: true });
+      setPromoFeedback("La cantidad cambió. Vuelve a aplicar el código para recalcular el descuento.", "err");
+    }
     renderTickets();
   });
 
@@ -4245,6 +4348,10 @@ function setupCheckoutForm() {
     if (tickets.length <= 1) return;
 
     tickets.splice(index, 1);
+    if (promoState) {
+      clearPromoState({ keepMessage: true });
+      setPromoFeedback("La cantidad cambió. Vuelve a aplicar el código para recalcular el descuento.", "err");
+    }
     renderTickets();
   });
 
@@ -4264,6 +4371,16 @@ function setupCheckoutForm() {
     }
   });
 
+  promoCodeInput?.addEventListener("input", () => {
+    if (promoState) {
+      clearPromoState();
+    }
+  });
+
+  applyPromoBtn?.addEventListener("click", async () => {
+    await validatePromoCode();
+  });
+
   renderTickets();
 
   form.addEventListener("submit", async (e) => {
@@ -4272,6 +4389,7 @@ function setupCheckoutForm() {
     const emailInput = document.getElementById("userEmail");
     const email = emailInput?.value.trim();
     const normalizedEmail = (email || "").toLowerCase().trim();
+    const promoCode = String(promoCodeInput?.value || "").trim().toUpperCase();
     const termsCheck = document.getElementById("termsCheck")?.checked;
     const normalizedTickets = tickets.map((ticket) => ({
       fullName: normalizeName(ticket.fullName),
@@ -4292,6 +4410,15 @@ function setupCheckoutForm() {
     submitBtn.disabled = true;
     submitBtn.textContent = "Procesando...";
     const initiateCheckoutEventId = buildInitiateCheckoutEventId();
+
+    if (promoCode && (!promoState || promoState.code !== promoCode)) {
+      const isValidPromo = await validatePromoCode();
+      if (!isValidPromo) {
+        submitBtn.disabled = false;
+        submitBtn.textContent = originalText;
+        return;
+      }
+    }
 
     if (typeof window.fbq === "function") {
       window.fbq(
@@ -4317,6 +4444,7 @@ function setupCheckoutForm() {
           email,
           buyerEmail: normalizedEmail,
           tickets: normalizedTickets,
+          promoCode,
           metaEventId: initiateCheckoutEventId,
         }),
       });

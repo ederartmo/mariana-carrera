@@ -165,6 +165,19 @@
     .manual-feedback.err {
       color: #ff7f88;
     }
+    .btn-danger {
+      background: #6d2430;
+      color: #ffe7ea;
+      border: 0;
+      border-radius: 8px;
+      padding: 8px 10px;
+      cursor: pointer;
+      font-weight: 700;
+      font-size: 0.8rem;
+    }
+    .btn-danger:hover {
+      background: #873040;
+    }
   </style>
 <!-- Meta Pixel Code -->
 <script>
@@ -312,6 +325,7 @@ src="https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1"
                 <th>Numero de corredor</th>
                 <th>Orden</th>
                 <th>Fecha</th>
+                <th>Acciones</th>
               </tr>
             </thead>
             <tbody>
@@ -321,6 +335,11 @@ src="https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1"
           const date = new Date(row.created_at).toLocaleDateString('es-MX', {
             year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit'
           });
+
+          const orderId = row.order_session_id || '';
+          const ticketSummary = row.ticket_index ? `T${row.ticket_index}/${row.ticket_count || 1}` : '';
+          const deleteTarget = orderId || row.id;
+          const deleteMode = orderId ? 'order' : 'row';
 
           html += `
             <tr>
@@ -333,8 +352,20 @@ src="https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1"
               <td><strong>$${parseFloat(row.amount_paid || 0).toLocaleString('es-MX')}</strong></td>
               <td style="font-weight:700; color:#ff8c42;">${row.shirt_size || '—'}</td>
               <td style="font-weight:800; color:#19c88b;">${row.bib_number ? '#' + row.bib_number : '—'}</td>
-              <td>${row.order_session_id || '—'}${row.ticket_index ? ` · T${row.ticket_index}/${row.ticket_count || 1}` : ''}</td>
+              <td>${orderId || '—'}${ticketSummary ? ` · ${ticketSummary}` : ''}</td>
               <td>${date}</td>
+              <td>
+                <button
+                  type="button"
+                  class="btn-danger"
+                  data-delete-mode="${deleteMode}"
+                  data-delete-id="${row.id}"
+                  data-delete-order="${escapeHtml(orderId)}"
+                  data-delete-name="${escapeHtml(row.full_name || '')}"
+                >
+                  ${orderId ? 'Eliminar orden' : 'Eliminar'}
+                </button>
+              </td>
             </tr>
           `;
         });
@@ -538,6 +569,65 @@ src="https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1"
       });
     }
 
+    function setupDeleteActions(client) {
+      const contentDiv = document.getElementById('content');
+      const statusFilter = document.getElementById('statusFilter');
+      if (!contentDiv) return;
+
+      contentDiv.addEventListener('click', async (event) => {
+        const button = event.target?.closest('[data-delete-mode]');
+        if (!button) return;
+
+        const deleteMode = button.getAttribute('data-delete-mode') || 'row';
+        const inscriptionId = button.getAttribute('data-delete-id') || '';
+        const orderSessionId = button.getAttribute('data-delete-order') || '';
+        const fullName = button.getAttribute('data-delete-name') || 'este registro';
+
+        const message = deleteMode === 'order'
+          ? `Se eliminará toda la orden ${orderSessionId}. Esta acción no se puede deshacer. ¿Continuar?`
+          : `Se eliminará ${fullName}. Esta acción no se puede deshacer. ¿Continuar?`;
+
+        if (!window.confirm(message)) {
+          return;
+        }
+
+        const originalText = button.textContent;
+        button.disabled = true;
+        button.textContent = 'Eliminando...';
+
+        try {
+          const { data: { session } } = await client.auth.getSession();
+          const token = session?.access_token;
+          if (!token) {
+            throw new Error('Sesión no válida, vuelve a iniciar sesión.');
+          }
+
+          const response = await fetch('/api/admin-delete-inscription', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: `Bearer ${token}`,
+            },
+            body: JSON.stringify({
+              inscriptionId,
+              orderSessionId: deleteMode === 'order' ? orderSessionId : '',
+            }),
+          });
+
+          const data = await response.json();
+          if (!response.ok) {
+            throw new Error(data?.error || 'No se pudo eliminar el registro.');
+          }
+
+          await loadPaidInscriptions(client, statusFilter?.value || 'paid');
+        } catch (err) {
+          window.alert(err.message || 'No se pudo eliminar el registro.');
+          button.disabled = false;
+          button.textContent = originalText;
+        }
+      });
+    }
+
     // ====================== INICIALIZACIÓN ======================
     async function initAdminPage() {
       const client = await checkAdminAccess();
@@ -545,6 +635,7 @@ src="https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1"
 
       const statusFilter = document.getElementById("statusFilter");
       setupManualTransferForm(client);
+      setupDeleteActions(client);
       await loadPaidInscriptions(client, statusFilter?.value || "paid");
 
       statusFilter?.addEventListener("change", async () => {
