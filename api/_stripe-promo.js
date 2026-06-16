@@ -4,10 +4,51 @@ function toMoney(amountInCents) {
   return Number((amountInCents / 100).toFixed(2));
 }
 
+function isCouponExpired(coupon) {
+  if (!coupon || typeof coupon.redeem_by !== 'number') return false;
+  return coupon.redeem_by * 1000 < Date.now();
+}
+
+function matchesCode(value, cleanCode) {
+  return String(value || '').trim().toUpperCase() === cleanCode;
+}
+
+async function findCouponByCode(cleanCode) {
+  try {
+    const directCoupon = await stripe.coupons.retrieve(cleanCode);
+    if (directCoupon?.id) {
+      return directCoupon;
+    }
+  } catch (_error) {
+    // Ignore: el código no corresponde a un coupon ID directo.
+  }
+
+  let startingAfter = null;
+  for (let page = 0; page < 5; page += 1) {
+    const { data, has_more: hasMore } = await stripe.coupons.list({
+      limit: 100,
+      ...(startingAfter ? { starting_after: startingAfter } : {}),
+    });
+
+    const match = (data || []).find((coupon) =>
+      matchesCode(coupon?.name, cleanCode) || matchesCode(coupon?.id, cleanCode)
+    );
+
+    if (match) {
+      return match;
+    }
+
+    if (!hasMore || !data?.length) break;
+    startingAfter = data[data.length - 1].id;
+  }
+
+  return null;
+}
+
 async function resolvePromotionCode({ promoCode, subtotalAmount, currency = 'mxn' }) {
   const cleanCode = String(promoCode || '').trim().toUpperCase();
   if (!cleanCode) {
-    return { cleanCode: '', promotionCodeId: null, preview: null };
+    return { cleanCode: '', promotionCodeId: null, couponId: null, preview: null };
   }
 
   const subtotalCents = Math.round(Number(subtotalAmount || 0) * 100);
@@ -18,12 +59,17 @@ async function resolvePromotionCode({ promoCode, subtotalAmount, currency = 'mxn
   });
 
   const promotionCode = data?.[0] || null;
-  const coupon = promotionCode?.coupon || null;
+  let coupon = promotionCode?.coupon || null;
+  let couponId = null;
 
   if (!promotionCode?.id || !coupon) {
-    return {
-      error: 'El código de descuento no existe, ya venció o no está activo.',
-    };
+    coupon = await findCouponByCode(cleanCode);
+    if (!coupon?.id) {
+      return {
+        error: 'El código de descuento no existe, ya venció o no está activo.',
+      };
+    }
+    couponId = coupon.id;
   }
 
   if (coupon.valid === false) {
@@ -32,16 +78,24 @@ async function resolvePromotionCode({ promoCode, subtotalAmount, currency = 'mxn
     };
   }
 
-  const minimumAmount = promotionCode.restrictions?.minimum_amount;
-  const minimumCurrency = String(promotionCode.restrictions?.minimum_amount_currency || '').toLowerCase();
-  if (
-    typeof minimumAmount === 'number' &&
-    minimumCurrency === currency.toLowerCase() &&
-    subtotalCents < minimumAmount
-  ) {
+  if (isCouponExpired(coupon)) {
     return {
-      error: `Este código requiere un mínimo de $${toMoney(minimumAmount)} MXN.`,
+      error: 'El código de descuento ya venció.',
     };
+  }
+
+  if (promotionCode?.id) {
+    const minimumAmount = promotionCode.restrictions?.minimum_amount;
+    const minimumCurrency = String(promotionCode.restrictions?.minimum_amount_currency || '').toLowerCase();
+    if (
+      typeof minimumAmount === 'number' &&
+      minimumCurrency === currency.toLowerCase() &&
+      subtotalCents < minimumAmount
+    ) {
+      return {
+        error: `Este código requiere un mínimo de $${toMoney(minimumAmount)} MXN.`,
+      };
+    }
   }
 
   let discountCents = 0;
@@ -65,7 +119,8 @@ async function resolvePromotionCode({ promoCode, subtotalAmount, currency = 'mxn
 
   return {
     cleanCode,
-    promotionCodeId: promotionCode.id,
+    promotionCodeId: promotionCode?.id || null,
+    couponId,
     preview: {
       code: cleanCode,
       description,

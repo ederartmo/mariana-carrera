@@ -360,7 +360,7 @@ src="https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1"
 <!-- End Meta Pixel Code -->
   <div class="container">
     <h1>Panel Admin - Inscripciones Pagadas</h1>
-    <p class="page-intro">Usa este panel para registrar transferencias, revisar compras y, solo si activas el modo de riesgo, eliminar órdenes de prueba. <strong>Los usuarios con número 000</strong> son de uso de pruebas.</p>
+    <p class="page-intro">Usa este panel para registrar transferencias, revisar compras y, solo si activas la opción de borrar, eliminar órdenes de prueba. <strong>Los usuarios con número 000</strong> son de uso de pruebas.</p>
 
     <div class="dashboard-toolbar">
       <div class="toolbar-group">
@@ -377,11 +377,11 @@ src="https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1"
         <button type="button" id="toggleManualPanelBtn" class="btn-secondary">Mostrar transferencias manuales</button>
         <label class="toggle-chip danger-chip">
           <input type="checkbox" id="dangerModeToggle" />
-          Habilitar acciones peligrosas
+          Activar opción de borrar
         </label>
       </div>
     </div>
-    <div class="toolbar-note" id="dangerModeNote">El borrado permanece oculto hasta que actives el modo de acciones peligrosas.</div>
+    <div class="toolbar-note" id="dangerModeNote">La opción de borrar se mantiene oculta hasta activarla.</div>
 
     <section id="manualTransferCard" class="admin-card is-collapsed">
       <div class="admin-card-header">
@@ -900,15 +900,15 @@ src="https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1"
         }
 
         if (adminUiState.dangerMode) {
-          dangerModeNote.textContent = 'Acciones peligrosas activadas por 2 minutos. Los botones de eliminar ya están visibles.';
+          dangerModeNote.textContent = 'Opción de borrar activada por 2 minutos. Ya puedes ver los botones de eliminar.';
           dangerModeTimer = window.setTimeout(() => {
             adminUiState.dangerMode = false;
             dangerModeToggle.checked = false;
-            dangerModeNote.textContent = 'El borrado permanece oculto hasta que actives el modo de acciones peligrosas.';
+            dangerModeNote.textContent = 'La opción de borrar se mantiene oculta hasta activarla.';
             renderPaidInscriptions(cachedRows);
           }, 120000);
         } else {
-          dangerModeNote.textContent = 'El borrado permanece oculto hasta que actives el modo de acciones peligrosas.';
+          dangerModeNote.textContent = 'La opción de borrar se mantiene oculta hasta activarla.';
         }
 
         renderPaidInscriptions(cachedRows);

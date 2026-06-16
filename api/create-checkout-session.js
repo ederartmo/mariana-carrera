@@ -157,13 +157,19 @@ module.exports = async function handler(req, res) {
       return res.status(400).json({ error: promoResolution.error });
     }
 
+    const stripeDiscount = promoResolution.promotionCodeId
+      ? { promotion_code: promoResolution.promotionCodeId }
+      : promoResolution.couponId
+        ? { coupon: promoResolution.couponId }
+        : null;
+
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ['card'],
       mode: 'payment',
       allow_promotion_codes: true,
-      ...(promoResolution.promotionCodeId
+      ...(stripeDiscount
         ? {
-            discounts: [{ promotion_code: promoResolution.promotionCodeId }],
+            discounts: [stripeDiscount],
           }
         : {}),
       customer_email: cleanEmail,
