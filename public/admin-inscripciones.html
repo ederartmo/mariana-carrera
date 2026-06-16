@@ -11,28 +11,36 @@
       color: #e0e0e0;
       margin: 0;
       padding: 20px;
+      overflow-x: hidden;
     }
     .container {
-      max-width: 1200px;
+      max-width: 1280px;
       margin: 0 auto;
     }
     h1 {
       color: #19c88b;
       text-align: center;
-      margin-bottom: 30px;
+      margin-bottom: 10px;
+    }
+    .page-intro {
+      margin: 0 0 22px;
+      color: #a8b6c7;
+      text-align: center;
+    }
+    .page-intro strong {
+      color: #dce7f3;
     }
     table {
       width: 100%;
       border-collapse: collapse;
       background: #11181f;
-      border-radius: 12px;
-      overflow: hidden;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+      min-width: 1120px;
     }
     th, td {
       padding: 14px 16px;
       text-align: left;
       border-bottom: 1px solid #1f2a36;
+      vertical-align: top;
     }
     th {
       background: #19c88b;
@@ -69,6 +77,20 @@
       padding: 40px;
       color: #19c88b;
     }
+    .dashboard-toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      align-items: center;
+      justify-content: space-between;
+      margin: 0 0 16px;
+    }
+    .toolbar-group {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-items: center;
+    }
     .admin-card {
       background: #11181f;
       border: 1px solid #243041;
@@ -81,6 +103,21 @@
       margin: 0 0 12px;
       color: #d3f7ea;
       font-size: 1.08rem;
+    }
+    .admin-card-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+    .admin-card-header p {
+      margin: 0;
+      color: #8ea1b7;
+      font-size: 0.88rem;
+    }
+    .admin-card.is-collapsed .admin-card-body {
+      display: none;
     }
     .manual-grid {
       display: grid;
@@ -155,6 +192,10 @@
       cursor: pointer;
       font-weight: 700;
     }
+    .btn-secondary.is-active {
+      background: #2a4664;
+      color: #f3f8fd;
+    }
     .manual-feedback {
       margin-top: 10px;
       font-size: 0.9rem;
@@ -178,6 +219,125 @@
     .btn-danger:hover {
       background: #873040;
     }
+    .btn-danger[hidden] {
+      display: none;
+    }
+    .admin-input,
+    .admin-select {
+      background: #11181f;
+      color: #e0e0e0;
+      border: 1px solid #2a3a4b;
+      border-radius: 8px;
+      padding: 9px 10px;
+      min-height: 40px;
+      box-sizing: border-box;
+    }
+    .admin-input {
+      min-width: 240px;
+    }
+    .toggle-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: #11181f;
+      border: 1px solid #2a3a4b;
+      border-radius: 999px;
+      padding: 8px 12px;
+      color: #dce7f3;
+      font-size: 0.88rem;
+      font-weight: 700;
+    }
+    .toggle-chip input {
+      accent-color: #19c88b;
+    }
+    .danger-chip {
+      border-color: #6d2430;
+      color: #ffd9df;
+      background: rgba(109, 36, 48, 0.16);
+    }
+    .toolbar-note {
+      color: #8ea1b7;
+      font-size: 0.82rem;
+    }
+    .table-card {
+      padding: 0;
+      overflow: hidden;
+    }
+    .table-card-header {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 16px 18px;
+      border-bottom: 1px solid #1f2a36;
+    }
+    .table-card-header h2 {
+      margin: 0;
+    }
+    .table-card-header p {
+      margin: 0;
+      color: #8ea1b7;
+      font-size: 0.88rem;
+    }
+    .table-scroll {
+      width: 100%;
+      overflow-x: auto;
+      overflow-y: hidden;
+    }
+    .table-scroll table {
+      box-shadow: none;
+      border-radius: 0;
+    }
+    .cell-strong {
+      font-weight: 700;
+      color: #f2f5f9;
+    }
+    .cell-muted {
+      color: #8ea1b7;
+      font-size: 0.82rem;
+      display: block;
+      margin-top: 2px;
+    }
+    .truncate {
+      max-width: 220px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      display: inline-block;
+      vertical-align: top;
+    }
+    .id-badge {
+      display: inline-block;
+      background: #0d141c;
+      border: 1px solid #253445;
+      border-radius: 8px;
+      padding: 6px 8px;
+      font-size: 0.78rem;
+      color: #95a9bf;
+      max-width: 180px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    @media (max-width: 760px) {
+      body {
+        padding: 14px;
+      }
+      .ticket-row {
+        grid-template-columns: 1fr;
+      }
+      .admin-input,
+      .admin-select {
+        width: 100%;
+      }
+      .dashboard-toolbar,
+      .toolbar-group,
+      .table-card-header,
+      .admin-card-header {
+        align-items: stretch;
+      }
+    }
   </style>
 <!-- Meta Pixel Code -->
 <script>
@@ -200,45 +360,73 @@ src="https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1"
 <!-- End Meta Pixel Code -->
   <div class="container">
     <h1>Panel Admin - Inscripciones Pagadas</h1>
-    <p>Los Usuarios con numero 000 son de uso de pruebas de creacion y edicion de la web</p>
-    <section class="admin-card">
-      <h2>Registrar pago por transferencia</h2>
-      <form id="manualTransferForm" novalidate>
-        <div class="manual-grid">
-          <div>
-            <label for="buyerEmail">Correo comprador principal</label>
-            <input id="buyerEmail" type="email" placeholder="cliente@correo.com" required />
-          </div>
-          <div>
-            <label for="totalAmount">Monto total (MXN)</label>
-            <input id="totalAmount" type="number" min="1" step="0.01" placeholder="1100" required />
-          </div>
-          <div>
-            <label for="transferReference">Referencia (opcional)</label>
-            <input id="transferReference" type="text" maxlength="80" placeholder="Folio SPEI" />
-          </div>
+    <p class="page-intro">Usa este panel para registrar transferencias, revisar compras y, solo si activas el modo de riesgo, eliminar órdenes de prueba. <strong>Los usuarios con número 000</strong> son de uso de pruebas.</p>
+
+    <div class="dashboard-toolbar">
+      <div class="toolbar-group">
+        <select id="statusFilter" class="admin-select">
+          <option value="paid" selected>Solo pagadas</option>
+          <option value="all">Todos</option>
+          <option value="payment_failed">Pago fallido</option>
+          <option value="refunded">Reembolsadas</option>
+          <option value="paid_no_email">Pagadas sin email</option>
+        </select>
+        <input id="searchFilter" class="admin-input" type="search" placeholder="Buscar por nombre, correo u orden" />
+      </div>
+      <div class="toolbar-group">
+        <button type="button" id="toggleManualPanelBtn" class="btn-secondary">Mostrar transferencias manuales</button>
+        <label class="toggle-chip danger-chip">
+          <input type="checkbox" id="dangerModeToggle" />
+          Habilitar acciones peligrosas
+        </label>
+      </div>
+    </div>
+    <div class="toolbar-note" id="dangerModeNote">El borrado permanece oculto hasta que actives el modo de acciones peligrosas.</div>
+
+    <section id="manualTransferCard" class="admin-card is-collapsed">
+      <div class="admin-card-header">
+        <div>
+          <h2>Registrar pago por transferencia</h2>
+          <p>Captura comprador principal, monto total y los tickets con nombre y talla. Los bibs se asignan al guardar.</p>
         </div>
-        <div id="manualTickets" class="tickets-wrap"></div>
-        <div class="manual-actions">
-          <button type="button" id="addManualTicketBtn" class="btn-secondary">+ Agregar ticket</button>
-          <button type="submit" id="saveManualTransferBtn" class="btn-primary">Guardar transferencia</button>
-        </div>
-        <div id="manualTransferFeedback" class="manual-feedback"></div>
-      </form>
+      </div>
+      <div class="admin-card-body">
+        <form id="manualTransferForm" novalidate>
+          <div class="manual-grid">
+            <div>
+              <label for="buyerEmail">Correo comprador principal</label>
+              <input id="buyerEmail" type="email" placeholder="cliente@correo.com" required />
+            </div>
+            <div>
+              <label for="totalAmount">Monto total (MXN)</label>
+              <input id="totalAmount" type="number" min="1" step="0.01" placeholder="1100" required />
+            </div>
+            <div>
+              <label for="transferReference">Referencia (opcional)</label>
+              <input id="transferReference" type="text" maxlength="80" placeholder="Folio SPEI" />
+            </div>
+          </div>
+          <div id="manualTickets" class="tickets-wrap"></div>
+          <div class="manual-actions">
+            <button type="button" id="addManualTicketBtn" class="btn-secondary">+ Agregar ticket</button>
+            <button type="submit" id="saveManualTransferBtn" class="btn-primary">Guardar transferencia</button>
+          </div>
+          <div id="manualTransferFeedback" class="manual-feedback"></div>
+        </form>
+      </div>
     </section>
-    <div style="display:flex; gap:10px; align-items:center; margin: 0 0 14px;">
-      <label for="statusFilter" style="font-weight:700; color:#b7c4d4;">Estado:</label>
-      <select id="statusFilter" style="background:#11181f; color:#e0e0e0; border:1px solid #2a3a4b; border-radius:8px; padding:8px 10px;">
-        <option value="paid" selected>Solo pagadas</option>
-        <option value="all">Todos</option>
-        <option value="payment_failed">Pago fallido</option>
-        <option value="refunded">Reembolsadas</option>
-        <option value="paid_no_email">Pagadas sin email</option>
-      </select>
-    </div>
-    <div id="content">
+
+    <section class="admin-card table-card">
+      <div class="table-card-header">
+        <div>
+          <h2>Inscripciones</h2>
+          <p>La tabla mantiene su propio scroll horizontal para evitar desbordar toda la página.</p>
+        </div>
+      </div>
+      <div id="content">
         <div class="loading">Cargando inscripciones...</div>
-    </div>
+      </div>
+    </section>
   </div>
 
   <script>
@@ -256,6 +444,12 @@ src="https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1"
       .filter(Boolean);
     const SUPABASE_URL = "https://uycwzhlcnfijjyzkgkem.supabase.co";
     const SUPABASE_KEY = "sb_publishable_IKwD3YtQwWzzEtE8QkVagA_OJGdV2e4";
+    const adminUiState = {
+      dangerMode: false,
+      searchTerm: "",
+    };
+    let cachedRows = [];
+    let dangerModeTimer = null;
 
     // ====================== VERIFICACIÓN DE ACCESO ======================
     async function checkAdminAccess() {
@@ -288,6 +482,110 @@ src="https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1"
     }
 
     // ====================== CARGAR INSCRIPCIONES ======================
+    function buildDangerButton(row) {
+      if (!adminUiState.dangerMode) {
+        return `<button type="button" class="btn-danger" hidden>Eliminar</button>`;
+      }
+
+      const orderId = row.order_session_id || '';
+      const deleteMode = orderId ? 'order' : 'row';
+      return `
+        <button
+          type="button"
+          class="btn-danger"
+          data-delete-mode="${deleteMode}"
+          data-delete-id="${row.id}"
+          data-delete-order="${escapeHtml(orderId)}"
+          data-delete-name="${escapeHtml(row.full_name || '')}"
+        >
+          ${orderId ? 'Eliminar orden' : 'Eliminar'}
+        </button>
+      `;
+    }
+
+    function filterRows(rows) {
+      const searchTerm = adminUiState.searchTerm.trim().toLowerCase();
+      if (!searchTerm) return rows;
+
+      return rows.filter((row) => {
+        const haystack = [
+          row.full_name,
+          row.email,
+          row.buyer_email,
+          row.order_session_id,
+          row.event_slug,
+          row.bib_number,
+        ]
+          .map((value) => String(value || '').toLowerCase())
+          .join(' ');
+
+        return haystack.includes(searchTerm);
+      });
+    }
+
+    function renderPaidInscriptions(rows) {
+      const contentDiv = document.getElementById("content");
+      const filteredRows = filterRows(rows);
+
+      if (!filteredRows.length) {
+        contentDiv.innerHTML = `<div class="no-data">No hay resultados con los filtros actuales.</div>`;
+        return;
+      }
+
+      let html = `
+        <div class="table-scroll">
+          <table>
+            <thead>
+              <tr>
+                <th>Nombre</th>
+                <th>Comprador</th>
+                <th>Estado</th>
+                <th>Monto</th>
+                <th>Talla</th>
+                <th>Bib</th>
+                <th>Orden</th>
+                <th>Fecha</th>
+                <th>ID</th>
+                <th>Acciones</th>
+              </tr>
+            </thead>
+            <tbody>
+      `;
+
+      filteredRows.forEach((row) => {
+        const date = new Date(row.created_at).toLocaleDateString('es-MX', {
+          year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit'
+        });
+
+        const orderId = row.order_session_id || '';
+        const ticketSummary = row.ticket_index ? `T${row.ticket_index}/${row.ticket_count || 1}` : '';
+
+        html += `
+          <tr>
+            <td>
+              <span class="cell-strong">${row.full_name || '-'}</span>
+              <span class="cell-muted truncate" title="${escapeHtml(row.email || '')}">${row.email || '-'}</span>
+            </td>
+            <td><span class="truncate" title="${escapeHtml(row.buyer_email || row.email || '')}">${row.buyer_email || row.email || '-'}</span></td>
+            <td>${row.payment_status || '-'}</td>
+            <td><strong>$${parseFloat(row.amount_paid || 0).toLocaleString('es-MX')}</strong></td>
+            <td style="font-weight:700; color:#ff8c42;">${row.shirt_size || '—'}</td>
+            <td style="font-weight:800; color:#19c88b;">${row.bib_number ? '#' + row.bib_number : '—'}</td>
+            <td>
+              <span class="truncate" title="${escapeHtml(orderId)}">${orderId || '—'}</span>
+              ${ticketSummary ? `<span class="cell-muted">${ticketSummary}</span>` : ''}
+            </td>
+            <td>${date}</td>
+            <td><span class="id-badge" title="${row.id}">${row.id}</span></td>
+            <td>${buildDangerButton(row)}</td>
+          </tr>
+        `;
+      });
+
+      html += `</tbody></table></div>`;
+      contentDiv.innerHTML = html;
+    }
+
     async function loadPaidInscriptions(client, statusFilter = "paid") {
       const contentDiv = document.getElementById("content");
 
@@ -305,73 +603,13 @@ src="https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1"
 
         if (error) throw error;
 
-        if (!data || data.length === 0) {
+        cachedRows = Array.isArray(data) ? data : [];
+
+        if (!cachedRows.length) {
           contentDiv.innerHTML = `<div class="no-data">No hay inscripciones pagadas todavía.</div>`;
           return;
         }
-
-        let html = `
-          <table>
-            <thead>
-              <tr>
-                <th>ID</th>
-                <th>Nombre Completo</th>
-                <th>Email</th>
-                <th>Comprador</th>
-                <th>Evento</th>
-                <th>Estado</th>
-                <th>Monto Pagado</th>
-                <th>Talla de Playera</th>
-                <th>Numero de corredor</th>
-                <th>Orden</th>
-                <th>Fecha</th>
-                <th>Acciones</th>
-              </tr>
-            </thead>
-            <tbody>
-        `;
-
-        data.forEach(row => {
-          const date = new Date(row.created_at).toLocaleDateString('es-MX', {
-            year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit'
-          });
-
-          const orderId = row.order_session_id || '';
-          const ticketSummary = row.ticket_index ? `T${row.ticket_index}/${row.ticket_count || 1}` : '';
-          const deleteTarget = orderId || row.id;
-          const deleteMode = orderId ? 'order' : 'row';
-
-          html += `
-            <tr>
-              <td>${row.id}</td>
-              <td><strong>${row.full_name || '-'}</strong></td>
-              <td>${row.email}</td>
-              <td>${row.buyer_email || row.email || '-'}</td>
-              <td>${row.event_slug || 'Axolote Night Run'}</td>
-              <td>${row.payment_status || '-'}</td>
-              <td><strong>$${parseFloat(row.amount_paid || 0).toLocaleString('es-MX')}</strong></td>
-              <td style="font-weight:700; color:#ff8c42;">${row.shirt_size || '—'}</td>
-              <td style="font-weight:800; color:#19c88b;">${row.bib_number ? '#' + row.bib_number : '—'}</td>
-              <td>${orderId || '—'}${ticketSummary ? ` · ${ticketSummary}` : ''}</td>
-              <td>${date}</td>
-              <td>
-                <button
-                  type="button"
-                  class="btn-danger"
-                  data-delete-mode="${deleteMode}"
-                  data-delete-id="${row.id}"
-                  data-delete-order="${escapeHtml(orderId)}"
-                  data-delete-name="${escapeHtml(row.full_name || '')}"
-                >
-                  ${orderId ? 'Eliminar orden' : 'Eliminar'}
-                </button>
-              </td>
-            </tr>
-          `;
-        });
-
-        html += `</tbody></table>`;
-        contentDiv.innerHTML = html;
+        renderPaidInscriptions(cachedRows);
 
       } catch (err) {
         console.error(err);
@@ -575,6 +813,10 @@ src="https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1"
       if (!contentDiv) return;
 
       contentDiv.addEventListener('click', async (event) => {
+        if (!adminUiState.dangerMode) {
+          return;
+        }
+
         const button = event.target?.closest('[data-delete-mode]');
         if (!button) return;
 
@@ -628,19 +870,65 @@ src="https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1"
       });
     }
 
+    function setupDashboardControls(client) {
+      const statusFilter = document.getElementById('statusFilter');
+      const searchFilter = document.getElementById('searchFilter');
+      const toggleManualPanelBtn = document.getElementById('toggleManualPanelBtn');
+      const manualTransferCard = document.getElementById('manualTransferCard');
+      const dangerModeToggle = document.getElementById('dangerModeToggle');
+      const dangerModeNote = document.getElementById('dangerModeNote');
+
+      toggleManualPanelBtn?.addEventListener('click', () => {
+        const isCollapsed = manualTransferCard?.classList.toggle('is-collapsed');
+        toggleManualPanelBtn.classList.toggle('is-active', !isCollapsed);
+        toggleManualPanelBtn.textContent = isCollapsed
+          ? 'Mostrar transferencias manuales'
+          : 'Ocultar transferencias manuales';
+      });
+
+      searchFilter?.addEventListener('input', () => {
+        adminUiState.searchTerm = String(searchFilter.value || '');
+        renderPaidInscriptions(cachedRows);
+      });
+
+      dangerModeToggle?.addEventListener('change', () => {
+        adminUiState.dangerMode = Boolean(dangerModeToggle.checked);
+
+        if (dangerModeTimer) {
+          clearTimeout(dangerModeTimer);
+          dangerModeTimer = null;
+        }
+
+        if (adminUiState.dangerMode) {
+          dangerModeNote.textContent = 'Acciones peligrosas activadas por 2 minutos. Los botones de eliminar ya están visibles.';
+          dangerModeTimer = window.setTimeout(() => {
+            adminUiState.dangerMode = false;
+            dangerModeToggle.checked = false;
+            dangerModeNote.textContent = 'El borrado permanece oculto hasta que actives el modo de acciones peligrosas.';
+            renderPaidInscriptions(cachedRows);
+          }, 120000);
+        } else {
+          dangerModeNote.textContent = 'El borrado permanece oculto hasta que actives el modo de acciones peligrosas.';
+        }
+
+        renderPaidInscriptions(cachedRows);
+      });
+
+      statusFilter?.addEventListener('change', async () => {
+        await loadPaidInscriptions(client, statusFilter.value || 'paid');
+      });
+    }
+
     // ====================== INICIALIZACIÓN ======================
     async function initAdminPage() {
       const client = await checkAdminAccess();
       if (!client) return;
 
       const statusFilter = document.getElementById("statusFilter");
+      setupDashboardControls(client);
       setupManualTransferForm(client);
       setupDeleteActions(client);
       await loadPaidInscriptions(client, statusFilter?.value || "paid");
-
-      statusFilter?.addEventListener("change", async () => {
-        await loadPaidInscriptions(client, statusFilter.value || "paid");
-      });
     }
 
     // Ejecutar al cargar la página
