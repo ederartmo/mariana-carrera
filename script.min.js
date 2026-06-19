@@ -246,6 +246,36 @@ function setupPageLoadIndicator() {
   window.addEventListener("load", complete, { once: true });
 }
 
+function setupLightboxEscapeClose() {
+  const clearHashWithoutJump = () => {
+    const cleanUrl = new URL(window.location.href);
+    cleanUrl.hash = "";
+    window.history.replaceState({}, "", cleanUrl.toString());
+  };
+
+  const closeActiveModalOverlay = () => {
+    const activeModal = document.querySelector('.modal-overlay:not([hidden])');
+    if (!activeModal) return false;
+
+    activeModal.hidden = true;
+    activeModal.style.display = "none";
+    return true;
+  };
+
+  document.addEventListener("keydown", (event) => {
+    if (event.key !== "Escape" && event.key !== "Esc") return;
+
+    if (closeActiveModalOverlay()) return;
+
+    if (!window.location.hash) return;
+
+    const activeLightbox = document.querySelector(window.location.hash);
+    if (!activeLightbox || !activeLightbox.classList.contains("lightbox-overlay")) return;
+
+    clearHashWithoutJump();
+  });
+}
+
 function setupHeaderScrollState() {
   const header = document.querySelector(".site-header");
   if (!header) return;
@@ -1375,6 +1405,7 @@ function setupNeonEventToggle() {
     details.style.transform = "translateY(0)";
     toggleBtn.setAttribute("aria-expanded", "true");
     toggleBtn.textContent = "Ver menos";
+    window.dispatchEvent(new Event("home:rewards-visible"));
   };
 
   const expandAnimated = () => {
@@ -1390,12 +1421,14 @@ function setupNeonEventToggle() {
       details.style.maxHeight = `${details.scrollHeight}px`;
       details.style.opacity = "1";
       details.style.transform = "translateY(0)";
+      window.dispatchEvent(new Event("home:rewards-visible"));
     });
 
     const onEnd = (event) => {
       if (event.propertyName !== "max-height") return;
       details.style.maxHeight = "none";
       details.removeEventListener("transitionend", onEnd);
+      window.dispatchEvent(new Event("home:rewards-visible"));
       isAnimating = false;
     };
 
@@ -1673,6 +1706,86 @@ function setupHomeStagePricing() {
   if (stageNote) {
     stageNote.textContent = `Etapa vigente: ${stage.displayName || stage.label.replace("Etapa ", "")} ${formattedPrice}.`;
   }
+}
+
+function setupHomeRewardsScroller() {
+  const rewardsPanel = document.querySelector(".neon-rewards-panel");
+  const rewardsTrack = rewardsPanel?.querySelector(".neon-rewards-grid");
+  const prevBtn = rewardsPanel?.querySelector("[data-rewards-prev]");
+  const nextBtn = rewardsPanel?.querySelector("[data-rewards-next]");
+
+  if (!rewardsPanel || !rewardsTrack || !prevBtn || !nextBtn) return;
+  if (rewardsPanel.dataset.rewardsScrollerReady === "true") return;
+  rewardsPanel.dataset.rewardsScrollerReady = "true";
+
+  if (!rewardsTrack.hasAttribute("tabindex")) {
+    rewardsTrack.setAttribute("tabindex", "0");
+  }
+
+  const getStep = () => {
+    const firstCard = rewardsTrack.querySelector(".neon-reward-card");
+    if (firstCard) {
+      return Math.max(220, Math.round(firstCard.getBoundingClientRect().width + 12));
+    }
+    const panelWidth = rewardsTrack.clientWidth || 0;
+    return Math.max(220, Math.round(panelWidth * 0.78));
+  };
+
+  const updateControls = () => {
+    const hasHorizontalOverflow = rewardsTrack.scrollWidth - rewardsTrack.clientWidth > 2;
+
+    if (!hasHorizontalOverflow) {
+      prevBtn.disabled = true;
+      nextBtn.disabled = true;
+      return;
+    }
+
+    const maxScrollLeft = Math.max(0, rewardsTrack.scrollWidth - rewardsTrack.clientWidth - 2);
+    prevBtn.disabled = rewardsTrack.scrollLeft <= 1;
+    nextBtn.disabled = rewardsTrack.scrollLeft >= maxScrollLeft;
+  };
+
+  const refreshControls = () => {
+    window.requestAnimationFrame(updateControls);
+    window.setTimeout(updateControls, 220);
+  };
+
+  prevBtn.addEventListener("click", () => {
+    rewardsTrack.scrollBy({ left: -getStep(), behavior: "smooth" });
+    window.setTimeout(updateControls, 220);
+  });
+
+  nextBtn.addEventListener("click", () => {
+    rewardsTrack.scrollBy({ left: getStep(), behavior: "smooth" });
+    window.setTimeout(updateControls, 220);
+  });
+
+  rewardsTrack.addEventListener("scroll", updateControls, { passive: true });
+  rewardsTrack.addEventListener("keydown", (event) => {
+    if (event.key === "ArrowLeft") {
+      event.preventDefault();
+      rewardsTrack.scrollBy({ left: -getStep(), behavior: "smooth" });
+      window.setTimeout(updateControls, 220);
+      return;
+    }
+
+    if (event.key === "ArrowRight") {
+      event.preventDefault();
+      rewardsTrack.scrollBy({ left: getStep(), behavior: "smooth" });
+      window.setTimeout(updateControls, 220);
+    }
+  });
+  window.addEventListener("resize", updateControls);
+  window.addEventListener("home:rewards-visible", refreshControls);
+  window.addEventListener("load", refreshControls, { once: true });
+
+  refreshControls();
+}
+
+if (document.readyState === "loading") {
+  document.addEventListener("DOMContentLoaded", setupHomeRewardsScroller, { once: true });
+} else {
+  window.requestAnimationFrame(setupHomeRewardsScroller);
 }
 
 function setupEventStageCards() {
@@ -4600,6 +4713,8 @@ setupWhatsAppButton();
 setupEventStageCards();
 setupEventRegistrationPanel();
 setupHomeStagePricing();
+setupHomeRewardsScroller();
+setupLightboxEscapeClose();
 setupAuthPage();
 setupProfilePage();
 setupBlogTabs();
