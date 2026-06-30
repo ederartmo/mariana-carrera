@@ -41,6 +41,15 @@ src="https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1"
     const SUPABASE_URL = "https://uycwzhlcnfijjyzkgkem.supabase.co";
     const SUPABASE_KEY = "sb_publishable_IKwD3YtQwWzzEtE8QkVagA_OJGdV2e4";
 
+    function escapeHtml(value) {
+      return String(value || '')
+        .replaceAll('&', '&amp;')
+        .replaceAll('<', '&lt;')
+        .replaceAll('>', '&gt;')
+        .replaceAll('"', '&quot;')
+        .replaceAll("'", '&#39;');
+    }
+
     // Detectar si el usuario viene de un pago exitoso
     function checkPaymentSuccess() {
       const urlParams = new URLSearchParams(window.location.search);
@@ -62,6 +71,59 @@ src="https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1"
         const successScreen = document.getElementById('successMessage');
         if (successScreen) {
           successScreen.style.display = 'block';
+        }
+
+        const participantsBlock = document.getElementById('participantsBlock');
+        const participantsList = document.getElementById('participantsList');
+        const participantsTitle = document.getElementById('participantsTitle');
+        const participantsHint = document.getElementById('participantsHint');
+
+        if (participantsBlock && participantsList) {
+          fetch(`/api/checkout-summary?session_id=${encodeURIComponent(sessionId)}`)
+            .then((response) => {
+              if (!response.ok) {
+                throw new Error('No se pudo cargar el resumen');
+              }
+              return response.json();
+            })
+            .then((summary) => {
+              const participants = Array.isArray(summary.participants) ? summary.participants : [];
+
+              if (participants.length === 0) {
+                return;
+              }
+
+              if (participantsTitle) {
+                participantsTitle.textContent = participants.length > 1
+                  ? 'Participantes registrados'
+                  : 'Participante registrado';
+              }
+
+              if (participantsHint) {
+                participantsHint.textContent = participants.length > 1
+                  ? 'Cada ticket recibió su propio número de corredor.'
+                  : 'Tu ticket ya recibió su número de corredor.';
+              }
+
+              participantsList.innerHTML = participants.map((participant, index) => {
+                const bibNumber = String(participant.bibNumber || '').padStart(3, '0');
+                const shirtSize = participant.shirtSize || 'Por confirmar';
+                const displayName = escapeHtml(participant.fullName || 'Participante');
+                return `
+                  <div style="background:#ffffff;border:1px solid #e5e7eb;border-radius:12px;padding:16px 18px;">
+                    <p style="margin:0 0 8px;color:#6b7280;font-size:0.8rem;font-weight:800;text-transform:uppercase;letter-spacing:1px;">Participante ${index + 1}</p>
+                    <p style="margin:0 0 10px;font-size:1.05rem;font-weight:700;color:#111827;">${displayName}</p>
+                    <p style="margin:0 0 6px;color:#374151;">Número de corredor: <strong>#${bibNumber || '---'}</strong></p>
+                    <p style="margin:0;color:#374151;">Talla de playera: <strong>${shirtSize}</strong></p>
+                  </div>
+                `;
+              }).join('');
+
+              participantsBlock.style.display = 'block';
+            })
+            .catch((error) => {
+              console.warn('No se pudo cargar el resumen de participantes:', error);
+            });
         }
 
         const checkoutEmail = (localStorage.getItem(CHECKOUT_EMAIL_KEY) || '').trim().toLowerCase();
@@ -133,9 +195,15 @@ src="https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1"
         style="background: linear-gradient(135deg, #1a1f3a, #10172b); border-radius: 14px; padding: 24px; margin-bottom: 24px; text-align: left; border: 1px solid rgba(255,255,255,0.1);">
         <p style="margin: 0 0 10px; color: #9cb2ff; font-size: 0.9rem; text-transform: uppercase; letter-spacing: 1px; font-weight: 700;">Pago completado</p>
         <p style="margin: 0; color: #f3f7ff; line-height: 1.6; font-size: 1rem;">
-          Para ver tu número de corredor, revisa tu correo de confirmación o entra a tu perfil para terminar de llenar tus datos.
+          Para ver tu(s) número(s) de corredor, revisa el resumen de abajo, tu correo de confirmación o entra a tu perfil para terminar de llenar tus datos.
           Recuerda descargar el PDF de exoneración antes del evento.
         </p>
+      </div>
+
+      <div id="participantsBlock" style="display:none; background:#f8fafc; border-radius: 14px; padding: 24px; margin-bottom: 24px; text-align: left; border: 1px solid #e5e7eb;">
+        <h3 id="participantsTitle" style="margin: 0 0 10px; color: #111827; font-size: 1.1rem;">Participantes registrados</h3>
+        <p id="participantsHint" style="margin: 0 0 18px; color: #6b7280; font-size: 0.95rem;">Cada ticket recibió su propio número de corredor.</p>
+        <div id="participantsList" style="display:grid; gap:12px;"></div>
       </div>
 
       <div

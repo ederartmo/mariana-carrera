@@ -17,6 +17,48 @@ function normalizeParticipantName(value, fallbackLabel) {
   return fallbackLabel;
 }
 
+function escapeHtml(value) {
+  return String(value || '')
+    .replaceAll('&', '&amp;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;')
+    .replaceAll('"', '&quot;')
+    .replaceAll("'", '&#39;');
+}
+
+function renderParticipantCard(participant, index) {
+  const bibNumber = String(participant.bibNumber || '').padStart(3, '0');
+  const shirtSize = participant.shirtSize || 'Por confirmar';
+  const displayName = escapeHtml(participant.fullName);
+  const displayShirt = escapeHtml(shirtSize);
+
+  return `
+    <table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:12px;background-color:#141428;border:1px solid #2c2c52;border-radius:10px;overflow:hidden;">
+      <tr>
+        <td style="padding:14px 16px;border-bottom:1px solid #2c2c52;color:#00f5ff;font-size:12px;font-weight:700;letter-spacing:1px;text-transform:uppercase;">Participante ${index + 1}</td>
+      </tr>
+      <tr>
+        <td style="padding:14px 16px;">
+          <table width="100%" cellpadding="0" cellspacing="0" border="0">
+            <tr>
+              <td style="padding:4px 0;color:#aaaaaa;font-size:13px;">Nombre</td>
+              <td style="padding:4px 0;color:#ffffff;font-size:13px;font-weight:600;text-align:right;">${displayName}</td>
+            </tr>
+            <tr>
+              <td style="padding:4px 0;color:#aaaaaa;font-size:13px;">Número de corredor</td>
+              <td style="padding:4px 0;color:#00f5ff;font-size:13px;font-weight:700;text-align:right;">#${bibNumber}</td>
+            </tr>
+            <tr>
+              <td style="padding:4px 0;color:#aaaaaa;font-size:13px;">Talla de playera</td>
+              <td style="padding:4px 0;color:#ffffff;font-size:13px;font-weight:600;text-align:right;">${displayShirt}</td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+    </table>
+  `;
+}
+
 function readParticipantsFromMetadata(metadata) {
   const rawCount = Number.parseInt(String(metadata?.ticket_count || '1'), 10);
   const ticketCount = Number.isInteger(rawCount) && rawCount > 0 ? Math.min(rawCount, 10) : 1;
@@ -397,6 +439,10 @@ module.exports = async (req, res) => {
       }
 
       const primaryBibNumber = bibNumbers[0];
+      const participantDetails = safeParticipants.map((participant, index) => ({
+        ...participant,
+        bibNumber: bibNumbers[index],
+      }));
       console.log(`✅ Inscripciones guardadas correctamente | total=${safeParticipants.length} | bib_inicio=${primaryBibNumber}`);
 
       // Enviar email de confirmación solo si la DB se guardó correctamente
@@ -440,7 +486,7 @@ module.exports = async (req, res) => {
                             <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:#1a1a2e;border:2px solid #00f5ff;border-radius:12px;">
                                 <tr>
                                     <td style="padding:20px;text-align:center;">
-                                        <p style="margin:0 0 8px 0;color:#00f5ff;font-size:16px;">Tu número de corredor es:</p>
+                                    <p style="margin:0 0 8px 0;color:#00f5ff;font-size:16px;">${safeParticipants.length > 1 ? 'Tu número principal de corredor es:' : 'Tu número de corredor es:'}</p>
                                   <p class="bib-num" style="margin:0;font-size:52px;font-weight:bold;color:#00f5ff;letter-spacing:6px;">${String(primaryBibNumber).padStart(3,'0')}</p>
                                     </td>
                                 </tr>
@@ -461,7 +507,7 @@ module.exports = async (req, res) => {
                                 </tr>
                                 <tr>
                                     <td style="padding:10px 0;border-bottom:1px solid #333;color:#aaaaaa;font-size:14px;">Nombre</td>
-                                  <td style="padding:10px 0;border-bottom:1px solid #333;color:#ffffff;font-weight:600;font-size:14px;text-align:right;">${primaryParticipant.fullName}</td>
+                                  <td style="padding:10px 0;border-bottom:1px solid #333;color:#ffffff;font-weight:600;font-size:14px;text-align:right;">${escapeHtml(primaryParticipant.fullName)}</td>
                                 </tr>
                                 <tr>
                                     <td style="padding:10px 0;border-bottom:1px solid #333;color:#aaaaaa;font-size:14px;">Monto pagado</td>
@@ -482,6 +528,15 @@ module.exports = async (req, res) => {
                             </table>
                         </td>
                     </tr>
+
+                            ${participantDetails.length > 1 ? `
+                            <tr>
+                              <td style="padding:10px 25px 0 25px;">
+                                <h2 style="text-align:center;color:#ffffff;font-size:18px;margin:0 0 16px 0;">Participantes registrados</h2>
+                                ${participantDetails.map((participant, index) => renderParticipantCard(participant, index)).join('')}
+                              </td>
+                            </tr>
+                            ` : ''}
 
                     <!-- NOTA -->
                     <tr>
