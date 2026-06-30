@@ -1470,6 +1470,36 @@ body.theme-light .hero-white-bridge {
   gap: 14px;
 }
 
+.neon-rewards-mobile-controls {
+  display: none;
+}
+
+.neon-rewards-nav {
+  border: 1px solid rgba(67, 224, 255, 0.42);
+  background: rgba(7, 15, 28, 0.86);
+  color: #dffcff;
+  min-width: 40px;
+  height: 40px;
+  border-radius: 999px;
+  font-size: 1.05rem;
+  font-weight: 800;
+  cursor: pointer;
+  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.32);
+  transition: transform 0.2s ease, box-shadow 0.2s ease, opacity 0.2s ease;
+}
+
+.neon-rewards-nav:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 10px 20px rgba(35, 216, 255, 0.2);
+}
+
+.neon-rewards-nav:disabled {
+  opacity: 0.42;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
 .neon-reward-card {
   padding: 12px;
   border-radius: 18px;
@@ -1702,8 +1732,26 @@ body.theme-light .hero-white-bridge {
     align-items: flex-start;
   }
 
+  .neon-rewards-mobile-controls {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+    margin-bottom: 10px;
+  }
+
   .neon-rewards-grid {
-    grid-template-columns: 1fr;
+    display: grid;
+    grid-auto-flow: column;
+    grid-auto-columns: minmax(250px, 82%);
+    gap: 12px;
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    scroll-snap-type: x proximity;
+    padding-bottom: 6px;
+  }
+
+  .neon-reward-card {
+    scroll-snap-align: start;
   }
 
   .neon-legal-layout {
