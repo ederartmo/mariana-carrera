@@ -5231,7 +5231,7 @@ body[data-page="series"] .page-hero .container {
   }
 
   .hero-banner-shell {
-    min-height: 232px;
+    min-height: 220px;
     padding-top: 0;
     display: flex;
     align-items: flex-end;
@@ -5245,7 +5245,7 @@ body[data-page="series"] .page-hero .container {
     border-radius: 14px;
     padding: 12px;
     gap: 10px;
-    transform: translateY(24px);
+    transform: translateY(10px);
     width: 100%;
   }
 
@@ -5256,10 +5256,11 @@ body[data-page="series"] .page-hero .container {
   .event-spotlight-main {
     grid-area: main;
     grid-template-columns: 56px minmax(0, 1fr);
-    justify-items: stretch;
+    justify-content: center;
+    justify-items: center;
     align-items: center;
     gap: 10px;
-    text-align: left;
+    text-align: center;
   }
 
   .event-spotlight-thumb {
@@ -5286,6 +5287,7 @@ body[data-page="series"] .page-hero .container {
     font-size: 0.82rem;
     font-weight: 650;
     line-height: 1.25;
+    text-align: center;
   }
 
   .event-spotlight-details {
@@ -5297,9 +5299,9 @@ body[data-page="series"] .page-hero .container {
     display: grid;
     grid-template-columns: minmax(96px, auto) 1fr;
     align-items: center;
-    justify-items: stretch;
+    justify-items: center;
     gap: 10px;
-    text-align: left;
+    text-align: center;
   }
 
   .event-spotlight-actions {
@@ -5334,7 +5336,7 @@ body[data-page="series"] .page-hero .container {
   }
 
   body.theme-light .hero-white-bridge {
-    min-height: 52px;
+    min-height: 22px;
   }
 
   .whatsapp-panel {
