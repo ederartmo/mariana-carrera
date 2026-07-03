@@ -1794,29 +1794,35 @@ function setupHomeRewardsScroller() {
     window.setTimeout(updateControls, 220);
   };
 
+  const scrollRewards = (direction) => {
+    const step = getStep();
+    const maxScrollLeft = Math.max(0, rewardsTrack.scrollWidth - rewardsTrack.clientWidth);
+    const currentIndex = Math.round(rewardsTrack.scrollLeft / step);
+    const targetLeft = Math.max(0, Math.min(maxScrollLeft, (currentIndex + direction) * step));
+
+    rewardsTrack.scrollTo({ left: targetLeft, behavior: "smooth" });
+    window.setTimeout(updateControls, 260);
+  };
+
   prevBtn.addEventListener("click", () => {
-    rewardsTrack.scrollBy({ left: -getStep(), behavior: "smooth" });
-    window.setTimeout(updateControls, 220);
+    scrollRewards(-1);
   });
 
   nextBtn.addEventListener("click", () => {
-    rewardsTrack.scrollBy({ left: getStep(), behavior: "smooth" });
-    window.setTimeout(updateControls, 220);
+    scrollRewards(1);
   });
 
   rewardsTrack.addEventListener("scroll", updateControls, { passive: true });
   rewardsTrack.addEventListener("keydown", (event) => {
     if (event.key === "ArrowLeft") {
       event.preventDefault();
-      rewardsTrack.scrollBy({ left: -getStep(), behavior: "smooth" });
-      window.setTimeout(updateControls, 220);
+      scrollRewards(-1);
       return;
     }
 
     if (event.key === "ArrowRight") {
       event.preventDefault();
-      rewardsTrack.scrollBy({ left: getStep(), behavior: "smooth" });
-      window.setTimeout(updateControls, 220);
+      scrollRewards(1);
     }
   });
   window.addEventListener("resize", updateControls);
@@ -4109,7 +4115,7 @@ function setupTipsCarousel() {
 
   const getVisibleCount = () => {
     const vw = window.innerWidth;
-    if (vw < 520) return 2;
+    if (vw < 520) return 1;
     if (vw < 780) return 3;
     if (vw < 1060) return 4;
     return 5;
