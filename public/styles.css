@@ -1840,16 +1840,18 @@ body.theme-light .hero-white-bridge {
   }
 
   .home-faq-cta {
-    grid-template-columns: 1fr;
-    justify-items: stretch;
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
     gap: 14px;
-    padding: 20px;
+    padding: 20px 18px;
+    text-align: left;
   }
 
   .home-faq-cta h3 {
     font-size: 1.55rem;
     line-height: 1.14;
-    max-width: 12ch;
+    max-width: 100%;
   }
 
   .home-faq-cta p {
@@ -1863,7 +1865,6 @@ body.theme-light .hero-white-bridge {
     min-height: 50px;
     padding: 0 18px;
     text-align: center;
-    justify-self: stretch;
   }
 }
 
@@ -5431,11 +5432,19 @@ body[data-page="series"] .page-hero .container {
 
   .footer-brand {
     justify-content: center;
+    width: 100%;
+    margin-inline: auto;
+  }
+
+  .footer-brand .brand-logo {
+    display: block;
+    margin-inline: auto;
   }
 
   .footer-brand-block {
     max-width: 300px;
     margin-inline: auto;
+    text-align: center;
   }
 
   .footer-legend {
