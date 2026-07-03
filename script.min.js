@@ -246,17 +246,26 @@ function setupPageLoadIndicator() {
   window.addEventListener("load", complete, { once: true });
 }
 
-function setupAuthCallbackErrorRedirect() {
+function setupAuthCallbackRedirect() {
   const hashParams = new URLSearchParams(window.location.hash.replace(/^#/, ""));
   const authErrorCode = hashParams.get("error_code");
   const hasAuthError = hashParams.has("error") || hashParams.has("error_code");
+  const callbackType = hashParams.get("type");
+  const hasAuthSession = hashParams.has("access_token") || hashParams.has("refresh_token");
+  const hasAuthCallback = hasAuthError || (hasAuthSession && (callbackType === "signup" || callbackType === "recovery"));
   const isAuthPage = !!document.querySelector("[data-auth-page]");
 
-  if (!hasAuthError || isAuthPage) return;
+  if (!hasAuthCallback || isAuthPage) return;
 
   const redirectUrl = new URL("auth.html", window.location.href);
   redirectUrl.searchParams.set("mode", authErrorCode === "otp_expired" ? "register" : "login");
-  redirectUrl.searchParams.set("authError", authErrorCode || "auth_callback_error");
+
+  if (hasAuthError) {
+    redirectUrl.searchParams.set("authError", authErrorCode || "auth_callback_error");
+  } else {
+    redirectUrl.hash = window.location.hash;
+  }
+
   window.location.replace(redirectUrl.toString());
 }
 
@@ -4752,7 +4761,7 @@ async function syncBibNumberToProfile(client, user) {
 }
 
 setupPageLoadIndicator();
-setupAuthCallbackErrorRedirect();
+setupAuthCallbackRedirect();
 setupMenuToggle();
 setupActiveNavLink();
 setupHeaderScrollState();
