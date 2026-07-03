@@ -29,16 +29,24 @@ const STATIC_EXTENSIONS = new Set([
   '.xml',
   '.txt',
   '.pdf',
+  '.mp4',
+  '.webm',
+  '.mov',
 ]);
 const EXCLUDED_ENTRIES = new Set([
   '.git',
   '.github',
+  '.vercel',
+  '.vscode',
   'api',
   'Archivo 2',
   'build.js',
   'desc',
   'node_modules',
   'public',
+]);
+const STATIC_DIRECTORIES = new Set([
+  'videos',
 ]);
 
 function prepareOutputDir() {
@@ -75,6 +83,47 @@ function copyStaticEntry(entryName) {
   }
 
   fs.copyFileSync(sourcePath, targetPath);
+  return true;
+}
+
+function copyStaticDirectory(entryName) {
+  if (EXCLUDED_ENTRIES.has(entryName)) {
+    return false;
+  }
+
+  if (!STATIC_DIRECTORIES.has(entryName)) {
+    return false;
+  }
+
+  const sourcePath = path.join(__dirname, entryName);
+  const targetPath = path.join(OUTPUT_DIR, entryName);
+  const stats = fs.statSync(sourcePath);
+
+  if (!stats.isDirectory()) {
+    return false;
+  }
+
+  const copyAllowedFiles = (sourceDir, targetDir) => {
+    fs.mkdirSync(targetDir, { recursive: true });
+
+    fs.readdirSync(sourceDir).forEach((childName) => {
+      const childSourcePath = path.join(sourceDir, childName);
+      const childTargetPath = path.join(targetDir, childName);
+      const childStats = fs.statSync(childSourcePath);
+
+      if (childStats.isDirectory()) {
+        copyAllowedFiles(childSourcePath, childTargetPath);
+        return;
+      }
+
+      const extension = path.extname(childName).toLowerCase();
+      if (STATIC_EXTENSIONS.has(extension)) {
+        fs.copyFileSync(childSourcePath, childTargetPath);
+      }
+    });
+  };
+
+  copyAllowedFiles(sourcePath, targetPath);
   return true;
 }
 
@@ -145,7 +194,12 @@ const copiedEntries = fs
   .readdirSync(__dirname)
   .filter(copyStaticEntry);
 
+const copiedDirectories = fs
+  .readdirSync(__dirname)
+  .filter(copyStaticDirectory);
+
 console.log(`🗂️  Archivos estáticos copiados a public: ${copiedEntries.length}`);
+console.log(`📁 Carpetas estáticas copiadas a public: ${copiedDirectories.length}`);
 console.log(`🏷️  Asset version: ${ASSET_VERSION}\n`);
 
 console.log('📦 Build completado. Archivos listos en:');
