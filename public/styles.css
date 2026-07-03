@@ -1740,9 +1740,7 @@ body.theme-light .hero-white-bridge {
   }
 
   .neon-rewards-grid {
-    display: grid;
-    grid-auto-flow: column;
-    grid-auto-columns: minmax(238px, calc(100% - 34px));
+    display: flex;
     gap: 12px;
     overflow-x: auto;
     overscroll-behavior-x: contain;
@@ -1759,6 +1757,8 @@ body.theme-light .hero-white-bridge {
   }
 
   .neon-reward-card {
+    flex: 0 0 min(286px, calc(100% - 34px));
+    min-width: 0;
     scroll-snap-align: start;
   }
 
