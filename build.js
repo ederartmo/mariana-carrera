@@ -46,6 +46,7 @@ const EXCLUDED_ENTRIES = new Set([
   'public',
 ]);
 const STATIC_DIRECTORIES = new Set([
+  'assets',
   'videos',
 ]);
 

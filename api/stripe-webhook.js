@@ -474,7 +474,7 @@ module.exports = async (req, res) => {
                     <!-- HEADER -->
                     <tr>
                         <td style="background-color:#0d0d1a;padding:40px 20px;text-align:center;">
-                            <img src="https://www.kinetichub.com.mx/Logo_kinect.png" alt="Kinetic Hub" width="150" style="display:block;margin:0 auto 20px auto;max-width:150px;">
+                            <img src="https://www.kinetichub.com.mx/assets/brand/logo-kinect.png" alt="Kinetic Hub" width="150" style="display:block;margin:0 auto 20px auto;max-width:150px;">
                             <h1 style="margin:8px 0;font-size:26px;font-weight:bold;color:#00f5ff;">¡FELICIDADES ${fullName.toUpperCase()}!</h1>
                             <p style="margin:4px 0;font-size:18px;color:#ffffff;">YA ESTÁS INSCRITO 🎉</p>
                         </td>

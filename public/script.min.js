@@ -386,7 +386,7 @@ function setupUnifiedFooter() {
       <div>
         <div class="footer-brand-block">
           <a href="index.html" class="footer-brand" aria-label="Inicio Kinetic Hub">
-            <img class="brand-logo" src="KineticHUB.png" alt="Kinetic Hub" />
+            <img class="brand-logo" src="assets/brand/kinetic-hub.png" alt="Kinetic Hub" />
           </a>
           <p class="footer-legend">Kinetic Hub conecta carreras, comunidad y experiencias que se viven antes, durante y después de cada meta.</p>
           <div class="footer-social" aria-label="Redes sociales de Kinetic Hub">
@@ -1544,7 +1544,7 @@ function setupWhatsAppButton() {
       <div class="whatsapp-panel-top">
         <p>Necesitas ayuda?</p>
         <a class="whatsapp-panel-link" href="${href}" target="_blank" rel="noopener noreferrer" aria-label="Escribenos por WhatsApp">
-          <img src="whatsapp_icon.png" alt="WhatsApp" />
+          <img src="assets/icons/whatsapp-icon.png" alt="WhatsApp" />
           Escribenos por Whatsapp
         </a>
       </div>
@@ -1555,7 +1555,7 @@ function setupWhatsAppButton() {
       </div>
     </div>
     <a class="whatsapp-button" href="${href}" target="_blank" rel="noopener noreferrer" aria-label="Abrir chat de WhatsApp">
-      <img src="whatsapp_icon.png" alt="WhatsApp" />
+      <img src="assets/icons/whatsapp-icon.png" alt="WhatsApp" />
     </a>
   `;
 
@@ -2431,6 +2431,14 @@ function setupSupabase() {
       });
 
       // Login con email + contraseña
+      const getLoginErrorMessage = (error) => {
+        const message = error?.message || "";
+        if (/invalid login credentials/i.test(message)) {
+          return "Esa contraseña es incorrecta. Verifica tus datos o usa ¿Olvidaste tu contraseña? para restablecerla.";
+        }
+        return message || "No pudimos iniciar sesión. Intenta de nuevo.";
+      };
+
       const loginForm = document.getElementById("loginForm");
       if (loginForm) {
         loginForm.addEventListener("submit", async (e) => {
@@ -2440,7 +2448,7 @@ function setupSupabase() {
           if (!email || !password) return;
           const { error } = await client.auth.signInWithPassword({ email, password });
           if (error) {
-            alert(error.message);
+            alert(getLoginErrorMessage(error));
           } else {
             sessionStorage.setItem(LAST_LOGIN_EMAIL_KEY, email);
             window.location.href = consumeReturnTarget();
@@ -3779,14 +3787,14 @@ function setupSupabase() {
                   </a>
                   </section>
 
-                  <a href="axo_convo.jpeg" target="_blank">
-                  <img src="axo_convo.jpeg" alt="Convocatoria" style="width:100%; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.2);">
+                  <a href="assets/events/axolote-night-run/legal/axo-convo.jpeg" target="_blank">
+                  <img src="assets/events/axolote-night-run/legal/axo-convo.jpeg" alt="Convocatoria" style="width:100%; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.2);">
                   </a>
-                  <a href="axo_convo1.jpeg" target="_blank">
-                  <img src="axo_convo1.jpeg" alt="Convocatoria" style="width:100%; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.2);">
+                  <a href="assets/events/axolote-night-run/legal/axo-convo-1.jpeg" target="_blank">
+                  <img src="assets/events/axolote-night-run/legal/axo-convo-1.jpeg" alt="Convocatoria" style="width:100%; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.2);">
                   </a>
-                  <a href="axo_convo2.jpeg" target="_blank">
-                  <img src="axo_convo2.jpeg" alt="Convocatoria" style="width:100%; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.2);">
+                  <a href="assets/events/axolote-night-run/legal/axo-convo-2.jpeg" target="_blank">
+                  <img src="assets/events/axolote-night-run/legal/axo-convo-2.jpeg" alt="Convocatoria" style="width:100%; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.2);">
                   </a>
                 </div>
                 <div class="modal-actions" style="text-align: center; padding: 20px 0;">
@@ -4184,6 +4192,7 @@ function setupTipsCarousel() {
   const openModal = (card) => {
     const cfId = card.dataset.cfId || "";
     const videoSrc = card.dataset.videoSrc || "";
+    const imageSrc = card.dataset.imageSrc || "";
     const username = card.dataset.username || "";
     const bio = card.dataset.bio || "";
     const avatar = card.dataset.avatar || "";
@@ -4222,6 +4231,11 @@ function setupTipsCarousel() {
         video.setAttribute("playsinline", "");
         video.title = `Video de ${username}`;
         modalVideoShell.appendChild(video);
+      } else if (imageSrc) {
+        const image = document.createElement("img");
+        image.src = imageSrc;
+        image.alt = username;
+        modalVideoShell.appendChild(image);
       } else if (!isPlaceholderId(cfId)) {
         const iframe = document.createElement("iframe");
         iframe.src = buildModalSrc(cfId);

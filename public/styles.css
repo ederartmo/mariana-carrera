@@ -22,11 +22,11 @@
   --brand-green-dark: #0da56f;
   --brand-dark: #080f15;
   --sticky-banner-offset: 90px;
-  --img-banner: image-set(url("banner.avif") type("image/avif") 1x, url("banner.webp") type("image/webp") 1x, url("banner.png") type("image/png") 1x);
-  --img-banner-foto: image-set(url("banner-foto.avif") type("image/avif") 1x, url("banner-foto.webp") type("image/webp") 1x, url("banner foto.png") type("image/png") 1x);
-  --img-banner3: image-set(url("banner3.avif") type("image/avif") 1x, url("banner3.webp") type("image/webp") 1x, url("banner3.png") type("image/png") 1x);
-  --img-evento1: image-set(url("evento1.avif") type("image/avif") 1x, url("evento1.webp") type("image/webp") 1x, url("evento1.png") type("image/png") 1x);
-  --img-post1blog: image-set(url("post1blog.avif") type("image/avif") 1x, url("post1blog.webp") type("image/webp") 1x, url("post1blog.png") type("image/png") 1x);
+  --img-banner: url("assets/home/banners/nuevo_banner.jpg");
+  --img-banner-foto: image-set(url("assets/home/banners/banner-foto.avif") type("image/avif") 1x, url("assets/home/banners/banner-foto.webp") type("image/webp") 1x, url("assets/home/banners/banner-foto.png") type("image/png") 1x);
+  --img-banner3: image-set(url("assets/home/banners/banner-3.avif") type("image/avif") 1x, url("assets/home/banners/banner-3.webp") type("image/webp") 1x, url("assets/home/banners/banner-3.png") type("image/png") 1x);
+  --img-evento1: image-set(url("assets/home/banners/evento-1.avif") type("image/avif") 1x, url("assets/home/banners/evento-1.webp") type("image/webp") 1x, url("assets/home/banners/evento-1.png") type("image/png") 1x);
+  --img-post1blog: image-set(url("assets/blog/post-1/post-1.avif") type("image/avif") 1x, url("assets/blog/post-1/post-1.webp") type("image/webp") 1x, url("assets/blog/post-1/post-1.png") type("image/png") 1x);
 }
 
 * {
@@ -547,7 +547,7 @@ body.theme-light .hero-white-bridge {
   border: 1px solid rgba(0, 255, 156, 0.24);
   background:
     linear-gradient(155deg, rgba(0, 255, 156, 0.2), rgba(8, 18, 26, 0.35)),
-    url("axo3d_oficial.png");
+    url("assets/events/axolote-night-run/promo/axo-3d-oficial.png");
   background-size: cover;
   background-repeat: no-repeat;
   background-position: center;
@@ -893,7 +893,7 @@ body.theme-light .hero-white-bridge {
   border: 1px solid rgba(0, 255, 156, 0.32);
   background:
     linear-gradient(160deg, rgba(0, 255, 156, 0.2), rgba(8, 18, 26, 0.34)),
-    url("axo3d_oficial.png");
+    url("assets/events/axolote-night-run/promo/axo-3d-oficial.png");
   background-size: cover;
   background-position: center;
 }
@@ -2105,13 +2105,13 @@ body.theme-light .hero-white-bridge {
 .media-run {
   background-image:
     linear-gradient(145deg, rgba(52, 74, 69, 0.34), rgba(52, 74, 69, 0.34)),
-    url("correr.jpg");
+    url("assets/events/axolote-night-run/gallery/correr.jpg");
 }
 
 .media-santa {
   background-image:
     linear-gradient(145deg, rgba(52, 74, 69, 0.34), rgba(52, 74, 69, 0.34)),
-    url("santa1.jpeg");
+    url("assets/events/santa-run/gallery/santa-1.jpeg");
 }
 
 .media-axolote {
@@ -2123,31 +2123,31 @@ body.theme-light .hero-white-bridge {
 .media-trail {
   background-image:
     linear-gradient(145deg, rgba(103, 125, 104, 0.3), rgba(103, 125, 104, 0.3)),
-    url("correr1.jpg");
+    url("assets/events/axolote-night-run/gallery/correr-1.jpg");
 }
 
 .media-cycle {
   background-image:
     linear-gradient(145deg, rgba(52, 74, 69, 0.28), rgba(52, 74, 69, 0.28)),
-    url("correr2.jpg");
+    url("assets/events/axolote-night-run/gallery/correr-2.jpg");
 }
 
 .media-family {
   background-image:
     linear-gradient(145deg, rgba(222, 111, 32, 0.28), rgba(103, 125, 104, 0.28)),
-    url("correr.jpg");
+    url("assets/events/axolote-night-run/gallery/correr.jpg");
 }
 
 .media-night {
   background-image:
     linear-gradient(145deg, rgba(52, 74, 69, 0.4), rgba(52, 74, 69, 0.4)),
-    url("correr1.jpg");
+    url("assets/events/axolote-night-run/gallery/correr-1.jpg");
 }
 
 .media-tri {
   background-image:
     linear-gradient(145deg, rgba(52, 74, 69, 0.3), rgba(52, 74, 69, 0.3)),
-    url("correr2.jpg");
+    url("assets/events/axolote-night-run/gallery/correr-2.jpg");
 }
 
 .event-body,
@@ -2964,7 +2964,7 @@ body.theme-light .hero-white-bridge {
 .page-hero .container {
   background-image:
     linear-gradient(to bottom, rgba(6, 10, 18, 0.12) 0%, rgba(6, 10, 18, 0.72) 100%),
-    url("correr2.jpg");
+    url("assets/events/axolote-night-run/gallery/correr-2.jpg");
   background-size: cover;
   background-position: center;
   border-radius: 14px;
@@ -2980,14 +2980,14 @@ body.theme-light .hero-white-bridge {
 body[data-page="blog"] .page-hero .container {
   background-image:
     linear-gradient(to bottom, rgba(6, 10, 18, 0.08) 0%, rgba(6, 10, 18, 0.75) 100%),
-    url("correr.jpg");
+    url("assets/events/axolote-night-run/gallery/correr.jpg");
   background-position: center 30%;
 }
 
 body[data-page="nosotros"] .page-hero .container {
   background-image:
     linear-gradient(to bottom, rgba(6, 10, 18, 0.08) 0%, rgba(6, 10, 18, 0.75) 100%),
-    url("correr2.jpg");
+    url("assets/events/axolote-night-run/gallery/correr-2.jpg");
   background-position: center 35%;
 }
 
@@ -3007,7 +3007,7 @@ body[data-page="nosotros"] {
       rgba(0, 20, 24, 0.55) 70%,
       rgba(0, 20, 24, 0.28) 100%
     ),
-    url("banner2.png") center right / cover no-repeat;
+    url("assets/home/banners/banner-2.png") center right / cover no-repeat;
   min-height: 560px;
   display: flex;
   align-items: center;
@@ -3272,7 +3272,7 @@ body[data-page="nosotros"] {
   border-radius: 28px;
   background:
     linear-gradient(to bottom, rgba(12, 18, 24, 0.08), rgba(12, 18, 24, 0.28)),
-    url("exo.jpeg") center / cover no-repeat;
+    url("assets/events/axolote-night-run/gallery/exo.jpeg") center / cover no-repeat;
   box-shadow: 0 26px 46px rgba(18, 25, 34, 0.14);
 }
 
@@ -3505,7 +3505,7 @@ body[data-page="nosotros"] {
         rgba(0, 20, 24, 0.88) 60%,
         rgba(0, 20, 24, 0.72) 100%
       ),
-      url("banner2.png");
+      url("assets/home/banners/banner-2.png");
     background-size: cover;
     background-position: center right;
   }
@@ -3563,7 +3563,7 @@ body[data-page="series"] .page-hero .container {
       rgba(0, 12, 24, 0.55) 70%,
       rgba(0, 12, 24, 0.28) 100%
     ),
-    url("banner1.png") center right / cover no-repeat;
+    url("assets/home/banners/banner-1.png") center right / cover no-repeat;
   min-height: 520px;
   display: flex;
   align-items: center;
@@ -3677,7 +3677,7 @@ body[data-page="series"] .page-hero .container {
   margin-top: 28px;
   background-image:
     linear-gradient(to bottom, rgba(6, 10, 18, 0.05) 0%, rgba(6, 10, 18, 0.78) 100%),
-    url("correr.jpg");
+    url("assets/events/axolote-night-run/gallery/correr.jpg");
   background-size: cover;
   background-position: center;
   border-radius: 22px;
@@ -3974,7 +3974,7 @@ body[data-page="series"] .page-hero .container {
   min-height: 200px;
   background-image:
     linear-gradient(130deg, rgba(52, 74, 69, 0.42), rgba(52, 74, 69, 0.16)),
-    url("correr.jpg");
+    url("assets/events/axolote-night-run/gallery/correr.jpg");
   background-size: cover;
   background-position: center;
 }
@@ -3982,13 +3982,13 @@ body[data-page="series"] .page-hero .container {
 .blog-list .blog-entry:nth-child(2) .blog-cover {
   background-image:
     linear-gradient(130deg, rgba(103, 125, 104, 0.44), rgba(103, 125, 104, 0.16)),
-    url("correr1.jpg");
+    url("assets/events/axolote-night-run/gallery/correr-1.jpg");
 }
 
 .blog-list .blog-entry:nth-child(3) .blog-cover {
   background-image:
     linear-gradient(130deg, rgba(222, 111, 32, 0.38), rgba(52, 74, 69, 0.16)),
-    url("correr2.jpg");
+    url("assets/events/axolote-night-run/gallery/correr-2.jpg");
 }
 
 .blog-body {
@@ -4066,7 +4066,7 @@ body[data-page="series"] .page-hero .container {
       rgba(2, 10, 14, 0.45) 58%,
       rgba(2, 10, 14, 0.18) 100%
     ),
-    url("banner1.png");
+    url("assets/home/banners/banner-1.png");
   background-size: cover;
   background-position: center right;
   background-repeat: no-repeat;
@@ -4169,7 +4169,7 @@ body[data-page="series"] .page-hero .container {
         rgba(2, 10, 14, 0.78) 42%,
         rgba(2, 10, 14, 0.42) 100%
       ),
-      url("banner1.png");
+      url("assets/home/banners/banner-1.png");
     background-position: center right;
   }
 
@@ -6441,7 +6441,7 @@ body[data-page="series"] .page-hero .container {
       rgba(0, 12, 20, 0.72) 55%,
       rgba(0, 12, 20, 0.9) 100%
     ),
-    url('banner_blog.png') center center / contain no-repeat;
+    url('assets/blog/banner-blog.png') center center / contain no-repeat;
   background-color: #000c18;
   min-height: 520px;
   display: flex;
@@ -7029,6 +7029,14 @@ body[data-page="series"] .page-hero .container {
 }
 
 .tips-modal-video-shell video {
+  width: 100%;
+  height: 100%;
+  border: none;
+  display: block;
+  object-fit: cover;
+}
+
+.tips-modal-video-shell img {
   width: 100%;
   height: 100%;
   border: none;
