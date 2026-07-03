@@ -246,6 +246,20 @@ function setupPageLoadIndicator() {
   window.addEventListener("load", complete, { once: true });
 }
 
+function setupAuthCallbackErrorRedirect() {
+  const hashParams = new URLSearchParams(window.location.hash.replace(/^#/, ""));
+  const authErrorCode = hashParams.get("error_code");
+  const hasAuthError = hashParams.has("error") || hashParams.has("error_code");
+  const isAuthPage = !!document.querySelector("[data-auth-page]");
+
+  if (!hasAuthError || isAuthPage) return;
+
+  const redirectUrl = new URL("auth.html", window.location.href);
+  redirectUrl.searchParams.set("mode", authErrorCode === "otp_expired" ? "register" : "login");
+  redirectUrl.searchParams.set("authError", authErrorCode || "auth_callback_error");
+  window.location.replace(redirectUrl.toString());
+}
+
 function setupLightboxEscapeClose() {
   const clearHashWithoutJump = () => {
     const cleanUrl = new URL(window.location.href);
@@ -1123,6 +1137,27 @@ function setupAuthPage() {
 
   const statusParam = searchParams.get("status");
   const emailParam = searchParams.get("email");
+  const authErrorParam = searchParams.get("authError");
+  const authHashParams = new URLSearchParams(window.location.hash.replace(/^#/, ""));
+  const authErrorCode = authHashParams.get("error_code") || authErrorParam;
+  const authError = authHashParams.get("error");
+  const authErrorDescription = authHashParams.get("error_description");
+  if (authError || authErrorCode || authErrorParam) {
+    activateMode(authErrorCode === "otp_expired" ? "register" : "login");
+    const fallbackMessage = authErrorCode === "otp_expired"
+      ? "El enlace de confirmacion vencio o ya fue usado. Vuelve a registrarte con el mismo correo para recibir un enlace nuevo, o inicia sesion si ya confirmaste tu cuenta."
+      : "No pudimos completar la verificacion. Intenta iniciar sesion o solicita un enlace nuevo.";
+    showGlobalStatus(authErrorCode === "otp_expired" ? fallbackMessage : authErrorDescription || fallbackMessage, true);
+
+    const cleanUrl = new URL(window.location.href);
+    cleanUrl.hash = "";
+    cleanUrl.searchParams.delete("authError");
+    if (!cleanUrl.searchParams.has("mode")) {
+      cleanUrl.searchParams.set("mode", authErrorCode === "otp_expired" ? "register" : "login");
+    }
+    window.history.replaceState({}, "", cleanUrl.toString());
+  }
+
   if (statusParam === "check-email") {
     activateMode("login");
     showGlobalStatus("Gracias por registrarte. Revisa tu correo para confirmar tu cuenta y luego inicia sesión.");
@@ -2187,6 +2222,8 @@ function setupSupabase() {
       const searchParams = new URLSearchParams(window.location.search);
       const hashParams = new URLSearchParams(window.location.hash.replace(/^#/, ""));
       const statusParam = searchParams.get("status");
+      const authErrorCode = hashParams.get("error_code");
+      const hasAuthCallbackError = hashParams.has("error") || hashParams.has("error_code");
       const hasSignupCallback = hashParams.get("type") === "signup" && hashParams.has("access_token");
       const hasRecoveryCallback = hashParams.get("type") === "recovery" && hashParams.has("access_token");
 
@@ -2225,7 +2262,16 @@ function setupSupabase() {
         }
       };
 
-      if (hasRecoveryCallback) {
+      if (hasAuthCallbackError) {
+        const cleanUrl = new URL(window.location.href);
+        cleanUrl.hash = "";
+        if (!cleanUrl.searchParams.has("mode")) {
+          cleanUrl.searchParams.set("mode", authErrorCode === "otp_expired" ? "register" : "login");
+        }
+        window.history.replaceState({}, "", cleanUrl.toString());
+      }
+
+      if (hasRecoveryCallback && !hasAuthCallbackError) {
         showResetPasswordFlow("Confirma tu nueva contraseña para completar la recuperación.");
       } else {
         hideResetPasswordFlow();
@@ -2233,6 +2279,13 @@ function setupSupabase() {
 
       client.auth.getSession().then(async ({ data: { session } }) => {
         if (!session) return;
+
+        if (hasAuthCallbackError) {
+          if (authErrorCode === "otp_expired") {
+            await client.auth.signOut();
+          }
+          return;
+        }
 
         if (hasRecoveryCallback) {
           return;
@@ -2307,6 +2360,13 @@ function setupSupabase() {
       // Si ya hay sesión activa → preguntar si desea continuar con esa cuenta
       client.auth.getSession().then(async ({ data: { session } }) => {
         if (!session) return;
+
+        if (hasAuthCallbackError) {
+          if (authErrorCode === "otp_expired") {
+            await client.auth.signOut();
+          }
+          return;
+        }
 
         if (hasSignupCallback) {
           const url = new URL(window.location.href);
@@ -4692,6 +4752,7 @@ async function syncBibNumberToProfile(client, user) {
 }
 
 setupPageLoadIndicator();
+setupAuthCallbackErrorRedirect();
 setupMenuToggle();
 setupActiveNavLink();
 setupHeaderScrollState();
