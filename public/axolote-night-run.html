@@ -14,7 +14,7 @@
       href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Sora:wght@500;600;700;800&display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="styles.min.css?v=1783112189730" />
+    <link rel="stylesheet" href="styles.min.css?v=1783113863125" />
     <link rel="icon" type="image/png" href="assets/brand/icon.png" />
     <style>
       body[data-event-page] {
@@ -379,19 +379,28 @@
       }
 
       .ax-benefit-icon {
-        width: 46px;
-        height: 46px;
-        border-radius: 14px;
+        width: 54px;
+        height: 54px;
+        border-radius: 16px;
         background: #ffffff;
         border: 1px solid rgba(211, 219, 230, 0.96);
         display: grid;
         place-items: center;
         color: #3a536f;
+        overflow: hidden;
+        box-shadow: 0 10px 18px rgba(12, 18, 30, 0.08);
       }
 
       .ax-benefit-icon svg {
         width: 22px;
         height: 22px;
+      }
+
+      .ax-benefit-icon img {
+        width: 100%;
+        height: 100%;
+        display: block;
+        object-fit: cover;
       }
 
       .ax-benefit-item span {
@@ -411,7 +420,7 @@
       .ax-timeline::before {
         content: "";
         position: absolute;
-        left: 118px;
+        left: 98px;
         top: 8px;
         bottom: 8px;
         width: 2px;
@@ -421,15 +430,15 @@
       .ax-timeline-item {
         position: relative;
         display: grid;
-        grid-template-columns: 88px 88px 1fr;
-        gap: 16px;
+        grid-template-columns: 88px 104px 1fr;
+        gap: 18px;
         align-items: start;
       }
 
       .ax-timeline-item::before {
         content: "";
         position: absolute;
-        left: 114px;
+        left: 94px;
         top: 10px;
         width: 10px;
         height: 10px;
@@ -506,26 +515,110 @@
 
       .ax-page-faq {
         display: grid;
-        gap: 18px;
+        gap: 16px;
       }
 
       .ax-page-faq .home-faq-grid {
         margin-top: 0;
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 8px;
+        border: 1px solid rgba(213, 221, 232, 0.96);
+        border-radius: 18px;
+        overflow: hidden;
+        background: #ffffff;
+        box-shadow: 0 16px 28px rgba(12, 18, 30, 0.06);
       }
 
       .ax-page-faq .home-faq-item {
-        border-radius: 16px;
+        border: 0;
+        border-radius: 0;
+        box-shadow: none;
+        background: #ffffff;
+      }
+
+      .ax-page-faq .home-faq-item + .home-faq-item {
+        border-top: 1px solid rgba(226, 232, 240, 0.95);
+      }
+
+      .ax-page-faq .home-faq-item.is-open {
+        background: linear-gradient(180deg, #ffffff, #f7fbff);
       }
 
       .ax-page-faq .home-faq-question {
-        min-height: 62px;
-        padding: 18px 20px;
-        font-size: 0.98rem;
+        min-height: 54px;
+        padding: 14px 16px;
+        font-size: 0.94rem;
+        line-height: 1.25;
+        display: grid;
+        grid-template-columns: 1fr 30px;
+        align-items: center;
+        gap: 14px;
+      }
+
+      .ax-page-faq .home-faq-question:hover {
+        background: #f8fbff;
+      }
+
+      .ax-page-faq .home-faq-icon {
+        width: 30px;
+        height: 30px;
+        border-radius: 999px;
+        border: 1px solid rgba(148, 163, 184, 0.46);
+        background: #f8fafc;
+        position: relative;
+      }
+
+      .ax-page-faq .home-faq-icon::before,
+      .ax-page-faq .home-faq-icon::after {
+        content: "";
+        position: absolute;
+        left: 50%;
+        top: 50%;
+        width: 12px;
+        height: 2px;
+        border-radius: 999px;
+        background: #334155;
+        transform: translate(-50%, -50%);
+      }
+
+      .ax-page-faq .home-faq-icon::after {
+        transform: translate(-50%, -50%) rotate(90deg);
+        transition: transform 180ms ease, opacity 180ms ease;
+      }
+
+      .ax-page-faq .home-faq-item.is-open .home-faq-icon {
+        border-color: rgba(13, 199, 133, 0.42);
+        background: rgba(13, 199, 133, 0.1);
+      }
+
+      .ax-page-faq .home-faq-item.is-open .home-faq-icon::after {
+        opacity: 0;
+        transform: translate(-50%, -50%) rotate(0deg);
+      }
+
+      .ax-page-faq .home-faq-answer {
+        display: none;
+        opacity: 1;
+        border-top: 0;
+      }
+
+      .ax-page-faq .home-faq-item.is-open .home-faq-answer {
+        display: block;
       }
 
       .ax-page-faq .home-faq-answer p {
-        padding: 0 20px 18px;
-        font-size: 0.94rem;
+        padding: 0 56px 16px 16px;
+        color: #526274;
+        font-size: 0.92rem;
+        line-height: 1.5;
+      }
+
+      .ax-page-faq .home-faq-cta {
+        margin-top: 0;
+        border-radius: 16px;
+        padding: 18px;
+        grid-template-columns: 1fr auto;
       }
 
       .ax-event-sidebar {
@@ -1163,37 +1256,37 @@ src="https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1"
               <div class="ax-benefits-band" style="margin-top: 18px;">
                 <div class="ax-benefit-item">
                   <div class="ax-benefit-icon" aria-hidden="true">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M8 5h8l-1 5 3 2-6 7-6-7 3-2-1-5z"></path></svg>
+                    <img src="assets/home/videos/medalla-1.jpg" alt="" loading="lazy" />
                   </div>
                   <span>Medalla finisher exclusiva</span>
                 </div>
                 <div class="ax-benefit-item">
                   <div class="ax-benefit-icon" aria-hidden="true">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 7h16"></path><path d="M7 7v10"></path><path d="M17 7v10"></path><path d="M4 17h16"></path></svg>
+                    <img src="assets/home/videos/playera-1.jpg" alt="" loading="lazy" />
                   </div>
                   <span>Playera oficial del evento</span>
                 </div>
                 <div class="ax-benefit-item">
                   <div class="ax-benefit-icon" aria-hidden="true">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 3v18"></path><path d="M7 7h10"></path><path d="M7 17h10"></path></svg>
+                    <img src="assets/home/videos/mochila.jpg" alt="" loading="lazy" />
                   </div>
                   <span>Número de corredor</span>
                 </div>
                 <div class="ax-benefit-item">
                   <div class="ax-benefit-icon" aria-hidden="true">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M8 4h8v4H8z"></path><path d="M10 8v12"></path><path d="M14 8v12"></path></svg>
+                    <img src="assets/events/axolote-night-run/gallery/correr.jpg" alt="" loading="lazy" />
                   </div>
                   <span>Hidratación en ruta y meta</span>
                 </div>
                 <div class="ax-benefit-item">
                   <div class="ax-benefit-icon" aria-hidden="true">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="7"></circle><path d="M12 8v4l3 2"></path></svg>
+                    <img src="assets/home/videos/medallas.jpg" alt="" loading="lazy" />
                   </div>
                   <span>Chip y resultados oficiales</span>
                 </div>
                 <div class="ax-benefit-item">
                   <div class="ax-benefit-icon" aria-hidden="true">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 8l8 5 8-5"></path><path d="M4 8v8h16V8"></path></svg>
+                    <img src="assets/home/banners/nuevo_banner.jpg" alt="" loading="lazy" />
                   </div>
                   <span>Comunicación previa y logística</span>
                 </div>
@@ -1674,7 +1767,7 @@ src="https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1"
     </footer>
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="axolote-stage-config.js?v=1783112189730"></script>
-    <script src="script.min.js?v=1783112189730"></script>
+    <script src="axolote-stage-config.js?v=1783113863125"></script>
+    <script src="script.min.js?v=1783113863125"></script>
   </body>
 </html>
