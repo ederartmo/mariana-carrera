@@ -547,7 +547,7 @@ body.theme-light .hero-white-bridge {
   border: 1px solid rgba(0, 255, 156, 0.24);
   background:
     linear-gradient(155deg, rgba(0, 255, 156, 0.2), rgba(8, 18, 26, 0.35)),
-    url("assets/events/axolote-night-run/promo/axo-3d-oficial.png");
+    url("assets/home/banners/nuevo_banner.jpg");
   background-size: cover;
   background-repeat: no-repeat;
   background-position: center;
@@ -893,7 +893,7 @@ body.theme-light .hero-white-bridge {
   border: 1px solid rgba(0, 255, 156, 0.32);
   background:
     linear-gradient(160deg, rgba(0, 255, 156, 0.2), rgba(8, 18, 26, 0.34)),
-    url("assets/events/axolote-night-run/promo/axo-3d-oficial.png");
+    url("assets/home/banners/nuevo_banner.jpg");
   background-size: cover;
   background-position: center;
 }
@@ -1742,12 +1742,20 @@ body.theme-light .hero-white-bridge {
   .neon-rewards-grid {
     display: grid;
     grid-auto-flow: column;
-    grid-auto-columns: minmax(250px, 82%);
+    grid-auto-columns: minmax(238px, calc(100% - 34px));
     gap: 12px;
     overflow-x: auto;
     overscroll-behavior-x: contain;
-    scroll-snap-type: x proximity;
-    padding-bottom: 6px;
+    scroll-snap-type: x mandatory;
+    scroll-padding-inline: 0 18px;
+    touch-action: pan-x;
+    -webkit-overflow-scrolling: touch;
+    padding: 0 18px 8px 0;
+    scrollbar-width: none;
+  }
+
+  .neon-rewards-grid::-webkit-scrollbar {
+    display: none;
   }
 
   .neon-reward-card {
@@ -1755,11 +1763,38 @@ body.theme-light .hero-white-bridge {
   }
 
   .neon-legal-layout {
-    grid-template-columns: 1fr;
+    grid-template-columns: 1fr 72px;
+    align-items: end;
+    gap: 12px;
+  }
+
+  .neon-legal-content {
+    display: contents;
+  }
+
+  .neon-legal h4,
+  .neon-legal ol {
+    grid-column: 1 / -1;
+  }
+
+  .neon-inline-action {
+    grid-column: 1;
+    width: fit-content;
   }
 
   .neon-legal-media {
-    min-height: 180px;
+    grid-column: 2;
+    width: 64px;
+    height: 64px;
+    min-height: 0;
+    align-self: center;
+    border-radius: 999px;
+    box-shadow: 0 0 16px rgba(67, 224, 255, 0.28);
+  }
+
+  .neon-legal-media img {
+    padding: 0;
+    object-fit: cover;
   }
 
   .neon-category {
