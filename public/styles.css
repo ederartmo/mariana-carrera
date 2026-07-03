@@ -6641,6 +6641,10 @@ body[data-page="series"] .page-hero .container {
   padding: 56px 0 60px;
 }
 
+.tips-section + .results-dashboard-section {
+  margin-top: 0;
+}
+
 /* Header row */
 .tips-header {
   display: flex;
@@ -6793,7 +6797,7 @@ body[data-page="series"] .page-hero .container {
 }
 
 .tips-card:hover .tips-card-poster {
-  opacity: 0;
+  opacity: 0.92;
 }
 
 /* Hover preview iframe container */
@@ -6848,6 +6852,10 @@ body[data-page="series"] .page-hero .container {
 .tips-card.is-playing .tips-card-poster {
   opacity: 0;
   pointer-events: none;
+}
+
+.tips-card-video {
+  background: #000;
 }
 
 /* Card video iframe */
@@ -7018,6 +7026,14 @@ body[data-page="series"] .page-hero .container {
   height: 100%;
   border: none;
   display: block;
+}
+
+.tips-modal-video-shell video {
+  width: 100%;
+  height: 100%;
+  border: none;
+  display: block;
+  object-fit: cover;
 }
 
 .tips-modal-user {

@@ -4126,7 +4126,7 @@ function setupTipsCarousel() {
 
   updateArrows();
 
-  // ── Hover preview (muted Cloudflare iframe) ───────────
+  // ── Hover preview (muted local video or Cloudflare iframe) ───────────
   const isPlaceholderId = (id) =>
     !id || id.startsWith("CLOUDFLARE_VIDEO_ID") || id.startsWith("PLACEHOLDER");
 
@@ -4138,6 +4138,21 @@ function setupTipsCarousel() {
 
   cards.forEach((card) => {
     const cfId = card.dataset.cfId || "";
+    const localVideo = card.querySelector("video.tips-card-video");
+
+    if (localVideo) {
+      card.addEventListener("mouseenter", () => {
+        localVideo.currentTime = 0;
+        localVideo.play().catch(() => {});
+      });
+
+      card.addEventListener("mouseleave", () => {
+        localVideo.pause();
+        localVideo.currentTime = 0;
+      });
+      return;
+    }
+
     if (isPlaceholderId(cfId)) return;
 
     const previewWrap = card.querySelector(".tips-card-preview-wrap");
@@ -4168,6 +4183,7 @@ function setupTipsCarousel() {
   // ── Open / close modal ────────────────────────────────
   const openModal = (card) => {
     const cfId = card.dataset.cfId || "";
+    const videoSrc = card.dataset.videoSrc || "";
     const username = card.dataset.username || "";
     const bio = card.dataset.bio || "";
     const avatar = card.dataset.avatar || "";
@@ -4197,7 +4213,16 @@ function setupTipsCarousel() {
     // Video
     if (modalVideoShell) {
       modalVideoShell.innerHTML = "";
-      if (!isPlaceholderId(cfId)) {
+      if (videoSrc) {
+        const video = document.createElement("video");
+        video.src = videoSrc;
+        video.controls = true;
+        video.autoplay = true;
+        video.playsInline = true;
+        video.setAttribute("playsinline", "");
+        video.title = `Video de ${username}`;
+        modalVideoShell.appendChild(video);
+      } else if (!isPlaceholderId(cfId)) {
         const iframe = document.createElement("iframe");
         iframe.src = buildModalSrc(cfId);
         iframe.setAttribute(
