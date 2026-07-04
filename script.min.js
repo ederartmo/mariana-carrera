@@ -1429,7 +1429,43 @@ function setupNeonEventToggle() {
   if (!toggleBtn || !details) return;
 
   const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const isMobileViewport = () => window.matchMedia("(max-width: 760px)").matches;
   let isAnimating = false;
+
+  const animateScrollTo = (targetY, duration = 1150) => {
+    const startY = window.scrollY;
+    const distance = targetY - startY;
+    const startTime = performance.now();
+    const easeInOutCubic = (progress) =>
+      progress < 0.5 ? 4 * progress * progress * progress : 1 - Math.pow(-2 * progress + 2, 3) / 2;
+
+    const step = (now) => {
+      const progress = Math.min((now - startTime) / duration, 1);
+      window.scrollTo(0, startY + distance * easeInOutCubic(progress));
+
+      if (progress < 1) {
+        window.requestAnimationFrame(step);
+      }
+    };
+
+    window.requestAnimationFrame(step);
+  };
+
+  const scrollToExpandedDetails = () => {
+    if (!isMobileViewport()) return;
+
+    window.requestAnimationFrame(() => {
+      const section = details.closest(".neon-event-section") || details;
+      const targetY = Math.max(0, section.getBoundingClientRect().top + window.scrollY + 28);
+
+      if (reduceMotion) {
+        window.scrollTo(0, targetY);
+        return;
+      }
+
+      animateScrollTo(targetY);
+    });
+  };
 
   const setCollapsed = () => {
     details.classList.remove("is-expanded");
@@ -1450,6 +1486,7 @@ function setupNeonEventToggle() {
     toggleBtn.setAttribute("aria-expanded", "true");
     toggleBtn.textContent = "Ver menos";
     window.dispatchEvent(new Event("home:rewards-visible"));
+    scrollToExpandedDetails();
   };
 
   const expandAnimated = () => {
@@ -1466,6 +1503,7 @@ function setupNeonEventToggle() {
       details.style.opacity = "1";
       details.style.transform = "translateY(0)";
       window.dispatchEvent(new Event("home:rewards-visible"));
+      scrollToExpandedDetails();
     });
 
     const onEnd = (event) => {
