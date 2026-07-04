@@ -4263,6 +4263,7 @@ function setupTipsCarousel() {
     // Video
     if (modalVideoShell) {
       modalVideoShell.innerHTML = "";
+      modalVideoShell.classList.toggle("is-vertical", Boolean(videoSrc));
       if (videoSrc) {
         const video = document.createElement("video");
         video.src = videoSrc;
@@ -4306,7 +4307,10 @@ function setupTipsCarousel() {
   const closeModal = () => {
     modal.hidden = true;
     document.body.style.overflow = "";
-    if (modalVideoShell) modalVideoShell.innerHTML = "";
+    if (modalVideoShell) {
+      modalVideoShell.innerHTML = "";
+      modalVideoShell.classList.remove("is-vertical");
+    }
   };
 
   cards.forEach((card) => {
