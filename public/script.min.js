@@ -1752,6 +1752,41 @@ function setupHomeStagePricing() {
   }
 }
 
+function setupEventCountdown() {
+  const countdown = document.querySelector("[data-countdown-target]");
+  if (!countdown) return;
+
+  const daysNode = countdown.querySelector("[data-countdown-days]");
+  const timeNode = countdown.querySelector("[data-countdown-time]");
+  const target = new Date(countdown.dataset.countdownTarget || "");
+
+  if (!daysNode || !timeNode || Number.isNaN(target.getTime())) return;
+
+  const formatNumber = (value) => String(value).padStart(2, "0");
+
+  const updateCountdown = () => {
+    const remaining = target.getTime() - Date.now();
+
+    if (remaining <= 0) {
+      daysNode.textContent = "0";
+      timeNode.textContent = "00:00:00";
+      return;
+    }
+
+    const totalSeconds = Math.floor(remaining / 1000);
+    const days = Math.floor(totalSeconds / 86400);
+    const hours = Math.floor((totalSeconds % 86400) / 3600);
+    const minutes = Math.floor((totalSeconds % 3600) / 60);
+    const seconds = totalSeconds % 60;
+
+    daysNode.textContent = String(days);
+    timeNode.textContent = `${formatNumber(hours)}:${formatNumber(minutes)}:${formatNumber(seconds)}`;
+  };
+
+  updateCountdown();
+  window.setInterval(updateCountdown, 1000);
+}
+
 function setupHomeRewardsScroller() {
   const rewardsPanel = document.querySelector(".neon-rewards-panel");
   const rewardsTrack = rewardsPanel?.querySelector(".neon-rewards-grid");
@@ -4828,6 +4863,7 @@ setupWhatsAppButton();
 setupEventStageCards();
 setupEventRegistrationPanel();
 setupHomeStagePricing();
+setupEventCountdown();
 setupHomeRewardsScroller();
 setupLightboxEscapeClose();
 setupAuthPage();
