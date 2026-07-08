@@ -7410,6 +7410,10 @@ body[data-page="series"] .page-hero .container {
   animation: tipsModalIn 0.22s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
+.tips-modal-overlay.is-horizontal .tips-modal-box {
+  max-width: min(920px, calc(100vw - 40px));
+}
+
 @keyframes tipsModalIn {
   from {
     opacity: 0;
@@ -7450,6 +7454,11 @@ body[data-page="series"] .page-hero .container {
   background: #000;
   overflow: hidden;
   max-height: 60vh;
+}
+
+.tips-modal-video-shell.is-horizontal {
+  aspect-ratio: 16 / 9;
+  max-height: min(62svh, calc((100vw - 40px) * 9 / 16));
 }
 
 .tips-modal-video-shell iframe {
@@ -7560,6 +7569,18 @@ body[data-page="series"] .page-hero .container {
   .tips-modal-video-shell.is-vertical {
     height: min(calc(100svh - 148px), calc((100vw - 40px) * 16 / 9));
     aspect-ratio: 9 / 16;
+  }
+
+  .tips-modal-overlay.is-horizontal {
+    padding: 12px;
+  }
+
+  .tips-modal-overlay.is-horizontal .tips-modal-box {
+    max-width: calc(100vw - 24px);
+  }
+
+  .tips-modal-video-shell.is-horizontal {
+    max-height: calc(100svh - 148px);
   }
 
   .tips-modal-box:has(.tips-modal-video-shell.is-vertical) {

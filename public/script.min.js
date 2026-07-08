@@ -3856,25 +3856,19 @@ function setupSupabase() {
             <div class="modal-overlay" id="legalDocumentsModal" style="display: flex !important; z-index: 100000;  ">
               <div class="modal-dialog modal-dialog-gallery modal-special-dialog" role="dialog" aria-modal="true" aria-labelledby="legalModalTitle"  >
                 <button class="modal-close" type="button" aria-label="Cerrar" data-modal-close>×</button>
-                <h3 id="legalModalTitle">Documento del Evento</h3>
-                <p id="legalModalParagraf">Debe descargar la exoneración oficial y traerla firmada al evento</p>
-                <div class="modal-gallery" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px;">
-                <section style="display:flex;justify-content:center;align-items:center;flex-direction:column;">
+                <h3 id="legalModalTitle">Documentos del Evento</h3>
+                <p id="legalModalParagraf">Descarga la exoneración oficial para el evento, y consulta la convocatoria completa en formato PDF.</p>
+                <div class="modal-gallery" style="display: flex; flex-direction:column; gap: 16px; align-items:center; min-height: 200px; justify-content:center;">
+                <section style="display:flex;justify-content:center;align-items:center; gap: 16px; flex-wrap: wrap;">
                   <a href="exoneracion.pdf" download class="btn"
                     style="display: inline-block; margin: 8px 8px 8px 0; background: #19c88b; color: white; padding: 10px 20px; border-radius: 999px; text-decoration: none;">
           📄          Descargar - Exoneración
                   </a>
+                  <a href="assets/events/axolote-night-run/legal/convocatoria.pdf" target="_blank" rel="noopener noreferrer" class="btn"
+                    style="display: inline-block; margin: 8px 8px 8px 0; background: transparent; color: #111; padding: 10px 20px; border-radius: 999px; text-decoration: none; border: 1px solid #111;">
+          📄          Ver Convocatoria (PDF)
+                  </a>
                   </section>
-
-                  <a href="assets/events/axolote-night-run/legal/axo-convo.jpeg" target="_blank">
-                  <img src="assets/events/axolote-night-run/legal/axo-convo.jpeg" alt="Convocatoria" style="width:100%; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.2);">
-                  </a>
-                  <a href="assets/events/axolote-night-run/legal/axo-convo-1.jpeg" target="_blank">
-                  <img src="assets/events/axolote-night-run/legal/axo-convo-1.jpeg" alt="Convocatoria" style="width:100%; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.2);">
-                  </a>
-                  <a href="assets/events/axolote-night-run/legal/axo-convo-2.jpeg" target="_blank">
-                  <img src="assets/events/axolote-night-run/legal/axo-convo-2.jpeg" alt="Convocatoria" style="width:100%; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.2);">
-                  </a>
                 </div>
                 <div class="modal-actions" style="text-align: center; padding: 20px 0;">
                   <button class="modal-close-secondary" type="button" data-modal-close style="
@@ -4271,11 +4265,13 @@ function setupTipsCarousel() {
   const openModal = (card) => {
     const cfId = card.dataset.cfId || "";
     const videoSrc = card.dataset.videoSrc || "";
+    const videoOrientation = card.dataset.videoOrientation || "vertical";
     const imageSrc = card.dataset.imageSrc || "";
     const username = card.dataset.username || "";
     const bio = card.dataset.bio || "";
     const avatar = card.dataset.avatar || "";
     const initials = username.replace("@", "").slice(0, 2).toLowerCase();
+    const isHorizontalVideo = Boolean(videoSrc) && videoOrientation === "horizontal";
 
     if (modalUsername) modalUsername.textContent = username;
     if (modalBio) modalBio.textContent = bio;
@@ -4301,7 +4297,8 @@ function setupTipsCarousel() {
     // Video
     if (modalVideoShell) {
       modalVideoShell.innerHTML = "";
-      modalVideoShell.classList.toggle("is-vertical", Boolean(videoSrc));
+      modalVideoShell.classList.toggle("is-vertical", Boolean(videoSrc) && !isHorizontalVideo);
+      modalVideoShell.classList.toggle("is-horizontal", isHorizontalVideo);
       if (videoSrc) {
         const video = document.createElement("video");
         video.src = videoSrc;
@@ -4337,6 +4334,8 @@ function setupTipsCarousel() {
       }
     }
 
+    modal.classList.toggle("is-horizontal", isHorizontalVideo);
+    modal.classList.toggle("is-vertical", Boolean(videoSrc) && !isHorizontalVideo);
     modal.hidden = false;
     document.body.style.overflow = "hidden";
     if (modalClose) modalClose.focus();
@@ -4344,10 +4343,12 @@ function setupTipsCarousel() {
 
   const closeModal = () => {
     modal.hidden = true;
+    modal.classList.remove("is-horizontal", "is-vertical");
     document.body.style.overflow = "";
     if (modalVideoShell) {
       modalVideoShell.innerHTML = "";
       modalVideoShell.classList.remove("is-vertical");
+      modalVideoShell.classList.remove("is-horizontal");
     }
   };
 
