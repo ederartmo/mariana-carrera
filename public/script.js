@@ -4548,6 +4548,7 @@ function setupCheckoutForm() {
                 <option value="S" ${ticket.shirtSize === "S" ? "selected" : ""}>S</option>
                 <option value="M" ${ticket.shirtSize === "M" ? "selected" : ""}>M</option>
                 <option value="L" ${ticket.shirtSize === "L" ? "selected" : ""}>L</option>
+                <option value="XL" ${ticket.shirtSize === "XL" ? "selected" : ""}>XL</option>
               </select>
             </div>
           </div>
@@ -4702,7 +4703,7 @@ function setupCheckoutForm() {
     }));
 
     const hasInvalidTicket = normalizedTickets.some(
-      (ticket) => !ticket.fullName || ticket.fullName.length < 3 || !["S", "M", "L"].includes(ticket.shirtSize)
+      (ticket) => !ticket.fullName || ticket.fullName.length < 3 || !["S", "M", "L", "XL"].includes(ticket.shirtSize)
     );
 
     if (!email || !termsCheck || hasInvalidTicket) {
