@@ -13,7 +13,7 @@ begin
 	) then
 		alter table public.inscripciones
 		add constraint inscripciones_shirt_size_check
-		check (shirt_size in ('S', 'M', 'L'));
+		check (shirt_size in ('S', 'M', 'L', 'XL'));
 	end if;
 end
 $$;

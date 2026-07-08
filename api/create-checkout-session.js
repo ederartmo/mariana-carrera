@@ -11,7 +11,7 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY
 );
 
-const ALLOWED_SHIRT_SIZES = ['S', 'M', 'L'];
+const ALLOWED_SHIRT_SIZES = ['S', 'M', 'L', 'XL'];
 const MAX_TICKETS_PER_ORDER = 5;
 
 function getCookieValue(req, name) {
@@ -69,7 +69,7 @@ function normalizeTickets({ tickets, legacyShirtSize }) {
 
       if (!ALLOWED_SHIRT_SIZES.includes(shirtSize)) {
         return {
-          error: `El ticket ${i + 1} debe incluir una talla válida (S, M o L).`,
+          error: `El ticket ${i + 1} debe incluir una talla válida (S, M, L o XL).`,
         };
       }
 
