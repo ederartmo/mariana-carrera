@@ -6,7 +6,7 @@ const supabase = createClient(
 );
 
 function getAdminEmails() {
-  const raw = process.env.ADMIN_EMAILS || 'mariana@kinetichub.com.mx';
+  const raw = process.env.ADMIN_EMAILS || 'mariana@kinetichub.com.mx,gato.jijen01@gmail.com';
   return raw
     .split(',')
     .map((item) => item.trim().toLowerCase())
