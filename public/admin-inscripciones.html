@@ -222,6 +222,38 @@
     .btn-danger[hidden] {
       display: none;
     }
+    .btn-email {
+      background: transparent;
+      color: #19c88b;
+      border: 1px solid #19c88b;
+      border-radius: 6px;
+      padding: 4px 10px;
+      font-size: 0.78rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.2s;
+      white-space: nowrap;
+    }
+    .btn-email:hover {
+      background: #19c88b;
+      color: #000;
+    }
+    .btn-email:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      pointer-events: none;
+    }
+    .btn-email-sent {
+      background: transparent;
+      color: #555;
+      border: 1px solid #333;
+      border-radius: 6px;
+      padding: 4px 10px;
+      font-size: 0.78rem;
+      font-weight: 700;
+      cursor: default;
+      white-space: nowrap;
+    }
     .admin-input,
     .admin-select {
       background: #11181f;
@@ -439,7 +471,7 @@ src="https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1"
 
   <script>
     // ====================== CONFIG ======================
-    const ADMIN_EMAILS = (window.ADMIN_EMAILS || ["mariana@kinetichub.com.mx"])
+    const ADMIN_EMAILS = (window.ADMIN_EMAILS || ["mariana@kinetichub.com.mx"] || ["gato.jijen01@gmail.com"] )
       .map(email => String(email).trim().toLowerCase())
       .filter(Boolean);
     const SUPABASE_URL = "https://uycwzhlcnfijjyzkgkem.supabase.co";
@@ -472,7 +504,7 @@ src="https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1"
 
       const userEmail = session.user.email.trim().toLowerCase();
 
-      if (!ADMIN_EMAILS.includes(userEmail)) {
+      if (ADMIN_EMAILS.includes(userEmail)) {
         alert("No tienes permisos para acceder a esta página.");
         window.location.href = "perfil.html";
         return null;
@@ -482,6 +514,15 @@ src="https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1"
     }
 
     // ====================== CARGAR INSCRIPCIONES ======================
+    function buildEmailButton(row) {
+      const orderId = row.order_session_id || '';
+      if (!orderId) return '<span class="btn-email-sent">—</span>';
+      if (row.email_sent) {
+        return `<span class="btn-email-sent">✓ Enviado</span>`;
+      }
+      return `<button type="button" class="btn-email" data-resend-order="${escapeHtml(orderId)}" data-resend-name="${escapeHtml(row.full_name || '')}">Reenviar email</button>`;
+    }
+
     function buildDangerButton(row) {
       if (!adminUiState.dangerMode) {
         return `<button type="button" class="btn-danger" hidden>Eliminar</button>`;
@@ -540,6 +581,7 @@ src="https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1"
                 <th>Nombre</th>
                 <th>Comprador</th>
                 <th>Estado</th>
+                <th>Email</th>
                 <th>Monto</th>
                 <th>Talla</th>
                 <th>Bib</th>
@@ -568,6 +610,7 @@ src="https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1"
             </td>
             <td><span class="truncate" title="${escapeHtml(row.buyer_email || row.email || '')}">${row.buyer_email || row.email || '-'}</span></td>
             <td>${row.payment_status || '-'}</td>
+            <td>${row.email_sent ? '<span style="color:#19c88b;">✓ Enviado</span>' : '<span style="color:#ff6b6b;">✗ Pendiente</span>'}</td>
             <td><strong>$${parseFloat(row.amount_paid || 0).toLocaleString('es-MX')}</strong></td>
             <td style="font-weight:700; color:#ff8c42;">${row.shirt_size || '—'}</td>
             <td style="font-weight:800; color:#19c88b;">${row.bib_number ? '#' + row.bib_number : '—'}</td>
@@ -577,7 +620,12 @@ src="https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1"
             </td>
             <td>${date}</td>
             <td><span class="id-badge" title="${row.id}">${row.id}</span></td>
-            <td>${buildDangerButton(row)}</td>
+            <td>
+              <div style="display:flex; gap:6px; align-items:center; flex-wrap:wrap;">
+                ${buildEmailButton(row)}
+                ${buildDangerButton(row)}
+              </div>
+            </td>
           </tr>
         `;
       });
@@ -592,7 +640,7 @@ src="https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1"
       try {
         let query = client
           .from("inscripciones")
-          .select("id, full_name, email, buyer_email, order_session_id, ticket_index, ticket_count, event_slug, amount_paid, payment_status, bib_number, shirt_size, created_at")
+          .select("id, full_name, email, buyer_email, order_session_id, ticket_index, ticket_count, event_slug, amount_paid, payment_status, bib_number, shirt_size, email_sent, created_at")
           .order("created_at", { ascending: false });
 
         if (statusFilter !== "all") {
@@ -864,6 +912,56 @@ src="https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1"
           await loadPaidInscriptions(client, statusFilter?.value || 'paid');
         } catch (err) {
           window.alert(err.message || 'No se pudo eliminar el registro.');
+          button.disabled = false;
+          button.textContent = originalText;
+        }
+      });
+
+      contentDiv.addEventListener('click', async (event) => {
+        const button = event.target?.closest('[data-resend-order]');
+        if (!button) return;
+
+        const orderId = button.getAttribute('data-resend-order') || '';
+        const fullName = button.getAttribute('data-resend-name') || '';
+
+        if (!orderId) return;
+
+        button.disabled = true;
+        const originalText = button.textContent;
+        button.textContent = 'Enviando...';
+
+        try {
+          const { data: { session } } = await client.auth.getSession();
+          const token = session?.access_token;
+          if (!token) {
+            throw new Error('Sesión no válida, vuelve a iniciar sesión.');
+          }
+
+          const response = await fetch('/api/resend-single-confirmation', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: `Bearer ${token}`,
+            },
+            body: JSON.stringify({ orderSessionId: orderId }),
+          });
+
+          if (!response.ok) {
+            let errorMsg = 'No se pudo enviar el correo.';
+            try {
+              const errorData = await response.json();
+              errorMsg = errorData?.error || errorMsg;
+            } catch (_) {
+              errorMsg = `Error del servidor (${response.status}). Revisa que el endpoint esté desplegado.`;
+            }
+            throw new Error(errorMsg);
+          }
+
+          const data = await response.json();
+          window.alert(`Correo de confirmación reenviado a ${data.email}`);
+          await loadPaidInscriptions(client, statusFilter?.value || 'paid');
+        } catch (err) {
+          window.alert(err.message || 'Error al enviar el correo.');
           button.disabled = false;
           button.textContent = originalText;
         }
