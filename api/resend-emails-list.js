@@ -46,7 +46,8 @@ module.exports = async function handler(req, res) {
       return res.status(500).json({ error: error.message || 'Error al consultar Resend.' });
     }
 
-    const emails = (data || []).map(e => ({
+    const rawList = data?.data || data || [];
+    const emails = (Array.isArray(rawList) ? rawList : []).map(e => ({
       id: e.id,
       to: Array.isArray(e.to) ? e.to.join(', ') : (e.to || ''),
       from: e.from || '',
