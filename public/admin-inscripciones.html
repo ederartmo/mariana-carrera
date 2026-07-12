@@ -813,12 +813,6 @@ src="https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1"
     // ====================== TRANSFERENCIAS MANUALES ======================
     const MAX_MANUAL_TICKETS = 5;
     let manualTickets = [{ fullName: '', shirtSize: '' }];
-      return String(value || '')
-        .replaceAll('&', '&amp;')
-        .replaceAll('<', '&lt;')
-        .replaceAll('>', '&gt;')
-        .replaceAll('"', '&quot;');
-    }
 
     function renderManualTickets() {
       const wrap = document.getElementById('manualTickets');
