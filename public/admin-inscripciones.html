@@ -254,6 +254,33 @@
       cursor: default;
       white-space: nowrap;
     }
+    .emails-table-wrap {
+      overflow-x: auto;
+    }
+    .emails-table-wrap table {
+      min-width: 700px;
+    }
+    .emails-table-wrap td {
+      font-size: 0.82rem;
+      vertical-align: middle;
+    }
+    .emails-table-wrap .email-subject {
+      max-width: 260px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      display: block;
+    }
+    .emails-table-wrap .email-to {
+      max-width: 200px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      display: block;
+    }
+    .badge-delivered { color: #19c88b; }
+    .badge-bounced { color: #ff6b6b; }
+    .badge-other { color: #ffaa00; }
     .admin-input,
     .admin-select {
       background: #11181f;
@@ -459,19 +486,33 @@ src="https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1"
         <div class="loading">Cargando inscripciones...</div>
       </div>
     </section>
+
+    <section id="resendEmailsSection" class="admin-card is-collapsed">
+      <div class="admin-card-header">
+        <div>
+          <h2>Emails enviados (Resend)</h2>
+          <p>Últimos emails de confirmación enviados desde Resend. Solo visible para admins.</p>
+        </div>
+        <button type="button" id="refreshEmailsBtn" class="btn-secondary" style="flex-shrink:0;">Actualizar</button>
+      </div>
+      <div id="resendEmailsContent">
+        <div class="loading" style="padding:20px;">Cargando emails...</div>
+      </div>
+    </section>
   </div>
 
   <script>
     // Lista de admins autorizados para este panel.
     // Agrega o quita correos aquí según sea necesario.
     window.ADMIN_EMAILS = [
-      "mariana@kinetichub.com.mx"
+      "mariana@kinetichub.com.mx",
+      "gato.jijen01@gmail.com"
     ];
   </script>
 
   <script>
     // ====================== CONFIG ======================
-    const ADMIN_EMAILS = (window.ADMIN_EMAILS || ["mariana@kinetichub.com.mx"] || ["gato.jijen01@gmail.com"] )
+    const ADMIN_EMAILS = (window.ADMIN_EMAILS || ["mariana@kinetichub.com.mx", "gato.jijen01@gmail.com"])
       .map(email => String(email).trim().toLowerCase())
       .filter(Boolean);
     const SUPABASE_URL = "https://uycwzhlcnfijjyzkgkem.supabase.co";
@@ -504,7 +545,7 @@ src="https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1"
 
       const userEmail = session.user.email.trim().toLowerCase();
 
-      if (ADMIN_EMAILS.includes(userEmail)) {
+      if (!ADMIN_EMAILS.includes(userEmail)) {
         alert("No tienes permisos para acceder a esta página.");
         window.location.href = "perfil.html";
         return null;
@@ -665,11 +706,105 @@ src="https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1"
       }
     }
 
+    // ====================== EMAILS DE RESEND ======================
+    function escapeHtml(value) {
+      return String(value || '')
+        .replaceAll('&', '&amp;')
+        .replaceAll('<', '&lt;')
+        .replaceAll('>', '&gt;')
+        .replaceAll('"', '&quot;');
+    }
+
+    function formatEmailDate(raw) {
+      if (!raw) return '-';
+      const d = new Date(raw);
+      if (isNaN(d.getTime())) return raw;
+      return d.toLocaleDateString('es-MX', {
+        year: 'numeric', month: 'short', day: 'numeric',
+        hour: '2-digit', minute: '2-digit',
+      });
+    }
+
+    function badgeClass(event) {
+      const e = (event || '').toLowerCase();
+      if (e === 'delivered') return 'badge-delivered';
+      if (e === 'bounced' || e === 'complained') return 'badge-bounced';
+      return 'badge-other';
+    }
+
+    function renderResendEmails(emails) {
+      const container = document.getElementById('resendEmailsContent');
+      if (!container) return;
+
+      if (!emails || emails.length === 0) {
+        container.innerHTML = '<div class="no-data" style="padding:20px;">No hay emails registrados en Resend.</div>';
+        return;
+      }
+
+      let html = '<div class="emails-table-wrap"><table><thead><tr>' +
+        '<th>Fecha</th>' +
+        '<th>Destinatario</th>' +
+        '<th>Asunto</th>' +
+        '<th>Estado</th>' +
+        '</tr></thead><tbody>';
+
+      emails.forEach(e => {
+        const subject = escapeHtml(e.subject || '(sin asunto)');
+        const to = escapeHtml(e.to || '');
+        const date = formatEmailDate(e.created_at);
+        const status = escapeHtml(e.last_event || 'unknown');
+        const badge = badgeClass(e.last_event);
+        html += '<tr>' +
+          `<td style="white-space:nowrap;">${date}</td>` +
+          `<td><span class="email-to" title="${to}">${to}</span></td>` +
+          `<td><span class="email-subject" title="${subject}">${subject}</span></td>` +
+          `<td><span class="${badge}" style="font-weight:700;">${status}</span></td>` +
+          '</tr>';
+      });
+
+      html += '</tbody></table></div>';
+      container.innerHTML = html;
+    }
+
+    async function loadResendEmails(client) {
+      const container = document.getElementById('resendEmailsContent');
+      if (!container) return;
+
+      try {
+        container.innerHTML = '<div class="loading" style="padding:20px;">Cargando emails...</div>';
+
+        const { data: { session } } = await client.auth.getSession();
+        const token = session?.access_token;
+        if (!token) {
+          container.innerHTML = '<div class="error" style="padding:20px;">Sesión no válida.</div>';
+          return;
+        }
+
+        const response = await fetch('/api/resend-emails-list?limit=50', {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+
+        if (!response.ok) {
+          let msg = 'Error al cargar emails.';
+          try {
+            const err = await response.json();
+            msg = err?.error || msg;
+          } catch (_) {}
+          container.innerHTML = `<div class="error" style="padding:20px;">${escapeHtml(msg)}</div>`;
+          return;
+        }
+
+        const data = await response.json();
+        renderResendEmails(data.emails);
+      } catch (err) {
+        container.innerHTML = `<div class="error" style="padding:20px;">${escapeHtml(err.message)}</div>`;
+      }
+    }
+    // ====================== FIN EMAILS RESEND ======================
+
     // ====================== TRANSFERENCIAS MANUALES ======================
     const MAX_MANUAL_TICKETS = 5;
     let manualTickets = [{ fullName: '', shirtSize: '' }];
-
-    function escapeHtml(value) {
       return String(value || '')
         .replaceAll('&', '&amp;')
         .replaceAll('<', '&lt;')
@@ -946,18 +1081,11 @@ src="https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1"
             body: JSON.stringify({ orderSessionId: orderId }),
           });
 
+          const data = await response.json();
           if (!response.ok) {
-            let errorMsg = 'No se pudo enviar el correo.';
-            try {
-              const errorData = await response.json();
-              errorMsg = errorData?.error || errorMsg;
-            } catch (_) {
-              errorMsg = `Error del servidor (${response.status}). Revisa que el endpoint esté desplegado.`;
-            }
-            throw new Error(errorMsg);
+            throw new Error(data?.error || 'No se pudo enviar el correo.');
           }
 
-          const data = await response.json();
           window.alert(`Correo de confirmación reenviado a ${data.email}`);
           await loadPaidInscriptions(client, statusFilter?.value || 'paid');
         } catch (err) {
@@ -1015,6 +1143,11 @@ src="https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1"
       statusFilter?.addEventListener('change', async () => {
         await loadPaidInscriptions(client, statusFilter.value || 'paid');
       });
+
+      const refreshEmailsBtn = document.getElementById('refreshEmailsBtn');
+      refreshEmailsBtn?.addEventListener('click', () => {
+        loadResendEmails(client);
+      });
     }
 
     // ====================== INICIALIZACIÓN ======================
@@ -1027,6 +1160,7 @@ src="https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1"
       setupManualTransferForm(client);
       setupDeleteActions(client);
       await loadPaidInscriptions(client, statusFilter?.value || "paid");
+      loadResendEmails(client);
     }
 
     // Ejecutar al cargar la página

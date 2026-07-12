@@ -12,7 +12,7 @@ const MAX_TICKETS_PER_ORDER = 5;
 const DEFAULT_EVENT_SLUG = 'axolote-night-run';
 
 function getAdminEmails() {
-  const raw = process.env.ADMIN_EMAILS || 'mariana@kinetichub.com.mx';
+  const raw = process.env.ADMIN_EMAILS || 'mariana@kinetichub.com.mx,gato.jijen01@gmail.com';
   return raw
     .split(',')
     .map((item) => item.trim().toLowerCase())
