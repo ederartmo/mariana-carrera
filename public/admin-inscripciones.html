@@ -506,7 +506,7 @@ src="https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1"
     // Agrega o quita correos aquí según sea necesario.
     window.ADMIN_EMAILS = [
       "mariana@kinetichub.com.mx",
-      "gato.jijen01@gmail.com"
+      "gato.jijen01@gmail.com",
     ];
   </script>
 
@@ -530,7 +530,15 @@ src="https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1"
         const script = document.createElement("script");
         script.src = "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2";
         document.head.appendChild(script);
-        await new Promise(r => script.onload = r);
+        await Promise.race([
+          new Promise(r => { script.onload = r; script.onerror = r; }),
+          new Promise(r => setTimeout(r, 10000)),
+        ]);
+      }
+
+      if (typeof window.supabase === "undefined") {
+        document.getElementById("content").innerHTML = '<div class="error">Error: No se pudo cargar la librería de Supabase. Revisa tu conexión o recarga la página.</div>';
+        return null;
       }
 
       const client = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
@@ -1152,15 +1160,25 @@ src="https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1"
 
     // ====================== INICIALIZACIÓN ======================
     async function initAdminPage() {
-      const client = await checkAdminAccess();
-      if (!client) return;
+      console.log('[Admin] initAdminPage started');
+      try {
+        const client = await checkAdminAccess();
+        if (!client) { console.log('[Admin] checkAdminAccess returned null'); return; }
+        console.log('[Admin] checkAdminAccess OK');
 
-      const statusFilter = document.getElementById("statusFilter");
-      setupDashboardControls(client);
-      setupManualTransferForm(client);
-      setupDeleteActions(client);
-      await loadPaidInscriptions(client, statusFilter?.value || "paid");
-      loadResendEmails(client);
+        const statusFilter = document.getElementById("statusFilter");
+        setupDashboardControls(client);
+        setupManualTransferForm(client);
+        setupDeleteActions(client);
+        console.log('[Admin] setup functions done, loading inscriptions...');
+        await loadPaidInscriptions(client, statusFilter?.value || "paid");
+        console.log('[Admin] loadPaidInscriptions done, loading emails...');
+        loadResendEmails(client);
+        console.log('[Admin] init complete');
+      } catch (e) {
+        console.error('[Admin] initAdminPage error:', e);
+        document.getElementById("content").innerHTML = '<div class="error">Error al inicializar: ' + escapeHtml(e.message) + '</div>';
+      }
     }
 
     // Ejecutar al cargar la página
