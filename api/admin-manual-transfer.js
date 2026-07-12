@@ -1,5 +1,6 @@
 const { createClient } = require('@supabase/supabase-js');
 const crypto = require('crypto');
+const { sendConfirmationEmail } = require('./stripe-webhook');
 
 const supabase = createClient(
   process.env.SUPABASE_URL,
@@ -170,6 +171,37 @@ module.exports = async function handler(req, res) {
       inserted.push(data);
     }
 
+    // Enviar email de confirmación al comprador
+    const safeParticipants = inserted.map(r => ({
+      fullName: r.full_name,
+      shirtSize: r.shirt_size,
+    }));
+    const participantDetails = inserted.map(r => ({
+      fullName: r.full_name,
+      shirtSize: r.shirt_size,
+      bibNumber: r.bib_number,
+    }));
+    const emailResult = await sendConfirmationEmail({
+      email: cleanBuyerEmail,
+      fullName: inserted[0].full_name,
+      primaryBibNumber: inserted[0].bib_number,
+      primaryParticipant: inserted[0],
+      amountTotal: amount,
+      safeParticipants,
+      shirtSize: inserted[0].shirt_size,
+      participantDetails,
+    });
+
+    if (emailResult.ok) {
+      await supabase
+        .from('inscripciones')
+        .update({ email_sent: true })
+        .eq('order_session_id', orderSessionId);
+      console.log(`✅ Email de confirmación enviado a ${cleanBuyerEmail} (orden manual ${orderSessionId})`);
+    } else {
+      console.error(`❌ Email NO enviado a ${cleanBuyerEmail} (orden manual ${orderSessionId}): ${emailResult.error}`);
+    }
+
     return res.status(200).json({
       ok: true,
       orderSessionId,
@@ -180,6 +212,7 @@ module.exports = async function handler(req, res) {
       ticketsCreated: inserted.length,
       tickets: inserted,
       totalAmount: amount,
+      emailSent: emailResult.ok,
     });
   } catch (error) {
     console.error('Error en admin-manual-transfer:', error);
