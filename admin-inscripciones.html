@@ -566,10 +566,8 @@ src="https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1"
     function buildEmailButton(row) {
       const orderId = row.order_session_id || '';
       if (!orderId) return '<span class="btn-email-sent">—</span>';
-      if (row.email_sent) {
-        return `<span class="btn-email-sent">✓ Enviado</span>`;
-      }
-      return `<button type="button" class="btn-email" data-resend-order="${escapeHtml(orderId)}" data-resend-name="${escapeHtml(row.full_name || '')}">Reenviar email</button>`;
+      const label = row.email_sent ? 'Reenviar email' : 'Enviar email';
+      return `<button type="button" class="btn-email" data-resend-order="${escapeHtml(orderId)}" data-resend-name="${escapeHtml(row.full_name || '')}">${label}</button>`;
     }
 
     function buildDangerButton(row) {
