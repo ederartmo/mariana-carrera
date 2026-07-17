@@ -4545,6 +4545,7 @@ function setupCheckoutForm() {
                 required
               >
                 <option value="" ${!ticket.shirtSize ? "selected" : ""} disabled>Selecciona una talla</option>
+                <option value="XS" ${ticket.shirtSize === "XS" ? "selected" : ""}>XS</option>
                 <option value="S" ${ticket.shirtSize === "S" ? "selected" : ""}>S</option>
                 <option value="M" ${ticket.shirtSize === "M" ? "selected" : ""}>M</option>
                 <option value="L" ${ticket.shirtSize === "L" ? "selected" : ""}>L</option>
@@ -4703,7 +4704,7 @@ function setupCheckoutForm() {
     }));
 
     const hasInvalidTicket = normalizedTickets.some(
-      (ticket) => !ticket.fullName || ticket.fullName.length < 3 || !["S", "M", "L", "XL"].includes(ticket.shirtSize)
+      (ticket) => !ticket.fullName || ticket.fullName.length < 3 || !["XS", "S", "M", "L", "XL"].includes(ticket.shirtSize)
     );
 
     if (!email || !termsCheck || hasInvalidTicket) {

@@ -9,7 +9,7 @@ const supabase = createClient(
   process.env.SUPABASE_URL,
   process.env.SUPABASE_SERVICE_ROLE_KEY
 );
-const ALLOWED_SHIRT_SIZES = ['S', 'M', 'L'];
+const ALLOWED_SHIRT_SIZES = ['XS', 'S', 'M', 'L', 'XL'];
 
 function normalizeParticipantName(value, fallbackLabel) {
   const normalized = String(value || '').trim().replace(/\s+/g, ' ');
