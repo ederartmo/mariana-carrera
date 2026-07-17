@@ -7,7 +7,7 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY
 );
 
-const ALLOWED_SHIRT_SIZES = ['S', 'M', 'L'];
+const ALLOWED_SHIRT_SIZES = ['XS', 'S', 'M', 'L', 'XL'];
 const MAX_TICKETS_PER_ORDER = 5;
 const DEFAULT_EVENT_SLUG = 'axolote-night-run';
 
@@ -119,7 +119,7 @@ module.exports = async function handler(req, res) {
       }
 
       if (!ALLOWED_SHIRT_SIZES.includes(shirtSize)) {
-        throw new Error(`Talla inválida en ticket ${index + 1}. Usa S, M o L.`);
+        throw new Error(`Talla inválida en ticket ${index + 1}. Usa XS, S, M, L o XL.`);
       }
 
       return { fullName, shirtSize };

@@ -847,9 +847,11 @@ src="https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1"
                 data-manual-index="${index}"
               >
                 <option value="" ${!ticket.shirtSize ? 'selected' : ''}>Selecciona</option>
+                <option value="XS" ${ticket.shirtSize === 'XS' ? 'selected' : ''}>XS</option>
                 <option value="S" ${ticket.shirtSize === 'S' ? 'selected' : ''}>S</option>
                 <option value="M" ${ticket.shirtSize === 'M' ? 'selected' : ''}>M</option>
                 <option value="L" ${ticket.shirtSize === 'L' ? 'selected' : ''}>L</option>
+                <option value="XL" ${ticket.shirtSize === 'XL' ? 'selected' : ''}>XL</option>
               </select>
             </div>
             ${removeBtn}
@@ -925,7 +927,7 @@ src="https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1"
         }));
 
         const invalidTicket = tickets.some((ticket) => (
-          ticket.fullName.length < 3 || !['S', 'M', 'L'].includes(ticket.shirtSize)
+          ticket.fullName.length < 3 || !['XS', 'S', 'M', 'L', 'XL'].includes(ticket.shirtSize)
         ));
 
         if (!buyerEmail || !buyerEmail.includes('@')) {
