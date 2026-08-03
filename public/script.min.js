@@ -1752,15 +1752,15 @@ function getAxoloteStageByDate(date = new Date()) {
   const day = fallbackDate.getDate();
 
   if (year < 2026 || (year === 2026 && month < 6) || (year === 2026 && month === 5 && day <= 31)) {
-    return { key: "early", label: "Etapa Early Bird", displayName: "Early Bird", price: 480, amount: 480, period: "Hasta 31 de mayo de 2026", isOpen: true };
+    return { key: "early", label: "Etapa Preventa", displayName: "Preventa", price: 480, amount: 480, period: "Del 1 de abril al 31 de mayo de 2026", isOpen: true };
   }
 
-  if (year === 2026 && month >= 6 && month <= 7) {
-    return { key: "regular", label: "Etapa Regular", displayName: "Regular", price: 550, amount: 550, period: "1 de junio al 31 de julio de 2026", isOpen: true };
+  if (year === 2026 && month >= 6 && month <= 8) {
+    return { key: "regular", label: "Etapa Acceso General", displayName: "Acceso General", price: 550, amount: 550, period: "1 de junio al 31 de agosto de 2026", isOpen: true };
   }
 
-  if (year === 2026 && (month === 8 || month === 9 || (month === 10 && day <= 10))) {
-    return { key: "extemporanea", label: "Etapa Extemporánea", displayName: "Extemporánea", price: 600, amount: 600, period: "1 de agosto al 10 de octubre de 2026", isOpen: true };
+  if (year === 2026 && (month === 9 || (month === 10 && day <= 15))) {
+    return { key: "extemporanea", label: "Etapa Último minuto", displayName: "Último minuto", price: 550, amount: 550, period: "1 de septiembre al 15 de octubre de 2026", isOpen: true };
   }
 
   return { key: "closed", label: "Inscripciones cerradas", displayName: "Inscripciones cerradas", price: null, amount: null, period: "Convocatoria cerrada", isOpen: false };
