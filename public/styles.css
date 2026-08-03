@@ -2217,6 +2217,13 @@ body.theme-light .hero-white-bridge {
     var(--img-banner);
 }
 
+.media-cascanueces {
+  background-image:
+    linear-gradient(145deg, rgba(12, 24, 36, 0.18), rgba(12, 24, 36, 0.48)),
+    url("assets/events/cascanueces-run/gallery/cascanueces_run.jpeg");
+  background-position: center 38%;
+}
+
 .media-trail {
   background-image:
     linear-gradient(145deg, rgba(103, 125, 104, 0.3), rgba(103, 125, 104, 0.3)),

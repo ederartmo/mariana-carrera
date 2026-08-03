@@ -393,7 +393,7 @@ async function sendConfirmationEmail({
                     <tr>
                         <td style="padding:24px 25px;text-align:center;color:#cccccc;font-size:14px;line-height:1.6;">
                             <strong style="color:#ffffff;">Guarda este correo.</strong><br>
-                            La entrega de kit ser&aacute; el <strong style="color:#ffffff;">viernes 30 de octubre de 11:00 a 17:30 hrs</strong> en Perif&eacute;rico Sur s/n, Col. Cuemanco, Alcald&iacute;a Xochimilco, CDMX.<br>
+                            La entrega de kit ser&aacute; el <strong style="color:#ffffff;">viernes 30 de octubre de 11:00 a 17:30 hrs</strong> frente al gimnasio de la Pista de Remo y Canotaje Virgilio Uribe, CDMX.<br>
                             Lleva tu identificaci&oacute;n oficial y exoneraci&oacute;n firmada ese d&iacute;a.
                         </td>
                     </tr>
