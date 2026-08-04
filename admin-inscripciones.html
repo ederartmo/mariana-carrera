@@ -423,6 +423,11 @@ src="https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1"
 
     <div class="dashboard-toolbar">
       <div class="toolbar-group">
+        <select id="eventFilter" class="admin-select">
+          <option value="all" selected>Todas las carreras</option>
+          <option value="axolote-night-run">Axolote Night Run</option>
+          <option value="cascanueces-run">Cascanueces Run</option>
+        </select>
         <select id="statusFilter" class="admin-select">
           <option value="paid" selected>Solo pagadas</option>
           <option value="all">Todos</option>
@@ -452,6 +457,13 @@ src="https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1"
       <div class="admin-card-body">
         <form id="manualTransferForm" novalidate>
           <div class="manual-grid">
+            <div>
+              <label for="manualEventSlug">Carrera</label>
+              <select id="manualEventSlug" required>
+                <option value="axolote-night-run">Axolote Night Run 2026</option>
+                <option value="cascanueces-run">Cascanueces Run 2026</option>
+              </select>
+            </div>
             <div>
               <label for="buyerEmail">Correo comprador principal</label>
               <input id="buyerEmail" type="email" placeholder="cliente@correo.com" required />
@@ -520,6 +532,7 @@ src="https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1"
     const adminUiState = {
       dangerMode: false,
       searchTerm: "",
+      eventSlug: "all",
     };
     let cachedRows = [];
     let dangerModeTimer = null;
@@ -593,9 +606,13 @@ src="https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1"
 
     function filterRows(rows) {
       const searchTerm = adminUiState.searchTerm.trim().toLowerCase();
-      if (!searchTerm) return rows;
-
       return rows.filter((row) => {
+        if (adminUiState.eventSlug !== 'all' && row.event_slug !== adminUiState.eventSlug) {
+          return false;
+        }
+
+        if (!searchTerm) return true;
+
         const haystack = [
           row.full_name,
           row.email,
@@ -626,6 +643,7 @@ src="https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1"
             <thead>
               <tr>
                 <th>Nombre</th>
+                <th>Evento</th>
                 <th>Comprador</th>
                 <th>Estado</th>
                 <th>Email</th>
@@ -648,6 +666,11 @@ src="https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1"
 
         const orderId = row.order_session_id || '';
         const ticketSummary = row.ticket_index ? `T${row.ticket_index}/${row.ticket_count || 1}` : '';
+        const eventName = row.event_slug === 'cascanueces-run'
+          ? 'Cascanueces Run'
+          : row.event_slug === 'axolote-night-run'
+            ? 'Axolote Night Run'
+            : row.event_slug || 'Sin evento';
 
         html += `
           <tr>
@@ -655,6 +678,7 @@ src="https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1"
               <span class="cell-strong">${row.full_name || '-'}</span>
               <span class="cell-muted truncate" title="${escapeHtml(row.email || '')}">${row.email || '-'}</span>
             </td>
+            <td><span class="cell-strong">${escapeHtml(eventName)}</span></td>
             <td><span class="truncate" title="${escapeHtml(row.buyer_email || row.email || '')}">${row.buyer_email || row.email || '-'}</span></td>
             <td>${row.payment_status || '-'}</td>
             <td>${row.email_sent ? '<span style="color:#19c88b;">✓ Enviado</span>' : '<span style="color:#ff6b6b;">✗ Pendiente</span>'}</td>
@@ -916,6 +940,7 @@ src="https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1"
         setFeedback('', '');
 
         const buyerEmail = String(document.getElementById('buyerEmail')?.value || '').trim().toLowerCase();
+        const eventSlug = String(document.getElementById('manualEventSlug')?.value || 'axolote-night-run');
         const totalAmount = Number(document.getElementById('totalAmount')?.value || '0');
         const transferReference = String(document.getElementById('transferReference')?.value || '').trim();
 
@@ -964,7 +989,7 @@ src="https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1"
               totalAmount,
               transferReference,
               tickets,
-              eventSlug: 'axolote-night-run',
+              eventSlug,
             }),
           });
 
@@ -1100,6 +1125,7 @@ src="https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1"
 
     function setupDashboardControls(client) {
       const statusFilter = document.getElementById('statusFilter');
+      const eventFilter = document.getElementById('eventFilter');
       const searchFilter = document.getElementById('searchFilter');
       const toggleManualPanelBtn = document.getElementById('toggleManualPanelBtn');
       const manualTransferCard = document.getElementById('manualTransferCard');
@@ -1116,6 +1142,11 @@ src="https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1"
 
       searchFilter?.addEventListener('input', () => {
         adminUiState.searchTerm = String(searchFilter.value || '');
+        renderPaidInscriptions(cachedRows);
+      });
+
+      eventFilter?.addEventListener('change', () => {
+        adminUiState.eventSlug = eventFilter.value || 'all';
         renderPaidInscriptions(cachedRows);
       });
 
