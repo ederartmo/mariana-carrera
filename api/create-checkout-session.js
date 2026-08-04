@@ -263,6 +263,7 @@ module.exports = async function handler(req, res) {
         email: cleanEmail,
         full_name: primaryTicket.fullName,
         event_slug: event.slug,
+        distance: event.distance,
         amount_paid: totalAmount,
         payment_status: 'pending',
         shirt_size: primaryTicket.shirtSize,

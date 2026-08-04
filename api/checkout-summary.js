@@ -24,7 +24,7 @@ module.exports = async function handler(req, res) {
 
     const { data, error } = await supabase
       .from('inscripciones')
-      .select('id, full_name, email, buyer_email, order_session_id, ticket_index, ticket_count, event_slug, amount_paid, payment_status, bib_number, shirt_size, created_at, stripe_session_id')
+      .select('id, full_name, email, buyer_email, order_session_id, ticket_index, ticket_count, event_slug, distance, amount_paid, payment_status, bib_number, shirt_size, created_at, stripe_session_id')
       .eq('order_session_id', sessionId)
       .order('ticket_index', { ascending: true })
       .order('created_at', { ascending: true });
@@ -49,7 +49,7 @@ module.exports = async function handler(req, res) {
     const eventSlug = data[0].event_slug || sessionMetadata.event_slug || 'axolote-night-run';
     const eventName = sessionMetadata.event_name
       || (eventSlug === 'cascanueces-run' ? 'Cascanueces Run 2026' : 'Axolote Night Run 2026');
-    const distance = String(sessionMetadata.distance || '5K').toUpperCase();
+    const distance = String(data[0].distance || sessionMetadata.distance || '5K').toUpperCase();
 
     const participants = data.map((row) => ({
       fullName: row.full_name,

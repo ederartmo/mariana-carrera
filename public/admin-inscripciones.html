@@ -465,6 +465,12 @@ src="https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1"
               </select>
             </div>
             <div>
+              <label for="manualDistance">Distancia</label>
+              <select id="manualDistance" required>
+                <option value="5K">5K</option>
+              </select>
+            </div>
+            <div>
               <label for="buyerEmail">Correo comprador principal</label>
               <input id="buyerEmail" type="email" placeholder="cliente@correo.com" required />
             </div>
@@ -619,6 +625,7 @@ src="https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1"
           row.buyer_email,
           row.order_session_id,
           row.event_slug,
+          row.distance,
           row.bib_number,
         ]
           .map((value) => String(value || '').toLowerCase())
@@ -644,6 +651,7 @@ src="https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1"
               <tr>
                 <th>Nombre</th>
                 <th>Evento</th>
+                <th>Distancia</th>
                 <th>Comprador</th>
                 <th>Estado</th>
                 <th>Email</th>
@@ -679,6 +687,7 @@ src="https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1"
               <span class="cell-muted truncate" title="${escapeHtml(row.email || '')}">${row.email || '-'}</span>
             </td>
             <td><span class="cell-strong">${escapeHtml(eventName)}</span></td>
+            <td><span class="cell-strong">${escapeHtml(row.distance || '—')}</span></td>
             <td><span class="truncate" title="${escapeHtml(row.buyer_email || row.email || '')}">${row.buyer_email || row.email || '-'}</span></td>
             <td>${row.payment_status || '-'}</td>
             <td>${row.email_sent ? '<span style="color:#19c88b;">✓ Enviado</span>' : '<span style="color:#ff6b6b;">✗ Pendiente</span>'}</td>
@@ -711,7 +720,7 @@ src="https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1"
       try {
         let query = client
           .from("inscripciones")
-          .select("id, full_name, email, buyer_email, order_session_id, ticket_index, ticket_count, event_slug, amount_paid, payment_status, bib_number, shirt_size, email_sent, created_at")
+          .select("id, full_name, email, buyer_email, order_session_id, ticket_index, ticket_count, event_slug, distance, amount_paid, payment_status, bib_number, shirt_size, email_sent, created_at")
           .order("created_at", { ascending: false });
 
         if (statusFilter !== "all") {
@@ -894,6 +903,8 @@ src="https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1"
       const feedback = document.getElementById('manualTransferFeedback');
       const saveBtn = document.getElementById('saveManualTransferBtn');
       const statusFilter = document.getElementById('statusFilter');
+      const manualEventSlug = document.getElementById('manualEventSlug');
+      const manualDistance = document.getElementById('manualDistance');
       if (!form || !ticketsWrap || !addBtn || !feedback || !saveBtn) return;
 
       const setFeedback = (message, type) => {
@@ -902,6 +913,14 @@ src="https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1"
       };
 
       renderManualTickets();
+
+      const updateManualDistances = () => {
+        if (!manualDistance) return;
+        const distances = manualEventSlug?.value === 'cascanueces-run' ? ['5K', '10K'] : ['5K'];
+        manualDistance.innerHTML = distances.map((value) => `<option value="${value}">${value}</option>`).join('');
+      };
+      manualEventSlug?.addEventListener('change', updateManualDistances);
+      updateManualDistances();
 
       addBtn.addEventListener('click', () => {
         if (manualTickets.length >= MAX_MANUAL_TICKETS) return;
@@ -941,6 +960,7 @@ src="https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1"
 
         const buyerEmail = String(document.getElementById('buyerEmail')?.value || '').trim().toLowerCase();
         const eventSlug = String(document.getElementById('manualEventSlug')?.value || 'axolote-night-run');
+        const distance = String(document.getElementById('manualDistance')?.value || '5K').toUpperCase();
         const totalAmount = Number(document.getElementById('totalAmount')?.value || '0');
         const transferReference = String(document.getElementById('transferReference')?.value || '').trim();
 
@@ -990,6 +1010,7 @@ src="https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1"
               transferReference,
               tickets,
               eventSlug,
+              distance,
             }),
           });
 

@@ -11,6 +11,10 @@ const ALLOWED_SHIRT_SIZES = ['XS', 'S', 'M', 'L', 'XL'];
 const MAX_TICKETS_PER_ORDER = 5;
 const DEFAULT_EVENT_SLUG = 'axolote-night-run';
 const ALLOWED_EVENT_SLUGS = ['axolote-night-run', 'cascanueces-run'];
+const EVENT_DISTANCES = {
+  'axolote-night-run': ['5K'],
+  'cascanueces-run': ['5K', '10K'],
+};
 
 function getAdminEmails() {
   const raw = process.env.ADMIN_EMAILS || 'mariana@kinetichub.com.mx,gato.jijen01@gmail.com';
@@ -94,6 +98,7 @@ module.exports = async function handler(req, res) {
       tickets,
       totalAmount,
       eventSlug,
+      distance,
       transferReference,
       paidAt,
     } = req.body || {};
@@ -132,6 +137,10 @@ module.exports = async function handler(req, res) {
     if (!ALLOWED_EVENT_SLUGS.includes(cleanEventSlug)) {
       return res.status(400).json({ error: 'Carrera inválida.' });
     }
+    const cleanDistance = String(distance || '5K').trim().toUpperCase();
+    if (!EVENT_DISTANCES[cleanEventSlug].includes(cleanDistance)) {
+      return res.status(400).json({ error: 'Distancia inválida para la carrera.' });
+    }
     const cleanReference = String(transferReference || '').trim().slice(0, 80);
     const amount = parseAmount(totalAmount);
 
@@ -159,6 +168,7 @@ module.exports = async function handler(req, res) {
           email: cleanBuyerEmail,
           full_name: ticket.fullName,
           event_slug: cleanEventSlug,
+          distance: cleanDistance,
           amount_paid: amountParts[i],
           payment_status: 'paid',
           shirt_size: ticket.shirtSize,
