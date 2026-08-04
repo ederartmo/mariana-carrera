@@ -10,6 +10,7 @@ const supabase = createClient(
 const ALLOWED_SHIRT_SIZES = ['XS', 'S', 'M', 'L', 'XL'];
 const MAX_TICKETS_PER_ORDER = 5;
 const DEFAULT_EVENT_SLUG = 'axolote-night-run';
+const ALLOWED_EVENT_SLUGS = ['axolote-night-run', 'cascanueces-run'];
 
 function getAdminEmails() {
   const raw = process.env.ADMIN_EMAILS || 'mariana@kinetichub.com.mx,gato.jijen01@gmail.com';
@@ -44,8 +45,10 @@ function splitAmountInCents(totalAmount, ticketCount) {
   return parts.map((cents) => Number((cents / 100).toFixed(2)));
 }
 
-async function generateNextBibNumber() {
-  const { data, error } = await supabase.rpc('get_next_bib_number');
+async function generateNextBibNumber(eventSlug) {
+  const { data, error } = await supabase.rpc('get_next_event_bib_number', {
+    p_event_slug: eventSlug,
+  });
   if (error) {
     throw new Error(`No se pudo generar bib_number: ${error.message}`);
   }
@@ -126,6 +129,9 @@ module.exports = async function handler(req, res) {
     });
 
     const cleanEventSlug = String(eventSlug || DEFAULT_EVENT_SLUG).trim() || DEFAULT_EVENT_SLUG;
+    if (!ALLOWED_EVENT_SLUGS.includes(cleanEventSlug)) {
+      return res.status(400).json({ error: 'Carrera inválida.' });
+    }
     const cleanReference = String(transferReference || '').trim().slice(0, 80);
     const amount = parseAmount(totalAmount);
 
@@ -141,7 +147,7 @@ module.exports = async function handler(req, res) {
 
     for (let i = 0; i < normalizedTickets.length; i += 1) {
       const ticket = normalizedTickets[i];
-      const bibNumber = await generateNextBibNumber();
+      const bibNumber = await generateNextBibNumber(cleanEventSlug);
       const stripeSessionId = i === 0 ? orderSessionId : `${orderSessionId}::${i + 1}`;
 
       const { data, error } = await supabase

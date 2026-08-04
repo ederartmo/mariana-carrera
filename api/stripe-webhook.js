@@ -119,8 +119,10 @@ const getRawBody = (req) => {
 
 // Función para generar el siguiente bib_number de forma atómica via RPC.
 // Requiere ejecutar desc/sql-atomic-bib-number.sql en Supabase primero.
-async function generateNextBibNumber() {
-  const { data, error } = await supabase.rpc('get_next_bib_number');
+async function generateNextBibNumber(eventSlug) {
+  const { data, error } = await supabase.rpc('get_next_event_bib_number', {
+    p_event_slug: eventSlug,
+  });
   if (error) {
     console.error("Error al generar bib_number via RPC:", error);
     // Fallback: timestamp para minimizar colisiones en caso extremo
@@ -583,7 +585,7 @@ module.exports = async (req, res) => {
 
       for (let index = 0; index < safeParticipants.length; index += 1) {
         const participant = safeParticipants[index];
-        const bibNumber = await generateNextBibNumber();
+        const bibNumber = await generateNextBibNumber(selectedEvent.slug);
         const participantSessionId = index === 0 ? sessionId : `${sessionId}::${index + 1}`;
 
         const { error: upsertError } = await supabase
@@ -799,7 +801,7 @@ module.exports = async (req, res) => {
 
       for (let index = 0; index < safeParticipants.length; index += 1) {
         const participant = safeParticipants[index];
-        const bibNumber = await generateNextBibNumber();
+        const bibNumber = await generateNextBibNumber(selectedEvent.slug);
         const participantSessionId = index === 0 ? sessionId : `${sessionId}::${index + 1}`;
 
         const { error: upsertError } = await supabase
