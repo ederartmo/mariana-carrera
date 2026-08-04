@@ -3684,6 +3684,26 @@ function setupSupabase() {
         const profileUrl = new URL(window.location.href);
         const raceParam = profileUrl.searchParams.get("race");
         const paidParam = profileUrl.searchParams.get("paid");
+        const PROFILE_EVENT_CATALOG = {
+          "axolote-night-run": {
+            name: "Axolote Night Run 2026",
+            dateLocation: "31 OCT 2026 · Pista de Canotaje, CDMX",
+            detailUrl: "axolote-night-run.html",
+            waiverUrl: "exoneracion.pdf",
+            announcementUrl: "assets/events/axolote-night-run/legal/convocatoria.pdf",
+          },
+          "cascanueces-run": {
+            name: "Cascanueces Run 2026",
+            dateLocation: "6 DIC 2026 · Bosque de San Juan de Aragón, CDMX",
+            detailUrl: "cascanueces-run.html",
+            waiverUrl: "assets/events/cascanueces-run/legal/Cascanueces%20Run1.pdf",
+            announcementUrl: "assets/events/cascanueces-run/legal/Cascanueces%20Run_convocatoria.pdf",
+          },
+        };
+
+        const getProfileEvent = (eventSlug) => (
+          PROFILE_EVENT_CATALOG[eventSlug] || PROFILE_EVENT_CATALOG["axolote-night-run"]
+        );
 
         const readPaymentState = () => localStorage.getItem(AXOLOTE_PAYMENT_STATE_KEY) || "";
         const writePaymentState = (value) => {
@@ -3816,9 +3836,47 @@ function setupSupabase() {
           racesContainer.innerHTML = `... tu HTML vacío actual ...`;
         };
 
+        const renderUserInscriptions = (inscriptions) => {
+          if (!racesContainer || !Array.isArray(inscriptions) || inscriptions.length === 0) return;
+
+          racesContainer.innerHTML = inscriptions.map((inscription) => {
+            const event = getProfileEvent(inscription.event_slug);
+            const isPaid = String(inscription.payment_status || '').toLowerCase() === 'paid';
+            const statusLabel = isPaid ? 'Inscripción pagada ✓' : 'Pendiente de pago';
+            const statusClass = isPaid ? 'is-paid' : 'is-pending';
+            const distance = inscription.distance || '5K';
+            const bibHtml = inscription.bib_number
+              ? `<p class="profile-race-meta bib-number-display" style="color:#19c88b;font-size:1.15rem;font-weight:800;margin:10px 0 0;">Número de corredor: <strong>#${escapeHtml(inscription.bib_number)}</strong></p>`
+              : '';
+
+            return `
+              <div class="profile-race-card">
+                <article class="profile-race-item">
+                  <div class="profile-race-top">
+                    <h3 class="profile-race-name">${escapeHtml(event.name)}</h3>
+                    <span class="profile-race-status ${statusClass}">${statusLabel}</span>
+                  </div>
+                  <p class="profile-race-meta">${escapeHtml(event.dateLocation)} · ${escapeHtml(distance)}</p>
+                  ${bibHtml}
+                  <div class="profile-race-actions">
+                    <a class="profile-race-detail-btn" href="${event.detailUrl}">Ver detalle del evento</a>
+                    ${isPaid ? `<button type="button" class="profile-reminder-cta profile-legal-documents-btn" data-event-slug="${escapeHtml(inscription.event_slug)}" style="background:#19c88b;color:white;border:none;">Ver documentos</button>` : ''}
+                  </div>
+                </article>
+              </div>
+            `;
+          }).join('');
+
+          racesContainer.querySelectorAll('.profile-legal-documents-btn').forEach((button) => {
+            button.addEventListener('click', () => openLegalDocumentsModal(button.dataset.eventSlug));
+          });
+        };
+
         // Función para actualizar el reminder cuando está inscrito (paid)
-        const updateReminderForPaid = () => {
+        const updateReminderForPaid = (inscription) => {
           if (!reminder) return;
+          const event = getProfileEvent(inscription?.event_slug);
+          const distance = inscription?.distance || '5K';
 
           reminder.hidden = false;   // ← Importante: quitamos el hidden
 
@@ -3826,9 +3884,9 @@ function setupSupabase() {
             <div class="container profile-reminder-inner">
               <div>
                 <p class="profile-reminder-title">Carrera Inscrita</p>
-                <p class="profile-reminder-copy">Axolote Night Run 2026 · Categoría única 5K · 31 OCT 2026</p>
+                <p class="profile-reminder-copy">${escapeHtml(event.name)} · ${escapeHtml(distance)} · ${escapeHtml(event.dateLocation)}</p>
               </div>
-              <button id="verDocumentosReminderBtn" class="profile-reminder-cta" style="background:#19c88b; color:white; border:none;">
+              <button id="verDocumentosReminderBtn" data-event-slug="${escapeHtml(inscription?.event_slug || 'axolote-night-run')}" class="profile-reminder-cta" style="background:#19c88b; color:white; border:none;">
                 Ver documentos
               </button>
             </div>
@@ -3839,16 +3897,17 @@ function setupSupabase() {
             const btn = document.getElementById("verDocumentosReminderBtn");
             const btn2 = document.getElementById("verDocumentosReminderBtn2");
             if (btn) {
-              btn.addEventListener("click", openLegalDocumentsModal);
+              btn.addEventListener("click", () => openLegalDocumentsModal(btn.dataset.eventSlug));
             }
             if (btn2) {
-              btn2.addEventListener("click", openLegalDocumentsModal);
+              btn2.addEventListener("click", () => openLegalDocumentsModal('axolote-night-run'));
             }
           }, 100);
         };
 
         // Modal de Documentos Legales
-        function openLegalDocumentsModal() {
+        function openLegalDocumentsModal(eventSlug = 'axolote-night-run') {
+          const event = getProfileEvent(eventSlug);
           let existing = document.getElementById("legalDocumentsModal");
           if (existing) existing.remove();
 
@@ -3860,11 +3919,11 @@ function setupSupabase() {
                 <p id="legalModalParagraf">Descarga la exoneración oficial para el evento, y consulta la convocatoria completa en formato PDF.</p>
                 <div class="modal-gallery" style="display: flex; flex-direction:column; gap: 16px; align-items:center; min-height: 200px; justify-content:center;">
                 <section style="display:flex;justify-content:center;align-items:center; gap: 16px; flex-wrap: wrap;">
-                  <a href="exoneracion.pdf" download class="btn"
+                  <a href="${event.waiverUrl}" download class="btn"
                     style="display: inline-block; margin: 8px 8px 8px 0; background: #19c88b; color: white; padding: 10px 20px; border-radius: 999px; text-decoration: none;">
           📄          Descargar - Exoneración
                   </a>
-                  <a href="assets/events/axolote-night-run/legal/convocatoria.pdf" target="_blank" rel="noopener noreferrer" class="btn"
+                  <a href="${event.announcementUrl}" target="_blank" rel="noopener noreferrer" class="btn"
                     style="display: inline-block; margin: 8px 8px 8px 0; background: transparent; color: #111; padding: 10px 20px; border-radius: 999px; text-decoration: none; border: 1px solid #111;">
           📄          Ver Convocatoria (PDF)
                   </a>
@@ -3924,6 +3983,7 @@ function setupSupabase() {
       event_slug, 
       amount_paid, 
       payment_status,
+      distance,
       bib_number          
     `)
             .eq("email", email)
@@ -3946,14 +4006,18 @@ function setupSupabase() {
             if (dbStatus === "paid") {
               finalState = "paid";
               writePaymentState("paid");
-              updateReminderForPaid();
+              updateReminderForPaid(inscription);
             } else {
               finalState = "pending";
               writePaymentState("pending");
             }
           }
 
-          renderRaces(finalState, bibNumber);   // ← Pasamos el bibNumber correctamente
+          if (data && data.length > 0) {
+            renderUserInscriptions(data);
+          } else {
+            renderRaces(finalState, bibNumber);
+          }
         }
 
         // Inicialización
