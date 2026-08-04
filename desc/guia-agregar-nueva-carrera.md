@@ -179,7 +179,25 @@ Notas importantes:
 
 ## 7. Configurar Stripe
 
-El checkout crea precios dinamicos con `price_data`; no hace falta crear un precio por etapa en Dashboard.
+Cascanueces usa un producto persistente y un Price por etapa en cada entorno de Stripe. Axolote y eventos sin Price IDs configurados conservan el fallback dinamico con `price_data`.
+
+Para vincular una carrera al catalogo:
+
+1. Crear un producto en Stripe Test y otro en Stripe Live.
+2. Crear un precio de pago unico en MXN por cada etapa.
+3. Guardar los Price IDs Test en variables Preview y los Price IDs Live en variables Production.
+4. Mapear cada `stage.key` al nombre de su variable dentro de `EVENT_CATALOG` en `api/create-checkout-session.js`.
+5. Validar en backend que el Price este activo y coincida en moneda y monto antes de crear Checkout.
+
+Los nombres actuales para Cascanueces son:
+
+```text
+STRIPE_CASCANUECES_PREVENTA_PRICE_ID
+STRIPE_CASCANUECES_GENERAL_PRICE_ID
+STRIPE_CASCANUECES_LAST_MINUTE_PRICE_ID
+```
+
+Nunca reutilizar un Price ID Test en Production ni uno Live en Preview.
 
 Para cupones:
 

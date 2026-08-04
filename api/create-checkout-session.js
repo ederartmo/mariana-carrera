@@ -40,6 +40,11 @@ const EVENT_CATALOG = {
     distances: ['5K', '10K'],
     defaultDistance: '5K',
     getStage: getCascanuecesStageByDate,
+    priceEnvironmentVariables: {
+      preventa: 'STRIPE_CASCANUECES_PREVENTA_PRICE_ID',
+      acceso_general: 'STRIPE_CASCANUECES_GENERAL_PRICE_ID',
+      ultimo_minuto: 'STRIPE_CASCANUECES_LAST_MINUTE_PRICE_ID',
+    },
   },
 };
 
@@ -66,6 +71,40 @@ function getCurrentStage(event) {
     label: stage.displayName || stage.label,
     amount: stage.amount,
     period: stage.period,
+  };
+}
+
+async function buildStripeLineItem(event, stage, ticketCount) {
+  const priceVariable = event.priceEnvironmentVariables?.[stage.key];
+  const configuredPriceId = priceVariable ? String(process.env[priceVariable] || '').trim() : '';
+
+  if (!configuredPriceId) {
+    return {
+      quantity: ticketCount,
+      price_data: {
+        currency: 'mxn',
+        unit_amount: Math.round(stage.amount * 100),
+        product_data: {
+          name: `${event.name} - ${stage.label}`,
+          description: `Inscripción modalidad ${event.distance} | ${stage.period} | ${ticketCount} ticket(s)`,
+        },
+      },
+    };
+  }
+
+  const price = await stripe.prices.retrieve(configuredPriceId, {
+    expand: ['product'],
+  });
+  const productIsActive = typeof price.product === 'string' || price.product?.active !== false;
+  const expectedAmount = Math.round(stage.amount * 100);
+
+  if (!price.active || !productIsActive || price.currency !== 'mxn' || price.unit_amount !== expectedAmount) {
+    throw new Error(`El precio Stripe configurado para ${event.slug}/${stage.key} no coincide con ${stage.amount} MXN.`);
+  }
+
+  return {
+    quantity: ticketCount,
+    price: configuredPriceId,
   };
 }
 
@@ -209,6 +248,7 @@ module.exports = async function handler(req, res) {
         : null;
 
     const origin = getRequestOrigin(req);
+    const lineItem = await buildStripeLineItem(event, stage, ticketCount);
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ['card'],
       mode: 'payment',
@@ -218,17 +258,7 @@ module.exports = async function handler(req, res) {
         ? { discounts: [stripeDiscount] }
         : { allow_promotion_codes: true }),
       customer_email: cleanEmail,
-      line_items: [{
-        quantity: ticketCount,
-        price_data: {
-          currency: 'mxn',
-          unit_amount: Math.round(stage.amount * 100),
-          product_data: {
-            name: `${event.name} - ${stage.label}`,
-            description: `Inscripción modalidad ${event.distance} | ${stage.period} | ${ticketCount} ticket(s)`
-          }
-        }
-      }],
+      line_items: [lineItem],
       success_url: `${origin}/succes.html?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${origin}/checkout.html?event=${encodeURIComponent(event.slug)}&distance=${encodeURIComponent(event.distance)}`,
       metadata: {
