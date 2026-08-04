@@ -4446,6 +4446,10 @@ function setupCheckoutForm() {
   const finalTotalPrice = document.getElementById("finalTotalPrice");
   let tickets = [{ fullName: "", shirtSize: "" }];
   let promoState = null;
+  const checkoutSelection = window.KineticHubCheckoutSelection || {
+    eventSlug: "axolote-night-run",
+    distance: "5K",
+  };
 
   if (!ticketsList || !addTicketBtn || !stagePriceEl || !totalPriceEl || !ticketCountLabel) return;
 
@@ -4604,6 +4608,7 @@ function setupCheckoutForm() {
         body: JSON.stringify({
           promoCode,
           ticketCount: tickets.length,
+          eventSlug: checkoutSelection.eventSlug,
         }),
       });
 
@@ -4753,6 +4758,8 @@ function setupCheckoutForm() {
           tickets: normalizedTickets,
           promoCode,
           metaEventId: initiateCheckoutEventId,
+          eventSlug: checkoutSelection.eventSlug,
+          distance: checkoutSelection.distance,
         }),
       });
 

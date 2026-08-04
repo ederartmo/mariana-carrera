@@ -10,6 +10,28 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY
 );
 const ALLOWED_SHIRT_SIZES = ['XS', 'S', 'M', 'L', 'XL'];
+const EVENT_CATALOG = {
+  'axolote-night-run': {
+    slug: 'axolote-night-run',
+    name: 'Axolote Night Run 2026',
+    defaultDistance: '5K',
+    kitDelivery: 'viernes 30 de octubre de 11:00 a 17:30 hrs frente al gimnasio de la Pista de Remo y Canotaje Virgilio Uribe, CDMX',
+    waiverUrl: 'https://www.kinetichub.com.mx/exoneracion.pdf',
+  },
+  'cascanueces-run': {
+    slug: 'cascanueces-run',
+    name: 'Cascanueces Run 2026',
+    defaultDistance: '5K',
+    kitDelivery: 'viernes 4 de diciembre de 11:00 a 17:30 hrs en el Huerto Educativo del Bosque de San Juan de Aragón, CDMX',
+    waiverUrl: 'https://www.kinetichub.com.mx/assets/events/cascanueces-run/legal/Cascanueces%20Run1.pdf',
+  },
+};
+
+function resolveEventFromMetadata(metadata = {}) {
+  const event = EVENT_CATALOG[metadata.event_slug] || EVENT_CATALOG['axolote-night-run'];
+  const distance = String(metadata.distance || event.defaultDistance).trim().toUpperCase();
+  return { ...event, distance };
+}
 
 function normalizeParticipantName(value, fallbackLabel) {
   const normalized = String(value || '').trim().replace(/\s+/g, ' ');
@@ -295,14 +317,17 @@ async function sendConfirmationEmail({
   safeParticipants,
   shirtSize,
   participantDetails,
+  eventSlug,
+  distance,
 }) {
+  const selectedEvent = resolveEventFromMetadata({ event_slug: eventSlug, distance });
   const bibStr = String(primaryBibNumber || '').padStart(3, '0');
   const displayShirt = ALLOWED_SHIRT_SIZES.includes(shirtSize) ? shirtSize : 'Por confirmar';
   try {
     await resend.emails.send({
       from: 'Kinetic Hub <no-reply@kinetichub.com.mx>',
       to: email,
-      subject: `\u00a1${fullName}, ya est\u00e1s inscrito en Axolote Night Run 2026! \ud83c\udf89`,
+      subject: `\u00a1${fullName}, ya est\u00e1s inscrito en ${selectedEvent.name}! \ud83c\udf89`,
       html: `
             <!DOCTYPE html>
 <html lang="es">
@@ -354,7 +379,11 @@ async function sendConfirmationEmail({
                             <table width="100%" cellpadding="0" cellspacing="0" border="0">
                                 <tr>
                                     <td style="padding:10px 0;border-bottom:1px solid #333;color:#aaaaaa;font-size:14px;">Evento</td>
-                                    <td style="padding:10px 0;border-bottom:1px solid #333;color:#ffffff;font-weight:600;font-size:14px;text-align:right;">Axolote Night Run 2026</td>
+                                    <td style="padding:10px 0;border-bottom:1px solid #333;color:#ffffff;font-weight:600;font-size:14px;text-align:right;">${escapeHtml(selectedEvent.name)}</td>
+                                  </tr>
+                                  <tr>
+                                    <td style="padding:10px 0;border-bottom:1px solid #333;color:#aaaaaa;font-size:14px;">Distancia</td>
+                                    <td style="padding:10px 0;border-bottom:1px solid #333;color:#ffffff;font-weight:600;font-size:14px;text-align:right;">${escapeHtml(selectedEvent.distance)}</td>
                                 </tr>
                                 <tr>
                                     <td style="padding:10px 0;border-bottom:1px solid #333;color:#aaaaaa;font-size:14px;">Nombre</td>
@@ -393,7 +422,7 @@ async function sendConfirmationEmail({
                     <tr>
                         <td style="padding:24px 25px;text-align:center;color:#cccccc;font-size:14px;line-height:1.6;">
                             <strong style="color:#ffffff;">Guarda este correo.</strong><br>
-                            La entrega de kit ser&aacute; el <strong style="color:#ffffff;">viernes 30 de octubre de 11:00 a 17:30 hrs</strong> frente al gimnasio de la Pista de Remo y Canotaje Virgilio Uribe, CDMX.<br>
+                            La entrega de kit ser&aacute; el <strong style="color:#ffffff;">${escapeHtml(selectedEvent.kitDelivery)}</strong>.<br>
                             Lleva tu identificaci&oacute;n oficial y exoneraci&oacute;n firmada ese d&iacute;a.
                         </td>
                     </tr>
@@ -401,7 +430,7 @@ async function sendConfirmationEmail({
                     <!-- BOT\u00d3N -->
                     <tr>
                         <td style="padding:0 25px 30px 25px;text-align:center;">
-                            <a href="https://www.kinetichub.com.mx/exoneracion.pdf"
+                            <a href="${selectedEvent.waiverUrl}"
                                style="display:inline-block;background-color:#19c88b;color:#000000;padding:13px 28px;border-radius:999px;text-decoration:none;font-weight:bold;font-size:14px;">
                                 \ud83d\udcc4 Hoja 1 - Exoneraci\u00f3n
                             </a>
@@ -411,7 +440,7 @@ async function sendConfirmationEmail({
                     <!-- FOOTER -->
                     <tr>
                         <td style="background-color:#0a0a0a;padding:25px;text-align:center;font-size:13px;color:#777777;">
-                            <p style="margin:0 0 6px 0;">Kinetic Hub \u2022 Axolote Night Run 2026</p>
+                            <p style="margin:0 0 6px 0;">Kinetic Hub \u2022 ${escapeHtml(selectedEvent.name)}</p>
                             <p style="margin:0;">Si tienes alguna duda, responde este correo o escr\u00edbenos a <a href="mailto:hola@kinetichub.com.mx" style="color:#00f5ff;text-decoration:none;">hola@kinetichub.com.mx</a></p>
                         </td>
                     </tr>
@@ -499,6 +528,7 @@ module.exports = async (req, res) => {
   // ==================== CHECKOUT SESSION COMPLETED ====================
   if (event.type === 'checkout.session.completed') {
     const session = event.data.object;
+    const selectedEvent = resolveEventFromMetadata(session.metadata);
 
     const email = session.customer_email || session.customer_details?.email;
     const fullName = session.customer_details?.name || "Atleta";
@@ -522,7 +552,7 @@ module.exports = async (req, res) => {
         buyer_email: null,
         email: null,
         full_name: primaryParticipant.fullName || fullName.trim(),
-        event_slug: 'axolote-night-run',
+        event_slug: selectedEvent.slug,
         amount_paid: amountTotal,
         payment_status: 'paid_no_email',
         shirt_size: null,
@@ -564,7 +594,7 @@ module.exports = async (req, res) => {
             buyer_email: cleanEmail,
             email: cleanEmail,
             full_name: participant.fullName,
-            event_slug: 'axolote-night-run',
+            event_slug: selectedEvent.slug,
             amount_paid: amountPerTicket,
             payment_status: 'paid',
             shirt_size: participant.shirtSize,
@@ -600,6 +630,8 @@ module.exports = async (req, res) => {
         safeParticipants,
         shirtSize,
         participantDetails,
+        eventSlug: selectedEvent.slug,
+        distance: selectedEvent.distance,
       });
 
       if (emailResult.ok) {
@@ -624,7 +656,7 @@ module.exports = async (req, res) => {
         customData: {
           currency: 'MXN',
           value: amountTotal,
-          content_name: 'Axolote Night Run 2026',
+          content_name: `${selectedEvent.name} - ${selectedEvent.distance}`,
           content_type: 'product',
         },
         eventSourceUrl: 'https://www.kinetichub.com.mx/succes.html',
@@ -687,6 +719,7 @@ module.exports = async (req, res) => {
   // ==================== CHECKOUT SESSION ASYNC PAYMENT SUCCEEDED ====================
   if (event.type === 'checkout.session.async_payment_succeeded') {
     const session = event.data.object;
+    const selectedEvent = resolveEventFromMetadata(session.metadata);
     const email = session.customer_email || session.customer_details?.email;
     const fullName = session.customer_details?.name || 'Atleta';
     const sessionId = session.id;
@@ -708,7 +741,7 @@ module.exports = async (req, res) => {
         buyer_email: null,
         email: null,
         full_name: primaryParticipant.fullName || fullName.trim(),
-        event_slug: 'axolote-night-run',
+        event_slug: selectedEvent.slug,
         amount_paid: amountTotal,
         payment_status: 'paid_no_email',
         shirt_size: null,
@@ -777,7 +810,7 @@ module.exports = async (req, res) => {
             buyer_email: cleanEmail,
             email: cleanEmail,
             full_name: participant.fullName,
-            event_slug: 'axolote-night-run',
+            event_slug: selectedEvent.slug,
             amount_paid: amountPerTicket,
             payment_status: 'paid',
             shirt_size: participant.shirtSize,
@@ -813,6 +846,8 @@ module.exports = async (req, res) => {
         safeParticipants,
         shirtSize,
         participantDetails,
+        eventSlug: selectedEvent.slug,
+        distance: selectedEvent.distance,
       });
 
       if (emailResult.ok) {
@@ -837,7 +872,7 @@ module.exports = async (req, res) => {
         customData: {
           currency: 'MXN',
           value: amountTotal,
-          content_name: 'Axolote Night Run 2026',
+          content_name: `${selectedEvent.name} - ${selectedEvent.distance}`,
           content_type: 'product',
         },
         eventSourceUrl: 'https://www.kinetichub.com.mx/succes.html',

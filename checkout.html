@@ -506,17 +506,20 @@ src="https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1"
                   <strong>1</strong> Tu evento
                 </h2>
                 <div class="event-info-card">
-                  <picture>
-                    <source srcset="assets/home/banners/banner.avif" type="image/avif" />
-                    <source srcset="assets/home/banners/banner.webp" type="image/webp" />
-                    <img src="assets/home/banners/banner.png" alt="Axolote Night Run" loading="lazy" decoding="async" />
-                  </picture>
+                  <img id="checkoutEventImage" src="assets/home/banners/banner.avif" alt="Axolote Night Run" loading="lazy" decoding="async" />
                   <div class="event-info-content">
-                    <h3>Axolote Night Run</h3>
-                    <p>🏃 Distancia: 5K</p>
-                    <p>📅 31 OCT 2026 · 18:00 H</p>
-                    <p>📍 Pista de Remo y Canotaje Virgilio Uribe, CDMX</p>
+                    <h3 id="checkoutEventName">Axolote Night Run</h3>
+                    <p id="checkoutEventDistance">Distancia: 5K</p>
+                    <p id="checkoutEventDate">31 OCT 2026 · 18:00 H</p>
+                    <p id="checkoutEventLocation">Pista de Remo y Canotaje Virgilio Uribe, CDMX</p>
                   </div>
+                </div>
+                <div class="checkout-form-grid" id="distanceField" hidden>
+                  <label for="eventDistance">Selecciona tu distancia <span class="required-mark">*</span></label>
+                  <select id="eventDistance" name="eventDistance">
+                    <option value="5K">5K</option>
+                    <option value="10K">10K</option>
+                  </select>
                 </div>
               </div>
               <div class="checkout-section">
@@ -579,8 +582,8 @@ src="https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1"
 
               <div>
                 <div class="summary-item">
-                  <span>Axolote Night Run</span>
-                  <strong>5K</strong>
+                  <span id="summaryEventName">Axolote Night Run</span>
+                  <strong id="summaryDistance">5K</strong>
                 </div>
                 <div class="summary-item">
                   <span id="stageLabel">Etapa Regular</span>
@@ -626,7 +629,7 @@ src="https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1"
                 <button type="submit" style="padding:1rem 0rem 1rem 0rem" class="btn-checkout-submit">
                   Continuar al pago
                 </button>
-                <a href="axolote-night-run.html" class="btn-continue-shopping">
+                <a id="checkoutReturnLink" href="axolote-night-run.html" class="btn-continue-shopping">
                   Volver al evento
                 </a>
               </div>
@@ -684,13 +687,73 @@ src="https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1"
     </footer>
 
     <script src="axolote-stage-config.js?v=__ASSET_VERSION__"></script>
+    <script src="cascanueces-stage-config.js?v=__ASSET_VERSION__"></script>
     <script src="script.min.js?v=__ASSET_VERSION__"></script>
     <script>
+      const checkoutParams = new URLSearchParams(window.location.search);
+      const checkoutEventSlug = checkoutParams.get('event') === 'cascanueces-run'
+        ? 'cascanueces-run'
+        : 'axolote-night-run';
+      const requestedDistance = String(checkoutParams.get('distance') || '5K').toUpperCase();
+      const checkoutEvent = checkoutEventSlug === 'cascanueces-run'
+        ? {
+            name: 'Cascanueces Run',
+            image: 'assets/events/cascanueces-run/gallery/cascanueces_run.jpeg',
+            date: '6 DIC 2026 · 08:00 H',
+            location: 'Bosque de San Juan de Aragón, CDMX',
+            returnUrl: 'cascanueces-run.html',
+            distance: ['5K', '10K'].includes(requestedDistance) ? requestedDistance : '5K',
+            stageProvider: window.KineticHubCascanuecesStageConfig,
+          }
+        : {
+            name: 'Axolote Night Run',
+            image: 'assets/home/banners/banner.avif',
+            date: '31 OCT 2026 · 18:00 H',
+            location: 'Pista de Remo y Canotaje Virgilio Uribe, CDMX',
+            returnUrl: 'axolote-night-run.html',
+            distance: '5K',
+            stageProvider: window.KineticHubStageConfig,
+          };
+
+      window.KineticHubCheckoutSelection = {
+        eventSlug: checkoutEventSlug,
+        get distance() {
+          return document.getElementById('eventDistance')?.value || checkoutEvent.distance;
+        },
+      };
+
+      function updateCheckoutEventUI() {
+        const distanceField = document.getElementById('distanceField');
+        const distanceSelect = document.getElementById('eventDistance');
+        const eventImage = document.getElementById('checkoutEventImage');
+        if (eventImage) {
+          eventImage.src = checkoutEvent.image;
+          eventImage.alt = checkoutEvent.name;
+        }
+        document.getElementById('checkoutEventName').textContent = checkoutEvent.name;
+        document.getElementById('checkoutEventDate').textContent = checkoutEvent.date;
+        document.getElementById('checkoutEventLocation').textContent = checkoutEvent.location;
+        document.getElementById('summaryEventName').textContent = checkoutEvent.name;
+        document.getElementById('checkoutReturnLink').href = checkoutEvent.returnUrl;
+        if (distanceField) distanceField.hidden = checkoutEventSlug !== 'cascanueces-run';
+        if (distanceSelect) distanceSelect.value = checkoutEvent.distance;
+
+        const updateDistance = () => {
+          const distance = distanceSelect?.value || checkoutEvent.distance;
+          document.getElementById('checkoutEventDistance').textContent = `Distancia: ${distance}`;
+          document.getElementById('summaryDistance').textContent = distance;
+        };
+        distanceSelect?.addEventListener('change', updateDistance);
+        updateDistance();
+      }
+
       // Detectar etapa actual y actualizar UI dinámicamente
       function updateStageOnCheckout() {
-        const stageProvider = window.KineticHubStageConfig;
+        const stageProvider = checkoutEvent.stageProvider;
         const stageData = stageProvider && typeof stageProvider.getAxoloteStageByDate === 'function'
           ? stageProvider.getAxoloteStageByDate(new Date())
+          : stageProvider && typeof stageProvider.getCascanuecesStageByDate === 'function'
+            ? stageProvider.getCascanuecesStageByDate(new Date())
           : null;
 
         let stageName = 'Etapa Regular';
@@ -730,10 +793,12 @@ src="https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1"
       }
 
       // Ejecutar cuando el DOM esté listo
-      document.addEventListener('DOMContentLoaded', updateStageOnCheckout);
+      document.addEventListener('DOMContentLoaded', () => {
+        updateCheckoutEventUI();
+        updateStageOnCheckout();
+      });
       
       // También ejecutar inmediatamente si el script carga tarde
-      updateStageOnCheckout();
     </script>
   </body>
 </html>

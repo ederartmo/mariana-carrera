@@ -1,4 +1,5 @@
 const { createClient } = require('@supabase/supabase-js');
+const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 
 const supabase = createClient(
   process.env.SUPABASE_URL,
@@ -37,6 +38,19 @@ module.exports = async function handler(req, res) {
       return res.status(404).json({ error: 'No se encontró la compra' });
     }
 
+    let sessionMetadata = {};
+    try {
+      const stripeSession = await stripe.checkout.sessions.retrieve(sessionId);
+      sessionMetadata = stripeSession.metadata || {};
+    } catch (stripeError) {
+      console.warn(`No se pudo recuperar metadata Stripe para ${sessionId}:`, stripeError.message);
+    }
+
+    const eventSlug = data[0].event_slug || sessionMetadata.event_slug || 'axolote-night-run';
+    const eventName = sessionMetadata.event_name
+      || (eventSlug === 'cascanueces-run' ? 'Cascanueces Run 2026' : 'Axolote Night Run 2026');
+    const distance = String(sessionMetadata.distance || '5K').toUpperCase();
+
     const participants = data.map((row) => ({
       fullName: row.full_name,
       bibNumber: row.bib_number,
@@ -52,6 +66,9 @@ module.exports = async function handler(req, res) {
       email: data[0].buyer_email || data[0].email || '',
       ticketCount: data[0].ticket_count || data.length,
       amountPaid: Number(totalAmount.toFixed(2)),
+      eventSlug,
+      eventName,
+      distance,
       participants,
     });
   } catch (error) {

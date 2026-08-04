@@ -12,7 +12,7 @@
   <link
     href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Sora:wght@500;600;700;800&display=swap"
     rel="stylesheet" />
-  <link rel="stylesheet" href="styles.min.css?v=1785787700899" />
+  <link rel="stylesheet" href="styles.min.css?v=1785858234021" />
   <link rel="icon" type="image/png" href="assets/brand/icon.png" />
 <!-- Meta Pixel Code -->
 <script>
@@ -88,6 +88,22 @@ src="https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1"
             })
             .then((summary) => {
               const participants = Array.isArray(summary.participants) ? summary.participants : [];
+              const eventSlug = summary.eventSlug || 'axolote-night-run';
+              const eventName = summary.eventName || 'Axolote Night Run 2026';
+              const distance = summary.distance || '5K';
+              const raceParam = eventSlug === 'cascanueces-run' ? 'cascanueces' : 'axolote';
+              const eventConfirmation = document.getElementById('eventConfirmation');
+              const waiverLink = document.getElementById('waiverLink');
+
+              if (eventConfirmation) {
+                eventConfirmation.textContent = `${eventName} · ${distance}`;
+              }
+              if (waiverLink && eventSlug === 'cascanueces-run') {
+                waiverLink.href = 'assets/events/cascanueces-run/legal/Cascanueces%20Run1.pdf';
+              }
+
+              const checkoutEmail = (localStorage.getItem(CHECKOUT_EMAIL_KEY) || '').trim().toLowerCase();
+              configureProfileLink(checkoutEmail, raceParam);
 
               if (participants.length === 0) {
                 return;
@@ -127,11 +143,18 @@ src="https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1"
         }
 
         const checkoutEmail = (localStorage.getItem(CHECKOUT_EMAIL_KEY) || '').trim().toLowerCase();
+        configureProfileLink(checkoutEmail, 'axolote');
+      } else {
+        window.location.href = "index.html";
+      }
+    }
+
+    function configureProfileLink(checkoutEmail, raceParam) {
         const completeProfileLink = document.getElementById('completeProfileLink');
         if (completeProfileLink) {
           const profileTarget = checkoutEmail
-            ? `/perfil.html?race=axolote&paid=1&checkoutEmail=${encodeURIComponent(checkoutEmail)}`
-            : '/perfil.html?race=axolote&paid=1';
+            ? `/perfil.html?race=${encodeURIComponent(raceParam)}&paid=1&checkoutEmail=${encodeURIComponent(checkoutEmail)}`
+            : `/perfil.html?race=${encodeURIComponent(raceParam)}&paid=1`;
 
           const loginUrl = new URL('/auth.html', window.location.origin);
           loginUrl.searchParams.set('mode', 'login');
@@ -141,7 +164,7 @@ src="https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1"
           }
 
           // Prevenir lapso de sesión vieja: cierra cualquier sesión activa antes de navegar
-          completeProfileLink.addEventListener('click', async (e) => {
+          completeProfileLink.onclick = async (e) => {
             e.preventDefault();
             try {
               if (typeof window.supabase !== "undefined") {
@@ -160,17 +183,8 @@ src="https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1"
             }
             
             window.location.href = loginUrl.toString();
-          });
+          };
         }
-
-        // Limpiar la URL (opcional, para que quede más limpia)
-        // PERO: Mantener sessionId en localStorage para persistencia en refresh
-        window.history.replaceState({}, document.title, window.location.pathname);
-
-        console.log('✅ Pago confirmado - Session ID:', sessionId);
-      } else {
-        window.location.href = "index.html";
-      }
     }
 
     // Ejecutar cuando cargue la página
@@ -188,7 +202,7 @@ src="https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1"
 
       <h1 style="font-family: 'Sora', sans-serif; font-size: 2rem; margin: 0 0 16px;">¡Inscripción Confirmada!</h1>
       <p style="font-size: 1.1rem; color: #374151; margin-bottom: 32px;">
-        Gracias por tu pago. Ya estás inscrito en <strong>Axolote Night Run 2026</strong>.
+        Gracias por tu pago. Ya estás inscrito en <strong id="eventConfirmation">tu carrera</strong>.
       </p>
 
       <div
@@ -210,7 +224,7 @@ src="https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1"
         style="display:flex; justify-content: center; align-items: center;flex-direction: column;background: #f8faf9; border-radius: 12px; padding: 24px; margin-bottom: 32px; text-align: left;">
         <h3 style="margin: 0 0 16px; color: #19c88b;">📋 Descarga tu documento para la carrera</h3>
         <p style="margin: 0 0 12px;">Imprime esta hoja, fírmala y llévala el día del evento:</p>
-        <a href="exoneracion.pdf" download class="btn"
+        <a id="waiverLink" href="exoneracion.pdf" download class="btn"
           style="display: inline-block; margin: 8px 8px 8px 0; background: #19c88b; color: white; padding: 12px 24px; border-radius: 999px; text-decoration: none;">
           📄 Exoneración oficial
         </a>
