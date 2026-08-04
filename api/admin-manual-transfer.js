@@ -190,6 +190,7 @@ module.exports = async function handler(req, res) {
       safeParticipants,
       shirtSize: inserted[0].shirt_size,
       participantDetails,
+      eventSlug: cleanEventSlug,
     });
 
     if (emailResult.ok) {

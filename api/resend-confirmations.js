@@ -125,6 +125,7 @@ async function sendForAllPaid() {
         safeParticipants,
         shirtSize,
         participantDetails,
+        eventSlug: records[0].event_slug,
       });
 
       if (result?.ok) {

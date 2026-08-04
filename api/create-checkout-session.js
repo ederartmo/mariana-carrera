@@ -5,6 +5,7 @@ const crypto = require('crypto');
 const { trackMetaEvent } = require('./_meta-capi');
 const { resolvePromotionCode } = require('./_stripe-promo');
 const { getAxoloteStageByDate } = require('../axolote-stage-config');
+const { getCascanuecesStageByDate } = require('../cascanueces-stage-config');
 
 const supabase = createClient(
   process.env.SUPABASE_URL,
@@ -27,8 +28,34 @@ function getCookieValue(req, name) {
   return '';
 }
 
-function getCurrentStage() {
-  const stage = getAxoloteStageByDate(new Date());
+const EVENT_CATALOG = {
+  'axolote-night-run': {
+    name: 'Axolote Night Run 2026',
+    distances: ['5K'],
+    defaultDistance: '5K',
+    getStage: getAxoloteStageByDate,
+  },
+  'cascanueces-run': {
+    name: 'Cascanueces Run 2026',
+    distances: ['5K', '10K'],
+    defaultDistance: '5K',
+    getStage: getCascanuecesStageByDate,
+  },
+};
+
+function resolveEventSelection(eventSlug, distance) {
+  const cleanSlug = String(eventSlug || 'axolote-night-run').trim().toLowerCase();
+  const event = EVENT_CATALOG[cleanSlug];
+  if (!event) return null;
+
+  const cleanDistance = String(distance || event.defaultDistance).trim().toUpperCase();
+  if (!event.distances.includes(cleanDistance)) return null;
+
+  return { ...event, slug: cleanSlug, distance: cleanDistance };
+}
+
+function getCurrentStage(event) {
+  const stage = event.getStage(new Date());
 
   if (!stage?.isOpen) {
     return null;
@@ -36,10 +63,23 @@ function getCurrentStage() {
 
   return {
     key: stage.key,
-    label: stage.displayName,
+    label: stage.displayName || stage.label,
     amount: stage.amount,
     period: stage.period,
   };
+}
+
+function getRequestOrigin(req) {
+  if (process.env.VERCEL_URL) {
+    return `https://${process.env.VERCEL_URL}`;
+  }
+
+  const host = String(req.headers.host || '').trim();
+  if (host.startsWith('localhost') || host.startsWith('127.0.0.1')) {
+    return `http://${host}`;
+  }
+
+  return 'https://www.kinetichub.com.mx';
 }
 
 function normalizeFullName(value) {
@@ -107,8 +147,13 @@ module.exports = async function handler(req, res) {
   }
 
   try {
-    const { email, buyerEmail, shirtSize, tickets, metaEventId, promoCode } = req.body;
+    const { email, buyerEmail, shirtSize, tickets, metaEventId, promoCode, eventSlug, distance } = req.body;
     const rawEmail = buyerEmail || email;
+    const event = resolveEventSelection(eventSlug, distance);
+
+    if (!event) {
+      return res.status(400).json({ error: 'El evento o la distancia seleccionada no son válidos.' });
+    }
 
     if (!rawEmail || typeof rawEmail !== 'string' || !rawEmail.includes('@')) {
       return res.status(400).json({ 
@@ -136,7 +181,7 @@ module.exports = async function handler(req, res) {
         : `ic_${crypto.randomUUID()}`;
     console.log(`🔄 Checkout para: ${cleanEmail} | tickets=${ticketCount}`);
 
-    const stage = getCurrentStage();
+    const stage = getCurrentStage(event);
     if (!stage) {
       return res.status(400).json({ 
         error: 'Las inscripciones están cerradas.' 
@@ -163,6 +208,7 @@ module.exports = async function handler(req, res) {
         ? { coupon: promoResolution.couponId }
         : null;
 
+    const origin = getRequestOrigin(req);
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ['card'],
       mode: 'payment',
@@ -178,15 +224,17 @@ module.exports = async function handler(req, res) {
           currency: 'mxn',
           unit_amount: Math.round(stage.amount * 100),
           product_data: {
-            name: `Axolote Night Run 2026 - ${stage.label}`,
-            description: `Inscripción modalidad 5K | ${stage.period} | ${ticketCount} ticket(s)`
+            name: `${event.name} - ${stage.label}`,
+            description: `Inscripción modalidad ${event.distance} | ${stage.period} | ${ticketCount} ticket(s)`
           }
         }
       }],
-      success_url: 'https://www.kinetichub.com.mx/succes.html?v=20260508&session_id={CHECKOUT_SESSION_ID}',
-      cancel_url: 'https://www.kinetichub.com.mx/checkout.html',
+      success_url: `${origin}/succes.html?session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${origin}/checkout.html?event=${encodeURIComponent(event.slug)}&distance=${encodeURIComponent(event.distance)}`,
       metadata: {
-        event_slug: 'axolote-night-run',
+        event_slug: event.slug,
+        event_name: event.name,
+        distance: event.distance,
         user_email: cleanEmail,
         buyer_email: cleanEmail,
         stage_key: stage.key,
@@ -214,7 +262,7 @@ module.exports = async function handler(req, res) {
         buyer_email: cleanEmail,
         email: cleanEmail,
         full_name: primaryTicket.fullName,
-        event_slug: 'axolote-night-run',
+        event_slug: event.slug,
         amount_paid: totalAmount,
         payment_status: 'pending',
         shirt_size: primaryTicket.shirtSize,
@@ -227,6 +275,9 @@ module.exports = async function handler(req, res) {
 
     if (pendingUpsertError) {
       console.error('❌ Error guardando inscripción pending:', pendingUpsertError);
+      await stripe.checkout.sessions.expire(session.id).catch((expireError) => {
+        console.error(`❌ No se pudo expirar la sesión ${session.id}:`, expireError.message);
+      });
       return res.status(500).json({
         error: 'No se pudo preparar tu inscripción. Inténtalo de nuevo.',
       });
@@ -247,7 +298,7 @@ module.exports = async function handler(req, res) {
       customData: {
         currency: 'MXN',
         value: totalAmount,
-        content_name: `Axolote Night Run 2026 - ${stage.label}`,
+        content_name: `${event.name} - ${event.distance} - ${stage.label}`,
         content_type: 'product',
       },
       testEventCode: process.env.META_TEST_EVENT_CODE,
