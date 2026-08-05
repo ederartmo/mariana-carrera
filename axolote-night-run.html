@@ -1090,7 +1090,7 @@ fbq('init', '917340277990899');
 fbq('track', 'PageView');
 </script>
 </head>
-  <body data-event-page>
+  <body data-event-page data-event-landing-page>
 <noscript><img height="1" width="1" style="display:none"
 src="https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1"
 /></noscript>
@@ -1123,7 +1123,7 @@ src="https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1"
       </div>
     </header>
 
-    <main>
+    <main id="eventLandingRoot" aria-live="polite">
       <section class="container">
         <header class="event-detail-hero axolote-hero reveal">
           <div class="ax-hero-copy">
@@ -1343,8 +1343,8 @@ src="https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1"
                   </svg>
                 </div>
                 <div>
-                  <h2 class="ax-section-title">Flyer oficial, kit y premios del evento</h2>
-                  <p class="ax-section-copy">Además del visual oficial, aquí puedes ver parte de lo que más emociona a quienes se registran: playera conmemorativa, medalla finisher y premiación especial.</p>
+                  <h2 class="ax-section-title">Vive la experiencia antes de correrla</h2>
+                  <p class="ax-section-copy">Conoce el ambiente, la comunidad, el kit y los recuerdos que forman parte de Axolote Night Run antes de llegar a la línea de salida.</p>
                 </div>
               </div>
               <div class="ax-visual-strip">
@@ -1392,6 +1392,43 @@ src="https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1"
                 </article>
               </div>
             </article>
+
+            <section class="cl-section ax-participant-checklist" aria-labelledby="axChecklistTitle">
+              <div class="cl-head">
+                <div class="cl-head-copy">
+                  <p class="cl-eyebrow">Checklist del participante</p>
+                  <h2 class="cl-title" id="axChecklistTitle">Llega listo a la noche de carrera</h2>
+                  <p class="cl-desc">Consulta el estado de los pasos esenciales antes de recoger tu kit y llegar a la salida.</p>
+                </div>
+                <a class="cl-link" href="assets/events/axolote-night-run/legal/convocatoria.pdf" target="_blank" rel="noopener noreferrer">Ver convocatoria</a>
+              </div>
+              <div class="cl-grid">
+                <article class="cl-card reveal" id="cl-card-payment">
+                  <div class="cl-card-top"><div class="cl-num cl-num-orange">1</div><span class="cl-badge cl-badge-orange" id="cl-payment-badge">Pendiente</span></div>
+                  <h3 class="cl-card-title" id="cl-payment-title">Realiza tu pago</h3>
+                  <p class="cl-card-desc" id="cl-payment-desc">Confirma tu inscripción y asegura tu lugar en la carrera.</p>
+                  <a class="cl-btn cl-btn-orange" id="cl-payment-btn" href="checkout.html">Realizar pago</a>
+                </article>
+                <article class="cl-card reveal" id="cl-card-profile">
+                  <div class="cl-card-top"><div class="cl-num cl-num-orange">2</div><span class="cl-badge cl-badge-orange">Pendiente</span></div>
+                  <h3 class="cl-card-title">Completa tu perfil</h3>
+                  <p class="cl-card-desc">Mantén actualizados tus datos personales y contacto de emergencia.</p>
+                  <a class="cl-btn cl-btn-orange" href="perfil.html">Completar perfil</a>
+                </article>
+                <article class="cl-card reveal">
+                  <div class="cl-card-top"><div class="cl-num cl-num-orange">3</div><span class="cl-badge cl-badge-orange">Documento</span></div>
+                  <h3 class="cl-card-title">Revisa la convocatoria</h3>
+                  <p class="cl-card-desc">Consulta requisitos, horarios y lineamientos antes de la entrega de kit.</p>
+                  <a class="cl-btn cl-btn-outline-orange" href="assets/events/axolote-night-run/legal/convocatoria.pdf" target="_blank" rel="noopener noreferrer">Abrir convocatoria</a>
+                </article>
+                <article class="cl-card reveal">
+                  <div class="cl-card-top"><div class="cl-num cl-num-dark">4</div><span class="cl-badge cl-badge-dark">Paso final</span></div>
+                  <h3 class="cl-card-title">Prepárate para correr</h3>
+                  <p class="cl-card-desc">Llega con anticipación, identificación y la documentación que indique la convocatoria.</p>
+                  <a class="cl-btn cl-btn-dark" href="#registro">Ver mi inscripción</a>
+                </article>
+              </div>
+            </section>
 
             <article class="ax-section-card reveal">
               <div class="ax-page-faq home-faq">
@@ -1759,7 +1796,13 @@ src="https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1"
     </footer>
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://unpkg.com/lucide@0.468.0/dist/umd/lucide.js"></script>
     <script src="axolote-stage-config.js?v=__ASSET_VERSION__"></script>
+    <script src="axolote-event-data.js?v=__ASSET_VERSION__"></script>
+    <script src="event-landing.js?v=__ASSET_VERSION__"></script>
+    <script>
+      EventLanding({ root: "#eventLandingRoot", event: window.KineticHubAxoloteEvent });
+    </script>
     <script src="script.min.js?v=__ASSET_VERSION__"></script>
   </body>
 </html>

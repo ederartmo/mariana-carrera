@@ -166,6 +166,8 @@
       expectedPath: "assets/events/cascanueces-run/legal/mapa-recorrido.webp",
       href: null,
       cta: "Ver mapa interactivo",
+      fallbackTitle: "5K / 10K",
+      fallbackDescription: "Recorrido dentro del Bosque de San Juan de Aragón",
     },
     packetPickup: {
       title: "Entrega de paquetes",
@@ -223,6 +225,39 @@
       "--event-heading-font": "'Cormorant Garamond', Georgia, serif",
       "--event-body-font": "'Inter', sans-serif",
       "--event-accent-font": "'Cormorant Garamond', Georgia, serif",
+    },
+    decorations: {
+      snow: true,
+    },
+    copy: {
+      kit: {
+        eyebrow: "Tu kit de participante",
+        title: "Incluye todo para tu carrera",
+        subtitle: "Recibe piezas conmemorativas creadas para esta edición.",
+      },
+      modalities: {
+        eyebrow: "Cascanueces Run 2026",
+        title: "Elige tu distancia",
+        subtitle: "Corre, diviértete y vive la magia",
+      },
+      pricing: {
+        eyebrow: "Precios por etapa",
+        title: "Inscríbete en el mejor momento",
+        subtitle: "El monto final se confirma automáticamente en checkout.",
+        currentStageLabel: "Etapa vigente",
+      },
+      schedule: {
+        eyebrow: "Carrera recreativa",
+        title: "Tu día, paso a paso",
+        subtitle: "Disfruta cada momento de Cascanueces Run 2026.",
+      },
+      information: {
+        faqTitle: "Preguntas frecuentes",
+        routePendingLabel: "Mapa detallado próximamente",
+        documentsEyebrow: "Documentos oficiales",
+        documentsTitle: "Todo listo antes de correr",
+      },
+      signoff: "Nos vemos el 6 de diciembre para correr juntos la carrera más mágica del año.",
     },
     cta: {
       primary: "Inscribirme",

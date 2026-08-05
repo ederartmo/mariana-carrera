@@ -2217,14 +2217,14 @@ body.theme-light .hero-white-bridge {
 .media-axolote {
   background-image:
     linear-gradient(145deg, rgba(12, 24, 36, 0.38), rgba(12, 24, 36, 0.38)),
-    var(--img-banner);
+    url("assets/events/axolote-night-run/gallery/banner_axolote.png");
 }
 
 .media-cascanueces {
   background-image:
     linear-gradient(145deg, rgba(12, 24, 36, 0.18), rgba(12, 24, 36, 0.48)),
-    url("assets/events/cascanueces-run/gallery/cascanueces_run.jpeg");
-  background-position: center 38%;
+    url("assets/events/cascanueces-run/gallery/cascanueces_run_banner2.png");
+  background-position: center;
 }
 
 .media-trail {
@@ -8193,7 +8193,7 @@ body[data-event-landing-page] .site-header {
 }
 
 .event-landing-hero::after {
-  content: "✦  ❄  ✦";
+  content: var(--event-hero-decoration, "✦  ❄  ✦");
   position: absolute;
   top: 42px;
   right: 32px;
@@ -9315,7 +9315,7 @@ body[data-event-landing-page] .site-header {
   position: absolute;
   inset: 0;
   z-index: 0;
-  background: linear-gradient(90deg, rgba(255, 253, 249, 0.98) 0%, rgba(255, 253, 249, 0.94) 37%, rgba(255, 253, 249, 0.15) 63%, rgba(255, 253, 249, 0.02) 100%);
+  background: var(--event-hero-overlay, linear-gradient(90deg, rgba(255, 253, 249, 0.98) 0%, rgba(255, 253, 249, 0.94) 37%, rgba(255, 253, 249, 0.15) 63%, rgba(255, 253, 249, 0.02) 100%));
   pointer-events: none;
 }
 
@@ -9592,7 +9592,7 @@ body[data-event-landing-page] .site-header {
 
 .event-landing-modality-card {
   padding: 28px 28px 24px;
-  background: linear-gradient(160deg, #fffefa, #fdf8ef);
+  background: var(--event-card-background, linear-gradient(160deg, #fffefa, #fdf8ef));
 }
 
 .event-landing-modality-card h3 {
@@ -10030,3 +10030,1464 @@ body[data-event-landing-page] .site-header {
     padding: 30px 24px;
   }
 }
+
+  /* Corporate home */
+  body[data-home-page] {
+    background: #061018;
+    color: #eaf5f4;
+  }
+
+  body[data-home-page] .page-glow {
+    display: none;
+  }
+
+  .corporate-home {
+    overflow: clip;
+    background: #061018;
+  }
+
+  .corporate-hero {
+    position: relative;
+    min-height: min(720px, calc(100vh - 97px));
+    overflow: hidden;
+    isolation: isolate;
+    background: #061018;
+  }
+
+  .corporate-hero::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    background:
+      linear-gradient(90deg, rgba(4, 12, 21, 0.98) 0%, rgba(4, 12, 21, 0.83) 39%, rgba(4, 12, 21, 0.22) 69%, rgba(4, 12, 21, 0.52) 100%),
+      linear-gradient(0deg, rgba(4, 12, 21, 0.82), transparent 42%);
+  }
+
+  .corporate-hero-art {
+    position: absolute;
+    inset: 0;
+    z-index: -2;
+    background: url("assets/home/banners/nuevo_banner.jpg") center / cover no-repeat;
+    transform: scale(1.015);
+  }
+
+  .corporate-hero-art::after {
+    content: "";
+    position: absolute;
+    top: -22%;
+    right: 12%;
+    width: 34vw;
+    height: 132%;
+    border: 1px solid rgba(43, 235, 192, 0.45);
+    background: rgba(0, 208, 132, 0.08);
+    transform: rotate(35deg);
+  }
+
+  .corporate-hero-inner {
+    min-height: inherit;
+    display: flex;
+    align-items: center;
+    padding-block: 72px 62px;
+  }
+
+  .corporate-hero-copy {
+    width: min(640px, 100%);
+  }
+
+  .corporate-kicker,
+  .corporate-section-heading > p {
+    margin: 0 0 14px;
+    color: #2ce8b8;
+    font-size: 0.76rem;
+    font-weight: 800;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+  }
+
+  .corporate-kicker {
+    display: inline-flex;
+    align-items: center;
+    min-height: 30px;
+    padding: 0 12px;
+    border: 1px solid rgba(45, 232, 184, 0.44);
+    border-radius: 6px;
+    background: rgba(0, 20, 29, 0.62);
+  }
+
+  .corporate-hero h1,
+  .corporate-section-heading h2 {
+    margin: 0;
+    font-family: "Sora", sans-serif;
+    letter-spacing: 0;
+  }
+
+  .corporate-hero h1 {
+    max-width: 10ch;
+    color: #fff;
+    font-size: clamp(3rem, 6vw, 5.7rem);
+    line-height: 0.98;
+  }
+
+  .corporate-hero h1 span {
+    color: #00dca0;
+  }
+
+  .corporate-hero-copy > p:not(.corporate-kicker) {
+    max-width: 47ch;
+    margin: 20px 0 0;
+    color: #d4e1e4;
+    font-size: clamp(1rem, 1.5vw, 1.15rem);
+    line-height: 1.6;
+  }
+
+  .corporate-hero-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 14px;
+    margin-top: 28px;
+  }
+
+  .corporate-primary-action,
+  .corporate-secondary-action,
+  .corporate-event-cta {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    min-height: 56px;
+    padding: 13px 22px;
+    border-radius: 14px;
+    font-size: 0.93rem;
+    font-weight: 800;
+    text-decoration: none;
+    transition: transform 180ms ease, box-shadow 180ms ease, background 180ms ease;
+  }
+
+  .corporate-primary-action {
+    background: #00d68c;
+    color: #021c16;
+    box-shadow: 0 14px 30px rgba(0, 208, 132, 0.3);
+  }
+
+  .corporate-primary-action:hover,
+  .corporate-event-cta:hover {
+    transform: translateY(-2px);
+  }
+
+  .corporate-secondary-action {
+    border: 1px solid rgba(218, 236, 240, 0.45);
+    background: rgba(4, 15, 25, 0.28);
+    color: #f1f8fa;
+  }
+
+  .corporate-hero-actions svg,
+  .corporate-event-cta svg,
+  .corporate-content-card b svg {
+    width: 18px;
+    height: 18px;
+  }
+
+  .corporate-hero-highlights {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 12px;
+    margin: 34px 0 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .corporate-hero-highlights li {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-width: 0;
+    padding: 13px;
+    border: 1px solid rgba(64, 201, 185, 0.31);
+    border-radius: 14px;
+    background: rgba(1, 14, 23, 0.62);
+  }
+
+  .corporate-hero-highlights > li > svg {
+    flex: 0 0 auto;
+    width: 22px;
+    height: 22px;
+    padding: 5px;
+    border-radius: 8px;
+    box-sizing: content-box;
+    color: #00e8a3;
+    background: rgba(0, 208, 132, 0.15);
+  }
+
+  .corporate-hero-highlights strong,
+  .corporate-hero-highlights small {
+    display: block;
+  }
+
+  .corporate-hero-highlights strong {
+    color: #f4fbfc;
+    font-size: 0.75rem;
+  }
+
+  .corporate-hero-highlights small {
+    margin-top: 2px;
+    color: #b6c8cf;
+    font-size: 0.68rem;
+  }
+
+  .corporate-section {
+    position: relative;
+    padding: 104px 0;
+  }
+
+  .corporate-featured {
+    background: radial-gradient(circle at 50% -30%, rgba(0, 208, 132, 0.16), transparent 43%), #061018;
+  }
+
+  .corporate-section-heading {
+    max-width: 780px;
+    margin: 0 auto 42px;
+    text-align: center;
+  }
+
+  .corporate-section-heading--left {
+    margin-inline: 0;
+    text-align: left;
+  }
+
+  .corporate-section-heading h2 {
+    color: #f7fbfb;
+    font-size: clamp(2.25rem, 4vw, 4rem);
+    line-height: 1.06;
+  }
+
+  .corporate-section-heading > span {
+    display: block;
+    margin-top: 13px;
+    color: #aebfc5;
+    font-size: 1.05rem;
+  }
+
+  .corporate-events-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 22px;
+  }
+
+  .corporate-event-card {
+    overflow: hidden;
+    border: 1px solid rgba(72, 182, 174, 0.38);
+    border-radius: 16px;
+    background: #0a1721;
+    box-shadow: 0 22px 46px rgba(0, 0, 0, 0.24);
+  }
+
+  .corporate-event-card--cascanueces {
+    border-color: rgba(202, 144, 59, 0.65);
+    background: #fffaf2;
+  }
+
+  .corporate-event-media {
+    display: block;
+    height: 286px;
+    overflow: hidden;
+    background: #061018;
+  }
+
+  .corporate-event-media img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 350ms ease;
+  }
+
+  .corporate-event-card:hover .corporate-event-media img {
+    transform: scale(1.045);
+  }
+
+  .corporate-event-card--axolote .corporate-event-media img {
+    object-position: center 38%;
+  }
+
+  .corporate-event-card--cascanueces .corporate-event-media img {
+    object-position: center;
+  }
+
+  .corporate-event-content {
+    padding: 22px 24px 20px;
+  }
+
+  .corporate-event-status {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    color: #9cafbb;
+    font-size: 0.71rem;
+    font-weight: 800;
+  }
+
+  .corporate-event-status::before {
+    content: "";
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: currentColor;
+  }
+
+  .corporate-event-status.is-open {
+    color: #2cf0a1;
+  }
+
+  .corporate-event-card--cascanueces .corporate-event-status {
+    color: #78695b;
+  }
+
+  .corporate-event-card--cascanueces .corporate-event-status.is-open {
+    color: #287c59;
+  }
+
+  .corporate-event-content h3 {
+    margin: 14px 0 0;
+    color: #f5fbfd;
+    font-family: "Sora", sans-serif;
+    font-size: clamp(1.5rem, 2.4vw, 2rem);
+  }
+
+  .corporate-event-card--cascanueces .corporate-event-content h3 {
+    color: #102b45;
+    font-family: "Cormorant Garamond", Georgia, serif;
+    font-size: clamp(2rem, 3.4vw, 2.5rem);
+  }
+
+  .corporate-event-meta {
+    display: grid;
+    grid-template-columns: 0.75fr 1.4fr 0.65fr;
+    gap: 10px;
+    margin: 18px 0;
+    padding: 14px 0;
+    border-block: 1px solid rgba(186, 213, 219, 0.18);
+  }
+
+  .corporate-event-meta div {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+  }
+
+  .corporate-event-meta dt {
+    color: #61e9c5;
+  }
+
+  .corporate-event-card--cascanueces .corporate-event-meta dt {
+    color: #a66a26;
+  }
+
+  .corporate-event-meta svg {
+    width: 17px;
+    height: 17px;
+  }
+
+  .corporate-event-meta dd {
+    margin: 0;
+    color: #c8d6da;
+    font-size: 0.72rem;
+    font-weight: 600;
+    line-height: 1.35;
+  }
+
+  .corporate-event-card--cascanueces .corporate-event-meta {
+    border-color: rgba(26, 43, 69, 0.15);
+  }
+
+  .corporate-event-card--cascanueces .corporate-event-meta dd {
+    color: #3f5368;
+  }
+
+  .corporate-event-footer {
+    display: flex;
+    align-items: end;
+    justify-content: space-between;
+    gap: 20px;
+  }
+
+  .corporate-event-footer p {
+    margin: 0;
+    color: #b7c8cf;
+    font-size: 0.74rem;
+  }
+
+  .corporate-event-footer strong {
+    display: block;
+    margin-top: 2px;
+    color: #f4f9fa;
+    font-size: 1.32rem;
+  }
+
+  .corporate-event-card--cascanueces .corporate-event-footer p {
+    color: #5d6370;
+  }
+
+  .corporate-event-card--cascanueces .corporate-event-footer strong {
+    color: #a9101b;
+  }
+
+  .corporate-event-cta {
+    min-height: 46px;
+    padding: 10px 18px;
+    border-radius: 12px;
+    background: #00d68c;
+    color: #042219;
+    box-shadow: 0 10px 20px rgba(0, 208, 132, 0.2);
+  }
+
+  .corporate-event-card--cascanueces .corporate-event-cta {
+    background: #a9101b;
+    color: #fff;
+    box-shadow: 0 10px 20px rgba(169, 16, 27, 0.18);
+  }
+
+  .corporate-benefits {
+    background: #f2f8f5;
+    color: #152a2d;
+  }
+
+  .corporate-benefits .corporate-section-heading h2,
+  .corporate-steps .corporate-section-heading h2,
+  .corporate-content .corporate-section-heading h2 {
+    color: #102629;
+  }
+
+  .corporate-benefits .corporate-section-heading > span,
+  .corporate-steps .corporate-section-heading > span,
+  .corporate-content .corporate-section-heading > span {
+    color: #526b6c;
+  }
+
+  .corporate-benefit-grid {
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 14px;
+  }
+
+  .corporate-benefit-grid article {
+    min-height: 218px;
+    padding: 24px 18px;
+    border: 1px solid #c6e2d9;
+    border-radius: 8px;
+    background: #fff;
+  }
+
+  .corporate-benefit-grid svg {
+    width: 24px;
+    height: 24px;
+    padding: 10px;
+    box-sizing: content-box;
+    border-radius: 50%;
+    color: #087a5a;
+    background: #d9f6ea;
+  }
+
+  .corporate-benefit-grid h3 {
+    margin: 20px 0 0;
+    color: #183339;
+    font-family: "Sora", sans-serif;
+    font-size: 1rem;
+  }
+
+  .corporate-benefit-grid p {
+    margin: 10px 0 0;
+    color: #617576;
+    font-size: 0.84rem;
+    line-height: 1.55;
+  }
+
+  .corporate-steps {
+    background: #eaf3ef;
+  }
+
+  .corporate-steps-layout {
+    display: grid;
+    grid-template-columns: 0.8fr 1.2fr;
+    gap: 70px;
+    align-items: start;
+  }
+
+  .corporate-steps-list {
+    display: grid;
+    gap: 0;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    border-top: 1px solid #c7ddd4;
+  }
+
+  .corporate-steps-list li {
+    display: grid;
+    grid-template-columns: 62px 1fr;
+    gap: 18px;
+    padding: 19px 0;
+    border-bottom: 1px solid #c7ddd4;
+  }
+
+  .corporate-steps-list li > span {
+    color: #00a56d;
+    font-family: "Sora", sans-serif;
+    font-size: 0.86rem;
+    font-weight: 800;
+  }
+
+  .corporate-steps-list h3 {
+    margin: 0;
+    color: #183339;
+    font-family: "Sora", sans-serif;
+    font-size: 1.04rem;
+  }
+
+  .corporate-steps-list p {
+    margin: 5px 0 0;
+    color: #617576;
+    font-size: 0.9rem;
+  }
+
+  .corporate-community {
+    background: #07131d;
+  }
+
+  .corporate-gallery {
+    display: grid;
+    grid-template-columns: 1.2fr 0.8fr 0.8fr;
+    grid-template-rows: 230px 230px;
+    gap: 14px;
+  }
+
+  .corporate-gallery img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 8px;
+  }
+
+  .corporate-gallery .corporate-gallery-main {
+    grid-row: span 2;
+  }
+
+  .corporate-gallery img:nth-child(2) {
+    object-position: center;
+    background: #f8efe2;
+  }
+
+  .corporate-content {
+    background: #f7faf9;
+  }
+
+  .corporate-content-grid {
+    display: grid;
+    grid-template-columns: 1.3fr 0.7fr;
+    gap: 18px;
+  }
+
+  .corporate-content-card {
+    min-height: 265px;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    justify-content: end;
+    overflow: hidden;
+    padding: 28px;
+    border-radius: 8px;
+    color: #fff;
+    text-decoration: none;
+    background: #0d2c31;
+  }
+
+  .corporate-content-card img {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .corporate-content-card::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(0deg, rgba(3, 20, 25, 0.93), rgba(3, 20, 25, 0.12));
+  }
+
+  .corporate-content-card > * {
+    position: relative;
+    z-index: 1;
+  }
+
+  .corporate-content-card > span {
+    color: #8df5d0;
+    font-size: 0.75rem;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  .corporate-content-card h3 {
+    max-width: 23ch;
+    margin: 11px 0 0;
+    font-family: "Sora", sans-serif;
+    font-size: clamp(1.3rem, 2.4vw, 1.9rem);
+  }
+
+  .corporate-content-card b {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 17px;
+    font-size: 0.85rem;
+  }
+
+  .corporate-content-card--plain {
+    justify-content: space-between;
+    color: #eafff7;
+    background: linear-gradient(145deg, #075d48, #0a302e);
+  }
+
+  .corporate-content-card--plain::after {
+    background: linear-gradient(145deg, rgba(0, 227, 155, 0.14), transparent);
+  }
+
+  .corporate-content-card--plain > svg {
+    width: 38px;
+    height: 38px;
+    color: #74f1c5;
+  }
+
+  .corporate-faq {
+    background: #0b1721;
+  }
+
+  .corporate-faq-layout {
+    display: grid;
+    grid-template-columns: 0.8fr 1.2fr;
+    gap: 70px;
+    align-items: start;
+  }
+
+  .corporate-faq-list .home-faq-item {
+    background: transparent;
+    border-color: rgba(153, 190, 194, 0.25);
+  }
+
+  .corporate-faq-list .home-faq-question {
+    color: #effafa;
+  }
+
+  .corporate-faq-list .home-faq-answer p {
+    color: #b8c8cc;
+  }
+
+  .ax-participant-checklist {
+    padding: 0;
+    background: transparent;
+  }
+
+  .ax-participant-checklist .cl-head {
+    padding: 6px 0 22px;
+  }
+
+  .ax-participant-checklist .cl-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .open-events-widget {
+    position: fixed;
+    right: 22px;
+    bottom: 86px;
+    z-index: 46;
+    width: 56px;
+    height: 56px;
+  }
+
+  .open-events-notice {
+    position: absolute;
+    right: 0;
+    bottom: 0;
+    width: min(430px, calc(100vw - 32px));
+    padding: 18px;
+    border: 1px solid rgba(70, 231, 185, 0.54);
+    border-radius: 10px;
+    background: rgba(5, 22, 27, 0.97);
+    color: #effffb;
+    box-shadow: 0 22px 48px rgba(0, 0, 0, 0.35);
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    transform: translateY(12px) scale(0.96);
+    transform-origin: bottom right;
+    transition: opacity 220ms ease, transform 220ms ease, visibility 0s linear 220ms;
+  }
+
+  .open-events-widget.is-expanded .open-events-notice {
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+    transform: translateY(0) scale(1);
+    transition-delay: 0s;
+  }
+
+  .open-events-toggle {
+    position: relative;
+    display: grid;
+    place-items: center;
+    width: 56px;
+    height: 56px;
+    padding: 0;
+    border: 1px solid rgba(70, 231, 185, 0.54);
+    border-radius: 14px;
+    background: #0b2b31;
+    color: #6bf1c3;
+    box-shadow: 0 10px 22px rgba(0, 0, 0, 0.2);
+    cursor: pointer;
+    transition: opacity 180ms ease, transform 180ms ease, visibility 0s linear 180ms;
+  }
+
+  .open-events-widget.is-expanded .open-events-toggle {
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    transform: translateY(8px) scale(0.9);
+  }
+
+  .open-events-toggle:hover,
+  .open-events-toggle:focus-visible {
+    outline: none;
+    background: #104048;
+    box-shadow: 0 14px 28px rgba(0, 0, 0, 0.26);
+  }
+
+  .open-events-toggle svg {
+    width: 25px;
+    height: 25px;
+  }
+
+  .open-events-count {
+    position: absolute;
+    top: -6px;
+    right: -6px;
+    display: grid;
+    place-items: center;
+    min-width: 21px;
+    height: 21px;
+    padding: 0 5px;
+    border: 2px solid #061018;
+    border-radius: 999px;
+    background: #00d68c;
+    color: #05221a;
+    font-size: 0.7rem;
+    font-weight: 900;
+  }
+
+  .open-events-dismiss {
+    position: absolute;
+    top: 11px;
+    right: 11px;
+    display: grid;
+    place-items: center;
+    width: 30px;
+    height: 30px;
+    padding: 0;
+    border: 0;
+    border-radius: 50%;
+    color: #d2e1e3;
+    background: transparent;
+    cursor: pointer;
+  }
+
+  .open-events-dismiss:hover {
+    background: rgba(255, 255, 255, 0.12);
+  }
+
+  .open-events-dismiss svg,
+  .open-events-kicker svg {
+    width: 16px;
+    height: 16px;
+  }
+
+  .open-events-kicker {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 0 36px 14px 0;
+    color: #6bf1c3;
+    font-size: 0.85rem;
+    font-weight: 800;
+  }
+
+  .open-events-list {
+    display: grid;
+    gap: 10px;
+  }
+
+  .open-event-row {
+    display: grid;
+    grid-template-columns: 48px 1fr auto;
+    gap: 10px;
+    align-items: center;
+  }
+
+  .open-event-row img {
+    width: 48px;
+    height: 48px;
+    border-radius: 6px;
+    object-fit: cover;
+  }
+
+  .open-event-row strong,
+  .open-event-row small {
+    display: block;
+  }
+
+  .open-event-row strong {
+    font-size: 0.82rem;
+  }
+
+  .open-event-row small {
+    margin-top: 3px;
+    color: #afc2c7;
+    font-size: 0.67rem;
+  }
+
+  .open-event-row a {
+    color: #7bf2ca;
+    font-size: 0.72rem;
+    font-weight: 800;
+    text-decoration: none;
+  }
+
+  /* Axolote Night Run: dark event theme overrides. */
+  .event-landing[data-event-slug="axolote-night-run"] {
+    background:
+      radial-gradient(circle at 82% 16%, rgba(113, 53, 202, 0.17), transparent 25%),
+      radial-gradient(circle at 15% 42%, rgba(0, 216, 199, 0.1), transparent 28%),
+      #061018;
+  }
+
+  .event-landing[data-event-slug="axolote-night-run"] .event-landing-hero {
+    border-color: rgba(0, 216, 199, 0.32);
+    background: #071521;
+    box-shadow: 0 24px 54px rgba(0, 0, 0, 0.32);
+  }
+
+  .event-landing[data-event-slug="axolote-night-run"] .event-landing-hero::before {
+    background:
+      linear-gradient(180deg, rgba(2, 8, 18, 0.08) 0%, rgba(2, 8, 18, 0.52) 100%),
+      linear-gradient(90deg, rgba(2, 8, 18, 0.98) 0%, rgba(2, 8, 18, 0.92) 32%, rgba(2, 8, 18, 0.58) 58%, rgba(2, 8, 18, 0.1) 100%);
+  }
+
+  .event-landing[data-event-slug="axolote-night-run"] .event-landing-hero::after {
+    color: #ff58be;
+    opacity: 0.5;
+  }
+
+  .event-landing[data-event-slug="axolote-night-run"] .event-landing-hero-copy,
+  .event-landing[data-event-slug="axolote-night-run"] .event-landing-hero h1,
+  .event-landing[data-event-slug="axolote-night-run"] .event-landing-hero-meta dd,
+  .event-landing[data-event-slug="axolote-night-run"] .event-landing-hero-offer > strong {
+    color: #f6fbff;
+  }
+
+  .event-landing[data-event-slug="axolote-night-run"] .event-landing-subtitle,
+  .event-landing[data-event-slug="axolote-night-run"] .event-landing-hero-meta dd {
+    text-shadow: 0 2px 14px rgba(0, 0, 0, 0.6);
+  }
+
+  .event-landing[data-event-slug="axolote-night-run"] .event-landing-hero-meta dt,
+  .event-landing[data-event-slug="axolote-night-run"] .event-landing-title-primary {
+    color: #22e4d0;
+  }
+
+  .event-landing[data-event-slug="axolote-night-run"] .event-landing-price-stamp {
+    border-color: rgba(255, 88, 190, 0.66);
+    outline-color: rgba(0, 216, 199, 0.4);
+    background: rgba(3, 17, 29, 0.78);
+    backdrop-filter: blur(8px);
+  }
+
+  .event-landing[data-event-slug="axolote-night-run"] .event-landing-price-stamp span,
+  .event-landing[data-event-slug="axolote-night-run"] .event-landing-price-stamp b {
+    color: #f6fbff;
+  }
+
+  .event-landing[data-event-slug="axolote-night-run"] .event-landing-price-stamp b {
+    color: #27e6d2;
+  }
+
+  .event-landing[data-event-slug="axolote-night-run"] .event-landing-facts {
+    border-color: rgba(0, 216, 199, 0.26);
+    background: rgba(7, 24, 36, 0.94);
+    box-shadow: 0 18px 40px rgba(0, 0, 0, 0.34);
+  }
+
+  .event-landing[data-event-slug="axolote-night-run"] .event-landing-fact + .event-landing-fact {
+    border-color: rgba(169, 189, 202, 0.18);
+  }
+
+  .event-landing[data-event-slug="axolote-night-run"] .event-landing-fact strong,
+  .event-landing[data-event-slug="axolote-night-run"] .event-landing-section-heading h2,
+  .event-landing[data-event-slug="axolote-night-run"] .event-landing-kit-card h3,
+  .event-landing[data-event-slug="axolote-night-run"] .event-landing-experience-card h3,
+  .event-landing[data-event-slug="axolote-night-run"] .event-landing-modality-card h3,
+  .event-landing[data-event-slug="axolote-night-run"] .event-landing-info-card h2,
+  .event-landing[data-event-slug="axolote-night-run"] .event-landing-documents h2,
+  .event-landing[data-event-slug="axolote-night-run"] .event-landing-final h2,
+  .event-landing[data-event-slug="axolote-night-run"] .event-landing-timeline-item h3 {
+    color: #f6fbff;
+  }
+
+  .event-landing[data-event-slug="axolote-night-run"] .event-landing-fact small,
+  .event-landing[data-event-slug="axolote-night-run"] .event-landing-section-heading > span,
+  .event-landing[data-event-slug="axolote-night-run"] .event-landing-section-heading > p:last-child,
+  .event-landing[data-event-slug="axolote-night-run"] .event-landing-kit-card p,
+  .event-landing[data-event-slug="axolote-night-run"] .event-landing-experience-card p,
+  .event-landing[data-event-slug="axolote-night-run"] .event-landing-modality-description,
+  .event-landing[data-event-slug="axolote-night-run"] .event-landing-timeline-item p,
+  .event-landing[data-event-slug="axolote-night-run"] .event-landing-info-card p,
+  .event-landing[data-event-slug="axolote-night-run"] .event-landing-info-card small,
+  .event-landing[data-event-slug="axolote-night-run"] .event-landing-faq-list p,
+  .event-landing[data-event-slug="axolote-night-run"] .event-landing-final-copy > p {
+    color: #b6c9d5;
+  }
+
+  .event-landing[data-event-slug="axolote-night-run"] .event-landing-kit-card,
+  .event-landing[data-event-slug="axolote-night-run"] .event-landing-experience-card,
+  .event-landing[data-event-slug="axolote-night-run"] .event-landing-modality-card,
+  .event-landing[data-event-slug="axolote-night-run"] .event-landing-price-card,
+  .event-landing[data-event-slug="axolote-night-run"] .event-landing-info-card {
+    border-color: rgba(0, 216, 199, 0.22);
+    background: linear-gradient(155deg, #0d2636, #081723);
+    box-shadow: 0 14px 30px rgba(0, 0, 0, 0.18);
+  }
+
+  .event-landing[data-event-slug="axolote-night-run"] .event-landing-kit-card {
+    overflow: hidden;
+  }
+
+  .event-landing[data-event-slug="axolote-night-run"] .event-landing-kit-card > div {
+    min-height: 144px;
+    background: linear-gradient(180deg, rgba(8, 23, 35, 0.86), #081723 44%);
+  }
+
+  .event-landing[data-event-slug="axolote-night-run"] .event-landing-kit-card > div > span,
+  .event-landing[data-event-slug="axolote-night-run"] .event-landing-experience-card > div:last-child > span {
+    color: #071521;
+    border-color: rgba(0, 216, 199, 0.78);
+    background: #20e2ce;
+  }
+
+  .event-landing[data-event-slug="axolote-night-run"] .event-landing-includes {
+    display: flex;
+    flex-wrap: nowrap;
+    justify-content: space-between;
+    gap: 22px;
+    overflow-x: auto;
+    padding: 2px 0 10px;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(0, 216, 199, 0.5) transparent;
+  }
+
+  .event-landing[data-event-slug="axolote-night-run"] .event-landing-includes li {
+    flex: 0 0 auto;
+    color: #dcecf3;
+    font-weight: 650;
+    white-space: nowrap;
+  }
+
+  .event-landing[data-event-slug="axolote-night-run"] .event-landing-includes li::before {
+    color: #22e4d0;
+  }
+
+  .event-landing[data-event-slug="axolote-night-run"] .event-landing-experience {
+    border-color: rgba(0, 216, 199, 0.17);
+    background: rgba(7, 23, 35, 0.56);
+  }
+
+  .event-landing[data-event-slug="axolote-night-run"] .event-landing-experience-media {
+    display: block;
+    width: 100%;
+    height: 250px;
+    aspect-ratio: 16 / 10;
+    padding: 0;
+    object-fit: cover;
+    background: #071521;
+  }
+
+  .event-landing[data-event-slug="axolote-night-run"] .event-landing-experience-card:nth-child(2) .event-landing-experience-media {
+    object-position: center 42%;
+  }
+
+  .event-landing[data-event-slug="axolote-night-run"] .event-landing-experience-card > div:last-child {
+    background: #0b1b2a;
+  }
+
+  .event-landing[data-event-slug="axolote-night-run"] .event-landing-modalities {
+    padding-top: 96px;
+  }
+
+  .event-landing[data-event-slug="axolote-night-run"] .event-landing-modalities::before {
+    display: none;
+  }
+
+  .event-landing[data-event-slug="axolote-night-run"] .event-landing-modality-grid {
+    display: flex;
+    justify-content: center;
+    max-width: 760px;
+  }
+
+  .event-landing[data-event-slug="axolote-night-run"] .event-landing-modality-card {
+    width: min(100%, 620px);
+    text-align: center;
+  }
+
+  .event-landing[data-event-slug="axolote-night-run"] .event-landing-modality-name,
+  .event-landing[data-event-slug="axolote-night-run"] .event-landing-shoe,
+  .event-landing[data-event-slug="axolote-night-run"] .event-landing-modality-facts dt,
+  .event-landing[data-event-slug="axolote-night-run"] .event-landing-timeline-item strong,
+  .event-landing[data-event-slug="axolote-night-run"] .event-landing-timeline-item time,
+  .event-landing[data-event-slug="axolote-night-run"] .event-landing-info-card dt,
+  .event-landing[data-event-slug="axolote-night-run"] .event-landing-info-card > strong {
+    color: #26e5d1;
+  }
+
+  .event-landing[data-event-slug="axolote-night-run"] .event-landing-modality-facts dd,
+  .event-landing[data-event-slug="axolote-night-run"] .event-landing-info-card dd,
+  .event-landing[data-event-slug="axolote-night-run"] .event-landing-faq-list summary {
+    color: #e8f5fa;
+  }
+
+  .event-landing[data-event-slug="axolote-night-run"] .event-landing-pricing {
+    background: linear-gradient(180deg, rgba(7, 23, 35, 0.76), rgba(6, 16, 24, 0.9));
+  }
+
+  .event-landing[data-event-slug="axolote-night-run"] .event-landing-price-card {
+    min-height: 174px;
+  }
+
+  .event-landing[data-event-slug="axolote-night-run"] .event-landing-price-card > span {
+    color: #c8dce5;
+  }
+
+  .event-landing[data-event-slug="axolote-night-run"] .event-landing-price-card > strong {
+    color: #a96aff;
+  }
+
+  .event-landing[data-event-slug="axolote-night-run"] .event-landing-price-card > small {
+    color: #aabfc9;
+  }
+
+  .event-landing[data-event-slug="axolote-night-run"] .event-landing-price-card > b {
+    background: rgba(169, 106, 255, 0.2);
+    color: #e9ddff;
+  }
+
+  .event-landing[data-event-slug="axolote-night-run"] .event-landing-price-card.is-past {
+    border-color: rgba(130, 160, 174, 0.16);
+    opacity: 0.62;
+  }
+
+  .event-landing[data-event-slug="axolote-night-run"] .event-landing-price-card.is-past > b {
+    background: rgba(155, 172, 182, 0.12);
+    color: #b7c7ce;
+  }
+
+  .event-landing[data-event-slug="axolote-night-run"] .event-landing-price-card.is-current {
+    border-color: rgba(0, 216, 199, 0.72);
+    box-shadow: 0 14px 32px rgba(0, 216, 199, 0.14);
+  }
+
+  .event-landing[data-event-slug="axolote-night-run"] .event-landing-price-card.is-current > strong {
+    color: #21e4d0;
+  }
+
+  .event-landing[data-event-slug="axolote-night-run"] .event-landing-price-card.is-current > b {
+    background: rgba(0, 216, 199, 0.18);
+    color: #bffff6;
+  }
+
+  .event-landing[data-event-slug="axolote-night-run"] .event-landing-price-card.is-future > strong {
+    color: #ff75c7;
+  }
+
+  .event-landing[data-event-slug="axolote-night-run"] .event-landing-event-summary {
+    border-color: rgba(0, 216, 199, 0.35);
+    background: #091c2a;
+    box-shadow: 0 14px 30px rgba(0, 0, 0, 0.25);
+  }
+
+  .event-landing[data-event-slug="axolote-night-run"] .event-landing-event-summary > div + div {
+    border-color: rgba(169, 189, 202, 0.18);
+  }
+
+  .event-landing[data-event-slug="axolote-night-run"] .event-landing-event-summary span,
+  .event-landing[data-event-slug="axolote-night-run"] .event-landing-event-summary strong,
+  .event-landing[data-event-slug="axolote-night-run"] .event-landing-event-summary b {
+    color: #f2fbff;
+  }
+
+  .event-landing[data-event-slug="axolote-night-run"] .event-landing-event-summary small {
+    color: #a9bdca;
+  }
+
+  .event-landing[data-event-slug="axolote-night-run"] .event-landing-event-summary-price strong {
+    color: #21e4d0;
+  }
+
+  .event-landing[data-event-slug="axolote-night-run"] .event-landing-event-summary-price em {
+    background: #173b4c;
+    color: #bffff6;
+  }
+
+  .event-landing[data-event-slug="axolote-night-run"] .event-landing-timeline {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0;
+  }
+
+  .event-landing[data-event-slug="axolote-night-run"] .event-landing-timeline::before {
+    right: 16.66%;
+    left: 16.66%;
+    background: linear-gradient(90deg, #22e4d0, #a96aff, #ff58be);
+  }
+
+  .event-landing[data-event-slug="axolote-night-run"] .event-landing-timeline-item {
+    width: auto;
+    padding-inline: 18px;
+  }
+
+  .event-landing[data-event-slug="axolote-night-run"] .event-landing-timeline-icon {
+    border-color: rgba(0, 216, 199, 0.62);
+    background: #0b1b2a;
+    color: #22e4d0;
+  }
+
+  .event-landing[data-event-slug="axolote-night-run"] .event-landing-step {
+    background: #ff58be;
+  }
+
+  .event-landing[data-event-slug="axolote-night-run"] .event-landing-information {
+    background: #061018;
+  }
+
+  .event-landing[data-event-slug="axolote-night-run"] .event-landing-info-symbol {
+    border-color: rgba(255, 88, 190, 0.55);
+    background: rgba(255, 88, 190, 0.08);
+    color: #ff75c7;
+  }
+
+  .event-landing[data-event-slug="axolote-night-run"] .event-landing-info-card dl div + div,
+  .event-landing[data-event-slug="axolote-night-run"] .event-landing-faq-list details {
+    border-color: rgba(169, 189, 202, 0.2);
+  }
+
+  .event-landing[data-event-slug="axolote-night-run"] .event-landing-route-art {
+    border-color: rgba(0, 216, 199, 0.3);
+    background: linear-gradient(135deg, rgba(0, 216, 199, 0.1), rgba(113, 53, 202, 0.12)), #071521;
+    color: #22e4d0;
+  }
+
+  .event-landing[data-event-slug="axolote-night-run"] .event-landing-route-art small,
+  .event-landing[data-event-slug="axolote-night-run"] .event-landing-link-pending {
+    color: #a9bdca;
+  }
+
+  .event-landing[data-event-slug="axolote-night-run"] .event-landing-text-link {
+    color: #22e4d0;
+  }
+
+  .event-landing[data-event-slug="axolote-night-run"] .event-landing-documents {
+    border-color: rgba(255, 88, 190, 0.34);
+    background: linear-gradient(105deg, #0a1b2a, #0d2636);
+  }
+
+  .event-landing[data-event-slug="axolote-night-run"] .event-landing-documents .event-landing-eyebrow {
+    color: #ff75c7;
+  }
+
+  .event-landing[data-event-slug="axolote-night-run"] .event-landing-btn-primary,
+  .event-landing[data-event-slug="axolote-night-run"] .event-landing-mobile-cta a {
+    border-color: #22e4d0;
+    background: #22e4d0;
+    color: #031712;
+    box-shadow: 0 12px 24px rgba(0, 216, 199, 0.2);
+  }
+
+  .event-landing[data-event-slug="axolote-night-run"] .event-landing-btn-secondary {
+    border-color: rgba(0, 216, 199, 0.64);
+    color: #dff8ff;
+  }
+
+  .event-landing[data-event-slug="axolote-night-run"] .event-landing-final {
+    border-color: rgba(255, 88, 190, 0.42);
+    background: linear-gradient(115deg, #061018, #0b2637 56%, #16102d);
+    box-shadow: 0 18px 42px rgba(0, 0, 0, 0.32);
+  }
+
+  .event-landing[data-event-slug="axolote-night-run"] .event-landing-final-image {
+    background: #071521;
+  }
+
+  .event-landing[data-event-slug="axolote-night-run"] .event-landing-final-image img {
+    object-fit: cover;
+  }
+
+  .event-landing[data-event-slug="axolote-night-run"] .event-landing-final-copy {
+    background: transparent;
+  }
+
+  .event-landing[data-event-slug="axolote-night-run"] .event-landing-final h2 {
+    color: #f6fbff;
+  }
+
+  .event-landing[data-event-slug="axolote-night-run"] .event-landing-final h2::first-line {
+    color: #22e4d0;
+  }
+
+  .event-landing[data-event-slug="axolote-night-run"] .event-landing-final-copy > small {
+    color: #a9bdca;
+  }
+
+  @media (max-width: 760px) {
+    .event-landing[data-event-slug="axolote-night-run"] .event-landing-hero-copy {
+      width: 100%;
+    }
+
+    .event-landing[data-event-slug="axolote-night-run"] .event-landing-hero::before {
+      background: linear-gradient(180deg, rgba(2, 8, 18, 0.94) 0%, rgba(2, 8, 18, 0.75) 54%, rgba(2, 8, 18, 0.28) 100%);
+    }
+
+    .event-landing[data-event-slug="axolote-night-run"] .event-landing-includes {
+      justify-content: flex-start;
+      gap: 18px;
+      margin-inline: -12px;
+      padding-inline: 12px;
+    }
+
+    .event-landing[data-event-slug="axolote-night-run"] .event-landing-experience-media {
+      height: 225px;
+    }
+
+    .event-landing[data-event-slug="axolote-night-run"] .event-landing-modality-grid {
+      display: grid;
+      max-width: none;
+    }
+
+    .event-landing[data-event-slug="axolote-night-run"] .event-landing-modality-card {
+      width: 100%;
+    }
+
+    .event-landing[data-event-slug="axolote-night-run"] .event-landing-timeline {
+      grid-template-columns: 1fr;
+      gap: 0;
+    }
+
+    .event-landing[data-event-slug="axolote-night-run"] .event-landing-timeline::before {
+      top: 14px;
+      right: auto;
+      bottom: 14px;
+      left: 25px;
+      width: 1px;
+      height: auto;
+      background: linear-gradient(#22e4d0, #a96aff, #ff58be);
+    }
+
+    .event-landing[data-event-slug="axolote-night-run"] .event-landing-timeline-item {
+      padding-inline: 42px 0;
+    }
+
+    .event-landing[data-event-slug="axolote-night-run"] .event-landing-final-copy {
+      background: #081723;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .open-events-notice {
+      transition: none;
+    }
+  }
+
+  @media (max-width: 980px) {
+    .corporate-hero {
+      min-height: 660px;
+    }
+
+    .corporate-hero::before {
+      background: linear-gradient(90deg, rgba(4, 12, 21, 0.97) 0%, rgba(4, 12, 21, 0.8) 53%, rgba(4, 12, 21, 0.35) 100%);
+    }
+
+    .corporate-event-media {
+      height: 230px;
+    }
+
+    .corporate-event-meta {
+      grid-template-columns: 1fr;
+    }
+
+    .corporate-benefit-grid {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .corporate-steps-layout,
+    .corporate-faq-layout {
+      grid-template-columns: 1fr;
+      gap: 34px;
+    }
+  }
+
+  @media (max-width: 760px) {
+    .ax-participant-checklist .cl-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .corporate-hero {
+      min-height: 690px;
+    }
+
+    .corporate-hero-art {
+      background-position: 62% center;
+    }
+
+    .corporate-hero::before {
+      background: linear-gradient(90deg, rgba(4, 12, 21, 0.98), rgba(4, 12, 21, 0.72)), linear-gradient(0deg, rgba(4, 12, 21, 0.94), transparent 64%);
+    }
+
+    .corporate-hero-inner {
+      align-items: end;
+      padding-block: 54px 34px;
+    }
+
+    .corporate-hero h1 {
+      font-size: clamp(2.8rem, 13vw, 4rem);
+    }
+
+    .corporate-hero-copy > p:not(.corporate-kicker) {
+      font-size: 0.98rem;
+    }
+
+    .corporate-hero-actions {
+      display: grid;
+      grid-template-columns: 1fr;
+    }
+
+    .corporate-primary-action,
+    .corporate-secondary-action {
+      width: 100%;
+    }
+
+    .corporate-hero-highlights {
+      grid-template-columns: 1fr;
+      gap: 8px;
+      margin-top: 22px;
+    }
+
+    .corporate-hero-highlights li {
+      padding: 10px 12px;
+    }
+
+    .corporate-hero-highlights small {
+      display: none;
+    }
+
+    .corporate-section {
+      padding: 74px 0;
+    }
+
+    .corporate-section-heading {
+      margin-bottom: 28px;
+    }
+
+    .corporate-section-heading h2 {
+      font-size: clamp(2rem, 10vw, 2.8rem);
+    }
+
+    .corporate-section-heading > span {
+      font-size: 0.95rem;
+    }
+
+    .corporate-events-grid,
+    .corporate-content-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .corporate-event-media {
+      height: 245px;
+    }
+
+    .corporate-event-content {
+      padding: 18px;
+    }
+
+    .corporate-event-meta {
+      grid-template-columns: 1fr;
+      gap: 9px;
+    }
+
+    .corporate-event-footer {
+      align-items: center;
+    }
+
+    .corporate-event-cta {
+      min-height: 42px;
+      padding: 9px 13px;
+      font-size: 0.78rem;
+    }
+
+    .corporate-benefit-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .corporate-benefit-grid article {
+      min-height: 0;
+      padding: 18px 14px;
+    }
+
+    .corporate-benefit-grid article:last-child {
+      grid-column: span 2;
+    }
+
+    .corporate-benefit-grid h3 {
+      font-size: 0.9rem;
+    }
+
+    .corporate-benefit-grid p {
+      font-size: 0.78rem;
+    }
+
+    .corporate-gallery {
+      grid-template-columns: 1fr 1fr;
+      grid-template-rows: 210px 150px 150px;
+      gap: 8px;
+    }
+
+    .corporate-gallery .corporate-gallery-main {
+      grid-column: span 2;
+      grid-row: auto;
+    }
+
+    .corporate-gallery img:nth-child(4) {
+      display: none;
+    }
+
+    .corporate-content-card {
+      min-height: 230px;
+      padding: 22px;
+    }
+
+    .open-events-widget {
+      right: 12px;
+      bottom: 80px;
+    }
+
+    .open-events-notice {
+      width: calc(100vw - 24px);
+      max-height: min(440px, calc(100vh - 174px));
+      overflow-y: auto;
+    }
+  }
