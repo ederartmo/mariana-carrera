@@ -595,7 +595,7 @@ src="https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1"
                 </div>
                 <div class="summary-item">
                   <span>Incluye</span>
-                  <strong style="font-size: 0.85rem;">Playera + Medalla</strong>
+                  <strong id="summaryKitIncludes" style="font-size: 0.85rem;">Playera + Medalla + Morral + Sesión de maquillaje de catrina</strong>
                 </div>
               </div>
 
@@ -702,6 +702,7 @@ src="https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1"
             location: 'Bosque de San Juan de Aragón, CDMX',
             returnUrl: 'cascanueces-run.html',
             distance: ['5K', '10K'].includes(requestedDistance) ? requestedDistance : '5K',
+            kitIncludes: 'Playera + Medalla + Morral',
             stageProvider: window.KineticHubCascanuecesStageConfig,
           }
         : {
@@ -711,6 +712,7 @@ src="https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1"
             location: 'Pista de Remo y Canotaje Virgilio Uribe, CDMX',
             returnUrl: 'axolote-night-run.html',
             distance: '5K',
+            kitIncludes: 'Playera + Medalla + Morral + Sesión de maquillaje de catrina',
             stageProvider: window.KineticHubStageConfig,
           };
 
@@ -733,6 +735,7 @@ src="https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1"
         document.getElementById('checkoutEventDate').textContent = checkoutEvent.date;
         document.getElementById('checkoutEventLocation').textContent = checkoutEvent.location;
         document.getElementById('summaryEventName').textContent = checkoutEvent.name;
+        document.getElementById('summaryKitIncludes').textContent = checkoutEvent.kitIncludes;
         document.getElementById('checkoutReturnLink').href = checkoutEvent.returnUrl;
         if (distanceField) distanceField.hidden = checkoutEventSlug !== 'cascanueces-run';
         if (distanceSelect) distanceSelect.value = checkoutEvent.distance;
