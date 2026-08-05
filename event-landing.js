@@ -101,9 +101,10 @@
   }
 
   function renderKit(event) {
+    const copy = event.copy?.kit || {};
     return `
       <section class="event-landing-section event-landing-kit" id="kit-participante">
-        ${renderSectionHeading("Tu kit de participante", "Incluye todo para tu carrera", "Recibe piezas conmemorativas creadas para esta edición.")}
+        ${renderSectionHeading(copy.eyebrow || "Tu kit de participante", copy.title || "Incluye todo para tu carrera", copy.subtitle || "Recibe piezas conmemorativas creadas para esta edición.")}
         <div class="event-landing-kit-grid">
           ${event.experience.map((item, index) => `
             <article class="event-landing-kit-card reveal">
@@ -119,10 +120,31 @@
     `;
   }
 
+  function renderExperience(event) {
+    const experience = event.experienceDetails || [];
+    if (!experience.length) return "";
+
+    const copy = event.copy?.experience || {};
+    return `
+      <section class="event-landing-section event-landing-experience" id="experiencia">
+        ${renderSectionHeading(copy.eyebrow || "La experiencia", copy.title || "Más que una carrera", copy.subtitle || "Todo lo que hace especial esta edición.")}
+        <div class="event-landing-experience-grid">
+          ${experience.map((item, index) => `
+            <article class="event-landing-experience-card reveal">
+              ${renderVisual(item, "event-landing-experience-media")}
+              <div><span>0${index + 1}</span><h3>${escapeHtml(item.title)}</h3><p>${escapeHtml(item.description)}</p></div>
+            </article>
+          `).join("")}
+        </div>
+      </section>
+    `;
+  }
+
   function renderModalities(event, stage) {
+    const copy = event.copy?.modalities || {};
     return `
       <section class="event-landing-section event-landing-modalities" id="modalidades">
-        ${renderSectionHeading(`${event.name}`, "Elige tu distancia", event.subtitle)}
+        ${renderSectionHeading(copy.eyebrow || event.name, copy.title || "Elige tu distancia", copy.subtitle || event.subtitle)}
         <div class="event-landing-modality-grid">
           ${event.modalities.map((modality) => {
             const href = stage.isOpen ? checkoutUrl(event, modality.distance) : "contacto.html";
@@ -146,18 +168,27 @@
   }
 
   function renderPricing(event, currentStage) {
+    const copy = event.copy?.pricing || {};
     return `
       <section class="event-landing-pricing" id="precios">
-        ${renderSectionHeading("Precios por etapa", "Inscríbete en el mejor momento", "El monto final se confirma automáticamente en checkout.")}
+        ${renderSectionHeading(copy.eyebrow || "Precios por etapa", copy.title || "Inscríbete en el mejor momento", copy.subtitle || "El monto final se confirma automáticamente en checkout.")}
         <div class="event-landing-price-grid">
-          ${event.pricing.stages.map((stage) => {
+          ${event.pricing.stages.map((stage, index) => {
             const isCurrent = stage.key === currentStage.key;
+            const currentIndex = event.pricing.stages.findIndex((item) => item.key === currentStage.key);
+            const isPast = !isCurrent && currentIndex >= 0 && index < currentIndex;
+            const stateClass = isCurrent ? "is-current" : isPast ? "is-past" : "is-future";
+            const stateLabel = isCurrent
+              ? copy.currentStageLabel || "Etapa vigente"
+              : isPast
+                ? copy.completedStageLabel || "Finalizada"
+                : copy.futureStageLabel || "Próximamente";
             return `
-              <article class="event-landing-price-card ${isCurrent ? "is-current" : ""} reveal">
+              <article class="event-landing-price-card ${stateClass} reveal">
                 <span>${escapeHtml(stage.label)}</span>
                 <strong>${formatPrice(stage.amount, event.pricing.currency)}</strong>
                 <small>${escapeHtml(stage.period)}</small>
-                ${isCurrent ? "<b>Etapa vigente</b>" : ""}
+                ${isCurrent || event.pricing.showStageStatus ? `<b>${escapeHtml(stateLabel)}</b>` : ""}
               </article>
             `;
           }).join("")}
@@ -174,14 +205,16 @@
   }
 
   function renderSchedule(event) {
+    const copy = event.copy?.schedule || {};
+    const fallbackIcons = ["package", "map-pin", "activity", "flag", "trophy", "party-popper"];
     return `
       <section class="event-landing-section event-landing-day" id="cronograma">
-        ${renderSectionHeading("Carrera recreativa", "Tu día, paso a paso", "Disfruta cada momento de Cascanueces Run 2026.")}
+        ${renderSectionHeading(copy.eyebrow || event.name, copy.title || "Tu día, paso a paso", copy.subtitle || event.subtitle)}
         <ol class="event-landing-timeline">
           ${event.schedule.map((item) => `
             <li class="event-landing-timeline-item reveal">
               <span class="event-landing-step">${escapeHtml(item.step)}</span>
-              <div class="event-landing-timeline-icon">${icon(["package", "map-pin", "activity", "flag", "trophy", "party-popper"][Number(item.step) - 1] || "circle")}</div>
+              <div class="event-landing-timeline-icon">${icon(item.icon || fallbackIcons[Number(item.step) - 1] || "circle")}</div>
               <h3>${escapeHtml(item.title)}</h3>
               ${item.date ? `<strong>${escapeHtml(item.date)}</strong>` : ""}
               <time>${escapeHtml(item.time)}</time>
@@ -194,9 +227,11 @@
   }
 
   function renderInformation(event) {
+    const copy = event.copy?.information || {};
+    const routeMap = event.routeMap || {};
     const mapVisual = event.routeMap.image
       ? renderVisual({ image: event.routeMap.image, title: event.routeMap.title, alt: `Mapa del recorrido de ${event.name}` }, "event-landing-info-media")
-      : `<div class="event-landing-route-art event-landing-info-media" aria-label="Recorrido de ${escapeHtml(event.distances.join(" y "))}"><span>5K / 10K</span><i aria-hidden="true"></i><small>Recorrido dentro del Bosque de San Juan de Aragón</small></div>`;
+      : `<div class="event-landing-route-art event-landing-info-media" aria-label="Recorrido de ${escapeHtml(event.distances.join(" y "))}"><span>${escapeHtml(routeMap.fallbackTitle || event.distances.join(" / "))}</span><i aria-hidden="true"></i><small>${escapeHtml(routeMap.fallbackDescription || "Recorrido por confirmar")}</small></div>`;
 
     return `
       <section class="event-landing-section event-landing-information" id="informacion">
@@ -214,7 +249,7 @@
             <span class="event-landing-info-symbol">${icon("map")}</span>
             <h2>${escapeHtml(event.routeMap.title)}</h2>
             ${mapVisual}
-            ${event.routeMap.href ? `<a class="event-landing-text-link" href="${escapeHtml(event.routeMap.href)}">${escapeHtml(event.routeMap.cta)} ${icon("arrow-right")}</a>` : `<span class="event-landing-link-pending">Mapa detallado próximamente</span>`}
+            ${event.routeMap.href ? `<a class="event-landing-text-link" href="${escapeHtml(event.routeMap.href)}">${escapeHtml(event.routeMap.cta)} ${icon("arrow-right")}</a>` : `<span class="event-landing-link-pending">${escapeHtml(copy.routePendingLabel || "Mapa detallado próximamente")}</span>`}
           </article>
           <article class="event-landing-info-card reveal">
             <span class="event-landing-info-symbol">${icon("package")}</span>
@@ -226,7 +261,7 @@
           </article>
           <article class="event-landing-info-card event-landing-faq-card reveal">
             <span class="event-landing-info-symbol">${icon("circle-help")}</span>
-            <h2>Preguntas frecuentes</h2>
+            <h2>${escapeHtml(copy.faqTitle || "Preguntas frecuentes")}</h2>
             <div class="event-landing-faq-list">
               ${event.faqs.map((faq) => `
                 <details>
@@ -238,7 +273,7 @@
           </article>
         </div>
         <div class="event-landing-documents reveal">
-          <div><p class="event-landing-eyebrow">Documentos oficiales</p><h2>Todo listo antes de correr</h2></div>
+          <div><p class="event-landing-eyebrow">${escapeHtml(copy.documentsEyebrow || "Documentos oficiales")}</p><h2>${escapeHtml(copy.documentsTitle || "Todo listo antes de correr")}</h2></div>
           <div class="event-landing-document-links">
             ${event.documents.map((document) => `<a class="event-landing-btn event-landing-btn-secondary" href="${escapeHtml(document.href)}" target="_blank" rel="noopener noreferrer" ${document.download ? "download" : ""}>${icon(document.download ? "download" : "file-text")} ${escapeHtml(document.label)}</a>`).join("")}
           </div>
@@ -249,7 +284,7 @@
 
   function renderFinalCta(event, stage) {
     const href = stage.isOpen ? checkoutUrl(event, event.distances[0]) : "contacto.html";
-    const label = stage.isOpen ? "Inscribirme ahora" : event.cta.closed;
+    const label = stage.isOpen ? (event.cta.finalLabel || "Inscribirme ahora") : event.cta.closed;
 
     return `
       <section class="event-landing-final reveal" aria-labelledby="event-final-title">
@@ -298,17 +333,18 @@
     rootElement.classList.add("event-landing");
     rootElement.dataset.eventSlug = event.slug;
     rootElement.innerHTML = `
-      <div class="event-landing-snow" aria-hidden="true"></div>
+      ${event.decorations?.snow ? '<div class="event-landing-snow" aria-hidden="true"></div>' : ""}
       <div class="event-landing-container">
         ${renderHero(event, currentStage)}
         ${renderQuickFacts(event)}
         ${renderKit(event)}
+        ${renderExperience(event)}
         ${renderModalities(event, currentStage)}
         ${renderPricing(event, currentStage)}
         ${renderSchedule(event)}
         ${renderInformation(event)}
         ${renderFinalCta(event, currentStage)}
-        <p class="event-landing-signoff">Nos vemos el ${escapeHtml(event.date.label)} para correr juntos la carrera más mágica del año.</p>
+        ${event.copy?.signoff ? `<p class="event-landing-signoff">${escapeHtml(event.copy.signoff)}</p>` : ""}
       </div>
       ${renderMobileCta(event, currentStage)}
     `;
