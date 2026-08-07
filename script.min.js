@@ -4756,6 +4756,8 @@ function setupCheckoutForm() {
           tickets: normalizedTickets,
           promoCode,
           metaEventId: initiateCheckoutEventId,
+          eventSlug: window.KineticHubCheckoutSelection?.eventSlug || "axolote-night-run",
+          distance: window.KineticHubCheckoutSelection?.distance || "5K",
         }),
       });
 
