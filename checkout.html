@@ -518,7 +518,6 @@ src="https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1"
                   <label for="eventDistance">Selecciona tu distancia <span class="required-mark">*</span></label>
                   <select id="eventDistance" name="eventDistance">
                     <option value="5K">5K</option>
-                    <option value="10K">10K</option>
                   </select>
                 </div>
               </div>
@@ -738,7 +737,16 @@ src="https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1"
         document.getElementById('summaryKitIncludes').textContent = checkoutEvent.kitIncludes;
         document.getElementById('checkoutReturnLink').href = checkoutEvent.returnUrl;
         if (distanceField) distanceField.hidden = checkoutEventSlug !== 'cascanueces-run';
-        if (distanceSelect) distanceSelect.value = checkoutEvent.distance;
+        if (distanceSelect) {
+          const availableDistances = checkoutEventSlug === 'cascanueces-run' ? ['5K', '10K'] : ['5K'];
+          distanceSelect.replaceChildren(...availableDistances.map((distance) => {
+            const option = document.createElement('option');
+            option.value = distance;
+            option.textContent = distance;
+            return option;
+          }));
+          distanceSelect.value = checkoutEvent.distance;
+        }
 
         const updateDistance = () => {
           const distance = distanceSelect?.value || checkoutEvent.distance;
