@@ -243,6 +243,14 @@
       cursor: not-allowed;
       pointer-events: none;
     }
+    .btn-edit-email {
+      color: #7fb7ff;
+      border-color: #7fb7ff;
+    }
+    .btn-edit-email:hover {
+      background: #7fb7ff;
+      color: #07111f;
+    }
     .btn-email-sent {
       background: transparent;
       color: #555;
@@ -589,6 +597,23 @@ src="https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1"
       return `<button type="button" class="btn-email" data-resend-order="${escapeHtml(orderId)}" data-resend-name="${escapeHtml(row.full_name || '')}">${label}</button>`;
     }
 
+    function buildEditEmailButton(row) {
+      const orderId = row.order_session_id || '';
+      const currentEmail = row.buyer_email || row.email || '';
+      return `
+        <button
+          type="button"
+          class="btn-email btn-edit-email"
+          data-update-email-id="${row.id}"
+          data-update-email-order="${escapeHtml(orderId)}"
+          data-update-email-current="${escapeHtml(currentEmail)}"
+          data-update-email-name="${escapeHtml(row.full_name || '')}"
+        >
+          Corregir correo
+        </button>
+      `;
+    }
+
     function buildDangerButton(row) {
       if (!adminUiState.dangerMode) {
         return `<button type="button" class="btn-danger" hidden>Eliminar</button>`;
@@ -703,6 +728,7 @@ src="https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1"
             <td>
               <div style="display:flex; gap:6px; align-items:center; flex-wrap:wrap;">
                 ${buildEmailButton(row)}
+                ${buildEditEmailButton(row)}
                 ${buildDangerButton(row)}
               </div>
             </td>
@@ -752,6 +778,10 @@ src="https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1"
         .replaceAll('<', '&lt;')
         .replaceAll('>', '&gt;')
         .replaceAll('"', '&quot;');
+    }
+
+    function isValidEmail(value) {
+      return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(value || '').trim());
     }
 
     function formatEmailDate(raw) {
@@ -1138,6 +1168,68 @@ src="https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1"
           await loadPaidInscriptions(client, statusFilter?.value || 'paid');
         } catch (err) {
           window.alert(err.message || 'Error al enviar el correo.');
+          button.disabled = false;
+          button.textContent = originalText;
+        }
+      });
+
+      contentDiv.addEventListener('click', async (event) => {
+        const button = event.target?.closest('[data-update-email-id]');
+        if (!button) return;
+
+        const inscriptionId = button.getAttribute('data-update-email-id') || '';
+        const orderSessionId = button.getAttribute('data-update-email-order') || '';
+        const currentEmail = button.getAttribute('data-update-email-current') || '';
+        const fullName = button.getAttribute('data-update-email-name') || 'esta inscripción';
+        const newEmail = String(window.prompt(`Correo correcto para ${fullName}:`, currentEmail) || '')
+          .trim()
+          .toLowerCase();
+
+        if (!newEmail || newEmail === currentEmail) return;
+
+        if (!isValidEmail(newEmail)) {
+          window.alert('Ingresa un correo válido.');
+          return;
+        }
+
+        const targetLabel = orderSessionId ? `toda la orden ${orderSessionId}` : fullName;
+        if (!window.confirm(`Se cambiará el correo de ${targetLabel} a ${newEmail}. ¿Continuar?`)) {
+          return;
+        }
+
+        button.disabled = true;
+        const originalText = button.textContent;
+        button.textContent = 'Guardando...';
+
+        try {
+          const { data: { session } } = await client.auth.getSession();
+          const token = session?.access_token;
+          if (!token) {
+            throw new Error('Sesión no válida, vuelve a iniciar sesión.');
+          }
+
+          const response = await fetch('/api/admin-update-inscription-email', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: `Bearer ${token}`,
+            },
+            body: JSON.stringify({
+              inscriptionId,
+              orderSessionId,
+              email: newEmail,
+            }),
+          });
+
+          const data = await response.json();
+          if (!response.ok) {
+            throw new Error(data?.error || 'No se pudo actualizar el correo.');
+          }
+
+          window.alert(`Correo actualizado a ${data.email}. Ahora puedes enviar la confirmación al correo correcto.`);
+          await loadPaidInscriptions(client, statusFilter?.value || 'paid');
+        } catch (err) {
+          window.alert(err.message || 'No se pudo actualizar el correo.');
           button.disabled = false;
           button.textContent = originalText;
         }
