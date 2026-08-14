@@ -117,18 +117,76 @@ const getRawBody = (req) => {
   });
 };
 
-// Función para generar el siguiente bib_number de forma atómica via RPC.
-// Requiere ejecutar desc/sql-atomic-bib-number.sql en Supabase primero.
-async function generateNextBibNumber(eventSlug) {
-  const { data, error } = await supabase.rpc('get_next_event_bib_number', {
-    p_event_slug: eventSlug,
+function resolveStripeObjectId(value) {
+  if (!value) return null;
+  if (typeof value === 'string') return value;
+  if (typeof value === 'object' && value.id) return value.id;
+  return null;
+}
+
+function buildRpcParticipants(participants, buyerEmail) {
+  return participants.map((participant, index) => ({
+    ticketIndex: index + 1,
+    fullName: participant.fullName,
+    email: buyerEmail,
+    shirtSize: participant.shirtSize,
+  }));
+}
+
+async function finalizePaidOrder({ session, event, selectedEvent, cleanEmail, amountTotal, participants, fullName }) {
+  const safeParticipants = participants.length > 0
+    ? participants
+    : [{ fullName: normalizeParticipantName(fullName, 'Participante 1'), shirtSize: null }];
+  const amountPerTicket = Number((amountTotal / safeParticipants.length).toFixed(2));
+  const paymentIntentId = resolveStripeObjectId(session.payment_intent);
+
+  const { data, error } = await supabase.rpc('finalize_paid_order', {
+    p_order_session_id: session.id,
+    p_event_slug: selectedEvent.slug,
+    p_distance: selectedEvent.distance,
+    p_amount_paid: amountPerTicket,
+    p_buyer_email: cleanEmail,
+    p_payment_intent_id: paymentIntentId,
+    p_stripe_event_id: event.id,
+    p_participants: buildRpcParticipants(safeParticipants, cleanEmail),
   });
+
   if (error) {
-    console.error("Error al generar bib_number via RPC:", error);
-    // Fallback: timestamp para minimizar colisiones en caso extremo
-    return String(Date.now()).slice(-4).padStart(4, '0');
+    const wrappedError = new Error(`finalize_paid_order failed: ${error.message || 'unknown error'}`);
+    wrappedError.cause = error;
+    throw wrappedError;
   }
-  return String(data).padStart(3, '0');
+
+  const finalizedRows = Array.isArray(data) ? data : [];
+  if (finalizedRows.length !== safeParticipants.length) {
+    throw new Error(`finalize_paid_order returned ${finalizedRows.length} rows, expected ${safeParticipants.length}`);
+  }
+
+  return {
+    safeParticipants,
+    finalizedRows: finalizedRows.sort((a, b) => (a.ticket_index || 0) - (b.ticket_index || 0)),
+  };
+}
+
+async function markConfirmationEmailSent(orderSessionId, resendId) {
+  const payload = {
+    email_sent: true,
+    confirmation_email_id: resendId,
+    confirmation_email_sent_at: new Date().toISOString(),
+  };
+
+  const { error } = await supabase
+    .from('inscripciones')
+    .update(payload)
+    .eq('order_session_id', orderSessionId)
+    .or('email_sent.is.false,email_sent.is.null');
+
+  if (error) {
+    console.error(`❌ Error marcando email_sent para orden ${orderSessionId}:`, error);
+    return { ok: false, error: error.message || String(error) };
+  }
+
+  return { ok: true };
 }
 
 async function updateRegistrationBySessionId(sessionId, payload) {
@@ -326,7 +384,7 @@ async function sendConfirmationEmail({
   const bibStr = String(primaryBibNumber || '').padStart(3, '0');
   const displayShirt = ALLOWED_SHIRT_SIZES.includes(shirtSize) ? shirtSize : 'Por confirmar';
   try {
-    await resend.emails.send({
+    const result = await resend.emails.send({
       from: 'Kinetic Hub <no-reply@kinetichub.com.mx>',
       to: email,
       subject: `\u00a1${fullName}, ya est\u00e1s inscrito en ${selectedEvent.name}! \ud83c\udf89`,
@@ -455,12 +513,68 @@ async function sendConfirmationEmail({
 </html>
           `
     });
+
+    if (result?.error || !result?.data?.id) {
+      const errorMessage = result?.error?.message || result?.error || 'Resend no devolvió data.id';
+      console.error("❌ Resend rechazó el email:", result?.error || result);
+      return { ok: false, error: errorMessage, resendResponse: result };
+    }
+
     console.log(`\u{1F4E7} Email enviado a ${email}`);
-    return { ok: true };
+    return { ok: true, resendId: result.data.id, resendResponse: result };
   } catch (emailError) {
     console.error("\u274C Error al enviar email con Resend:", emailError);
     return { ok: false, error: emailError.message || String(emailError) };
   }
+}
+
+async function sendConfirmationForFinalizedOrder({
+  sessionId,
+  email,
+  fullName,
+  amountTotal,
+  safeParticipants,
+  finalizedRows,
+  eventSlug,
+  distance,
+}) {
+  if (finalizedRows.length > 0 && finalizedRows.every(row => row.email_sent === true)) {
+    console.log(`ℹ️ Confirmación ya enviada previamente | session_id=${sessionId}`);
+    return { ok: true, skipped: true };
+  }
+
+  const participantDetails = finalizedRows.map((row, index) => ({
+    fullName: row.full_name || safeParticipants[index]?.fullName || `Participante ${index + 1}`,
+    shirtSize: row.shirt_size || safeParticipants[index]?.shirtSize || null,
+    bibNumber: row.bib_number,
+  }));
+  const primaryParticipant = participantDetails[0] || safeParticipants[0] || { fullName, shirtSize: null };
+  const primaryBibNumber = primaryParticipant.bibNumber;
+  const shirtSize = (primaryParticipant.shirtSize || '').trim().toUpperCase();
+
+  const emailResult = await sendConfirmationEmail({
+    email,
+    fullName,
+    primaryBibNumber,
+    primaryParticipant,
+    amountTotal,
+    safeParticipants,
+    shirtSize,
+    participantDetails,
+    eventSlug,
+    distance,
+  });
+
+  if (!emailResult.ok) {
+    return emailResult;
+  }
+
+  const markResult = await markConfirmationEmailSent(sessionId, emailResult.resendId);
+  if (!markResult.ok) {
+    return { ok: false, error: markResult.error, resendId: emailResult.resendId, emailSentButNotMarked: true };
+  }
+
+  return emailResult;
 }
 
 async function markRefundedFromCharge(charge, sourceEventType) {
@@ -548,7 +662,7 @@ module.exports = async (req, res) => {
     if (!email) {
       console.error(`❌ PAGO SIN EMAIL: session_id=${sessionId} amount=${amountTotal}`);
       // Guardar el pago en DB sin email para no perder el registro
-      await supabase.from('inscripciones').upsert({
+      const { error: noEmailError } = await supabase.from('inscripciones').upsert({
         stripe_session_id: sessionId,
         order_session_id: sessionId,
         buyer_email: null,
@@ -564,6 +678,10 @@ module.exports = async (req, res) => {
         ticket_count: participants.length || 1,
         created_at: new Date().toISOString()
       }, { onConflict: 'stripe_session_id' });
+      if (noEmailError) {
+        console.error(`❌ Error guardando pago sin email | session_id=${sessionId}:`, noEmailError);
+        return res.status(500).json({ received: false, error: 'db_processing_failed' });
+      }
       // Alertar al admin
       await resend.emails.send({
         from: 'Kinetic Hub <no-reply@kinetichub.com.mx>',
@@ -578,72 +696,30 @@ module.exports = async (req, res) => {
     console.log(`✅ Pago confirmado: ${fullName} (${cleanEmail}) - ${sessionId} | tickets=${participants.length}`);
 
     try {
-      const safeParticipants = participants.length > 0
-        ? participants
-        : [{ fullName: normalizeParticipantName(fullName, 'Participante 1'), shirtSize: null }];
-      const amountPerTicket = Number((amountTotal / safeParticipants.length).toFixed(2));
-      const bibNumbers = [];
-
-      for (let index = 0; index < safeParticipants.length; index += 1) {
-        const participant = safeParticipants[index];
-        const bibNumber = await generateNextBibNumber(selectedEvent.slug);
-        const participantSessionId = index === 0 ? sessionId : `${sessionId}::${index + 1}`;
-
-        const { error: upsertError } = await supabase
-          .from('inscripciones')
-          .upsert({
-            stripe_session_id: participantSessionId,
-            order_session_id: sessionId,
-            buyer_email: cleanEmail,
-            email: cleanEmail,
-            full_name: participant.fullName,
-            event_slug: selectedEvent.slug,
-            distance: selectedEvent.distance,
-            amount_paid: amountPerTicket,
-            payment_status: 'paid',
-            shirt_size: participant.shirtSize,
-            bib_number: bibNumber,
-            ticket_index: index + 1,
-            ticket_count: safeParticipants.length,
-            created_at: new Date().toISOString()
-          }, {
-            onConflict: 'stripe_session_id'
-          });
-
-        if (upsertError) {
-          console.error(`❌ Error al guardar participante ${index + 1}:`, upsertError);
-          return res.status(200).json({ received: true });
-        }
-
-        bibNumbers.push(bibNumber);
-      }
-
-      const primaryBibNumber = bibNumbers[0];
-      const participantDetails = safeParticipants.map((participant, index) => ({
-        ...participant,
-        bibNumber: bibNumbers[index],
-      }));
-      console.log(`✅ Inscripciones guardadas correctamente | total=${safeParticipants.length} | bib_inicio=${primaryBibNumber}`);
-
-      const emailResult = await sendConfirmationEmail({
-        email,
+      const { safeParticipants, finalizedRows } = await finalizePaidOrder({
+        session,
+        event,
+        selectedEvent,
+        cleanEmail,
+        amountTotal,
+        participants,
         fullName,
-        primaryBibNumber,
-        primaryParticipant,
+      });
+      const primaryBibNumber = finalizedRows[0]?.bib_number;
+      console.log(`✅ Orden finalizada por RPC | total=${finalizedRows.length} | bib_inicio=${primaryBibNumber}`);
+
+      const emailResult = await sendConfirmationForFinalizedOrder({
+        sessionId,
+        email: cleanEmail,
+        fullName,
         amountTotal,
         safeParticipants,
-        shirtSize,
-        participantDetails,
+        finalizedRows,
         eventSlug: selectedEvent.slug,
         distance: selectedEvent.distance,
       });
 
-      if (emailResult.ok) {
-        await supabase
-          .from('inscripciones')
-          .update({ email_sent: true })
-          .eq('order_session_id', sessionId);
-      } else {
+      if (!emailResult.ok) {
         console.error(`❌ Correo NO enviado a ${email} (session ${sessionId}): ${emailResult.error}`);
       }
 
@@ -695,6 +771,7 @@ module.exports = async (req, res) => {
 
     } catch (dbError) {
       console.error("❌ Error general en procesamiento del webhook:", dbError);
+      return res.status(500).json({ received: false, error: 'db_processing_failed' });
     }
   }
 
@@ -740,7 +817,7 @@ module.exports = async (req, res) => {
 
     if (!email) {
       console.error(`❌ Pago asíncrono SIN EMAIL: session_id=${sessionId} amount=${amountTotal}`);
-      await supabase.from('inscripciones').upsert({
+      const { error: noEmailError } = await supabase.from('inscripciones').upsert({
         stripe_session_id: sessionId,
         order_session_id: sessionId,
         buyer_email: null,
@@ -756,6 +833,10 @@ module.exports = async (req, res) => {
         ticket_count: participants.length || 1,
         created_at: new Date().toISOString()
       }, { onConflict: 'stripe_session_id' });
+      if (noEmailError) {
+        console.error(`❌ Error guardando pago asíncrono sin email | session_id=${sessionId}:`, noEmailError);
+        return res.status(500).json({ received: false, error: 'db_processing_failed' });
+      }
       await resend.emails.send({
         from: 'Kinetic Hub <no-reply@kinetichub.com.mx>',
         to: 'hola@kinetichub.com.mx',
@@ -769,100 +850,30 @@ module.exports = async (req, res) => {
     console.log(`✅ Pago asíncrono confirmado: ${fullName} (${cleanEmail}) - ${sessionId} | tickets=${participants.length}`);
 
     try {
-      // Verificar si ya se procesó antes (duplicado)
-      const { data: exactExisting } = await supabase
-        .from('inscripciones')
-        .select('id, payment_status, bib_number')
-        .eq('stripe_session_id', sessionId);
-
-      const { data: childExisting } = await supabase
-        .from('inscripciones')
-        .select('id, payment_status, bib_number')
-        .like('stripe_session_id', `${sessionId}::%`);
-
-      const existing = [...(exactExisting || []), ...(childExisting || [])];
-
-      const alreadyProcessed = existing?.some(r => r.payment_status === 'paid' && r.bib_number);
-
-      if (alreadyProcessed) {
-        console.log(`ℹ️ Sesión ${sessionId} ya procesada como paid, omitiendo duplicado`);
-        // Aún así aseguramos que todos los registros estén como paid
-        const stillPending = existing?.filter(r => r.payment_status !== 'paid');
-        if (stillPending?.length) {
-          await supabase
-            .from('inscripciones')
-            .update({ payment_status: 'paid' })
-            .in('id', stillPending.map(r => r.id));
-        }
-        return res.status(200).json({ received: true });
-      }
-
-      const safeParticipants = participants.length > 0
-        ? participants
-        : [{ fullName: normalizeParticipantName(fullName, 'Participante 1'), shirtSize: null }];
-      const amountPerTicket = Number((amountTotal / safeParticipants.length).toFixed(2));
-      const bibNumbers = [];
-
-      for (let index = 0; index < safeParticipants.length; index += 1) {
-        const participant = safeParticipants[index];
-        const bibNumber = await generateNextBibNumber(selectedEvent.slug);
-        const participantSessionId = index === 0 ? sessionId : `${sessionId}::${index + 1}`;
-
-        const { error: upsertError } = await supabase
-          .from('inscripciones')
-          .upsert({
-            stripe_session_id: participantSessionId,
-            order_session_id: sessionId,
-            buyer_email: cleanEmail,
-            email: cleanEmail,
-            full_name: participant.fullName,
-            event_slug: selectedEvent.slug,
-            distance: selectedEvent.distance,
-            amount_paid: amountPerTicket,
-            payment_status: 'paid',
-            shirt_size: participant.shirtSize,
-            bib_number: bibNumber,
-            ticket_index: index + 1,
-            ticket_count: safeParticipants.length,
-            created_at: new Date().toISOString()
-          }, {
-            onConflict: 'stripe_session_id'
-          });
-
-        if (upsertError) {
-          console.error(`❌ Error al guardar participante ${index + 1}:`, upsertError);
-          return res.status(200).json({ received: true });
-        }
-
-        bibNumbers.push(bibNumber);
-      }
-
-      const primaryBibNumber = bibNumbers[0];
-      const participantDetails = safeParticipants.map((participant, index) => ({
-        ...participant,
-        bibNumber: bibNumbers[index],
-      }));
-      console.log(`✅ Inscripciones asíncronas guardadas | total=${safeParticipants.length} | bib_inicio=${primaryBibNumber}`);
-
-      const emailResult = await sendConfirmationEmail({
-        email,
+      const { safeParticipants, finalizedRows } = await finalizePaidOrder({
+        session,
+        event,
+        selectedEvent,
+        cleanEmail,
+        amountTotal,
+        participants,
         fullName,
-        primaryBibNumber,
-        primaryParticipant,
+      });
+      const primaryBibNumber = finalizedRows[0]?.bib_number;
+      console.log(`✅ Orden asíncrona finalizada por RPC | total=${finalizedRows.length} | bib_inicio=${primaryBibNumber}`);
+
+      const emailResult = await sendConfirmationForFinalizedOrder({
+        sessionId,
+        email: cleanEmail,
+        fullName,
         amountTotal,
         safeParticipants,
-        shirtSize,
-        participantDetails,
+        finalizedRows,
         eventSlug: selectedEvent.slug,
         distance: selectedEvent.distance,
       });
 
-      if (emailResult.ok) {
-        await supabase
-          .from('inscripciones')
-          .update({ email_sent: true })
-          .eq('order_session_id', sessionId);
-      } else {
+      if (!emailResult.ok) {
         console.error(`❌ Correo NO enviado a ${email} (session asíncrona ${sessionId}): ${emailResult.error}`);
       }
 
@@ -914,6 +925,7 @@ module.exports = async (req, res) => {
 
     } catch (dbError) {
       console.error("❌ Error general en procesamiento del webhook async_payment_succeeded:", dbError);
+      return res.status(500).json({ received: false, error: 'db_processing_failed' });
     }
   }
 
