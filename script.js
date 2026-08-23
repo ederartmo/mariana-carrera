@@ -1676,20 +1676,12 @@ async function setupProfilePage() {
   if (!document.querySelector("[data-profile-page]")) return;
 
   try {
-    const client = await ensureSupabaseClient();
-
-    const { data: { session } } = await client.auth.getSession();
-    const user = session?.user;
-
-    if (!user) {
-      return;
-    }
-
-    // ====================== SINCRONIZACIÓN DEL BIB_NUMBER ======================
-    await syncBibNumberToProfile(client, user);
-
-    // Actualizar UI del bib_number (sin depender de readProfileFromTable)
-    await updateProfileBibNumberUI(client, user);
+    // Nota multi-carrera: syncBibNumberToProfile y updateProfileBibNumberUI se mantienen como
+    // legacy para compatibilidad (user_profiles.bib_number) pero NO se invocan desde el perfil
+    // multi-carrera. Las tarjetas usan inscripciones.bib_number por evento (ver loadUserInscriptions).
+    // Se dejan de llamar aquí para evitar que sobrescriban el header "[data-bib-number]"
+    // con el dorsal de la inscripción más reciente cuando hay múltiples carreras.
+    // Si se necesita legacy fuera del perfil, llamar manualmente a syncBibNumberToProfile.
 
     // Sidebar navigation (mantener tu código original)
     const navItems = Array.from(document.querySelectorAll(".profile-nav-item[data-section]"));
@@ -3302,40 +3294,6 @@ function setupSupabase() {
 
           return data || null;
         };
-        const readInscriptionsFromTable = async (userEmail) => {
-          if (!userEmail) return [];
-
-          try {
-            const { data, error } = await client
-              .from('inscripciones')                    // ← Nombre de tu tabla
-              .select(`
-        id,
-        created_at,
-        event_slug,
-        full_name,
-        email,
-        amount_paid,
-        payment_status,
-        stripe_session_id,
-        category,
-        bib_number,
-        race_date
-      `)
-              .eq('email', userEmail.toLowerCase().trim())   // Buscamos por email (como haces en loadUserInscriptions)
-              .order('created_at', { ascending: false });    // Más recientes primero
-
-            if (error) {
-              console.error("Error al leer tabla inscripciones:", error);
-              return [];
-            }
-
-            return data || [];
-          } catch (err) {
-            console.error("Excepción al leer inscripciones:", err);
-            return [];
-          }
-        };
-
         const saveProfileInTable = async (profile) => {
           const row = {
             user_id: user.id,
@@ -3679,14 +3637,85 @@ function setupSupabase() {
         }
 
         const reminderPay = document.getElementById("profileRaceReminderPay");
-        // ====================== INSCRIPCIONES REALES DESDE SUPABASE ======================
+        // ====================== INSCRIPCIONES REALES DESDE SUPABASE (MULTI-CARRERA) ======================
 
         const racesContainer = document.getElementById("profileRacesContainer");
         const reminder = document.getElementById("profileRaceReminder");
+        const bibHeaderEl = document.querySelector("[data-bib-number]");
+        const bibHeaderWrapper = bibHeaderEl?.closest(".profile-ident-meta") || bibHeaderEl?.parentElement;
 
         const profileUrl = new URL(window.location.href);
         const raceParam = profileUrl.searchParams.get("race");
         const paidParam = profileUrl.searchParams.get("paid");
+
+        // --- Helpers multi-carrera (reutiliza trabajo 5f91db5) ---
+        const escapeHtml = (value) => String(value || "").replace(/[&<>"']/g, (m) => ({ "&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;" }[m]));
+        const PROFILE_EVENT_CATALOG = {
+          "axolote-night-run": {
+            name: "Axolote Night Run 2026",
+            dateLocation: "31 OCT 2026 · Pista de Canotaje, CDMX",
+            categoryLabel: "Categoría única",
+            detailUrl: "axolote-night-run.html",
+            waiverUrl: "exoneracion.pdf",
+            announcementUrl: "assets/events/axolote-night-run/legal/convocatoria.pdf",
+            fallbackDistance: "5K"
+          },
+          "cascanueces-run": {
+            name: "Cascanueces Run 2026",
+            dateLocation: "6 DIC 2026 · Bosque de San Juan de Aragón, CDMX",
+            categoryLabel: "Categoría",
+            detailUrl: "cascanueces-run.html",
+            waiverUrl: "assets/events/cascanueces-run/legal/Cascanueces%20Run1.pdf",
+            announcementUrl: "assets/events/cascanueces-run/legal/Cascanueces%20Run_convocatoria.pdf",
+            fallbackDistance: "5K"
+          }
+        };
+        const getProfileEvent = (eventSlug) => PROFILE_EVENT_CATALOG[eventSlug] || {
+          name: eventSlug ? eventSlug.replace(/-/g, " ").replace(/\b\w/g, c => c.toUpperCase()) : "Carrera",
+          dateLocation: "Fecha por confirmar",
+          categoryLabel: "Distancia",
+          detailUrl: "eventos.html",
+          waiverUrl: "exoneracion.pdf",
+          announcementUrl: "assets/events/axolote-night-run/legal/convocatoria.pdf",
+          fallbackDistance: "5K"
+        };
+        const getDistance = (ins) => (ins?.distance || getProfileEvent(ins?.event_slug).fallbackDistance || "5K").toUpperCase();
+        const formatStatus = (raw) => {
+          const s = String(raw || "").toLowerCase().trim();
+          if (s === "paid") return { key:"paid", label:"Inscripción pagada ✓", cls:"is-paid", isPaid:true };
+          if (s === "pending") return { key:"pending", label:"Pendiente de pago", cls:"is-pending", isPaid:false };
+          // paid_no_email: pago recibido en Stripe sin email capturado (api/stripe-webhook.js:674/829).
+          // Se guarda con email=null para no perder el cobro y alertar admin. Para el usuario,
+          // debe considerarse PAGADO (no CTA, no reminder pendiente) pero con label de verificación.
+          if (s === "paid_no_email") return { key:"paid_no_email", label:"Pago recibido · Verificación pendiente", cls:"is-pending", isPaid:true };
+          if (s === "payment_failed") return { key:"payment_failed", label:"Pago fallido", cls:"is-pending", isPaid:false };
+          if (s === "refunded") return { key:"refunded", label:"Reembolsada", cls:"is-pending", isPaid:false };
+          return { key: s || "pending", label: s ? s : "Pendiente", cls:"is-pending", isPaid:false };
+        };
+
+        const updateHeaderBibSummary = (inscriptions) => {
+          if (!bibHeaderEl) return;
+          if (!inscriptions || inscriptions.length === 0) {
+            bibHeaderEl.textContent = "---";
+            if (bibHeaderWrapper) bibHeaderWrapper.style.display = "";
+            return;
+          }
+          if (inscriptions.length === 1) {
+            const single = inscriptions[0];
+            const s = formatStatus(single.payment_status);
+            if (s.isPaid && single.bib_number) {
+              bibHeaderEl.textContent = `#${String(single.bib_number).replace(/\D/g,"").padStart(3,"0")}`;
+            } else {
+              bibHeaderEl.textContent = "---";
+            }
+            if (bibHeaderWrapper) bibHeaderWrapper.style.display = "";
+            return;
+          }
+          // Múltiples carreras: resumen neutro, no dorsal arbitrario
+          const paidCount = inscriptions.filter(i => formatStatus(i.payment_status).isPaid).length;
+          bibHeaderEl.textContent = `${inscriptions.length} carreras · ${paidCount} pagadas`;
+          if (bibHeaderWrapper) bibHeaderWrapper.style.display = "";
+        };
 
         const readPaymentState = () => localStorage.getItem(AXOLOTE_PAYMENT_STATE_KEY) || "";
         const writePaymentState = (value) => {
@@ -3697,8 +3726,9 @@ function setupSupabase() {
           localStorage.setItem(AXOLOTE_PAYMENT_STATE_KEY, value);
         };
 
-        if (raceParam === "axolote" && paidParam === "1") {
-          writePaymentState("paid");
+        // Limpiar params legacy axolote (mantener compat, no hardcodear lógica de negocio)
+        if (raceParam === "axolote" && (paidParam === "1" || paidParam === "0")) {
+          writePaymentState(paidParam === "1" ? "paid" : "pending");
           localStorage.removeItem(AXOLOTE_POST_VERIFY_PROMPT_KEY);
           profileUrl.searchParams.delete("race");
           profileUrl.searchParams.delete("paid");
@@ -3706,15 +3736,7 @@ function setupSupabase() {
           window.history.replaceState({}, "", profileUrl.pathname + profileUrl.search + profileUrl.hash);
         }
 
-        if (raceParam === "axolote" && paidParam === "0") {
-          writePaymentState("pending");
-          profileUrl.searchParams.delete("race");
-          profileUrl.searchParams.delete("paid");
-          profileUrl.searchParams.delete("checkoutEmail");
-          window.history.replaceState({}, "", profileUrl.pathname + profileUrl.search + profileUrl.hash);
-        }
-
-        // Modal de "Registro confirmado" (post-verificación)
+        // Modal de "Registro confirmado" (post-verificación) - mantiene hardcode Axolote como es página genérica post-verify, no perfil multi-carrera
         const openRegisterModal = () => {
           if (document.getElementById("profileRaceRegisterOverlay")) return;
 
@@ -3758,100 +3780,111 @@ function setupSupabase() {
           document.body.appendChild(overlay);
         };
 
-        // Renderizado de las tarjetas grandes
-        const renderRaces = (state, bibNumber = null) => {
+        // Renderizado multi-carrera: una tarjeta por inscripción
+        const renderEmptyState = () => {
           if (!racesContainer) return;
-
-          const bibHTML = bibNumber
-            ? `<p class="profile-race-meta bib-number-display" style="color:#19c88b; font-size:1.15rem; font-weight:800; margin:10px 0 0;">
-         Número de corredor: <strong>#${bibNumber}</strong>
-       </p>`
-            : '';
-
-          if (state === "pending") {
-            racesContainer.innerHTML = `
-      <div class="profile-race-card">
-        <article class="profile-race-item">
-          <div class="profile-race-top">
-            <h3 class="profile-race-name">Axolote Night Run 2026</h3>
-            <span class="profile-race-status is-pending">Pendiente de pago</span>
-          </div>
-          <p class="profile-race-meta">31 OCT 2026 · Pista de Canotaje, CDMX · Categoría única 5K</p>
-          <p class="profile-race-meta">Tu lugar está apartado. Completa el pago para asegurar tu inscripción.</p>
-          ${bibHTML}
-          <div class="profile-race-actions">
-            <a class="profile-race-pay-btn" href="${AXOLOTE_PAYMENT_URL}">Pagar para asegurar lugar</a>
-            <a class="profile-race-detail-btn" href="${AXOLOTE_EVENT_URL}">Ver detalle del evento</a>
-          </div>
-        </article>
-      </div>
-    `;
-            return;
-          }
-
-          if (state === "paid") {
-            racesContainer.innerHTML = `
-      <div class="profile-race-card">
-        <article class="profile-race-item">
-          <div class="profile-race-top">
-            <h3 class="profile-race-name">Axolote Night Run 2026</h3>
-            <span class="profile-race-status is-paid">Inscripción pagada ✓</span>
-          </div>
-          <p class="profile-race-meta">31 OCT 2026 · Pista de Canotaje, CDMX · Categoría única 5K</p>
-          ${bibHTML}
-          <p class="profile-race-meta">Incluye playera técnica oficial y medalla de finisher exclusiva.</p>
-          
-          <section style="display:flex; justify-content:space-between; align-items:center; margin-top:12px;">
-            <div class="profile-race-actions">
-              <a class="profile-race-detail-btn" href="${AXOLOTE_EVENT_URL}">Ver detalle del evento</a>
-            </div>
-            <button id="verDocumentosReminderBtn2" class="profile-reminder-cta" style="background:#19c88b; color:white; border:none;">
-              Ver documentos
-            </button>
-          </section>
-        </article>
-      </div>
-    `;
-            return;
-          }
-
-          // Sin inscripciones
-          racesContainer.innerHTML = `... tu HTML vacío actual ...`;
+          racesContainer.innerHTML = `
+            <div class="profile-card">
+              <div class="profile-empty-state">
+                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <rect x="3" y="4" width="18" height="18" rx="2" stroke="currentColor" stroke-width="1.7" />
+                  <line x1="16" y1="2" x2="16" y2="6" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" />
+                  <line x1="8" y1="2" x2="8" y2="6" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" />
+                  <line x1="3" y1="10" x2="21" y2="10" stroke="currentColor" stroke-width="1.7" />
+                </svg>
+                <p>Aún no tienes inscripciones. <a href="eventos.html" class="auth-link-btn">Explora eventos</a> y regístrate en tu próxima carrera.</p>
+              </div>
+            </div>`;
         };
 
-        // Función para actualizar el reminder cuando está inscrito (paid)
-        const updateReminderForPaid = () => {
+        const renderRaces = (inscriptions) => {
+          if (!racesContainer) return;
+          // Compat legacy: si llega string "pending"/"paid" (inicialización por localStorage), mostrar empty o nada hasta que cargue DB
+          if (typeof inscriptions === "string" || !Array.isArray(inscriptions)) {
+            renderEmptyState();
+            return;
+          }
+          if (inscriptions.length === 0) {
+            renderEmptyState();
+            return;
+          }
+
+          racesContainer.innerHTML = inscriptions.map((inscription) => {
+            const event = getProfileEvent(inscription.event_slug);
+            const status = formatStatus(inscription.payment_status);
+            const distance = getDistance(inscription);
+            const bib = inscription.bib_number ? String(inscription.bib_number).replace(/\D/g,"").padStart(3,"0") : null;
+            const bibHTML = bib && status.isPaid
+              ? `<p class="profile-race-meta bib-number-display" style="color:#19c88b; font-size:1.15rem; font-weight:800; margin:10px 0 0;">Número de corredor: <strong>#${escapeHtml(bib)}</strong></p>`
+              : (bib ? `<p class="profile-race-meta bib-number-display" style="color:#888; font-size:0.95rem; margin:10px 0 0;">Dorsal asignado: #${escapeHtml(bib)} · Esperando confirmación</p>` : "");
+            const amountLabel = inscription.amount_paid ? ` · $${Number(inscription.amount_paid).toFixed(0)} MXN` : "";
+            const dateLine = `${escapeHtml(event.dateLocation)} · ${escapeHtml(event.categoryLabel)} ${escapeHtml(distance)}${amountLabel}`;
+            const payBtn = !status.isPaid ? `<a class="profile-race-pay-btn" href="checkout.html?event=${encodeURIComponent(inscription.event_slug)}&distance=${encodeURIComponent(distance)}">Pagar para asegurar lugar</a>` : "";
+            const docsBtn = status.isPaid ? `<button type="button" class="profile-reminder-cta profile-legal-documents-btn" data-event-slug="${escapeHtml(inscription.event_slug)}" style="background:#19c88b;color:white;border:none;">Ver documentos</button>` : "";
+
+            return `
+              <div class="profile-race-card">
+                <article class="profile-race-item">
+                  <div class="profile-race-top">
+                    <h3 class="profile-race-name">${escapeHtml(event.name)}</h3>
+                    <span class="profile-race-status ${status.cls}">${escapeHtml(status.label)}</span>
+                  </div>
+                  <p class="profile-race-meta">${dateLine}</p>
+                  ${bibHTML}
+                  <div class="profile-race-actions" style="display:flex; gap:12px; flex-wrap:wrap; margin-top:12px; align-items:center;">
+                    <a class="profile-race-detail-btn" href="${escapeHtml(event.detailUrl)}">Ver detalle del evento</a>
+                    ${payBtn}
+                    ${docsBtn}
+                  </div>
+                </article>
+              </div>`;
+          }).join("");
+
+          racesContainer.querySelectorAll(".profile-legal-documents-btn").forEach((btn) => {
+            btn.addEventListener("click", () => openLegalDocumentsModal(btn.dataset.eventSlug));
+          });
+        };
+
+        // Reminder dinámico: solo para pendientes reales. Si no hay pending, oculto.
+        // No convertir en "Carrera Inscrita" para pagadas (preserva propósito original).
+        // DB gana: si todo paid (incluye paid_no_email como paid) y localStorage dice pending, se limpia.
+        const updateReminder = (inscriptions) => {
           if (!reminder) return;
-
-          reminder.hidden = false;   // ← Importante: quitamos el hidden
-
+          if (!Array.isArray(inscriptions) || inscriptions.length === 0) {
+            reminder.hidden = true;
+            reminder.innerHTML = "";
+            return;
+          }
+          const pending = inscriptions.filter(i => {
+            const s = formatStatus(i.payment_status).key;
+            return s === "pending";
+          });
+          if (pending.length === 0) {
+            reminder.hidden = true;
+            reminder.innerHTML = "";
+            return;
+          }
+          // Pendiente más reciente
+          const nextPending = [...pending].sort((a,b)=> new Date(b.created_at) - new Date(a.created_at))[0];
+          const event = getProfileEvent(nextPending.event_slug);
+          const distance = getDistance(nextPending);
+          reminder.hidden = false;
           reminder.innerHTML = `
             <div class="container profile-reminder-inner">
               <div>
-                <p class="profile-reminder-title">Carrera Inscrita</p>
-                <p class="profile-reminder-copy">Axolote Night Run 2026 · Categoría única 5K · 31 OCT 2026</p>
+                <p class="profile-reminder-title">Carrera pendiente de pago</p>
+                <p class="profile-reminder-copy">${escapeHtml(event.name)} · ${escapeHtml(distance)} · ${escapeHtml(event.dateLocation)}</p>
               </div>
-              <button id="verDocumentosReminderBtn" class="profile-reminder-cta" style="background:#19c88b; color:white; border:none;">
-                Ver documentos
-              </button>
-            </div>
-          `;
-
-          // Agregar evento al botón
-          setTimeout(() => {
-            const btn = document.getElementById("verDocumentosReminderBtn");
-            const btn2 = document.getElementById("verDocumentosReminderBtn2");
-            if (btn) {
-              btn.addEventListener("click", openLegalDocumentsModal);
-            }
-            if (btn2) {
-              btn2.addEventListener("click", openLegalDocumentsModal);
-            }
-          }, 100);
+              <a class="profile-reminder-cta" href="checkout.html?event=${encodeURIComponent(nextPending.event_slug)}&distance=${encodeURIComponent(distance)}">Pagar ahora</a>
+            </div>`;
         };
 
-        // Modal de Documentos Legales
-        function openLegalDocumentsModal() {
+        // Compat: mantener función antigua como wrapper para no romper llamadas externas si existen
+        const updateReminderForPaid = (inscription) => updateReminder(inscription ? [inscription] : []);
+
+        // Modal de Documentos Legales - ahora dinámico por evento
+        function openLegalDocumentsModal(eventSlug = "axolote-night-run") {
+          const event = getProfileEvent(eventSlug);
           let existing = document.getElementById("legalDocumentsModal");
           if (existing) existing.remove();
 
@@ -3863,11 +3896,11 @@ function setupSupabase() {
                 <p id="legalModalParagraf">Descarga la exoneración oficial para el evento, y consulta la convocatoria completa en formato PDF.</p>
                 <div class="modal-gallery" style="display: flex; flex-direction:column; gap: 16px; align-items:center; min-height: 200px; justify-content:center;">
                 <section style="display:flex;justify-content:center;align-items:center; gap: 16px; flex-wrap: wrap;">
-                  <a href="exoneracion.pdf" download class="btn"
+                  <a href="${event.waiverUrl}" download class="btn"
                     style="display: inline-block; margin: 8px 8px 8px 0; background: #19c88b; color: white; padding: 10px 20px; border-radius: 999px; text-decoration: none;">
           📄          Descargar - Exoneración
                   </a>
-                  <a href="assets/events/axolote-night-run/legal/convocatoria.pdf" target="_blank" rel="noopener noreferrer" class="btn"
+                  <a href="${event.announcementUrl}" target="_blank" rel="noopener noreferrer" class="btn"
                     style="display: inline-block; margin: 8px 8px 8px 0; background: transparent; color: #111; padding: 10px 20px; border-radius: 999px; text-decoration: none; border: 1px solid #111;">
           📄          Ver Convocatoria (PDF)
                   </a>
@@ -3905,7 +3938,7 @@ function setupSupabase() {
           });
         }
 
-        // ====================== loadUserInscriptions ======================
+        // ====================== loadUserInscriptions (MULTI-CARRERA) ======================
         async function loadUserInscriptions() {
           const client = await ensureSupabaseClient();
           if (!client) return;
@@ -3925,6 +3958,7 @@ function setupSupabase() {
       email, 
       full_name, 
       event_slug, 
+      distance,
       amount_paid, 
       payment_status,
       bib_number          
@@ -3934,32 +3968,31 @@ function setupSupabase() {
 
           if (error) {
             console.error("❌ Error al cargar inscripciones:", error);
-            renderRaces("pending", null);
+            renderRaces([]);
+            updateReminder([]);
+            updateHeaderBibSummary([]);
             return;
           }
 
-          let finalState = "pending";
-          let bibNumber = null;
+          const inscriptions = Array.isArray(data) ? data : [];
 
-          if (data && data.length > 0) {
-            const inscription = data[0];
-            const dbStatus = (inscription.payment_status || "").toLowerCase().trim();
-            bibNumber = inscription.bib_number || null;   // ← Ahora sí se recupera
-
-            if (dbStatus === "paid") {
-              finalState = "paid";
-              writePaymentState("paid");
-              updateReminderForPaid();
-            } else {
-              finalState = "pending";
-              writePaymentState("pending");
-            }
+          // DB es fuente de verdad: localStorage solo fallback, no debe contradecir DB
+          // Solo pending real dispara reminder y mantiene localStorage pending.
+          // paid y paid_no_email se consideran pagados (no CTA, no reminder). DB gana.
+          if (inscriptions.length > 0) {
+            const hasPending = inscriptions.some(i => formatStatus(i.payment_status).key === "pending");
+            if (hasPending) writePaymentState("pending");
+            else localStorage.removeItem(AXOLOTE_PAYMENT_STATE_KEY);
+          } else {
+            localStorage.removeItem(AXOLOTE_PAYMENT_STATE_KEY);
           }
 
-          renderRaces(finalState, bibNumber);   // ← Pasamos el bibNumber correctamente
+          renderRaces(inscriptions);
+          updateReminder(inscriptions);
+          updateHeaderBibSummary(inscriptions);
         }
 
-        // Inicialización
+        // Inicialización - DB gana; localStorage solo fallback visual breve hasta que cargue Supabase
         let paymentState = readPaymentState();
         const shouldPromptAfterVerify = localStorage.getItem(AXOLOTE_POST_VERIFY_PROMPT_KEY) === "1";
 
@@ -3968,13 +4001,10 @@ function setupSupabase() {
           setTimeout(openRegisterModal, 800);
         }
 
-        if (!paymentState) {
-          paymentState = "pending";
-          writePaymentState("pending");
-        }
-
-        // Render inicial
-        renderRaces(paymentState, null);
+        // Render inicial vacío (evita mostrar Axolote hardcodeado antes de DB)
+        renderEmptyState();
+        updateReminder([]);
+        updateHeaderBibSummary([]);
 
         // Carga real desde Supabase
         loadUserInscriptions();
@@ -4855,40 +4885,9 @@ async function syncBibNumberToProfile(client, user) {
     console.warn("Error sincronizando bib_number al perfil:", err);
   }
 }
-async function syncBibNumberToProfile(client, user) {
-  if (!user?.email) return;
-
-  try {
-    const email = user.email.trim().toLowerCase();
-
-    // Buscar la inscripción más reciente pagada
-    const { data: inscription } = await client
-      .from('inscripciones')
-      .select('bib_number')
-      .eq('email', email)
-      .eq('payment_status', 'paid')
-      .order('created_at', { ascending: false })
-      .limit(1)
-      .maybeSingle();
-
-    if (inscription?.bib_number) {
-      // Actualizar o insertar en user_profiles
-      const { error } = await client
-        .from('user_profiles')
-        .upsert({
-          user_id: user.id,
-          email: email,
-          bib_number: inscription.bib_number,
-          updated_at: new Date().toISOString()
-        }, { onConflict: 'user_id' });
-
-      if (!error) {
-      }
-    }
-  } catch (err) {
-    console.warn("Error sincronizando bib_number al perfil:", err);
-  }
-}
+// LEGACY: segunda definición duplicada eliminada. Se mantiene UNA sola syncBibNumberToProfile
+// para compatibilidad con flujos antiguos fuera del perfil multi-carrera. No se invoca
+// desde el perfil (ver setupProfilePage). No borrar columna user_profiles.bib_number.
 
 setupPageLoadIndicator();
 setupAuthCallbackRedirect();
