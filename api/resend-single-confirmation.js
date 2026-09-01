@@ -115,6 +115,7 @@ module.exports = async function handler(req, res) {
       shirtSize,
       participantDetails,
       eventSlug: records[0].event_slug,
+      distance: records[0].distance,
     });
 
     if (emailResult.ok) {

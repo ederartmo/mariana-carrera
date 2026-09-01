@@ -218,8 +218,8 @@ async function invoke(webhook, event) {
   return res;
 }
 
-function emailPayload() {
-  return {
+function emailPayload(overrides = {}) {
+  const payload = {
     email: 'runner@example.com',
     fullName: 'Runner Test',
     primaryBibNumber: '001',
@@ -231,6 +231,7 @@ function emailPayload() {
     eventSlug: 'cascanueces-run',
     distance: '5K',
   };
+  return { ...payload, ...overrides };
 }
 
 test('sendConfirmationEmail returns ok and resendId only when Resend returns data.id', async () => {
@@ -254,6 +255,29 @@ test('sendConfirmationEmail returns failure when Resend returns an error object'
 
     assert.equal(result.ok, false);
     assert.equal(result.error, 'API key is invalid');
+  });
+});
+
+test('sendConfirmationEmail renders the provided event distance', async () => {
+  await withWebhookMocks({
+    event: stripeEvent(),
+    resendResults: [
+      { data: { id: 'email_10k' }, error: null },
+      { data: { id: 'email_5k' }, error: null },
+      { data: { id: 'email_axolote' }, error: null },
+    ],
+  }, async ({ webhook, state }) => {
+    await webhook.sendConfirmationEmail(emailPayload({ distance: '10K' }));
+    await webhook.sendConfirmationEmail(emailPayload({ distance: '5K' }));
+    await webhook.sendConfirmationEmail(emailPayload({
+      eventSlug: 'axolote-night-run',
+      distance: '5K',
+    }));
+
+    assert.match(state.emailSends[0].html, /Distancia[\s\S]*10K/);
+    assert.doesNotMatch(state.emailSends[0].html, /Distancia[\s\S]*5K[\s\S]*Nombre/);
+    assert.match(state.emailSends[1].html, /Distancia[\s\S]*5K/);
+    assert.match(state.emailSends[2].html, /Distancia[\s\S]*5K/);
   });
 });
 
