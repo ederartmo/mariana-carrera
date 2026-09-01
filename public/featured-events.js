@@ -34,7 +34,7 @@
       date: new Date("2026-12-06T08:00:00-06:00"),
       location: "Bosque de San Juan de Aragon, CDMX",
       distance: "5K y 10K",
-      image: "assets/events/cascanueces-run/gallery/cascanueces_run_banner2.png",
+      image: "assets/events/cascanueces-run/gallery/cascanueces_run_banner3.jpeg",
       alt: "Cascanueces Run 2026",
       theme: "cascanueces",
       getStage() {

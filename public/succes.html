@@ -12,7 +12,7 @@
   <link
     href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Sora:wght@500;600;700;800&display=swap"
     rel="stylesheet" />
-  <link rel="stylesheet" href="styles.min.css?v=1785911265132" />
+  <link rel="stylesheet" href="styles.min.css?v=1788256909926" />
   <link rel="icon" type="image/png" href="assets/brand/icon.png" />
 <!-- Meta Pixel Code -->
 <script>
@@ -50,8 +50,143 @@ src="https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1"
         .replaceAll("'", '&#39;');
     }
 
-    // Detectar si el usuario viene de un pago exitoso
-    function checkPaymentSuccess() {
+    function wait(ms) {
+      return new Promise((resolve) => setTimeout(resolve, ms));
+    }
+
+    async function fetchCheckoutSummary(sessionId) {
+      const response = await fetch(`/api/checkout-summary?session_id=${encodeURIComponent(sessionId)}`);
+      if (!response.ok) {
+        throw new Error('No se pudo cargar el resumen');
+      }
+      return response.json();
+    }
+
+    async function fetchCheckoutSummaryWithPolling(sessionId) {
+      const maxAttempts = 5;
+      const delayMs = 1500;
+
+      for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
+        const summary = await fetchCheckoutSummary(sessionId);
+        const paymentStatus = String(summary.payment_status || 'pending').toLowerCase();
+        if (paymentStatus !== 'pending' || attempt === maxAttempts) {
+          return summary;
+        }
+        await wait(delayMs);
+      }
+
+      return null;
+    }
+
+    function applySummaryState(summary) {
+      const paymentStatus = String(summary.payment_status || 'pending').toLowerCase();
+      const isPaid = paymentStatus === 'paid';
+      const isFailed = paymentStatus === 'payment_failed';
+      const statusTitle = document.getElementById('statusTitle');
+      const statusIntro = document.getElementById('statusIntro');
+      const statusBadge = document.getElementById('statusBadge');
+      const statusCopy = document.getElementById('statusCopy');
+      const documentBlock = document.getElementById('documentBlock');
+      const profileBlock = document.getElementById('profileBlock');
+      const emailNotice = document.getElementById('emailNotice');
+      const retryPaymentLink = document.getElementById('retryPaymentLink');
+
+      if (retryPaymentLink) {
+        const eventSlug = summary.eventSlug || 'axolote-night-run';
+        const distance = summary.distance || '5K';
+        retryPaymentLink.href = `checkout.html?event=${encodeURIComponent(eventSlug)}&distance=${encodeURIComponent(distance)}`;
+      }
+
+      if (isPaid) {
+        if (statusTitle) statusTitle.textContent = '¡Inscripción Confirmada!';
+        if (statusIntro) statusIntro.innerHTML = `Gracias por tu pago. Ya estás inscrito en <strong id="eventConfirmation">${escapeHtml(summary.eventName || 'tu carrera')} · ${escapeHtml(summary.distance || '5K')}</strong>.`;
+        if (statusBadge) statusBadge.textContent = 'Pago completado';
+        if (statusCopy) {
+          statusCopy.textContent = 'Para ver tu(s) número(s) de corredor, revisa el resumen de abajo, tu correo de confirmación o entra a tu perfil para terminar de llenar tus datos. Recuerda descargar el PDF de exoneración antes del evento.';
+        }
+        if (documentBlock) documentBlock.style.display = 'flex';
+        if (profileBlock) profileBlock.style.display = 'block';
+        if (emailNotice) emailNotice.style.display = 'block';
+        if (retryPaymentLink) retryPaymentLink.style.display = 'none';
+        return;
+      }
+
+      if (isFailed) {
+        if (statusTitle) statusTitle.textContent = 'Pago no completado';
+        if (statusIntro) statusIntro.innerHTML = `No pudimos confirmar tu pago para <strong id="eventConfirmation">${escapeHtml(summary.eventName || 'tu carrera')} · ${escapeHtml(summary.distance || '5K')}</strong>.`;
+        if (statusBadge) statusBadge.textContent = 'Pago fallido';
+        if (statusCopy) {
+          statusCopy.textContent = 'Tu inscripción no está confirmada y todavía no tiene número de corredor. Puedes intentar el pago nuevamente desde la página del evento.';
+        }
+        if (documentBlock) documentBlock.style.display = 'none';
+        if (profileBlock) profileBlock.style.display = 'none';
+        if (emailNotice) emailNotice.style.display = 'none';
+        if (retryPaymentLink) retryPaymentLink.style.display = 'inline-block';
+        return;
+      }
+
+      if (statusTitle) statusTitle.textContent = 'Tu pago está pendiente';
+      if (statusIntro) statusIntro.innerHTML = `Estamos esperando la confirmación de pago para <strong id="eventConfirmation">${escapeHtml(summary.eventName || 'tu carrera')} · ${escapeHtml(summary.distance || '5K')}</strong>.`;
+      if (statusBadge) statusBadge.textContent = 'Pago pendiente';
+      if (statusCopy) {
+        statusCopy.textContent = 'Tu inscripción todavía no está confirmada. Cuando Stripe confirme el pago, se asignará tu número de corredor y recibirás el correo de confirmación.';
+      }
+      if (documentBlock) documentBlock.style.display = 'none';
+      if (profileBlock) profileBlock.style.display = 'none';
+      if (emailNotice) emailNotice.style.display = 'none';
+      if (retryPaymentLink) retryPaymentLink.style.display = 'inline-block';
+    }
+
+    function renderParticipants(summary) {
+      const participantsBlock = document.getElementById('participantsBlock');
+      const participantsList = document.getElementById('participantsList');
+      const participantsTitle = document.getElementById('participantsTitle');
+      const participantsHint = document.getElementById('participantsHint');
+      if (!participantsBlock || !participantsList) return;
+
+      const participants = Array.isArray(summary.participants) ? summary.participants : [];
+      const paymentStatus = String(summary.payment_status || 'pending').toLowerCase();
+      const isPaid = paymentStatus === 'paid';
+
+      if (participants.length === 0) {
+        participantsBlock.style.display = 'none';
+        return;
+      }
+
+      if (participantsTitle) {
+        participantsTitle.textContent = participants.length > 1
+          ? 'Participantes registrados'
+          : 'Participante registrado';
+      }
+
+      if (participantsHint) {
+        participantsHint.textContent = isPaid
+          ? (participants.length > 1 ? 'Cada ticket recibió su propio número de corredor.' : 'Tu ticket ya recibió su número de corredor.')
+          : 'El número de corredor se asignará cuando el pago quede confirmado.';
+      }
+
+      participantsList.innerHTML = participants.map((participant, index) => {
+        const rawBibNumber = participant.bibNumber == null ? '' : String(participant.bibNumber).trim();
+        const bibLabel = isPaid && rawBibNumber
+          ? `#${rawBibNumber.replace(/\D/g, '').padStart(3, '0')}`
+          : 'Pendiente';
+        const shirtSize = participant.shirtSize || 'Por confirmar';
+        const displayName = escapeHtml(participant.fullName || 'Participante');
+        return `
+          <div style="background:#ffffff;border:1px solid #e5e7eb;border-radius:12px;padding:16px 18px;">
+            <p style="margin:0 0 8px;color:#6b7280;font-size:0.8rem;font-weight:800;text-transform:uppercase;letter-spacing:1px;">Participante ${index + 1}</p>
+            <p style="margin:0 0 10px;font-size:1.05rem;font-weight:700;color:#111827;">${displayName}</p>
+            <p style="margin:0 0 6px;color:#374151;">Número de corredor: <strong>${bibLabel}</strong></p>
+            <p style="margin:0;color:#374151;">Talla de playera: <strong>${shirtSize}</strong></p>
+          </div>
+        `;
+      }).join('');
+
+      participantsBlock.style.display = 'block';
+    }
+
+    // Detectar si el usuario viene de un pago exitoso o pendiente
+    async function checkPaymentSuccess() {
       const urlParams = new URLSearchParams(window.location.search);
       let sessionId = urlParams.get('session_id');
       
@@ -73,88 +208,38 @@ src="https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1"
           successScreen.style.display = 'block';
         }
 
-        const participantsBlock = document.getElementById('participantsBlock');
-        const participantsList = document.getElementById('participantsList');
-        const participantsTitle = document.getElementById('participantsTitle');
-        const participantsHint = document.getElementById('participantsHint');
+        try {
+          const summary = await fetchCheckoutSummaryWithPolling(sessionId);
+          if (summary) {
+            const eventSlug = summary.eventSlug || 'axolote-night-run';
+            const raceParam = eventSlug === 'cascanueces-run' ? 'cascanueces' : 'axolote';
+            const waiverLink = document.getElementById('waiverLink');
 
-        if (participantsBlock && participantsList) {
-          fetch(`/api/checkout-summary?session_id=${encodeURIComponent(sessionId)}`)
-            .then((response) => {
-              if (!response.ok) {
-                throw new Error('No se pudo cargar el resumen');
-              }
-              return response.json();
-            })
-            .then((summary) => {
-              const participants = Array.isArray(summary.participants) ? summary.participants : [];
-              const eventSlug = summary.eventSlug || 'axolote-night-run';
-              const eventName = summary.eventName || 'Axolote Night Run 2026';
-              const distance = summary.distance || '5K';
-              const raceParam = eventSlug === 'cascanueces-run' ? 'cascanueces' : 'axolote';
-              const eventConfirmation = document.getElementById('eventConfirmation');
-              const waiverLink = document.getElementById('waiverLink');
+            if (waiverLink && eventSlug === 'cascanueces-run') {
+              waiverLink.href = 'assets/events/cascanueces-run/legal/Cascanueces%20Run1.pdf';
+            }
 
-              if (eventConfirmation) {
-                eventConfirmation.textContent = `${eventName} · ${distance}`;
-              }
-              if (waiverLink && eventSlug === 'cascanueces-run') {
-                waiverLink.href = 'assets/events/cascanueces-run/legal/Cascanueces%20Run1.pdf';
-              }
-
-              const checkoutEmail = (localStorage.getItem(CHECKOUT_EMAIL_KEY) || '').trim().toLowerCase();
-              configureProfileLink(checkoutEmail, raceParam);
-
-              if (participants.length === 0) {
-                return;
-              }
-
-              if (participantsTitle) {
-                participantsTitle.textContent = participants.length > 1
-                  ? 'Participantes registrados'
-                  : 'Participante registrado';
-              }
-
-              if (participantsHint) {
-                participantsHint.textContent = participants.length > 1
-                  ? 'Cada ticket recibió su propio número de corredor.'
-                  : 'Tu ticket ya recibió su número de corredor.';
-              }
-
-              participantsList.innerHTML = participants.map((participant, index) => {
-                const bibNumber = String(participant.bibNumber || '').padStart(3, '0');
-                const shirtSize = participant.shirtSize || 'Por confirmar';
-                const displayName = escapeHtml(participant.fullName || 'Participante');
-                return `
-                  <div style="background:#ffffff;border:1px solid #e5e7eb;border-radius:12px;padding:16px 18px;">
-                    <p style="margin:0 0 8px;color:#6b7280;font-size:0.8rem;font-weight:800;text-transform:uppercase;letter-spacing:1px;">Participante ${index + 1}</p>
-                    <p style="margin:0 0 10px;font-size:1.05rem;font-weight:700;color:#111827;">${displayName}</p>
-                    <p style="margin:0 0 6px;color:#374151;">Número de corredor: <strong>#${bibNumber || '---'}</strong></p>
-                    <p style="margin:0;color:#374151;">Talla de playera: <strong>${shirtSize}</strong></p>
-                  </div>
-                `;
-              }).join('');
-
-              participantsBlock.style.display = 'block';
-            })
-            .catch((error) => {
-              console.warn('No se pudo cargar el resumen de participantes:', error);
-            });
+            const checkoutEmail = (localStorage.getItem(CHECKOUT_EMAIL_KEY) || '').trim().toLowerCase();
+            configureProfileLink(checkoutEmail, raceParam, summary.payment_status);
+            applySummaryState(summary);
+            renderParticipants(summary);
+          }
+        } catch (error) {
+          console.warn('No se pudo cargar el resumen de participantes:', error);
         }
 
-        const checkoutEmail = (localStorage.getItem(CHECKOUT_EMAIL_KEY) || '').trim().toLowerCase();
-        configureProfileLink(checkoutEmail, 'axolote');
       } else {
         window.location.href = "index.html";
       }
     }
 
-    function configureProfileLink(checkoutEmail, raceParam) {
+    function configureProfileLink(checkoutEmail, raceParam, paymentStatus = 'paid') {
         const completeProfileLink = document.getElementById('completeProfileLink');
         if (completeProfileLink) {
+          const paidParam = paymentStatus === 'paid' ? '1' : '0';
           const profileTarget = checkoutEmail
-            ? `/perfil.html?race=${encodeURIComponent(raceParam)}&paid=1&checkoutEmail=${encodeURIComponent(checkoutEmail)}`
-            : `/perfil.html?race=${encodeURIComponent(raceParam)}&paid=1`;
+            ? `/perfil.html?race=${encodeURIComponent(raceParam)}&paid=${paidParam}&checkoutEmail=${encodeURIComponent(checkoutEmail)}`
+            : `/perfil.html?race=${encodeURIComponent(raceParam)}&paid=${paidParam}`;
 
           const loginUrl = new URL('/auth.html', window.location.origin);
           loginUrl.searchParams.set('mode', 'login');
@@ -200,15 +285,15 @@ src="https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1"
         </svg>
       </div>
 
-      <h1 style="font-family: 'Sora', sans-serif; font-size: 2rem; margin: 0 0 16px;">¡Inscripción Confirmada!</h1>
-      <p style="font-size: 1.1rem; color: #374151; margin-bottom: 32px;">
+      <h1 id="statusTitle" style="font-family: 'Sora', sans-serif; font-size: 2rem; margin: 0 0 16px;">Consultando tu pago...</h1>
+      <p id="statusIntro" style="font-size: 1.1rem; color: #374151; margin-bottom: 32px;">
         Gracias por tu pago. Ya estás inscrito en <strong id="eventConfirmation">tu carrera</strong>.
       </p>
 
       <div
         style="background: linear-gradient(135deg, #1a1f3a, #10172b); border-radius: 14px; padding: 24px; margin-bottom: 24px; text-align: left; border: 1px solid rgba(255,255,255,0.1);">
-        <p style="margin: 0 0 10px; color: #9cb2ff; font-size: 0.9rem; text-transform: uppercase; letter-spacing: 1px; font-weight: 700;">Pago completado</p>
-        <p style="margin: 0; color: #f3f7ff; line-height: 1.6; font-size: 1rem;">
+        <p id="statusBadge" style="margin: 0 0 10px; color: #9cb2ff; font-size: 0.9rem; text-transform: uppercase; letter-spacing: 1px; font-weight: 700;">Verificando estado</p>
+        <p id="statusCopy" style="margin: 0; color: #f3f7ff; line-height: 1.6; font-size: 1rem;">
           Para ver tu(s) número(s) de corredor, revisa el resumen de abajo, tu correo de confirmación o entra a tu perfil para terminar de llenar tus datos.
           Recuerda descargar el PDF de exoneración antes del evento.
         </p>
@@ -220,7 +305,7 @@ src="https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1"
         <div id="participantsList" style="display:grid; gap:12px;"></div>
       </div>
 
-      <div
+      <div id="documentBlock"
         style="display:flex; justify-content: center; align-items: center;flex-direction: column;background: #f8faf9; border-radius: 12px; padding: 24px; margin-bottom: 32px; text-align: left;">
         <h3 style="margin: 0 0 16px; color: #19c88b;">📋 Descarga tu documento para la carrera</h3>
         <p style="margin: 0 0 12px;">Imprime esta hoja, fírmala y llévala el día del evento:</p>
@@ -230,7 +315,7 @@ src="https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1"
         </a>
       </div>
 
-      <div style="background: linear-gradient(135deg, #0f2a1e, #0a1f16); border-radius: 16px; padding: 28px 32px; margin-bottom: 32px; text-align: left;">
+      <div id="profileBlock" style="background: linear-gradient(135deg, #0f2a1e, #0a1f16); border-radius: 16px; padding: 28px 32px; margin-bottom: 32px; text-align: left;">
         <div style="display:flex; align-items:center; gap:12px; margin-bottom:12px;">
           <div style="width:36px;height:36px;border-radius:50%;background:#FF6A00;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
             <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="#fff" stroke-width="2.2"><path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
@@ -244,10 +329,13 @@ src="https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1"
           <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M17 8l4 4m0 0l-4 4m4-4H3"/></svg>
         </a>
       </div>
-      <p style="color: #6b7280; font-size: 0.95rem;">
+      <p id="emailNotice" style="color: #6b7280; font-size: 0.95rem;">
         También te enviamos un correo con toda la información.<br>
         Revisa tu bandeja de entrada (y spam). Puede demorar
       </p>
+      <a id="retryPaymentLink" href="checkout.html" class="btn btn-primary" style="display:none; margin-top: 12px; padding: 14px 32px;">
+        Intentar pago nuevamente
+      </a>
       <p style="color: #19c88b; font-size: 0.95rem;">
         Si aún no te has registrado, crea una cuenta con el correo asociado a tu compra.
       </p>
