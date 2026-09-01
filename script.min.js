@@ -4637,6 +4637,7 @@ function setupCheckoutForm() {
         body: JSON.stringify({
           promoCode,
           ticketCount: tickets.length,
+          eventSlug: window.KineticHubCheckoutSelection?.eventSlug || "axolote-night-run",
         }),
       });
 
