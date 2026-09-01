@@ -250,7 +250,7 @@ module.exports = async function handler(req, res) {
     const origin = getRequestOrigin(req);
     const lineItem = await buildStripeLineItem(event, stage, ticketCount);
     const session = await stripe.checkout.sessions.create({
-      payment_method_types: ['card'],
+      payment_method_types: ['card', 'oxxo'],
       mode: 'payment',
       // allow_promotion_codes y discounts son mutuamente exclusivos en Stripe:
       // si ya hay un descuento aplicado, no se puede activar la caja de promociones.

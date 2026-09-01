@@ -15,6 +15,7 @@ const EVENT_CATALOG = {
     slug: 'axolote-night-run',
     name: 'Axolote Night Run 2026',
     defaultDistance: '5K',
+    distances: ['5K'],
     kitDelivery: 'viernes 30 de octubre de 11:00 a 17:30 hrs frente al gimnasio de la Pista de Remo y Canotaje Virgilio Uribe, CDMX',
     waiverUrl: 'https://www.kinetichub.com.mx/exoneracion.pdf',
   },
@@ -22,6 +23,7 @@ const EVENT_CATALOG = {
     slug: 'cascanueces-run',
     name: 'Cascanueces Run 2026',
     defaultDistance: '5K',
+    distances: ['5K', '10K'],
     kitDelivery: 'viernes 4 de diciembre de 11:00 a 17:30 hrs en el Huerto Educativo del Bosque de San Juan de Aragón, CDMX',
     waiverUrl: 'https://www.kinetichub.com.mx/assets/events/cascanueces-run/legal/Cascanueces%20Run1.pdf',
   },
@@ -29,7 +31,20 @@ const EVENT_CATALOG = {
 
 function resolveEventFromMetadata(metadata = {}) {
   const event = EVENT_CATALOG[metadata.event_slug] || EVENT_CATALOG['axolote-night-run'];
-  const distance = String(metadata.distance || event.defaultDistance).trim().toUpperCase();
+  const rawDistance = metadata.distance == null ? '' : String(metadata.distance).trim().toUpperCase();
+  const distances = Array.isArray(event.distances) && event.distances.length > 0
+    ? event.distances
+    : [event.defaultDistance];
+
+  if (!rawDistance && distances.length === 1) {
+    return { ...event, distance: event.defaultDistance };
+  }
+
+  if (!distances.includes(rawDistance)) {
+    throw new Error(`Distancia inválida o ausente para ${event.slug}: ${rawDistance || 'sin distance'}`);
+  }
+
+  const distance = rawDistance;
   return { ...event, distance };
 }
 
@@ -644,11 +659,18 @@ module.exports = async (req, res) => {
   // ==================== CHECKOUT SESSION COMPLETED ====================
   if (event.type === 'checkout.session.completed') {
     const session = event.data.object;
+    const sessionId = session.id;
+    const paymentStatus = String(session.payment_status || '').trim().toLowerCase();
+
+    if (paymentStatus !== 'paid') {
+      console.log(`⏳ Fulfillment diferido para checkout.session.completed | session_id=${sessionId} | payment_status=${paymentStatus || 'unknown'}`);
+      return res.status(200).json({ received: true, deferred: true });
+    }
+
     const selectedEvent = resolveEventFromMetadata(session.metadata);
 
     const email = session.customer_email || session.customer_details?.email;
     const fullName = session.customer_details?.name || "Atleta";
-    const sessionId = session.id;
     const amountTotal = (session.amount_total || 0) / 100;
     const participants = readParticipantsFromMetadata(session.metadata || {});
     const primaryParticipant = participants[0] || { fullName, shirtSize: null };

@@ -771,6 +771,13 @@ src="https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1"
         let stageDates = '1 de junio al 31 de julio de 2026';
         let checkoutOpen = true;
 
+        if (!stageData && checkoutEventSlug === 'cascanueces-run') {
+          stageName = 'Inscripciones cerradas';
+          stagePrice = 'Cerrado';
+          stageDates = 'No se pudo cargar la etapa vigente';
+          checkoutOpen = false;
+        }
+
         if (stageData) {
           stageName = stageData.label || stageName;
           stagePrice = stageData.price ? `$${stageData.price} MXN` : 'Cerrado';

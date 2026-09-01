@@ -50,10 +50,12 @@ module.exports = async function handler(req, res) {
     const eventName = sessionMetadata.event_name
       || (eventSlug === 'cascanueces-run' ? 'Cascanueces Run 2026' : 'Axolote Night Run 2026');
     const distance = String(data[0].distance || sessionMetadata.distance || '5K').toUpperCase();
+    const paymentStatus = String(data[0].payment_status || 'pending').toLowerCase().trim();
+    const primaryBibNumber = data[0].bib_number || null;
 
     const participants = data.map((row) => ({
       fullName: row.full_name,
-      bibNumber: row.bib_number,
+      bibNumber: row.bib_number || null,
       shirtSize: row.shirt_size,
       ticketIndex: row.ticket_index,
     }));
@@ -66,6 +68,8 @@ module.exports = async function handler(req, res) {
       email: data[0].buyer_email || data[0].email || '',
       ticketCount: data[0].ticket_count || data.length,
       amountPaid: Number(totalAmount.toFixed(2)),
+      payment_status: paymentStatus,
+      bib_number: primaryBibNumber,
       eventSlug,
       eventName,
       distance,

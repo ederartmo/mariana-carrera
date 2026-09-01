@@ -15,6 +15,7 @@ function checkoutSession(overrides = {}) {
     customer_details: { email: 'runner@example.com', name: 'Runner Test' },
     amount_total: 50000,
     payment_intent: 'pi_test_123',
+    payment_status: 'paid',
     metadata: {
       event_slug: 'cascanueces-run',
       distance: '5K',
@@ -86,6 +87,10 @@ function createSupabaseMock(state) {
         const query = {
           eq(column, value) {
             state.updateCalls.push({ table, payload, eq: { column, value } });
+            return query;
+          },
+          like(column, value) {
+            state.updateCalls.push({ table, payload, like: { column, value } });
             return query;
           },
           or(expression) {
@@ -219,7 +224,7 @@ async function invoke(webhook, event) {
 }
 
 function emailPayload(overrides = {}) {
-  const payload = {
+  return {
     email: 'runner@example.com',
     fullName: 'Runner Test',
     primaryBibNumber: '001',
@@ -230,8 +235,46 @@ function emailPayload(overrides = {}) {
     participantDetails: [{ fullName: 'Runner Test', shirtSize: 'M', bibNumber: '001' }],
     eventSlug: 'cascanueces-run',
     distance: '5K',
+    ...overrides,
   };
-  return { ...payload, ...overrides };
+}
+
+function countMetaEvent(state, eventName) {
+  return state.metaCalls.filter((call) => call.eventName === eventName).length;
+}
+
+function createJsonRes() {
+  return {
+    statusCode: 200,
+    headers: {},
+    body: null,
+    setHeader(name, value) {
+      this.headers[name] = value;
+      return this;
+    },
+    status(code) {
+      this.statusCode = code;
+      return this;
+    },
+    json(payload) {
+      this.body = payload;
+      return this;
+    },
+    send(payload) {
+      this.body = payload;
+      return this;
+    },
+  };
+}
+
+function queryResult(data, error = null) {
+  return {
+    order() { return this; },
+    eq() { return this; },
+    then(resolve, reject) {
+      return Promise.resolve({ data, error }).then(resolve, reject);
+    },
+  };
 }
 
 test('sendConfirmationEmail returns ok and resendId only when Resend returns data.id', async () => {
@@ -243,6 +286,54 @@ test('sendConfirmationEmail returns ok and resendId only when Resend returns dat
 
     assert.equal(result.ok, true);
     assert.equal(result.resendId, 'email_123');
+  });
+});
+
+test('sendConfirmationEmail renders Cascanueces 5K when distance is explicit 5K', async () => {
+  await withWebhookMocks({
+    event: stripeEvent(),
+    resendResults: [{ data: { id: 'email_5k' }, error: null }],
+  }, async ({ webhook, state }) => {
+    await webhook.sendConfirmationEmail(emailPayload({ distance: '5K' }));
+
+    assert.match(state.emailSends[0].html, />5K<\/td>/);
+  });
+});
+
+test('sendConfirmationEmail renders Cascanueces 10K when distance is explicit 10K', async () => {
+  await withWebhookMocks({
+    event: stripeEvent(),
+    resendResults: [{ data: { id: 'email_10k' }, error: null }],
+  }, async ({ webhook, state }) => {
+    await webhook.sendConfirmationEmail(emailPayload({ distance: '10K', amountTotal: 500 }));
+
+    assert.match(state.emailSends[0].html, />10K<\/td>/);
+  });
+});
+
+test('sendConfirmationEmail does not silently default Cascanueces without distance to 5K', async () => {
+  await withWebhookMocks({
+    event: stripeEvent(),
+  }, async ({ webhook, state }) => {
+    await assert.rejects(
+      () => webhook.sendConfirmationEmail(emailPayload({ distance: undefined })),
+      /Distancia inválida o ausente para cascanueces-run/
+    );
+    assert.equal(state.emailSends.length, 0);
+  });
+});
+
+test('sendConfirmationEmail keeps Axolote default 5K when distance is absent', async () => {
+  await withWebhookMocks({
+    event: stripeEvent(),
+    resendResults: [{ data: { id: 'email_axolote' }, error: null }],
+  }, async ({ webhook, state }) => {
+    await webhook.sendConfirmationEmail(emailPayload({
+      eventSlug: 'axolote-night-run',
+      distance: undefined,
+    }));
+
+    assert.match(state.emailSends[0].html, />5K<\/td>/);
   });
 });
 
@@ -258,27 +349,141 @@ test('sendConfirmationEmail returns failure when Resend returns an error object'
   });
 });
 
-test('sendConfirmationEmail renders the provided event distance', async () => {
-  await withWebhookMocks({
-    event: stripeEvent(),
-    resendResults: [
-      { data: { id: 'email_10k' }, error: null },
-      { data: { id: 'email_5k' }, error: null },
-      { data: { id: 'email_axolote' }, error: null },
-    ],
-  }, async ({ webhook, state }) => {
-    await webhook.sendConfirmationEmail(emailPayload({ distance: '10K' }));
-    await webhook.sendConfirmationEmail(emailPayload({ distance: '5K' }));
-    await webhook.sendConfirmationEmail(emailPayload({
-      eventSlug: 'axolote-night-run',
-      distance: '5K',
-    }));
-
-    assert.match(state.emailSends[0].html, /Distancia[\s\S]*10K/);
-    assert.doesNotMatch(state.emailSends[0].html, /Distancia[\s\S]*5K[\s\S]*Nombre/);
-    assert.match(state.emailSends[1].html, /Distancia[\s\S]*5K/);
-    assert.match(state.emailSends[2].html, /Distancia[\s\S]*5K/);
+test('resend-single-confirmation passes inscription distance to sendConfirmationEmail', async () => {
+  const emailCalls = [];
+  const records = [finalizedRow({ distance: '10K', order_session_id: 'order_10k' })];
+  const restoreSupabase = mockModule('@supabase/supabase-js', {
+    createClient: () => ({
+      auth: { getUser: async () => ({ data: { user: { email: 'mariana@kinetichub.com.mx' } }, error: null }) },
+      from: (table) => ({
+        select: () => queryResult(records),
+        update: (payload) => ({
+          eq: async (column, value) => ({ data: null, error: null, table, payload, column, value }),
+        }),
+      }),
+    }),
   });
+  const restoreWebhook = mockModule('../api/stripe-webhook', {
+    sendConfirmationEmail: async (payload) => {
+      emailCalls.push(payload);
+      return { ok: true, resendId: 'email_single_10k' };
+    },
+  });
+  delete require.cache[require.resolve('../api/resend-single-confirmation')];
+
+  try {
+    const handler = require('../api/resend-single-confirmation');
+    const res = createJsonRes();
+    await handler({
+      method: 'POST',
+      headers: { authorization: 'Bearer token' },
+      body: { orderSessionId: 'order_10k' },
+    }, res);
+
+    assert.equal(res.statusCode, 200);
+    assert.equal(emailCalls[0].distance, '10K');
+  } finally {
+    delete require.cache[require.resolve('../api/resend-single-confirmation')];
+    restoreWebhook();
+    restoreSupabase();
+  }
+});
+
+test('resend-confirmations passes each order distance to sendConfirmationEmail', async () => {
+  const emailCalls = [];
+  const records = [
+    finalizedRow({ distance: '10K', order_session_id: 'bulk_10k' }),
+  ];
+  const restoreSupabase = mockModule('@supabase/supabase-js', {
+    createClient: () => ({
+      from: (table) => ({
+        select: () => queryResult(records),
+        update: (payload) => ({
+          eq: async (column, value) => ({ data: null, error: null, table, payload, column, value }),
+        }),
+      }),
+    }),
+  });
+  const restoreWebhook = mockModule('../api/stripe-webhook', {
+    sendConfirmationEmail: async (payload) => {
+      emailCalls.push(payload);
+      return { ok: true, resendId: 'email_bulk_10k' };
+    },
+  });
+  delete require.cache[require.resolve('../api/resend-confirmations')];
+
+  try {
+    const handler = require('../api/resend-confirmations');
+    const res = createJsonRes();
+    await handler({ method: 'GET', headers: {} }, res);
+
+    assert.equal(res.statusCode, 200);
+    assert.equal(emailCalls[0].distance, '10K');
+  } finally {
+    delete require.cache[require.resolve('../api/resend-confirmations')];
+    restoreWebhook();
+    restoreSupabase();
+  }
+});
+
+test('admin-manual-transfer passes validated cleanDistance to sendConfirmationEmail', async () => {
+  const emailCalls = [];
+  let bib = 1;
+  const restoreSupabase = mockModule('@supabase/supabase-js', {
+    createClient: () => ({
+      auth: { getUser: async () => ({ data: { user: { email: 'mariana@kinetichub.com.mx' } }, error: null }) },
+      rpc: async () => ({ data: String(bib++).padStart(3, '0'), error: null }),
+      from: (table) => ({
+        insert: (payload) => ({
+          select: () => ({
+            single: async () => ({
+              data: {
+                id: 'manual_1',
+                full_name: payload.full_name,
+                shirt_size: payload.shirt_size,
+                bib_number: payload.bib_number,
+                ticket_index: payload.ticket_index,
+              },
+              error: null,
+            }),
+          }),
+        }),
+        update: (payload) => ({
+          eq: async (column, value) => ({ data: null, error: null, table, payload, column, value }),
+        }),
+      }),
+    }),
+  });
+  const restoreWebhook = mockModule('../api/stripe-webhook', {
+    sendConfirmationEmail: async (payload) => {
+      emailCalls.push(payload);
+      return { ok: true, resendId: 'email_manual_10k' };
+    },
+  });
+  delete require.cache[require.resolve('../api/admin-manual-transfer')];
+
+  try {
+    const handler = require('../api/admin-manual-transfer');
+    const res = createJsonRes();
+    await handler({
+      method: 'POST',
+      headers: { authorization: 'Bearer token' },
+      body: {
+        buyerEmail: 'runner@example.com',
+        tickets: [{ fullName: 'Runner Test', shirtSize: 'M' }],
+        totalAmount: 500,
+        eventSlug: 'cascanueces-run',
+        distance: '10k',
+      },
+    }, res);
+
+    assert.equal(res.statusCode, 200);
+    assert.equal(emailCalls[0].distance, '10K');
+  } finally {
+    delete require.cache[require.resolve('../api/admin-manual-transfer')];
+    restoreWebhook();
+    restoreSupabase();
+  }
 });
 
 for (const eventType of ['checkout.session.completed', 'checkout.session.async_payment_succeeded']) {
@@ -296,6 +501,7 @@ for (const eventType of ['checkout.session.completed', 'checkout.session.async_p
       assert.equal(state.rpcCalls[0].name, 'finalize_paid_order');
       assert.equal(state.rpcCalls[0].args.p_order_session_id, 'cs_test_123');
       assert.equal(state.rpcCalls[0].args.p_event_slug, 'cascanueces-run');
+      assert.equal(state.rpcCalls[0].args.p_distance, '5K');
       assert.equal(state.rpcCalls[0].args.p_participants.length, 1);
       assert.equal(state.emailSends.length, 1);
       assert.equal(state.updateCalls.length, 1);
@@ -373,6 +579,144 @@ for (const eventType of ['checkout.session.completed', 'checkout.session.async_p
     });
   });
 }
+
+test('checkout.session.completed with unpaid payment_status defers fulfillment without side effects', async () => {
+  const event = stripeEvent('checkout.session.completed', checkoutSession({
+    payment_status: 'unpaid',
+  }));
+
+  await withWebhookMocks({ event }, async ({ webhook, state }) => {
+    const res = await invoke(webhook, event);
+
+    assert.equal(res.statusCode, 200);
+    assert.deepEqual(res.body, { received: true, deferred: true });
+    assert.equal(state.rpcCalls.length, 0);
+    assert.equal(state.emailSends.length, 0);
+    assert.equal(state.updateCalls.length, 0);
+    assert.equal(state.upsertCalls.length, 0);
+    assert.equal(countMetaEvent(state, 'Purchase'), 0);
+    assert.equal(countMetaEvent(state, 'CompleteRegistration'), 0);
+  });
+});
+
+test('checkout.session.completed unpaid for Cascanueces 10K does not finalize or email', async () => {
+  const event = stripeEvent('checkout.session.completed', checkoutSession({
+    payment_status: 'unpaid',
+    metadata: {
+      event_slug: 'cascanueces-run',
+      distance: '10K',
+      ticket_count: '1',
+      participant_1_name: 'Runner Test',
+      participant_1_shirt: 'M',
+    },
+  }));
+
+  await withWebhookMocks({ event }, async ({ webhook, state }) => {
+    const res = await invoke(webhook, event);
+
+    assert.equal(res.statusCode, 200);
+    assert.equal(state.rpcCalls.length, 0);
+    assert.equal(state.emailSends.length, 0);
+    assert.equal(state.upsertCalls.length, 0);
+    assert.equal(countMetaEvent(state, 'Purchase'), 0);
+    assert.equal(countMetaEvent(state, 'CompleteRegistration'), 0);
+  });
+});
+
+test('checkout.session.completed unpaid followed by async success finalizes only on async success', async () => {
+  const unpaidEvent = stripeEvent('checkout.session.completed', checkoutSession({
+    payment_status: 'unpaid',
+    metadata: {
+      event_slug: 'cascanueces-run',
+      distance: '10K',
+      ticket_count: '1',
+      participant_1_name: 'Runner Test',
+      participant_1_shirt: 'M',
+    },
+  }));
+  const paidAsyncEvent = stripeEvent('checkout.session.async_payment_succeeded', checkoutSession({
+    payment_status: 'paid',
+    metadata: {
+      event_slug: 'cascanueces-run',
+      distance: '10K',
+      ticket_count: '1',
+      participant_1_name: 'Runner Test',
+      participant_1_shirt: 'M',
+    },
+  }));
+
+  await withWebhookMocks({
+    event: unpaidEvent,
+    rpcResults: [{ data: [finalizedRow({ distance: '10K', bib_number: '010' })], error: null }],
+    resendResults: [{ data: { id: 'email_async_10k' }, error: null }],
+  }, async ({ webhook, state }) => {
+    const first = await invoke(webhook, unpaidEvent);
+    state.event = paidAsyncEvent;
+    const second = await invoke(webhook, paidAsyncEvent);
+
+    assert.equal(first.statusCode, 200);
+    assert.equal(second.statusCode, 200);
+    assert.equal(state.rpcCalls.length, 1);
+    assert.equal(state.rpcCalls[0].name, 'finalize_paid_order');
+    assert.equal(state.rpcCalls[0].args.p_event_slug, 'cascanueces-run');
+    assert.equal(state.rpcCalls[0].args.p_distance, '10K');
+    assert.equal(state.emailSends.length, 1);
+    assert.match(state.emailSends[0].html, />10K<\/td>/);
+    assert.equal(countMetaEvent(state, 'Purchase'), 1);
+    assert.equal(countMetaEvent(state, 'CompleteRegistration'), 1);
+  });
+});
+
+test('checkout.session.async_payment_succeeded duplicate relies on RPC email_sent to avoid duplicate email', async () => {
+  const event = stripeEvent('checkout.session.async_payment_succeeded', checkoutSession({
+    payment_status: 'paid',
+    metadata: {
+      event_slug: 'cascanueces-run',
+      distance: '10K',
+      ticket_count: '1',
+      participant_1_name: 'Runner Test',
+      participant_1_shirt: 'M',
+    },
+  }));
+
+  await withWebhookMocks({
+    event,
+    rpcResults: [
+      { data: [finalizedRow({ distance: '10K', bib_number: '010', email_sent: false })], error: null },
+      { data: [finalizedRow({ distance: '10K', bib_number: '010', email_sent: true })], error: null },
+    ],
+    resendResults: [{ data: { id: 'email_async_once' }, error: null }],
+  }, async ({ webhook, state }) => {
+    const first = await invoke(webhook, event);
+    const second = await invoke(webhook, event);
+
+    assert.equal(first.statusCode, 200);
+    assert.equal(second.statusCode, 200);
+    assert.equal(state.rpcCalls.length, 2);
+    assert.equal(state.rpcCalls[0].args.p_distance, '10K');
+    assert.equal(state.rpcCalls[1].args.p_distance, '10K');
+    assert.equal(state.emailSends.length, 1);
+    assert.equal(state.updateCalls.length, 1);
+  });
+});
+
+test('checkout.session.async_payment_failed does not finalize, email, or track Purchase', async () => {
+  const event = stripeEvent('checkout.session.async_payment_failed', checkoutSession({
+    payment_status: 'unpaid',
+  }));
+
+  await withWebhookMocks({ event }, async ({ webhook, state }) => {
+    const res = await invoke(webhook, event);
+
+    assert.equal(res.statusCode, 200);
+    assert.equal(state.rpcCalls.length, 0);
+    assert.equal(state.emailSends.length, 0);
+    assert.equal(state.updateCalls.length, 2);
+    assert.equal(state.updateCalls[0].payload.payment_status, 'payment_failed');
+    assert.equal(countMetaEvent(state, 'Purchase'), 0);
+    assert.equal(countMetaEvent(state, 'CompleteRegistration'), 0);
+  });
+});
 
 test('payload contradiction returned by RPC produces 5xx and no email', async () => {
   const event = stripeEvent('checkout.session.completed', checkoutSession({
