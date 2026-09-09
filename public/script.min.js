@@ -4477,7 +4477,10 @@ function setupCheckoutForm() {
   const discountValue = document.getElementById("discountValue");
   const finalTotalRow = document.getElementById("finalTotalRow");
   const finalTotalPrice = document.getElementById("finalTotalPrice");
-  let tickets = [{ fullName: "", shirtSize: "" }];
+  // PR4 Parte B: catálogo espejo de api/location-catalog.js (mismo orden).
+  const PR4_STATES = ["Aguascalientes", "Baja California", "Baja California Sur", "Campeche", "Chiapas", "Chihuahua", "Ciudad de México", "Coahuila de Zaragoza", "Colima", "Durango", "Guanajuato", "Guerrero", "Hidalgo", "Jalisco", "Estado de México", "Michoacán de Ocampo", "Morelos", "Nayarit", "Nuevo León", "Oaxaca", "Puebla", "Querétaro", "Quintana Roo", "San Luis Potosí", "Sinaloa", "Sonora", "Tabasco", "Tamaulipas", "Tlaxcala", "Veracruz de Ignacio de la Llave", "Yucatán", "Zacatecas"];
+  const PR4_CDMX_BOROUGHS = ["Álvaro Obregón", "Azcapotzalco", "Benito Juárez", "Coyoacán", "Cuajimalpa de Morelos", "Cuauhtémoc", "Gustavo A. Madero", "Iztacalco", "Iztapalapa", "La Magdalena Contreras", "Miguel Hidalgo", "Milpa Alta", "Tláhuac", "Tlalpan", "Venustiano Carranza", "Xochimilco"];
+  let tickets = [{ fullName: "", shirtSize: "", birthDate: "", whatsapp: "", state: "", borough: "" }];
   let promoState = null;
 
   if (!ticketsList || !addTicketBtn || !stagePriceEl || !totalPriceEl || !ticketCountLabel) return;
@@ -4548,6 +4551,9 @@ function setupCheckoutForm() {
       .map((ticket, index) => {
         const ticketNumber = index + 1;
         const canRemove = tickets.length > 1;
+        const isCdmx = ticket.state === "Ciudad de México";
+        const stateOptions = PR4_STATES.map((s) => `<option value="${escapeAttr(s)}" ${ticket.state === s ? "selected" : ""}>${escapeAttr(s)}</option>`).join("");
+        const boroughOptions = PR4_CDMX_BOROUGHS.map((b) => `<option value="${escapeAttr(b)}" ${ticket.borough === b ? "selected" : ""}>${escapeAttr(b)}</option>`).join("");
         return `
           <div class="ticket-card" data-ticket-index="${index}">
             <div class="ticket-card-head">
@@ -4583,6 +4589,57 @@ function setupCheckoutForm() {
                 <option value="M" ${ticket.shirtSize === "M" ? "selected" : ""}>M</option>
                 <option value="L" ${ticket.shirtSize === "L" ? "selected" : ""}>L</option>
                 <option value="XL" ${ticket.shirtSize === "XL" ? "selected" : ""}>XL</option>
+                <option value="XXL" ${ticket.shirtSize === "XXL" ? "selected" : ""}>XXL</option>
+                <option value="XXXL" ${ticket.shirtSize === "XXXL" ? "selected" : ""}>XXXL</option>
+              </select>
+              <label for="ticketBirth${ticketNumber}">
+                Fecha de nacimiento <span class="required-mark">*</span>
+              </label>
+              <input
+                id="ticketBirth${ticketNumber}"
+                type="date"
+                data-ticket-field="birthDate"
+                data-ticket-index="${index}"
+                value="${escapeAttr(ticket.birthDate || "")}"
+                required
+              />
+              <label for="ticketWa${ticketNumber}">
+                WhatsApp (10 dígitos) <span class="required-mark">*</span>
+              </label>
+              <input
+                id="ticketWa${ticketNumber}"
+                type="tel"
+                inputmode="tel"
+                maxlength="16"
+                placeholder="55XXXXXXXX"
+                data-ticket-field="whatsapp"
+                data-ticket-index="${index}"
+                value="${escapeAttr(ticket.whatsapp || "")}"
+                required
+              />
+              <label for="ticketState${ticketNumber}">
+                Estado <span class="required-mark">*</span>
+              </label>
+              <select
+                id="ticketState${ticketNumber}"
+                data-ticket-field="state"
+                data-ticket-index="${index}"
+                required
+              >
+                <option value="" ${!ticket.state ? "selected" : ""} disabled>Selecciona tu estado</option>
+                ${stateOptions}
+              </select>
+              <label for="ticketBorough${ticketNumber}">
+                Alcaldía (solo CDMX)
+              </label>
+              <select
+                id="ticketBorough${ticketNumber}"
+                data-ticket-field="borough"
+                data-ticket-index="${index}"
+                ${isCdmx ? "required" : "disabled"}
+              >
+                <option value="" ${!ticket.borough ? "selected" : ""}>${isCdmx ? "Selecciona tu alcaldía" : "Solo aplica en CDMX"}</option>
+                ${boroughOptions}
               </select>
             </div>
           </div>
@@ -4670,9 +4727,33 @@ function setupCheckoutForm() {
     }
   }
 
+  function normalizeWhatsappFrontend(value) {
+    const digits = String(value || "").replace(/\D/g, "");
+    let national = digits;
+    if (digits.length === 12 && digits.startsWith("52")) national = digits.slice(2);
+    if (digits.length === 13 && digits.startsWith("521")) national = digits.slice(3);
+    if (digits.startsWith("0052") && digits.length === 16) national = digits.slice(4);
+    return national;
+  }
+
+  function isValidBirthFrontend(value) {
+    // Regla vigente: obligatorio, YYYY-MM-DD, fecha real, no futura, >=1900-01-01. Sin edad mínima.
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(String(value || ""))) return false;
+    const parts = String(value).split("-").map(Number);
+    if (parts[0] < 1900) return false;
+    const dt = new Date(`${value}T00:00:00`);
+    if (Number.isNaN(dt.getTime())) return false;
+    // fecha real (evita 2026-02-30 -> 2026-03-02)
+    if (dt.getFullYear() !== parts[0] || dt.getMonth() + 1 !== parts[1] || dt.getDate() !== parts[2]) return false;
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    if (dt >= today) return false;
+    return true;
+  }
+
   addTicketBtn.addEventListener("click", () => {
     if (tickets.length >= MAX_TICKETS_PER_ORDER) return;
-    tickets.push({ fullName: "", shirtSize: "" });
+    tickets.push({ fullName: "", shirtSize: "", birthDate: "", whatsapp: "", state: "", borough: "" });
     if (promoState) {
       clearPromoState({ keepMessage: true });
       setPromoFeedback("La cantidad cambió. Vuelve a aplicar el código para recalcular el descuento.", "err");
@@ -4710,6 +4791,34 @@ function setupCheckoutForm() {
     if (field === "shirtSize") {
       tickets[index].shirtSize = String(target.value || "").toUpperCase();
     }
+    if (field === "birthDate") {
+      tickets[index].birthDate = String(target.value || "");
+    }
+    if (field === "whatsapp") {
+      tickets[index].whatsapp = String(target.value || "");
+    }
+  });
+
+  ticketsList.addEventListener("change", (event) => {
+    const target = event.target;
+    if (!(target instanceof HTMLElement)) return;
+    const index = Number(target.getAttribute("data-ticket-index"));
+    const field = target.getAttribute("data-ticket-field");
+    if (!Number.isInteger(index) || !field || !tickets[index]) return;
+    if (field === "state") {
+      tickets[index].state = String(target.value || "");
+      // borough solo CDMX, else NULL
+      if (tickets[index].state !== "Ciudad de México") {
+        tickets[index].borough = "";
+      }
+      renderTickets();
+    }
+    if (field === "borough") {
+      tickets[index].borough = String(target.value || "");
+    }
+    if (field === "birthDate") {
+      tickets[index].birthDate = String(target.value || "");
+    }
   });
 
   promoCodeInput?.addEventListener("input", () => {
@@ -4732,17 +4841,34 @@ function setupCheckoutForm() {
     const normalizedEmail = (email || "").toLowerCase().trim();
     const promoCode = String(promoCodeInput?.value || "").trim().toUpperCase();
     const termsCheck = document.getElementById("termsCheck")?.checked;
-    const normalizedTickets = tickets.map((ticket) => ({
-      fullName: normalizeName(ticket.fullName),
-      shirtSize: String(ticket.shirtSize || "").trim().toUpperCase(),
-    }));
+    const normalizedTickets = tickets.map((ticket) => {
+      const state = String(ticket.state || "").trim();
+      const isCdmx = state === "Ciudad de México";
+      return {
+        fullName: normalizeName(ticket.fullName),
+        shirtSize: String(ticket.shirtSize || "").trim().toUpperCase(),
+        birthDate: String(ticket.birthDate || "").trim(),
+        whatsapp: String(ticket.whatsapp || "").trim(),
+        state,
+        borough: isCdmx ? String(ticket.borough || "").trim() : "",
+      };
+    });
 
-    const hasInvalidTicket = normalizedTickets.some(
-      (ticket) => !ticket.fullName || ticket.fullName.length < 3 || !["XS", "S", "M", "L", "XL"].includes(ticket.shirtSize)
-    );
+    const hasInvalidTicket = normalizedTickets.some((ticket) => {
+      if (!ticket.fullName || ticket.fullName.length < 3) return true;
+      if (!["XS", "S", "M", "L", "XL", "XXL", "XXXL"].includes(ticket.shirtSize)) return true;
+      if (!isValidBirthFrontend(ticket.birthDate)) return true;
+      const waDigits = normalizeWhatsappFrontend(ticket.whatsapp);
+      if (!/^[1-9]\d{9}$/.test(waDigits)) return true;
+      if (!PR4_STATES.includes(ticket.state)) return true;
+      if (ticket.state === "Ciudad de México") {
+        if (!PR4_CDMX_BOROUGHS.includes(ticket.borough)) return true;
+      }
+      return false;
+    });
 
     if (!email || !termsCheck || hasInvalidTicket) {
-      alert("Completa el correo, nombre y talla de cada ticket, y acepta los términos.");
+      alert("Completa el correo, nombre, talla, fecha de nacimiento, WhatsApp (10 dígitos), estado y alcaldía (solo CDMX) de cada ticket, y acepta los términos.");
       return;
     }
 

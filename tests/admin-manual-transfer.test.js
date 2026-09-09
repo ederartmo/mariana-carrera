@@ -104,7 +104,7 @@ async function runManualTransfer({ eventSlug, distance }) {
     headers: { authorization: 'Bearer admin-token' },
     body: {
       buyerEmail: 'manual-test@example.com',
-      tickets: [{ fullName: 'Runner Manual Test', shirtSize: 'M' }],
+      tickets: [{ fullName: 'Runner Manual Test', shirtSize: 'M', birthDate: '1990-05-14', whatsapp: '5512345678', state: 'Jalisco' }],
       totalAmount: 400,
       eventSlug,
       distance,

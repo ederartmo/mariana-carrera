@@ -394,8 +394,13 @@ test('resend-confirmations passes each order distance to sendConfirmationEmail',
   const records = [
     finalizedRow({ distance: '10K', order_session_id: 'bulk_10k' }),
   ];
+  const previousAdminEmails = process.env.ADMIN_EMAILS;
+  process.env.ADMIN_EMAILS = 'admin@example.com';
   const restoreSupabase = mockModule('@supabase/supabase-js', {
     createClient: () => ({
+      auth: {
+        getUser: async () => ({ data: { user: { email: 'admin@example.com' } }, error: null }),
+      },
       from: (table) => ({
         select: () => queryResult(records),
         update: (payload) => ({
@@ -415,7 +420,7 @@ test('resend-confirmations passes each order distance to sendConfirmationEmail',
   try {
     const handler = require('../api/resend-confirmations');
     const res = createJsonRes();
-    await handler({ method: 'GET', headers: {} }, res);
+    await handler({ method: 'POST', headers: { authorization: 'Bearer admin-token' } }, res);
 
     assert.equal(res.statusCode, 200);
     assert.equal(emailCalls[0].distance, '10K');
@@ -423,6 +428,11 @@ test('resend-confirmations passes each order distance to sendConfirmationEmail',
     delete require.cache[require.resolve('../api/resend-confirmations')];
     restoreWebhook();
     restoreSupabase();
+    if (previousAdminEmails === undefined) {
+      delete process.env.ADMIN_EMAILS;
+    } else {
+      process.env.ADMIN_EMAILS = previousAdminEmails;
+    }
   }
 });
 
@@ -470,7 +480,7 @@ test('admin-manual-transfer passes validated cleanDistance to sendConfirmationEm
       headers: { authorization: 'Bearer token' },
       body: {
         buyerEmail: 'runner@example.com',
-        tickets: [{ fullName: 'Runner Test', shirtSize: 'M' }],
+        tickets: [{ fullName: 'Runner Test', shirtSize: 'M', birthDate: '1990-05-14', whatsapp: '5512345678', state: 'Jalisco' }],
         totalAmount: 500,
         eventSlug: 'cascanueces-run',
         distance: '10k',

@@ -6,6 +6,37 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY
 );
 
+function getAdminEmails() {
+  const raw = process.env.ADMIN_EMAILS || 'mariana@kinetichub.com.mx,gato.jijen01@gmail.com';
+  return raw
+    .split(',')
+    .map((item) => item.trim().toLowerCase())
+    .filter(Boolean);
+}
+
+async function getAdminUserFromRequest(req) {
+  const authHeader = req.headers.authorization || '';
+  const token = authHeader.startsWith('Bearer ') ? authHeader.slice(7).trim() : '';
+
+  if (!token) {
+    return { error: 'No autorizado: falta token de sesión.' };
+  }
+
+  const { data, error } = await supabase.auth.getUser(token);
+  if (error || !data?.user?.email) {
+    return { error: 'No autorizado: sesión inválida.' };
+  }
+
+  const email = String(data.user.email).trim().toLowerCase();
+  const admins = getAdminEmails();
+
+  if (!admins.includes(email)) {
+    return { error: 'No autorizado: este usuario no es admin.' };
+  }
+
+  return { email };
+}
+
 function htmlPage(title, bodyContent) {
   return `<!DOCTYPE html>
 <html lang="es">
@@ -177,9 +208,21 @@ async function sendForAllPaid() {
 }
 
 module.exports = async function handler(req, res) {
-  res.setHeader('Content-Type', 'text/html; charset=utf-8');
+  if (req.method !== 'POST') {
+    return res.status(405).json({ error: 'Método no permitido.' });
+  }
 
   try {
+    const auth = await getAdminUserFromRequest(req);
+    if (auth.error) {
+      return res.status(401).json({ error: auth.error });
+    }
+
+    console.log(`📨 resend-confirmations llamado por admin ${auth.email} | method=${req.method}`);
+
+    if (typeof res.setHeader === 'function') {
+      res.setHeader('Content-Type', 'text/html; charset=utf-8');
+    }
     const report = await sendForAllPaid();
     const pct = report.totalOrders > 0
       ? Math.round((report.sentCount / report.totalOrders) * 100)

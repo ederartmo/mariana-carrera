@@ -7,8 +7,8 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY
 );
 
-const ALLOWED_SHIRT_SIZES = ['XS', 'S', 'M', 'L', 'XL'];
-const MAX_TICKETS_PER_ORDER = 5;
+const { SHIRT_SIZES: ALLOWED_SHIRT_SIZES, normalizeShirtSize, isValidShirtSize } = require('./_shirt-sizes');
+const { validateParticipant, MAX_TICKETS_PER_ORDER } = require('./_participant-validation');
 const DEFAULT_EVENT_SLUG = 'axolote-night-run';
 const ALLOWED_EVENT_SLUGS = ['axolote-night-run', 'cascanueces-run'];
 const EVENT_DISTANCES = {
@@ -118,20 +118,25 @@ module.exports = async function handler(req, res) {
       });
     }
 
-    const normalizedTickets = tickets.map((ticket, index) => {
-      const fullName = normalizeName(ticket?.fullName);
-      const shirtSize = String(ticket?.shirtSize || '').trim().toUpperCase();
-
-      if (fullName.length < 3) {
-        throw new Error(`Nombre inválido en ticket ${index + 1}.`);
-      }
-
-      if (!ALLOWED_SHIRT_SIZES.includes(shirtSize)) {
-        throw new Error(`Talla inválida en ticket ${index + 1}. Usa XS, S, M, L o XL.`);
-      }
-
-      return { fullName, shirtSize };
-    });
+    let normalizedTickets;
+    try {
+      normalizedTickets = tickets.map((ticket, index) => {
+        // PR4: validación compartida (birthDate/whatsapp/state/borough).
+        // Acepta fullName o full_name legacy del panel admin.
+        const source = {
+          fullName: ticket?.fullName ?? ticket?.full_name ?? ticket?.name,
+          shirtSize: ticket?.shirtSize ?? ticket?.shirt_size,
+          birthDate: ticket?.birthDate ?? ticket?.birth_date,
+          whatsapp: ticket?.whatsapp ?? ticket?.phone,
+          state: ticket?.state,
+          borough: ticket?.borough,
+        };
+        const v = validateParticipant(source, index);
+        return { fullName: v.fullName, shirtSize: v.shirtSize, birthDate: v.birthDate, whatsapp: v.whatsapp, state: v.state, borough: v.borough };
+      });
+    } catch (validationError) {
+      return res.status(400).json({ error: validationError.message });
+    }
 
     const cleanEventSlug = String(eventSlug || DEFAULT_EVENT_SLUG).trim() || DEFAULT_EVENT_SLUG;
     if (!ALLOWED_EVENT_SLUGS.includes(cleanEventSlug)) {
@@ -172,6 +177,10 @@ module.exports = async function handler(req, res) {
           amount_paid: amountParts[i],
           payment_status: 'paid',
           shirt_size: ticket.shirtSize,
+          birth_date: ticket.birthDate || null,
+          whatsapp: ticket.whatsapp || null,
+          state: ticket.state || null,
+          borough: ticket.borough || null,
           bib_number: bibNumber,
           ticket_index: i + 1,
           ticket_count: normalizedTickets.length,

@@ -9,7 +9,13 @@ const supabase = createClient(
   process.env.SUPABASE_URL,
   process.env.SUPABASE_SERVICE_ROLE_KEY
 );
-const ALLOWED_SHIRT_SIZES = ['XS', 'S', 'M', 'L', 'XL'];
+const { SHIRT_SIZES: ALLOWED_SHIRT_SIZES, normalizeShirtSize, isValidShirtSize } = require('./_shirt-sizes');
+const {
+  normalizeBirthDate,
+  normalizeWhatsapp,
+  normalizeState,
+  normalizeBoroughForState,
+} = require('./_participant-validation');
 const EVENT_CATALOG = {
   'axolote-night-run': {
     slug: 'axolote-night-run',
@@ -103,19 +109,33 @@ function readParticipantsFromMetadata(metadata) {
 
   for (let i = 1; i <= ticketCount; i += 1) {
     const rawName = metadata?.[`participant_${i}_name`] || '';
-    const rawShirt = String(metadata?.[`participant_${i}_shirt`] || '').trim().toUpperCase();
+    const rawShirt = normalizeShirtSize(metadata?.[`participant_${i}_shirt`]);
+    // PR4: nuevos campos por participante. Históricos sin metadata -> null (no rompe idempotencia).
+    // Correo sin birth_date/whatsapp: solo se usan para DB/RPC, nunca para el template.
+    const rawBirth = normalizeBirthDate(metadata?.[`participant_${i}_birth`]);
+    const rawWa = normalizeWhatsapp(metadata?.[`participant_${i}_wa`]);
+    const rawState = normalizeState(metadata?.[`participant_${i}_state`]);
+    const rawBoro = rawState ? normalizeBoroughForState(metadata?.[`participant_${i}_boro`], rawState) : null;
     participants.push({
       fullName: normalizeParticipantName(rawName, `Participante ${i}`),
-      shirtSize: ALLOWED_SHIRT_SIZES.includes(rawShirt) ? rawShirt : null,
+      shirtSize: isValidShirtSize(rawShirt) ? rawShirt : null,
+      birthDate: rawBirth || null,
+      whatsapp: rawWa || null,
+      state: rawState || null,
+      borough: rawBoro || null,
     });
   }
 
   if (participants.length === 0) {
-    const legacyShirt = String(metadata?.shirt_size || '').trim().toUpperCase();
+    const legacyShirt = normalizeShirtSize(metadata?.shirt_size);
     const legacyName = normalizeParticipantName(metadata?.full_name || '', 'Participante 1');
     participants.push({
       fullName: legacyName,
-      shirtSize: ALLOWED_SHIRT_SIZES.includes(legacyShirt) ? legacyShirt : null,
+      shirtSize: isValidShirtSize(legacyShirt) ? legacyShirt : null,
+      birthDate: normalizeBirthDate(metadata?.participant_1_birth) || null,
+      whatsapp: normalizeWhatsapp(metadata?.participant_1_wa) || null,
+      state: normalizeState(metadata?.participant_1_state) || null,
+      borough: null,
     });
   }
 
@@ -140,18 +160,31 @@ function resolveStripeObjectId(value) {
 }
 
 function buildRpcParticipants(participants, buyerEmail) {
+  // email/buyer_email intactos: cada participante hereda buyerEmail (comportamiento histórico).
+  // bib/amount no se tocan aquí: los asigna finalize_paid_order en DB.
   return participants.map((participant, index) => ({
     ticketIndex: index + 1,
     fullName: participant.fullName,
     email: buyerEmail,
     shirtSize: participant.shirtSize,
+    birthDate: participant.birthDate || null,
+    whatsapp: participant.whatsapp || null,
+    state: participant.state || null,
+    borough: participant.borough || null,
   }));
 }
 
 async function finalizePaidOrder({ session, event, selectedEvent, cleanEmail, amountTotal, participants, fullName }) {
   const safeParticipants = participants.length > 0
-    ? participants
-    : [{ fullName: normalizeParticipantName(fullName, 'Participante 1'), shirtSize: null }];
+    ? participants.map((p) => ({
+      fullName: p.fullName,
+      shirtSize: p.shirtSize || null,
+      birthDate: p.birthDate || null,
+      whatsapp: p.whatsapp || null,
+      state: p.state || null,
+      borough: p.borough || null,
+    }))
+    : [{ fullName: normalizeParticipantName(fullName, 'Participante 1'), shirtSize: null, birthDate: null, whatsapp: null, state: null, borough: null }];
   const amountPerTicket = Number((amountTotal / safeParticipants.length).toFixed(2));
   const paymentIntentId = resolveStripeObjectId(session.payment_intent);
 
@@ -397,7 +430,7 @@ async function sendConfirmationEmail({
 }) {
   const selectedEvent = resolveEventFromMetadata({ event_slug: eventSlug, distance });
   const bibStr = String(primaryBibNumber || '').padStart(3, '0');
-  const displayShirt = ALLOWED_SHIRT_SIZES.includes(shirtSize) ? shirtSize : 'Por confirmar';
+  const displayShirt = isValidShirtSize(shirtSize) ? shirtSize : 'Por confirmar';
   try {
     const result = await resend.emails.send({
       from: 'Kinetic Hub <no-reply@kinetichub.com.mx>',
@@ -781,7 +814,7 @@ module.exports = async (req, res) => {
         },
         customData: {
           status: 'completed',
-          shirt_size: ALLOWED_SHIRT_SIZES.includes(shirtSize) ? shirtSize : 'unknown',
+          shirt_size: isValidShirtSize(shirtSize) ? shirtSize : 'unknown',
         },
         eventSourceUrl: 'https://www.kinetichub.com.mx/succes.html',
         testEventCode: process.env.META_TEST_EVENT_CODE,
@@ -804,7 +837,7 @@ module.exports = async (req, res) => {
     const email = (session.customer_email || session.customer_details?.email || '').toLowerCase().trim() || null;
     const fullName = session.customer_details?.name || 'Atleta';
     const amountTotal = (session.amount_total || 0) / 100;
-    const shirtSize = (session.metadata?.shirt_size || '').trim().toUpperCase();
+    const shirtSize = normalizeShirtSize(session.metadata?.shirt_size);
 
     await updateRegistrationsByCheckoutSessionId(sessionId, {
       email,
@@ -813,7 +846,7 @@ module.exports = async (req, res) => {
       distance: String(session.metadata?.distance || '5K').toUpperCase(),
       amount_paid: amountTotal,
       payment_status: 'payment_failed',
-      shirt_size: ALLOWED_SHIRT_SIZES.includes(shirtSize) ? shirtSize : null,
+      shirt_size: isValidShirtSize(shirtSize) ? shirtSize : null,
       created_at: new Date().toISOString()
     });
 
@@ -960,7 +993,7 @@ module.exports = async (req, res) => {
       const email = (checkoutSession.customer_email || checkoutSession.customer_details?.email || '').toLowerCase().trim() || null;
       const fullName = checkoutSession.customer_details?.name || 'Atleta';
       const amountTotal = (checkoutSession.amount_total || paymentIntent.amount || 0) / 100;
-      const shirtSize = (checkoutSession.metadata?.shirt_size || '').trim().toUpperCase();
+      const shirtSize = normalizeShirtSize(checkoutSession.metadata?.shirt_size);
 
       await updateRegistrationsByCheckoutSessionId(checkoutSession.id, {
         email,
@@ -969,7 +1002,7 @@ module.exports = async (req, res) => {
         distance: String(checkoutSession.metadata?.distance || '5K').toUpperCase(),
         amount_paid: amountTotal,
         payment_status: 'payment_failed',
-        shirt_size: ALLOWED_SHIRT_SIZES.includes(shirtSize) ? shirtSize : null,
+        shirt_size: isValidShirtSize(shirtSize) ? shirtSize : null,
         created_at: new Date().toISOString()
       });
 

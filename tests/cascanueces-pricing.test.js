@@ -231,7 +231,7 @@ test('create-checkout-session enables card and OXXO payment methods', async () =
     buyerEmail: 'runner@example.com',
     eventSlug: 'cascanueces-run',
     distance: '10K',
-    tickets: [{ fullName: 'Runner Test', shirtSize: 'M' }],
+    tickets: [{ fullName: 'Runner Test', shirtSize: 'M', birthDate: '1990-05-14', whatsapp: '5512345678', state: 'Jalisco' }],
   });
 
   assert.equal(res.statusCode, 200);
@@ -243,7 +243,7 @@ test('create-checkout-session supports Cascanueces 5K metadata and current price
     buyerEmail: 'runner@example.com',
     eventSlug: 'cascanueces-run',
     distance: '5K',
-    tickets: [{ fullName: 'Runner Test', shirtSize: 'M' }],
+    tickets: [{ fullName: 'Runner Test', shirtSize: 'M', birthDate: '1990-05-14', whatsapp: '5512345678', state: 'Jalisco' }],
   });
 
   const sessionPayload = createdSessions[0];
@@ -265,7 +265,7 @@ test('create-checkout-session supports Cascanueces 10K metadata and current pric
     buyerEmail: 'runner@example.com',
     eventSlug: 'cascanueces-run',
     distance: '10K',
-    tickets: [{ fullName: 'Runner Test', shirtSize: 'M' }],
+    tickets: [{ fullName: 'Runner Test', shirtSize: 'M', birthDate: '1990-05-14', whatsapp: '5512345678', state: 'Jalisco' }],
   });
 
   const sessionPayload = createdSessions[0];
@@ -319,7 +319,7 @@ test('create-checkout-session calculates Cascanueces $450 on September 1 Mexico 
           buyerEmail: 'runner@example.com',
           eventSlug: 'cascanueces-run',
           distance: '10K',
-          tickets: [{ fullName: 'Runner Test', shirtSize: 'M' }],
+          tickets: [{ fullName: 'Runner Test', shirtSize: 'M', birthDate: '1990-05-14', whatsapp: '5512345678', state: 'Jalisco' }],
         },
       }, res);
 
@@ -342,7 +342,7 @@ test('create-checkout-session keeps Axolote checkout compatible with OXXO', asyn
     buyerEmail: 'runner@example.com',
     eventSlug: 'axolote-night-run',
     distance: '5K',
-    tickets: [{ fullName: 'Runner Test', shirtSize: 'M' }],
+    tickets: [{ fullName: 'Runner Test', shirtSize: 'M', birthDate: '1990-05-14', whatsapp: '5512345678', state: 'Jalisco' }],
   });
 
   const sessionPayload = createdSessions[0];
@@ -361,7 +361,7 @@ test('create-checkout-session with Cascanueces coupon preserves event, distance,
     eventSlug: 'cascanueces-run',
     distance: '10K',
     promoCode: 'PROMO10',
-    tickets: [{ fullName: 'Runner Test', shirtSize: 'M' }],
+    tickets: [{ fullName: 'Runner Test', shirtSize: 'M', birthDate: '1990-05-14', whatsapp: '5512345678', state: 'Jalisco' }],
   }, {
     promoResult: {
       cleanCode: 'PROMO10',

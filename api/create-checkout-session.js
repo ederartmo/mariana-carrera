@@ -12,8 +12,14 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY
 );
 
-const ALLOWED_SHIRT_SIZES = ['XS', 'S', 'M', 'L', 'XL'];
-const MAX_TICKETS_PER_ORDER = 5;
+const { SHIRT_SIZES: ALLOWED_SHIRT_SIZES, normalizeShirtSize, isValidShirtSize } = require('./_shirt-sizes');
+const {
+  MAX_TICKETS_PER_ORDER,
+  MAX_STRIPE_METADATA_KEYS,
+  normalizeTicketsPR4,
+  buildParticipantsMetadataPR4,
+  assertMetadataBudget,
+} = require('./_participant-validation');
 
 function getCookieValue(req, name) {
   const raw = req.headers.cookie || '';
@@ -126,58 +132,14 @@ function normalizeFullName(value) {
   return value.trim().replace(/\s+/g, ' ').slice(0, 80);
 }
 
+// PR4 Parte B: validación por participante (birthDate/whatsapp/state/borough).
+// Delegada a _participant-validation.js para compartir reglas con webhook y admin.
 function normalizeTickets({ tickets, legacyShirtSize }) {
-  if (Array.isArray(tickets) && tickets.length > 0) {
-    if (tickets.length > MAX_TICKETS_PER_ORDER) {
-      return {
-        error: `Puedes comprar hasta ${MAX_TICKETS_PER_ORDER} tickets por operación.`,
-      };
-    }
-
-    const normalizedTickets = [];
-    for (let i = 0; i < tickets.length; i += 1) {
-      const ticket = tickets[i] || {};
-      const fullName = normalizeFullName(ticket.fullName);
-      const shirtSize = String(ticket.shirtSize || '').trim().toUpperCase();
-
-      if (!fullName || fullName.length < 3) {
-        return {
-          error: `El ticket ${i + 1} debe incluir un nombre válido.`,
-        };
-      }
-
-      if (!ALLOWED_SHIRT_SIZES.includes(shirtSize)) {
-        return {
-          error: `El ticket ${i + 1} debe incluir una talla válida (XS, S, M, L o XL).`,
-        };
-      }
-
-      normalizedTickets.push({ fullName, shirtSize });
-    }
-
-    return { tickets: normalizedTickets };
-  }
-
-  const fallbackSize = String(legacyShirtSize || '').trim().toUpperCase();
-  if (!ALLOWED_SHIRT_SIZES.includes(fallbackSize)) {
-    return {
-      error: 'Por favor agrega al menos un ticket con nombre y talla válida.',
-    };
-  }
-
-  return {
-    tickets: [{ fullName: 'Participante 1', shirtSize: fallbackSize }],
-  };
+  return normalizeTicketsPR4({ tickets, legacyShirtSize });
 }
 
 function buildParticipantsMetadata(tickets) {
-  const metadata = {};
-  tickets.forEach((ticket, index) => {
-    const position = index + 1;
-    metadata[`participant_${position}_name`] = ticket.fullName;
-    metadata[`participant_${position}_shirt`] = ticket.shirtSize;
-  });
-  return metadata;
+  return buildParticipantsMetadataPR4(tickets);
 }
 
 module.exports = async function handler(req, res) {
@@ -230,6 +192,30 @@ module.exports = async function handler(req, res) {
     console.log(`🧾 Etapa seleccionada: ${stage.label} | ${stage.amount} MXN | tickets=${ticketCount}`);
 
     const participantsMetadata = buildParticipantsMetadata(normalizedTickets);
+    // PR4: presupuesto Stripe 46/50 keys (margen de seguridad).
+    const baseMetadataProbe = {
+      event_slug: event.slug,
+      event_name: event.name,
+      distance: event.distance,
+      user_email: cleanEmail,
+      buyer_email: cleanEmail,
+      stage_key: stage.key,
+      stage_label: stage.label,
+      stage_amount: String(stage.amount),
+      ticket_count: String(ticketCount),
+      shirt_size: primaryTicket.shirtSize,
+      full_name: primaryTicket.fullName,
+      meta_fbp: fbp || '',
+      meta_fbc: fbc || '',
+      meta_external_id: cleanEmail,
+      meta_initiate_checkout_event_id: initiateCheckoutEventId,
+      discount_code: '',
+    };
+    try {
+      assertMetadataBudget(baseMetadataProbe, participantsMetadata, MAX_STRIPE_METADATA_KEYS);
+    } catch (budgetError) {
+      return res.status(400).json({ error: budgetError.message });
+    }
     const totalAmount = Number((stage.amount * ticketCount).toFixed(2));
     const promoResolution = await resolvePromotionCode({
       promoCode,
@@ -297,6 +283,10 @@ module.exports = async function handler(req, res) {
         amount_paid: totalAmount,
         payment_status: 'pending',
         shirt_size: primaryTicket.shirtSize,
+        birth_date: primaryTicket.birthDate || null,
+        whatsapp: primaryTicket.whatsapp || null,
+        state: primaryTicket.state || null,
+        borough: primaryTicket.borough || null,
         ticket_index: 1,
         ticket_count: ticketCount,
         created_at: new Date().toISOString(),
