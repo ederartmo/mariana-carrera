@@ -3711,11 +3711,6 @@ body[data-page="nosotros"] {
   gap: 20px;
 }
 
-.about-clinic {
-  padding: 80px 0 96px;
-  background: #ffffff;
-}
-
 .clinica-gallery {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -3742,10 +3737,6 @@ body[data-page="nosotros"] {
 }
 
 @media (max-width: 760px) {
-  .about-clinic {
-    padding: 56px 0 64px;
-  }
-
   .clinica-gallery {
     grid-template-columns: repeat(2, 1fr);
     gap: 8px;
@@ -10593,6 +10584,15 @@ body[data-event-landing-page] .site-header {
 
   .corporate-community {
     background: #07131d;
+  }
+
+  .corporate-album-label {
+    margin: 22px 0 16px;
+    font-size: 0.8rem;
+    font-weight: 800;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: #8fd8b5;
   }
 
   .corporate-gallery {
