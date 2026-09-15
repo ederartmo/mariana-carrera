@@ -3711,6 +3711,47 @@ body[data-page="nosotros"] {
   gap: 20px;
 }
 
+.about-clinic {
+  padding: 80px 0 96px;
+  background: #ffffff;
+}
+
+.clinica-gallery {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 14px;
+}
+
+.clinica-gallery a {
+  display: block;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.clinica-gallery img {
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  object-fit: cover;
+  display: block;
+}
+
+@media (max-width: 1024px) {
+  .clinica-gallery {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 760px) {
+  .about-clinic {
+    padding: 56px 0 64px;
+  }
+
+  .clinica-gallery {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+  }
+}
+
 .about-pillar-card {
   padding: 28px 24px;
   border-radius: 22px;
