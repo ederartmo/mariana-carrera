@@ -18,7 +18,7 @@ process.env.ADMIN_EMAILS = 'admin@example.com';
 
 const projectRoot = path.join(__dirname, '..');
 const validation = require('../api/_participant-validation');
-const catalog = require('../api/location-catalog');
+const catalog = require('../location-catalog');
 
 function mockModule(modulePath, exports) {
   const resolved = require.resolve(modulePath);

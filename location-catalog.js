@@ -1,7 +1,8 @@
-// api/location-catalog.js - PR4 Parte B: catálogo oficial de ubicación.
-// Verdad canónica backend para state (32 entidades) y borough (16 alcaldías CDMX).
-// Frontend (script.js) mantiene un espejo; tests/pr4-participant-fields.test.js falla si divergen.
-// Compatible Node (require) y navegador (window.KineticHubLocationCatalog).
+// location-catalog.js - PR4: catálogo oficial de ubicación (única fuente).
+// Verdad canónica backend (require) y navegador (window.KineticHubLocationCatalog
+// vía <script src="location-catalog.js">). Vive en raíz para que build.js lo copie a public/.
+// Frontend (script.js panel checkout, admin-inscripciones.html) NO duplica listas;
+// tests de paridad fallan si divergen.
 
 const STATES = [
   'Aguascalientes',

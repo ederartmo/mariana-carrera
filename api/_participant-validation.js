@@ -16,7 +16,7 @@ const {
   isCdmxState,
   normalizeBorough,
   normalizeBoroughForState,
-} = require('./location-catalog');
+} = require('../location-catalog');
 
 const MAX_TICKETS_PER_ORDER = 5;
 const MAX_STRIPE_METADATA_KEYS = 46;

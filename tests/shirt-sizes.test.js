@@ -110,6 +110,12 @@ function extractOptionSizes(source) {
   return found;
 }
 
+function extractManualShirtSizes(source) {
+  const m = source.match(/const MANUAL_SHIRT_SIZES = \[([^\]]*)\]/);
+  if (!m) return null;
+  return [...m[1].matchAll(/'([A-Z]+)'/g)].map((x) => x[1]);
+}
+
 test('PR3-12: script.js, script.min.js y admin-inscripciones.html usan la misma secuencia', () => {
   const script = fs.readFileSync(path.join(projectRoot, 'script.js'), 'utf8');
   const scriptMin = fs.readFileSync(path.join(projectRoot, 'script.min.js'), 'utf8');
@@ -117,10 +123,11 @@ test('PR3-12: script.js, script.min.js y admin-inscripciones.html usan la misma 
 
   assert.deepEqual(extractOptionSizes(script), EXPECTED_SIZES);
   assert.deepEqual(extractOptionSizes(scriptMin), EXPECTED_SIZES);
-  assert.deepEqual(extractOptionSizes(admin), EXPECTED_SIZES);
+  // El panel admin genera las opciones desde MANUAL_SHIRT_SIZES (no literales).
+  assert.deepEqual(extractManualShirtSizes(admin), EXPECTED_SIZES);
 
   assert.ok(script.includes('["XS", "S", "M", "L", "XL", "XXL", "XXXL"]'));
-  assert.ok(admin.includes("['XS', 'S', 'M', 'L', 'XL', 'XXL', 'XXXL']"));
+  assert.ok(admin.includes("MANUAL_SHIRT_SIZES.includes("));
 });
 
 test('PR3-12: backends usan el helper canónico y no conservan la lista vieja de 5', () => {

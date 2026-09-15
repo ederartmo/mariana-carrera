@@ -4477,7 +4477,7 @@ function setupCheckoutForm() {
   const discountValue = document.getElementById("discountValue");
   const finalTotalRow = document.getElementById("finalTotalRow");
   const finalTotalPrice = document.getElementById("finalTotalPrice");
-  // PR4 Parte B: catálogo espejo de api/location-catalog.js (mismo orden).
+  // PR4: catálogo espejo de location-catalog.js (mismo orden).
   const PR4_STATES = ["Aguascalientes", "Baja California", "Baja California Sur", "Campeche", "Chiapas", "Chihuahua", "Ciudad de México", "Coahuila de Zaragoza", "Colima", "Durango", "Guanajuato", "Guerrero", "Hidalgo", "Jalisco", "Estado de México", "Michoacán de Ocampo", "Morelos", "Nayarit", "Nuevo León", "Oaxaca", "Puebla", "Querétaro", "Quintana Roo", "San Luis Potosí", "Sinaloa", "Sonora", "Tabasco", "Tamaulipas", "Tlaxcala", "Veracruz de Ignacio de la Llave", "Yucatán", "Zacatecas"];
   const PR4_CDMX_BOROUGHS = ["Álvaro Obregón", "Azcapotzalco", "Benito Juárez", "Coyoacán", "Cuajimalpa de Morelos", "Cuauhtémoc", "Gustavo A. Madero", "Iztacalco", "Iztapalapa", "La Magdalena Contreras", "Miguel Hidalgo", "Milpa Alta", "Tláhuac", "Tlalpan", "Venustiano Carranza", "Xochimilco"];
   let tickets = [{ fullName: "", shirtSize: "", birthDate: "", whatsapp: "", state: "", borough: "" }];
