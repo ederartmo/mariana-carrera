@@ -416,6 +416,70 @@
       text-overflow: ellipsis;
       white-space: nowrap;
     }
+    .participant-modal {
+      position: fixed;
+      inset: 0;
+      z-index: 1000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      background: rgba(2, 6, 10, 0.72);
+    }
+    .participant-modal[hidden] {
+      display: none;
+    }
+    .participant-modal-card {
+      width: 100%;
+      max-width: 560px;
+      max-height: 90vh;
+      overflow-y: auto;
+      background: #0c121a;
+      border: 1px solid #233243;
+      border-radius: 12px;
+      padding: 20px;
+    }
+    .participant-modal-card h2 {
+      margin: 0 0 8px;
+      font-size: 1.1rem;
+      color: #e8edf3;
+    }
+    .participant-context {
+      font-size: 0.82rem;
+      color: #9fb1c5;
+      background: #0b1118;
+      border: 1px solid #233243;
+      border-radius: 8px;
+      padding: 10px 12px;
+      margin-bottom: 12px;
+      line-height: 1.6;
+    }
+    .participant-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+    .participant-grid .span-2 {
+      grid-column: 1 / -1;
+    }
+    .participant-grid label {
+      display: block;
+      font-size: 0.8rem;
+      color: #9fb1c5;
+      margin-bottom: 4px;
+      font-weight: 700;
+    }
+    .participant-grid input,
+    .participant-grid select {
+      width: 100%;
+      min-height: 42px;
+      background: #0b1118;
+      color: #e8edf3;
+      border: 1px solid #2a3a4b;
+      border-radius: 8px;
+      padding: 9px 10px;
+      box-sizing: border-box;
+    }
     @media (max-width: 760px) {
       body {
         padding: 14px;
@@ -430,6 +494,20 @@
         justify-self: stretch;
         min-height: 44px;
         margin-top: 4px;
+      }
+      .participant-modal {
+        padding: 8px;
+        align-items: stretch;
+      }
+      .participant-modal-card {
+        max-width: none;
+        max-height: calc(100vh - 16px);
+      }
+      .participant-grid {
+        grid-template-columns: 1fr;
+      }
+      .participant-grid .span-2 {
+        grid-column: auto;
       }
       .admin-input,
       .admin-select {
@@ -545,6 +623,7 @@ src="https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1"
           <p>La tabla mantiene su propio scroll horizontal para evitar desbordar toda la página.</p>
         </div>
       </div>
+      <div id="inscriptionsFeedback" class="manual-feedback" style="margin-bottom:10px;"></div>
       <div id="content">
         <div class="loading">Cargando inscripciones...</div>
       </div>
@@ -563,6 +642,55 @@ src="https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1"
       </div>
     </section>
   </div>
+
+    <div id="participantModal" class="participant-modal" hidden>
+      <div class="participant-modal-card" role="dialog" aria-modal="true" aria-labelledby="participantModalTitle">
+        <h2 id="participantModalTitle">Editar participante</h2>
+        <div id="participantModalContext" class="participant-context"></div>
+        <form id="participantEditForm" novalidate>
+          <div class="participant-grid">
+            <div class="span-2">
+              <label for="editFullName">Nombre completo</label>
+              <input id="editFullName" type="text" maxlength="80" placeholder="Nombre del corredor" />
+            </div>
+            <div>
+              <label for="editShirtSize">Talla</label>
+              <select id="editShirtSize">
+                <option value="">Selecciona</option>
+                <option value="XS">XS</option>
+                <option value="S">S</option>
+                <option value="M">M</option>
+                <option value="L">L</option>
+                <option value="XL">XL</option>
+                <option value="XXL">XXL</option>
+                <option value="XXXL">XXXL</option>
+              </select>
+            </div>
+            <div>
+              <label for="editBirthDate">Fecha de nacimiento <span id="editAgeLabel" class="cell-muted"></span></label>
+              <input id="editBirthDate" type="date" min="1900-01-01" />
+            </div>
+            <div>
+              <label for="editWhatsapp">WhatsApp (10 dígitos)</label>
+              <input id="editWhatsapp" type="tel" inputmode="tel" placeholder="55 1234 5678" />
+            </div>
+            <div>
+              <label for="editState">Estado</label>
+              <select id="editState"></select>
+            </div>
+            <div class="span-2">
+              <label for="editBorough">Alcaldía (solo CDMX)</label>
+              <select id="editBorough"></select>
+            </div>
+          </div>
+          <div id="participantModalError" class="manual-feedback"></div>
+          <div class="manual-actions">
+            <button type="submit" id="participantSaveBtn" class="btn-primary">Guardar</button>
+            <button type="button" id="participantCancelBtn" class="btn-secondary">Cancelar</button>
+          </div>
+        </form>
+      </div>
+    </div>
 
   <script>
     // Lista de admins autorizados para este panel.
@@ -649,6 +777,19 @@ src="https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1"
           data-update-email-name="${escapeHtml(row.full_name || '')}"
         >
           Corregir correo
+        </button>
+      `;
+    }
+
+    function buildEditParticipantButton(row) {
+      if (String(row.payment_status || '').trim() !== 'paid') return '';
+      return `
+        <button
+          type="button"
+          class="btn-email btn-edit-participant"
+          data-edit-participant-id="${row.id}"
+        >
+          Editar
         </button>
       `;
     }
@@ -766,6 +907,7 @@ src="https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1"
             <td><span class="id-badge" title="${row.id}">${row.id}</span></td>
             <td>
               <div style="display:flex; gap:6px; align-items:center; flex-wrap:wrap;">
+                ${buildEditParticipantButton(row)}
                 ${buildEmailButton(row)}
                 ${buildEditEmailButton(row)}
                 ${buildDangerButton(row)}
@@ -785,7 +927,7 @@ src="https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1"
       try {
         let query = client
           .from("inscripciones")
-          .select("id, full_name, email, buyer_email, order_session_id, ticket_index, ticket_count, event_slug, distance, amount_paid, payment_status, bib_number, shirt_size, email_sent, created_at")
+          .select("id, full_name, email, buyer_email, order_session_id, ticket_index, ticket_count, event_slug, distance, amount_paid, payment_status, bib_number, shirt_size, birth_date, whatsapp, state, borough, email_sent, created_at")
           .order("created_at", { ascending: false });
 
         if (statusFilter !== "all") {
@@ -1281,6 +1423,190 @@ src="https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1"
       });
     }
 
+    // ====================== EDITAR PARTICIPANTE ======================
+    let editingParticipant = null;
+
+    function participantDerivedAge(birthDate) {
+      const m = String(birthDate || '').match(/^(\d{4})-(\d{2})-(\d{2})$/);
+      if (!m) return '';
+      const now = new Date();
+      let age = now.getFullYear() - Number(m[1]);
+      const refM = now.getMonth() + 1;
+      const refD = now.getDate();
+      if (refM < Number(m[2]) || (refM === Number(m[2]) && refD < Number(m[3]))) age -= 1;
+      return age >= 0 ? `(${age} años)` : '';
+    }
+
+    function refreshEditAge() {
+      const birthInput = document.getElementById('editBirthDate');
+      const ageLabel = document.getElementById('editAgeLabel');
+      if (ageLabel) ageLabel.textContent = participantDerivedAge(birthInput?.value);
+    }
+
+    function refreshEditBorough(keepValue) {
+      const stateInput = document.getElementById('editState');
+      const boroughInput = document.getElementById('editBorough');
+      if (!stateInput || !boroughInput) return;
+      const state = stateInput.value || '';
+      const catalog = getManualLocationCatalog();
+      const isCdmx = catalog && typeof catalog.normalizeState === 'function' && typeof catalog.CDMX_CANONICAL === 'string'
+        ? catalog.normalizeState(state) === catalog.CDMX_CANONICAL
+        : state === 'Ciudad de México';
+      boroughInput.innerHTML = manualBoroughOptions({ state, borough: keepValue ?? null });
+      boroughInput.disabled = !isCdmx;
+      if (!isCdmx) boroughInput.value = '';
+      else if (keepValue) boroughInput.value = keepValue;
+    }
+
+    function setParticipantModalError(message) {
+      const el = document.getElementById('participantModalError');
+      if (el) {
+        el.textContent = message || '';
+        el.className = `manual-feedback ${message ? 'err' : ''}`;
+      }
+    }
+
+    function openParticipantModal(id) {
+      const row = cachedRows.find((r) => String(r.id) === String(id));
+      if (!row) return;
+      if (String(row.payment_status || '').trim() !== 'paid') return;
+      editingParticipant = { id: row.id, email: row.email };
+
+      const eventName = row.event_slug === 'cascanueces-run'
+        ? 'Cascanueces Run'
+        : row.event_slug === 'axolote-night-run'
+          ? 'Axolote Night Run'
+          : row.event_slug || '—';
+      const ticketSummary = row.ticket_index ? `T${row.ticket_index}/${row.ticket_count || 1}` : '';
+      const contextEl = document.getElementById('participantModalContext');
+      if (contextEl) {
+        contextEl.innerHTML = `
+          <strong>${escapeHtml(row.full_name || '-')}</strong><br>
+          BIB ${row.bib_number ? '#' + escapeHtml(String(row.bib_number)) : '—'} ·
+          ${escapeHtml(eventName)} ${escapeHtml(row.distance || '')} ·
+          Orden <span class="truncate">${escapeHtml(row.order_session_id || '—')}</span> ${escapeHtml(ticketSummary)} ·
+          Comprador ${escapeHtml(row.buyer_email || row.email || '—')} ·
+          Pago ${escapeHtml(row.payment_status || '—')}
+        `;
+      }
+
+      document.getElementById('editFullName').value = row.full_name || '';
+      document.getElementById('editShirtSize').value = row.shirt_size || '';
+      const birthInput = document.getElementById('editBirthDate');
+      birthInput.value = row.birth_date || '';
+      birthInput.max = manualTodayISO();
+      document.getElementById('editWhatsapp').value = row.whatsapp || '';
+      document.getElementById('editState').innerHTML = manualStateOptions(row.state || '');
+      refreshEditBorough(row.borough || null);
+      refreshEditAge();
+      setParticipantModalError('');
+      document.getElementById('participantModal').hidden = false;
+    }
+
+    function closeParticipantModal() {
+      const modal = document.getElementById('participantModal');
+      if (modal) modal.hidden = true;
+      editingParticipant = null;
+      setParticipantModalError('');
+    }
+
+    function setInscriptionsFeedback(message, type) {
+      const el = document.getElementById('inscriptionsFeedback');
+      if (el) {
+        el.textContent = message || '';
+        el.className = `manual-feedback ${type || ''}`;
+      }
+    }
+
+    function setupParticipantModal(client) {
+      const modal = document.getElementById('participantModal');
+      const form = document.getElementById('participantEditForm');
+      const contentDiv = document.getElementById('content');
+      if (!modal || !form || !contentDiv) return;
+
+      contentDiv.addEventListener('click', (event) => {
+        const button = event.target?.closest?.('[data-edit-participant-id]');
+        if (!button) return;
+        openParticipantModal(button.getAttribute('data-edit-participant-id'));
+      });
+
+      document.getElementById('participantCancelBtn')?.addEventListener('click', closeParticipantModal);
+      modal.addEventListener('click', (event) => {
+        if (event.target === modal) closeParticipantModal();
+      });
+      document.getElementById('editBirthDate')?.addEventListener('input', refreshEditAge);
+      document.getElementById('editState')?.addEventListener('change', () => refreshEditBorough(null));
+
+      form.addEventListener('submit', async (event) => {
+        event.preventDefault();
+        if (!editingParticipant) return;
+        setParticipantModalError('');
+
+        const gathered = {
+          fullName: String(document.getElementById('editFullName')?.value || ''),
+          shirtSize: String(document.getElementById('editShirtSize')?.value || ''),
+          birthDate: String(document.getElementById('editBirthDate')?.value || ''),
+          whatsapp: String(document.getElementById('editWhatsapp')?.value || ''),
+          state: String(document.getElementById('editState')?.value || ''),
+          borough: String(document.getElementById('editBorough')?.value || '') || null,
+        };
+        if (!isManualCdmxTicket(gathered)) gathered.borough = null;
+
+        const validationError = manualTicketError(gathered);
+        if (validationError) {
+          setParticipantModalError(validationError);
+          return;
+        }
+
+        if (!window.confirm('Los datos del corredor serán reemplazados. El BIB, pago y orden permanecerán sin cambios.')) {
+          return;
+        }
+
+        const saveBtn = document.getElementById('participantSaveBtn');
+        saveBtn.disabled = true;
+        saveBtn.textContent = 'Guardando...';
+
+        try {
+          const { data: { session } } = await client.auth.getSession();
+          const token = session?.access_token;
+          if (!token) {
+            throw new Error('Sesión no válida, vuelve a iniciar sesión.');
+          }
+
+          const response = await fetch('/api/admin-update-participant', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: `Bearer ${token}`,
+            },
+            body: JSON.stringify({
+              id: editingParticipant.id,
+              email: editingParticipant.email,
+              participant: gathered,
+            }),
+          });
+
+          const data = await response.json().catch(() => ({}));
+          if (!response.ok) {
+            throw new Error(data?.error || 'No se pudo guardar.');
+          }
+
+          const index = cachedRows.findIndex((r) => String(r.id) === String(editingParticipant.id));
+          if (index >= 0 && data.inscription) {
+            cachedRows[index] = { ...cachedRows[index], ...data.inscription };
+          }
+          closeParticipantModal();
+          renderPaidInscriptions(cachedRows);
+          setInscriptionsFeedback('Participante actualizado correctamente.', 'ok');
+        } catch (err) {
+          setParticipantModalError(err.message || 'Error al guardar.');
+        } finally {
+          saveBtn.disabled = false;
+          saveBtn.textContent = 'Guardar';
+        }
+      });
+    }
+
     function setupDeleteActions(client) {
       const contentDiv = document.getElementById('content');
       const statusFilter = document.getElementById('statusFilter');
@@ -1520,6 +1846,7 @@ src="https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1"
         const statusFilter = document.getElementById("statusFilter");
         setupDashboardControls(client);
         setupManualTransferForm(client);
+        setupParticipantModal(client);
         setupDeleteActions(client);
         console.log('[Admin] setup functions done, loading inscriptions...');
         await loadPaidInscriptions(client, statusFilter?.value || "paid");
