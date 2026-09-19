@@ -93,13 +93,20 @@ function createSupabaseMock(state) {
             state.updateCalls.push({ table, payload, like: { column, value } });
             return query;
           },
+          in(column, values) {
+            state.updateCalls.push({ table, payload, in: { column, values } });
+            return query;
+          },
           or(expression) {
             const last = state.updateCalls[state.updateCalls.length - 1];
             if (last) last.or = expression;
             return Promise.resolve({ error: state.updateError || null });
           },
           select() {
-            return Promise.resolve({ data: [], error: state.updateError || null });
+            const rows = Array.isArray(state.updateResultRows) && state.updateResultRows.length > 0
+              ? state.updateResultRows.shift()
+              : [];
+            return Promise.resolve({ data: rows, error: state.updateError || null });
           },
           limit() {
             return Promise.resolve({ data: [], error: state.updateError || null });
@@ -111,14 +118,23 @@ function createSupabaseMock(state) {
         state.upsertCalls.push({ table, payload, options });
         return Promise.resolve({ data: null, error: state.upsertError || null });
       },
-      select() {
-        return {
-          eq() { return Promise.resolve({ data: [], error: null }); },
-          like() { return Promise.resolve({ data: [], error: null }); },
-          in() { return Promise.resolve({ data: [], error: null }); },
-          order() { return this; },
-          limit() { return Promise.resolve({ data: [], error: null }); },
+      select(cols) {
+        const chain = {
+          eq(col, val) { state.selectCalls.push({ table, cols, op: 'eq', col, val }); return chain; },
+          in(col, vals) { state.selectCalls.push({ table, cols, op: 'in', col, vals }); return chain; },
+          or(expr) { state.selectCalls.push({ table, cols, op: 'or', expr }); return chain; },
+          like(col, val) { state.selectCalls.push({ table, cols, op: 'like', col, val }); return chain; },
+          order() { return chain; },
+          limit() { return chain; },
+          then(resolve, reject) {
+            const next = Array.isArray(state.selectResults) && state.selectResults.length > 0
+              ? state.selectResults.shift()
+              : null;
+            const result = next || { data: [], error: null };
+            return Promise.resolve(typeof result === 'function' ? result(chain) : result).then(resolve, reject);
+          },
         };
+        return chain;
       },
     }),
   };
@@ -149,7 +165,7 @@ function createReqRes(event) {
   return { req, res };
 }
 
-async function withWebhookMocks({ event, rpcResults = [], resendResults = [], updateError = null }, run) {
+async function withWebhookMocks({ event, rpcResults = [], resendResults = [], updateError = null, selectResults = [], updateResultRows = [], sessionsByPaymentIntent = {}, chargesById = {}, chargeRetrieveError = null }, run) {
   const originalConsole = {
     log: console.log,
     warn: console.warn,
@@ -163,6 +179,14 @@ async function withWebhookMocks({ event, rpcResults = [], resendResults = [], up
     emailSends: [],
     updateCalls: [],
     upsertCalls: [],
+    selectCalls: [],
+    selectResults: [...selectResults],
+    updateResultRows: [...updateResultRows],
+    sessionListCalls: [],
+    sessionsByPaymentIntent,
+    chargeRetrieveCalls: [],
+    chargesById,
+    chargeRetrieveError,
     updateError,
     upsertError: null,
     metaCalls: [],
@@ -172,8 +196,22 @@ async function withWebhookMocks({ event, rpcResults = [], resendResults = [], up
     webhooks: {
       constructEvent: () => state.event,
     },
-    checkout: { sessions: { list: async () => ({ data: [] }) } },
-    charges: { retrieve: async () => ({}) },
+    checkout: {
+      sessions: {
+        list: async (params) => {
+          state.sessionListCalls.push(params);
+          const found = (state.sessionsByPaymentIntent || {})[params?.payment_intent];
+          return { data: found ? [found] : [] };
+        },
+      },
+    },
+    charges: {
+      retrieve: async (id) => {
+        state.chargeRetrieveCalls.push(id);
+        if (state.chargeRetrieveError) throw state.chargeRetrieveError;
+        return (state.chargesById || {})[id] || {};
+      },
+    },
   }));
   const restoreSupabase = mockModule('@supabase/supabase-js', {
     createClient: () => createSupabaseMock(state),
@@ -748,5 +786,253 @@ test('payload contradiction returned by RPC produces 5xx and no email', async ()
     assert.equal(res.statusCode, 500);
     assert.equal(state.emailSends.length, 0);
     assert.equal(state.updateCalls.length, 0);
+  });
+});
+
+// ==================== BATCH 2: refunds deterministas ====================
+// Ownership SOLO por payment_intent_id / checkout session. Ningún test
+// configura email/amount como vía de resolución: si el código volviera a
+// usarlos, estos tests fallarían (las filas de A y B comparten email).
+
+function refundRow(overrides = {}) {
+  return { id: 'row_1', order_session_id: 'cs_order_A', payment_status: 'paid', ...overrides };
+}
+
+function stripeCharge(overrides = {}) {
+  return {
+    id: 'ch_A',
+    payment_intent: 'pi_A',
+    amount: 50000,
+    amount_refunded: 50000,
+    billing_details: { email: 'buyer@example.com' },
+    receipt_email: 'buyer@example.com',
+    ...overrides,
+  };
+}
+
+function chargeRefundedEvent(charge) {
+  return { id: 'evt_charge_refunded_1', type: 'charge.refunded', data: { object: charge } };
+}
+
+function stripeRefund(overrides = {}) {
+  return {
+    id: 're_1',
+    status: 'succeeded',
+    amount: 50000,
+    charge: 'ch_A',
+    payment_intent: 'pi_A',
+    ...overrides,
+  };
+}
+
+function refundEvent(type, refund) {
+  return { id: `evt_${type.replaceAll('.', '_')}_1`, type, data: { object: refund } };
+}
+
+function refundUpdateCalls(state) {
+  // El mock registra una entrada por método encadenado (eq + in); contar
+  // solo la entrada con cláusula eq para medir 1 UPDATE por orden.
+  return state.updateCalls.filter((call) => call.payload?.payment_status === 'refunded' && call.eq);
+}
+
+function assertNoEmailOrAmountOwnership(state) {
+  for (const call of state.selectCalls) {
+    assert.notEqual(call.col, 'email', 'refund no debe filtrar por email');
+    assert.notEqual(call.col, 'amount_paid', 'refund no debe filtrar por monto');
+  }
+}
+
+test('B2-1: charge.refunded total marca solo la orden del payment_intent', async () => {
+  const rowsA = [refundRow({ id: 'a1', order_session_id: 'cs_order_A' })];
+  await withWebhookMocks({
+    event: chargeRefundedEvent(stripeCharge()),
+    selectResults: [{ data: rowsA, error: null }],
+    updateResultRows: [[{ id: 'a1' }]],
+  }, async ({ webhook, state }) => {
+    const res = await invoke(webhook, state.event);
+
+    assert.equal(res.statusCode, 200);
+    assertNoEmailOrAmountOwnership(state);
+    const updates = refundUpdateCalls(state);
+    assert.equal(updates.length, 1);
+    assert.equal(updates[0].eq.column, 'order_session_id');
+    assert.equal(updates[0].eq.value, 'cs_order_A');
+    const inClause = state.updateCalls.find((call) => call.in);
+    assert.deepEqual(inClause.in.values, ['paid', 'paid_no_email']);
+  });
+});
+
+test('B2-2: dos órdenes mismo email, refund A no toca B', async () => {
+  const rowsA = [refundRow({ id: 'a1', order_session_id: 'cs_order_A' })];
+  await withWebhookMocks({
+    event: chargeRefundedEvent(stripeCharge({ payment_intent: 'pi_A' })),
+    selectResults: [{ data: rowsA, error: null }],
+    updateResultRows: [[{ id: 'a1' }]],
+  }, async ({ webhook, state }) => {
+    const res = await invoke(webhook, state.event);
+
+    assert.equal(res.statusCode, 200);
+    assertNoEmailOrAmountOwnership(state);
+    for (const call of refundUpdateCalls(state)) {
+      assert.equal(call.eq.value, 'cs_order_A');
+    }
+    assert.ok(!state.updateCalls.some((call) => call.eq?.value === 'cs_order_B'));
+  });
+});
+
+test('B2-3: mismo email + mismo monto, refund B solo muta B', async () => {
+  const rowsB = [
+    refundRow({ id: 'b1', order_session_id: 'cs_order_B' }),
+    refundRow({ id: 'b2', order_session_id: 'cs_order_B' }),
+  ];
+  await withWebhookMocks({
+    event: chargeRefundedEvent(stripeCharge({ id: 'ch_B', payment_intent: 'pi_B', amount: 50000, amount_refunded: 50000 })),
+    selectResults: [{ data: rowsB, error: null }],
+    updateResultRows: [[{ id: 'b1' }, { id: 'b2' }]],
+  }, async ({ webhook, state }) => {
+    const res = await invoke(webhook, state.event);
+
+    assert.equal(res.statusCode, 200);
+    assertNoEmailOrAmountOwnership(state);
+    const updates = refundUpdateCalls(state);
+    assert.equal(updates.length, 1);
+    assert.equal(updates[0].eq.value, 'cs_order_B');
+  });
+});
+
+test('B2-4: multi-ticket (3 filas) refund total actualiza las 3', async () => {
+  const rows = [
+    refundRow({ id: 'a1', order_session_id: 'cs_order_A' }),
+    refundRow({ id: 'a2', order_session_id: 'cs_order_A' }),
+    refundRow({ id: 'a3', order_session_id: 'cs_order_A' }),
+  ];
+  await withWebhookMocks({
+    event: chargeRefundedEvent(stripeCharge({ amount: 150000, amount_refunded: 150000 })),
+    selectResults: [{ data: rows, error: null }],
+    updateResultRows: [[{ id: 'a1' }, { id: 'a2' }, { id: 'a3' }]],
+  }, async ({ webhook, state }) => {
+    const res = await invoke(webhook, state.event);
+
+    assert.equal(res.statusCode, 200);
+    const updates = refundUpdateCalls(state);
+    assert.equal(updates.length, 1);
+    assert.equal(updates[0].eq.value, 'cs_order_A');
+  });
+});
+
+test('B2-5: orden A (3 tickets) y B (2 tickets) mismo email, refund A solo muta A', async () => {
+  const rowsA = [
+    refundRow({ id: 'a1', order_session_id: 'cs_order_A' }),
+    refundRow({ id: 'a2', order_session_id: 'cs_order_A' }),
+    refundRow({ id: 'a3', order_session_id: 'cs_order_A' }),
+  ];
+  await withWebhookMocks({
+    event: refundEvent('refund.updated', stripeRefund({ id: 're_A', amount: 150000, charge: 'ch_A', payment_intent: 'pi_A' })),
+    chargesById: { ch_A: stripeCharge({ amount: 150000, amount_refunded: 150000 }) },
+    selectResults: [{ data: rowsA, error: null }],
+    updateResultRows: [[{ id: 'a1' }, { id: 'a2' }, { id: 'a3' }]],
+  }, async ({ webhook, state }) => {
+    const res = await invoke(webhook, state.event);
+
+    assert.equal(res.statusCode, 200);
+    assertNoEmailOrAmountOwnership(state);
+    const updates = refundUpdateCalls(state);
+    assert.equal(updates.length, 1);
+    assert.equal(updates[0].eq.value, 'cs_order_A');
+    assert.ok(!state.updateCalls.some((call) => call.eq?.value === 'cs_order_B'));
+  });
+});
+
+test('B2-6: payment_intent irresoluble → 0 UPDATE, sin fallback, 200', async () => {
+  await withWebhookMocks({
+    event: chargeRefundedEvent(stripeCharge({ id: 'ch_X', payment_intent: 'pi_unknown' })),
+    selectResults: [{ data: [], error: null }],
+    sessionsByPaymentIntent: {},
+  }, async ({ webhook, state }) => {
+    const res = await invoke(webhook, state.event);
+
+    assert.equal(res.statusCode, 200);
+    assert.equal(state.updateCalls.length, 0);
+    assertNoEmailOrAmountOwnership(state);
+  });
+});
+
+test('B2-7: evento repetido es idempotente y no toca otras órdenes', async () => {
+  const rowsA = [refundRow({ id: 'a1', order_session_id: 'cs_order_A' })];
+  await withWebhookMocks({
+    event: chargeRefundedEvent(stripeCharge()),
+    selectResults: [
+      { data: rowsA, error: null },
+      { data: [{ ...rowsA[0], payment_status: 'refunded' }], error: null },
+    ],
+    updateResultRows: [[{ id: 'a1' }], []],
+  }, async ({ webhook, state }) => {
+    const first = await invoke(webhook, state.event);
+    const second = await invoke(webhook, state.event);
+
+    assert.equal(first.statusCode, 200);
+    assert.equal(second.statusCode, 200);
+    for (const call of refundUpdateCalls(state)) {
+      assert.equal(call.eq.value, 'cs_order_A');
+    }
+  });
+});
+
+test('B2-8a: charge.refunded parcial no muta nada', async () => {
+  await withWebhookMocks({
+    event: chargeRefundedEvent(stripeCharge({ amount: 50000, amount_refunded: 20000 })),
+  }, async ({ webhook, state }) => {
+    const res = await invoke(webhook, state.event);
+
+    assert.equal(res.statusCode, 200);
+    assert.equal(state.updateCalls.length, 0);
+    assert.equal(state.selectCalls.length, 0);
+  });
+});
+
+test('B2-8b: refund.updated parcial no muta nada', async () => {
+  await withWebhookMocks({
+    event: refundEvent('refund.updated', stripeRefund({ id: 're_P', amount: 20000, charge: 'ch_A' })),
+    chargesById: { ch_A: stripeCharge({ amount: 50000, amount_refunded: 20000 }) },
+  }, async ({ webhook, state }) => {
+    const res = await invoke(webhook, state.event);
+
+    assert.equal(res.statusCode, 200);
+    assert.equal(state.updateCalls.length, 0);
+  });
+});
+
+test('B2-9: refund.updated no-succeeded no muta y no consulta charge', async () => {
+  await withWebhookMocks({
+    event: refundEvent('refund.updated', stripeRefund({ id: 're_P', status: 'pending', charge: 'ch_A' })),
+  }, async ({ webhook, state }) => {
+    const res = await invoke(webhook, state.event);
+
+    assert.equal(res.statusCode, 200);
+    assert.equal(state.updateCalls.length, 0);
+    assert.equal(state.chargeRetrieveCalls.length, 0);
+  });
+});
+
+test('B2-10: legacy sin payment_intent_id se resuelve por checkout session', async () => {
+  const rows = [refundRow({ id: 'a1', order_session_id: 'cs_legacy' })];
+  await withWebhookMocks({
+    event: chargeRefundedEvent(stripeCharge({ id: 'ch_L', payment_intent: 'pi_L' })),
+    selectResults: [
+      { data: [], error: null },
+      { data: rows, error: null },
+    ],
+    sessionsByPaymentIntent: { pi_L: { id: 'cs_legacy' } },
+    updateResultRows: [[{ id: 'a1' }]],
+  }, async ({ webhook, state }) => {
+    const res = await invoke(webhook, state.event);
+
+    assert.equal(res.statusCode, 200);
+    assertNoEmailOrAmountOwnership(state);
+    const updates = refundUpdateCalls(state);
+    assert.equal(updates.length, 1);
+    assert.equal(updates[0].eq.value, 'cs_legacy');
+    assert.equal(state.sessionListCalls.length, 1);
+    assert.equal(state.sessionListCalls[0].payment_intent, 'pi_L');
   });
 });
