@@ -7,6 +7,7 @@
   <title>Kinetic Hub | Checkout</title>
   <meta name="description"
     content="Completa tu inscripción a eventos de Kinetic Hub con nuestro proceso seguro de checkout." />
+  <meta name="referrer" content="no-referrer" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link
@@ -56,6 +57,11 @@ src="https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1"
 
     async function fetchCheckoutSummary(sessionId) {
       const response = await fetch(`/api/checkout-summary?session_id=${encodeURIComponent(sessionId)}`);
+      if (response.status === 401 || response.status === 403) {
+        const err = new Error('Resumen privado no disponible en este navegador');
+        err.status = response.status;
+        throw err;
+      }
       if (!response.ok) {
         throw new Error('No se pudo cargar el resumen');
       }
@@ -185,6 +191,30 @@ src="https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1"
       participantsBlock.style.display = 'block';
     }
 
+    function showPrivateSummaryUnavailable() {
+      const statusTitle = document.getElementById('statusTitle');
+      const statusIntro = document.getElementById('statusIntro');
+      const statusBadge = document.getElementById('statusBadge');
+      const statusCopy = document.getElementById('statusCopy');
+      const participantsBlock = document.getElementById('participantsBlock');
+      const documentBlock = document.getElementById('documentBlock');
+      const profileBlock = document.getElementById('profileBlock');
+      const emailNotice = document.getElementById('emailNotice');
+      const retryPaymentLink = document.getElementById('retryPaymentLink');
+
+      if (statusTitle) statusTitle.textContent = 'No pudimos mostrar el resumen privado de esta compra';
+      if (statusIntro) statusIntro.textContent = 'Revisa el correo de confirmación o inicia sesión para consultar tus carreras.';
+      if (statusBadge) statusBadge.textContent = 'Acceso restringido';
+      if (statusCopy) {
+        statusCopy.textContent = 'Por seguridad, el detalle de la compra solo se muestra en el navegador donde se realizó el pago. Revisa tu correo o entra a tu perfil.';
+      }
+      if (participantsBlock) participantsBlock.style.display = 'none';
+      if (documentBlock) documentBlock.style.display = 'none';
+      if (profileBlock) profileBlock.style.display = 'block';
+      if (emailNotice) emailNotice.style.display = 'block';
+      if (retryPaymentLink) retryPaymentLink.style.display = 'none';
+    }
+
     // Detectar si el usuario viene de un pago exitoso o pendiente
     async function checkPaymentSuccess() {
       const urlParams = new URLSearchParams(window.location.search);
@@ -211,6 +241,13 @@ src="https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1"
         try {
           const summary = await fetchCheckoutSummaryWithPolling(sessionId);
           if (summary) {
+            // Limpieza de privacidad: el session_id ya está en localStorage para
+            // refresh; retirarlo de la URL evita propagarlo en referrers/copias.
+            try {
+              if (window.history && typeof window.history.replaceState === 'function') {
+                window.history.replaceState({}, '', window.location.pathname);
+              }
+            } catch (_) {}
             const eventSlug = summary.eventSlug || 'axolote-night-run';
             const raceParam = eventSlug === 'cascanueces-run' ? 'cascanueces' : 'axolote';
             const waiverLink = document.getElementById('waiverLink');
@@ -225,6 +262,10 @@ src="https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1"
             renderParticipants(summary);
           }
         } catch (error) {
+          if (error && (error.status === 401 || error.status === 403)) {
+            showPrivateSummaryUnavailable();
+            return;
+          }
           console.warn('No se pudo cargar el resumen de participantes:', error);
         }
 

@@ -1,5 +1,6 @@
 const { createClient } = require('@supabase/supabase-js');
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
+const { verifyCheckoutSummaryClaim } = require('../lib/_checkout-summary-claim');
 
 const supabase = createClient(
   process.env.SUPABASE_URL,
@@ -15,11 +16,23 @@ module.exports = async function handler(req, res) {
     return res.status(405).json({ error: 'Método no permitido' });
   }
 
+  if (typeof res.setHeader === 'function') {
+    res.setHeader('Cache-Control', 'no-store');
+  }
+
   try {
     const sessionId = normalizeSessionId(req.query.session_id || req.query.sessionId);
 
     if (!sessionId) {
       return res.status(400).json({ error: 'Falta session_id' });
+    }
+
+    // Batch 3: autorización ANTES de consultar/armar PII. Sin claim válido
+    // para ESTA sesión → 403 genérico (sin distinguir el motivo al cliente).
+    const claimCheck = verifyCheckoutSummaryClaim(req.headers?.cookie, sessionId);
+    if (!claimCheck.ok) {
+      console.warn(`⛔ checkout-summary no autorizado | session_id=${sessionId} | reason=${claimCheck.reason || 'unknown'}`);
+      return res.status(403).json({ error: 'No autorizado para consultar este resumen.' });
     }
 
     const { data, error } = await supabase

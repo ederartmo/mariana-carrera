@@ -14,6 +14,7 @@ process.env.STRIPE_WEBHOOK_SECRET = process.env.STRIPE_WEBHOOK_SECRET || 'whsec_
 process.env.RESEND_API_KEY = process.env.RESEND_API_KEY || 're_mock';
 process.env.SUPABASE_URL = process.env.SUPABASE_URL || 'https://example.supabase.co';
 process.env.SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || 'mock-service-role-key';
+process.env.CHECKOUT_SUMMARY_SECRET = process.env.CHECKOUT_SUMMARY_SECRET || 'test-only-checkout-summary-secret-0123456789';
 process.env.ADMIN_EMAILS = 'admin@example.com';
 
 const projectRoot = path.join(__dirname, '..');

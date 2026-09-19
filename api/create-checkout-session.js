@@ -20,6 +20,11 @@ const {
   buildParticipantsMetadataPR4,
   assertMetadataBudget,
 } = require('../lib/_participant-validation');
+const {
+  createCheckoutSummaryClaim,
+  buildCheckoutSummaryCookie,
+  shouldSecureCheckoutCookie,
+} = require('../lib/_checkout-summary-claim');
 
 function getCookieValue(req, name) {
   const raw = req.headers.cookie || '';
@@ -305,6 +310,26 @@ module.exports = async function handler(req, res) {
     }
 
     console.log(`📝 Inscripción pending creada/actualizada | session_id=${session.id}`);
+
+    // Batch 3: prueba de posesión para checkout-summary (cookie HttpOnly firmada).
+    // Fail closed: sin secreto válido no hay checkout (se expira la sesión).
+    const { claim, error: claimError } = createCheckoutSummaryClaim(session.id);
+    if (claimError || !claim) {
+      console.error(`❌ CHECKOUT_SUMMARY_SECRET ausente o débil; expirando sesión ${session.id}`);
+      await stripe.checkout.sessions.expire(session.id).catch((expireError) => {
+        console.error(`❌ No se pudo expirar la sesión ${session.id}:`, expireError.message);
+      });
+      return res.status(500).json({
+        error: 'No se pudo preparar tu inscripción. Inténtalo de nuevo.',
+      });
+    }
+
+    if (typeof res.setHeader === 'function') {
+      res.setHeader(
+        'Set-Cookie',
+        buildCheckoutSummaryCookie(claim, { secure: shouldSecureCheckoutCookie(req) })
+      );
+    }
 
     const initiateTrack = await trackMetaEvent({
       req,
