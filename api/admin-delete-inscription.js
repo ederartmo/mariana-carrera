@@ -125,12 +125,16 @@ module.exports = async function handler(req, res) {
       });
     }
 
-    let deleteQuery = supabase.from('inscripciones').delete().select('id');
-    deleteQuery = cleanOrderSessionId
-      ? deleteQuery.eq('order_session_id', cleanOrderSessionId)
-      : deleteQuery.eq('id', cleanInscriptionId);
+    // Batch 4 review: mutar SOLO los IDs verificados en el preflight
+    // (cierra ventana TOCTOU: una fila insertada después con el mismo
+    // order_session_id jamás se borra). Nada de DELETE por order_session_id.
+    const verifiedIds = targets.map((row) => row.id);
 
-    const { data: deleted, error: deleteError } = await deleteQuery;
+    const { data: deleted, error: deleteError } = await supabase
+      .from('inscripciones')
+      .delete()
+      .in('id', verifiedIds)
+      .select('id');
     if (deleteError) {
       throw new Error(deleteError.message);
     }

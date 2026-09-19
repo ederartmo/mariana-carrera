@@ -31,10 +31,12 @@ function createRes() {
   };
 }
 
-function terminal(state, queueName, calls, entry) {
+function terminal(state, queueName) {
   const queue = state[queueName];
   const next = Array.isArray(queue) && queue.length > 0 ? queue.shift() : null;
-  if (entry) calls.push(entry);
+  // Una entrada función recibe state.calls: simula el estado de DB al momento
+  // de la mutación (p. ej. fila C que apareció tras el pre-read).
+  if (typeof next === 'function') return Promise.resolve(next(state.calls));
   return Promise.resolve(next || { data: [], error: null });
 }
 
@@ -59,8 +61,8 @@ function createSupabaseMock(state) {
           in(col, vals) { state.calls.select.push({ table, cols, op: 'in', col, vals }); return chain; },
           order() { return chain; },
           limit() { return chain; },
-          single() { return terminal(state, 'selectResults', [], null).then((r) => ({ data: (r.data || [])[0] || null, error: r.error })); },
-          then(resolve, reject) { return terminal(state, 'selectResults', [], null).then(resolve, reject); },
+          single() { return terminal(state, 'selectResults').then((r) => ({ data: (r.data || [])[0] || null, error: r.error })); },
+          then(resolve, reject) { return terminal(state, 'selectResults').then(resolve, reject); },
         };
         return chain;
       },
@@ -68,8 +70,8 @@ function createSupabaseMock(state) {
         const chain = {
           eq(col, val) { state.calls.update.push({ table, payload, op: 'eq', col, val }); return chain; },
           in(col, vals) { state.calls.update.push({ table, payload, op: 'in', col, vals }); return chain; },
-          select() { return terminal(state, 'updateResults', [], null); },
-          single() { return terminal(state, 'updateResults', [], null).then((r) => ({ data: (r.data || [])[0] || null, error: r.error })); },
+          select() { return terminal(state, 'updateResults'); },
+          single() { return terminal(state, 'updateResults').then((r) => ({ data: (r.data || [])[0] || null, error: r.error })); },
         };
         return chain;
       },
@@ -87,8 +89,9 @@ function createSupabaseMock(state) {
       delete() {
         const chain = {
           eq(col, val) { state.calls.delete.push({ table, op: 'eq', col, val }); return chain; },
+          in(col, vals) { state.calls.delete.push({ table, op: 'in', col, vals }); return chain; },
           select() { return chain; },
-          then(resolve, reject) { return terminal(state, 'deleteResults', [], null).then(resolve, reject); },
+          then(resolve, reject) { return terminal(state, 'deleteResults').then(resolve, reject); },
         };
         return chain;
       },
@@ -341,6 +344,30 @@ test('B4-17: inscripción individual production → bloqueada', async () => {
   assert.equal(state.calls.delete.length, 0);
 });
 
+test('B4-16b TOCTOU delete: fila C posterior no se borra', async () => {
+  const rows = [
+    testRow({ id: 'a', order_session_id: 'cs_test_toctou', stripe_session_id: 'cs_test_toctou' }),
+    testRow({ id: 'b', order_session_id: 'cs_test_toctou', stripe_session_id: 'cs_test_toctou' }),
+  ];
+  const state = baseState({
+    selectResults: [{ data: rows, error: null }],
+    // La capa de mutación ve A+B+C (C apareció tras el preflight). Si el
+    // código borrara por order_session_id, devolvería las 3.
+    deleteResults: [(calls) => {
+      const inCall = (calls.delete || []).find((c) => c.op === 'in');
+      if (inCall && inCall.col === 'id') {
+        return { data: [{ id: 'a' }, { id: 'b' }], error: null };
+      }
+      return { data: [{ id: 'a' }, { id: 'b' }, { id: 'c' }], error: null };
+    }],
+  });
+  const res = await runDelete(state, { orderSessionId: 'cs_test_toctou', confirmTarget: 'cs_test_toctou' });
+
+  assert.equal(res.statusCode, 200);
+  assert.equal(res.body.deletedCount, 2);
+  assert.deepEqual(res.body.deletedIds, ['a', 'b']);
+});
+
 // ---------- UPDATE EMAIL (18-21) ----------
 
 test('B4-18: update-email sin admin → bloqueado', async () => {
@@ -385,7 +412,39 @@ test('B4-20: update-email por orden afecta solo esa orden', async () => {
     assert.equal(res.statusCode, 200);
     assert.equal(res.body.updatedCount, 2);
     assert.deepEqual(res.body.updatedIds, ['e1', 'e2']);
-    assert.ok(state.calls.update.every((c) => c.col === 'order_session_id' && c.val === 'cs_ord_1'));
+    // La mutación usa SOLO los IDs verificados, nunca re-target por orden.
+    const inCalls = state.calls.update.filter((c) => c.op === 'in');
+    assert.equal(inCalls.length, 1);
+    assert.equal(inCalls[0].col, 'id');
+    assert.deepEqual(inCalls[0].vals, ['e1', 'e2']);
+  });
+});
+
+test('B4-20b TOCTOU update-email: fila C posterior no se toca', async () => {
+  const existing = [
+    { id: 'a', order_session_id: 'cs_test_toctou' },
+    { id: 'b', order_session_id: 'cs_test_toctou' },
+  ];
+  const state = baseState({
+    selectResults: [{ data: existing, error: null }],
+    // La capa de mutación ve A+B+C (C apareció tras el pre-read). Si el
+    // código re-targeteara por order_session_id, devolvería las 3.
+    updateResults: [(calls) => {
+      const inCall = (calls.update || []).find((c) => c.op === 'in');
+      if (inCall && inCall.col === 'id') {
+        return { data: [{ id: 'a' }, { id: 'b' }], error: null };
+      }
+      return { data: [{ id: 'a' }, { id: 'b' }, { id: 'c' }], error: null };
+    }],
+  });
+  await withAdminMocks(state, null, async () => {
+    const handler = loadFresh('api/admin-update-inscription-email.js');
+    const res = createRes();
+    await handler(adminReq({ orderSessionId: 'cs_test_toctou', email: 'nuevo@example.com' }), res);
+
+    assert.equal(res.statusCode, 200);
+    assert.equal(res.body.updatedCount, 2);
+    assert.deepEqual(res.body.updatedIds, ['a', 'b']);
   });
 });
 

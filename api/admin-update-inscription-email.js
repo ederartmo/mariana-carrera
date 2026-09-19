@@ -63,19 +63,18 @@ module.exports = async function handler(req, res) {
       return res.status(409).json({ error: 'La orden contiene registros inconsistentes; no se actualizó nada.' });
     }
 
-    let updateQuery = supabase
+    // Batch 4 review: mutar SOLO los IDs verificados en el pre-read
+    // (cierra ventana TOCTOU). Nada de UPDATE por order_session_id.
+    const verifiedIds = existing.map((row) => row.id);
+
+    const { data, error } = await supabase
       .from('inscripciones')
       .update({
         buyer_email: cleanEmail,
         email: cleanEmail,
         email_sent: false,
-      });
-
-    updateQuery = cleanOrderSessionId
-      ? updateQuery.eq('order_session_id', cleanOrderSessionId)
-      : updateQuery.eq('id', cleanInscriptionId);
-
-    const { data, error } = await updateQuery
+      })
+      .in('id', verifiedIds)
       .select('id, order_session_id, full_name, email, buyer_email, email_sent');
     if (error) {
       throw new Error(error.message);
