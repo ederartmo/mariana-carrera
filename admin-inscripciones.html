@@ -1665,6 +1665,19 @@ src="https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1"
           return;
         }
 
+        // Batch 4: confirmación explícita del identificador exacto (el backend
+        // la exige vía confirmTarget y bloquea compras reales/no-test).
+        const expectedTarget = deleteMode === 'order' ? orderSessionId : inscriptionId;
+        const typedTarget = String(window.prompt(
+          `Confirma escribiendo el identificador exacto a eliminar:\n${expectedTarget}`,
+          ''
+        ) || '').trim();
+
+        if (typedTarget !== expectedTarget) {
+          window.alert('Confirmación incorrecta. No se eliminó nada.');
+          return;
+        }
+
         const originalText = button.textContent;
         button.disabled = true;
         button.textContent = 'Eliminando...';
@@ -1685,6 +1698,7 @@ src="https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1"
             body: JSON.stringify({
               inscriptionId,
               orderSessionId: deleteMode === 'order' ? orderSessionId : '',
+              confirmTarget: expectedTarget,
             }),
           });
 

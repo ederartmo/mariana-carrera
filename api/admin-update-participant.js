@@ -9,6 +9,7 @@
 
 const { createClient } = require('@supabase/supabase-js');
 const { validateParticipant } = require('../lib/_participant-validation');
+const { getAdminUser } = require('../lib/_auth');
 
 const supabase = createClient(
   process.env.SUPABASE_URL,
@@ -17,37 +18,6 @@ const supabase = createClient(
 
 const ROOT_KEYS = ['id', 'email', 'participant'];
 const PARTICIPANT_KEYS = ['fullName', 'shirtSize', 'birthDate', 'whatsapp', 'state', 'borough'];
-
-function getAdminEmails() {
-  const raw = process.env.ADMIN_EMAILS || 'mariana@kinetichub.com.mx,gato.jijen01@gmail.com';
-  return raw
-    .split(',')
-    .map((item) => item.trim().toLowerCase())
-    .filter(Boolean);
-}
-
-async function getAdminUserFromRequest(req) {
-  const authHeader = req.headers.authorization || '';
-  const token = authHeader.startsWith('Bearer ') ? authHeader.slice(7).trim() : '';
-
-  if (!token) {
-    return { error: 'No autorizado: falta token de sesión.' };
-  }
-
-  const { data, error } = await supabase.auth.getUser(token);
-  if (error || !data?.user?.email) {
-    return { error: 'No autorizado: sesión inválida.' };
-  }
-
-  const email = String(data.user.email).trim().toLowerCase();
-  const admins = getAdminEmails();
-
-  if (!admins.includes(email)) {
-    return { error: 'No autorizado: este usuario no es admin.' };
-  }
-
-  return { email };
-}
 
 function isValidEmail(value) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(value || ''));
@@ -59,9 +29,9 @@ module.exports = async function handler(req, res) {
   }
 
   try {
-    const auth = await getAdminUserFromRequest(req);
+    const auth = await getAdminUser(req);
     if (auth.error) {
-      return res.status(401).json({ error: auth.error });
+      return res.status(auth.status || 401).json({ error: auth.error });
     }
 
     const body = req.body || {};
@@ -157,7 +127,7 @@ module.exports = async function handler(req, res) {
       return res.status(500).json({ error: 'Actualización ambigua, no se aplicó de forma segura.' });
     }
 
-    console.log(`✏️ Participante editado id=${cleanId} por admin ${auth.email}`);
+    console.log(`admin_action=update_participant admin=${auth.email} target=${cleanId} result=updated rows=1`);
     return res.status(200).json({ ok: true, inscription: updated[0], adminEmail: auth.email });
   } catch (error) {
     console.error('Error en admin-update-participant:', error);

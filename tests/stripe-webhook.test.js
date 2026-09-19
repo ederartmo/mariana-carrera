@@ -7,6 +7,8 @@ process.env.STRIPE_WEBHOOK_SECRET = process.env.STRIPE_WEBHOOK_SECRET || 'whsec_
 process.env.RESEND_API_KEY = process.env.RESEND_API_KEY || 're_mock';
 process.env.SUPABASE_URL = process.env.SUPABASE_URL || 'https://example.supabase.co';
 process.env.SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || 'mock-service-role-key';
+// Batch 4: auth admin fail-closed — los tests que usan admin@mocks declaran allowlist explícita.
+process.env.ADMIN_EMAILS = process.env.ADMIN_EMAILS || 'mariana@kinetichub.com.mx,admin@example.com';
 
 function checkoutSession(overrides = {}) {
   return {
