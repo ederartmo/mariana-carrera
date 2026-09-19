@@ -135,10 +135,11 @@ function createRes() {
   };
 }
 
-async function postCheckout({ host = 'localhost:3000', upsertError = null } = {}) {
+async function postCheckout({ host = 'localhost:3000', upsertError = null, unsetSecret = false } = {}) {
   return withMockedNow('2026-09-09T12:00:00-06:00', async () => {
     const createdSessions = [];
     const expiredSessions = [];
+    const upsertCalls = [];
     const restoreStripe = mockModule('stripe', () => ({
       checkout: {
         sessions: {
@@ -154,7 +155,10 @@ async function postCheckout({ host = 'localhost:3000', upsertError = null } = {}
     const restoreSupabase = mockModule('@supabase/supabase-js', {
       createClient: () => ({
         from: () => ({
-          upsert: async () => ({ data: null, error: upsertError }),
+          upsert: async (payload) => {
+            upsertCalls.push(payload);
+            return { data: null, error: upsertError };
+          },
         }),
       }),
     });
@@ -166,6 +170,8 @@ async function postCheckout({ host = 'localhost:3000', upsertError = null } = {}
     });
     delete require.cache[require.resolve('../api/create-checkout-session')];
     const restoreLogs = silenceLogs();
+    const savedSecret = process.env.CHECKOUT_SUMMARY_SECRET;
+    if (unsetSecret) delete process.env.CHECKOUT_SUMMARY_SECRET;
     try {
       const handler = require('../api/create-checkout-session');
       const res = createRes();
@@ -179,8 +185,9 @@ async function postCheckout({ host = 'localhost:3000', upsertError = null } = {}
           distance: '5K',
         },
       }, res);
-      return { res, createdSessions, expiredSessions };
+      return { res, createdSessions, expiredSessions, upsertCalls };
     } finally {
+      if (unsetSecret) process.env.CHECKOUT_SUMMARY_SECRET = savedSecret;
       restoreLogs();
       delete require.cache[require.resolve('../api/create-checkout-session')];
       restoreMeta();
@@ -228,4 +235,22 @@ test('B3-10: si pending upsert falla, no hay claim válido y se expira la sesió
   assert.equal(res.statusCode, 500);
   assert.ok(!res.headers['Set-Cookie'], 'sin cookie ante fallo de persistencia');
   assert.deepEqual(expiredSessions, ['cs_test_claim']);
+});
+
+test('B3-10b: sin secreto no se intenta el upsert: expira, sin cookie, DB mutation ZERO', async () => {
+  const { res, createdSessions, expiredSessions, upsertCalls } = await postCheckout({ unsetSecret: true });
+
+  assert.equal(res.statusCode, 500);
+  assert.equal(createdSessions.length, 1);
+  assert.deepEqual(expiredSessions, ['cs_test_claim']);
+  assert.equal(upsertCalls.length, 0);
+  assert.ok(!res.headers['Set-Cookie']);
+});
+
+test('B3-10c: flujo exitoso persiste antes de emitir cookie', async () => {
+  const { res, upsertCalls } = await postCheckout({});
+
+  assert.equal(res.statusCode, 200);
+  assert.equal(upsertCalls.length, 1);
+  assert.ok(res.headers['Set-Cookie']);
 });
