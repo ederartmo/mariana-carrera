@@ -921,24 +921,56 @@ src="https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1"
       contentDiv.innerHTML = html;
     }
 
+    // Batch 1A: lectura vía /api/admin-list-inscriptions (Bearer + allowlist
+    // server-side). El navegador ya NO hace SELECT directo a inscripciones.
+    // Paginamos en servidor (limit 100) y concatenamos para preservar el
+    // comportamiento actual del panel (filtros/búsqueda en cliente intactos).
+    const ADMIN_LIST_PAGE_LIMIT = 100;
+    const ADMIN_LIST_MAX_PAGES = 20;
+
+    async function fetchAdminInscriptionsPage(token, status, page) {
+      const params = new URLSearchParams({
+        status: status || 'paid',
+        page: String(page),
+        limit: String(ADMIN_LIST_PAGE_LIMIT),
+      });
+      const response = await fetch(`/api/admin-list-inscriptions?${params.toString()}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (response.status === 401 || response.status === 403) {
+        throw new Error('Sesión no válida o sin permisos de administrador.');
+      }
+      if (!response.ok) {
+        let msg = 'No se pudieron cargar las inscripciones.';
+        try {
+          const err = await response.json();
+          msg = err?.error || msg;
+        } catch (_) {}
+        throw new Error(msg);
+      }
+      return response.json();
+    }
+
     async function loadPaidInscriptions(client, statusFilter = "paid") {
       const contentDiv = document.getElementById("content");
 
       try {
-        let query = client
-          .from("inscripciones")
-          .select("id, full_name, email, buyer_email, order_session_id, ticket_index, ticket_count, event_slug, distance, amount_paid, payment_status, bib_number, shirt_size, birth_date, whatsapp, state, borough, email_sent, created_at")
-          .order("created_at", { ascending: false });
-
-        if (statusFilter !== "all") {
-          query = query.eq("payment_status", statusFilter);
+        const { data: { session } } = await client.auth.getSession();
+        const token = session?.access_token;
+        if (!token) {
+          throw new Error('Sesión no válida, vuelve a iniciar sesión.');
         }
 
-        const { data, error } = await query;
+        const rows = [];
+        for (let page = 1; page <= ADMIN_LIST_MAX_PAGES; page += 1) {
+          const payload = await fetchAdminInscriptionsPage(token, statusFilter, page);
+          if (Array.isArray(payload?.rows)) {
+            rows.push(...payload.rows);
+          }
+          if (!payload?.hasMore) break;
+        }
 
-        if (error) throw error;
-
-        cachedRows = Array.isArray(data) ? data : [];
+        cachedRows = rows;
 
         if (!cachedRows.length) {
           contentDiv.innerHTML = `<div class="no-data">No hay inscripciones pagadas todavía.</div>`;
@@ -948,7 +980,7 @@ src="https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1"
 
       } catch (err) {
         console.error(err);
-        contentDiv.innerHTML = `<div class="error">Error al cargar los datos: ${err.message}</div>`;
+        contentDiv.innerHTML = `<div class="error">Error al cargar los datos: ${escapeHtml(err.message)}</div>`;
       }
     }
 

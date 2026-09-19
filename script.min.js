@@ -41,41 +41,57 @@ function setupMenuToggle() {
     }
   });
 }
-// ====================== FUNCIÓN REUTILIZABLE PARA VERIFICAR PAGO ======================
-async function checkIfUserHasPaid() {
-  // Esperar a que Supabase esté disponible
-  if (typeof window.supabase === "undefined") {
-    await new Promise(resolve => setTimeout(resolve, 600)); // pequeña espera
+// ====================== MIS CARRERAS VÍA API (BATCH 1A) ======================
+// El navegador NUNCA consulta public.inscripciones directo.
+// Toda lectura va a GET /api/me/registrations con Bearer token; el servidor
+// deriva el email del JWT validado. Promesa cacheada por carga de página
+// para que checkIfUserHasPaid(), checklist y perfil reutilicen 1 request.
+let myRegistrationsPromise = null;
+async function fetchMyRegistrations() {
+  if (!myRegistrationsPromise) {
+    myRegistrationsPromise = (async () => {
+      if (typeof window.supabase === "undefined") return null;
+
+      const client = window.supabase.createClient(
+        "https://uycwzhlcnfijjyzkgkem.supabase.co",
+        "sb_publishable_IKwD3YtQwWzzEtE8QkVagA_OJGdV2e4"
+      );
+
+      const { data: { session } } = await client.auth.getSession();
+      const token = session?.access_token;
+      if (!token) return null;
+
+      const response = await fetch("/api/me/registrations", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      if (response.status === 401) return null;
+      if (!response.ok) {
+        throw new Error("No se pudieron cargar tus carreras.");
+      }
+
+      const payload = await response.json();
+      return Array.isArray(payload?.registrations) ? payload.registrations : [];
+    })();
+
+    myRegistrationsPromise.catch(() => {
+      myRegistrationsPromise = null;
+    });
   }
 
+  return myRegistrationsPromise;
+}
+// ====================== FUNCIÓN REUTILIZABLE PARA VERIFICAR PAGO ======================
+async function checkIfUserHasPaid() {
   try {
-    const client = window.supabase.createClient(
-      "https://uycwzhlcnfijjyzkgkem.supabase.co",
-      "sb_publishable_IKwD3YtQwWzzEtE8QkVagA_OJGdV2e4"
-    );
+    const registrations = await fetchMyRegistrations();
+    if (!registrations || registrations.length === 0) return false;
 
-    const { data: { session } } = await client.auth.getSession();
-    if (!session?.user?.email) return false;
+    const latest = [...registrations].sort(
+      (a, b) => new Date(b.created_at) - new Date(a.created_at)
+    )[0];
 
-    const email = session.user.email.trim().toLowerCase();
-
-    const { data, error } = await client
-      .from("inscripciones")
-      .select("payment_status")
-      .eq("email", email)
-      .order("created_at", { ascending: false })
-      .limit(1)
-      .maybeSingle();
-
-    if (error) {
-      console.warn("Error al consultar inscripciones:", error);
-      return false;
-    }
-
-    const isPaid = (data?.payment_status || "").toLowerCase().trim() === "paid";
-
-    return isPaid;
-
+    return String(latest?.payment_status || "").toLowerCase().trim() === "paid";
   } catch (err) {
     console.warn("Error en checkIfUserHasPaid():", err);
     return false;
@@ -1631,57 +1647,19 @@ function setupWhatsAppButton() {
 //   profileData = await readProfileFromTable();
 //   updateBibNumberInUI(profileData.bib_number);
 // }
-async function updateProfileBibNumberUI(client, user) {
-  if (!user?.email) return;
-
-  try {
-    const email = user.email.trim().toLowerCase();
-    let bibNumber = null;
-
-    const { data: profile } = await client
-      .from('user_profiles')
-      .select('bib_number')
-      .eq('email', email)
-      .maybeSingle();
-
-    bibNumber = profile?.bib_number || null;
-
-    if (!bibNumber) {
-      const { data: inscription } = await client
-        .from('inscripciones')
-        .select('bib_number')
-        .eq('email', email)
-        .eq('payment_status', 'paid')
-        .order('created_at', { ascending: false })
-        .limit(1)
-        .maybeSingle();
-
-      bibNumber = inscription?.bib_number || null;
-    }
-
-    const formattedBib = bibNumber
-      ? String(bibNumber).replace(/\D/g, '').padStart(3, '0')
-      : '---';
-
-    // Actualiza todos los elementos que muestren el número de corredor
-    document.querySelectorAll('#bibNumberDisplay, .bib-number, [data-bib-number]').forEach(el => {
-      if (el) el.textContent = formattedBib;
-    });
-
-  } catch (err) {
-    console.warn("No se pudo actualizar bib_number en UI:", err);
-  }
-}
+// NOTA Batch 1A: updateProfileBibNumberUI eliminado (2026-09-19).
+// Era código muerto: hacía SELECT directo a user_profiles/inscripciones
+// desde el navegador y ningún flujo lo invocaba (solo referencias en
+// comentarios). El header del perfil usa inscripciones vía
+// /api/me/registrations (ver loadUserInscriptions).
 async function setupProfilePage() {
   if (!document.querySelector("[data-profile-page]")) return;
 
   try {
-    // Nota multi-carrera: syncBibNumberToProfile y updateProfileBibNumberUI se mantienen como
-    // legacy para compatibilidad (user_profiles.bib_number) pero NO se invocan desde el perfil
-    // multi-carrera. Las tarjetas usan inscripciones.bib_number por evento (ver loadUserInscriptions).
-    // Se dejan de llamar aquí para evitar que sobrescriban el header "[data-bib-number]"
-    // con el dorsal de la inscripción más reciente cuando hay múltiples carreras.
-    // Si se necesita legacy fuera del perfil, llamar manualmente a syncBibNumberToProfile.
+    // Nota Batch 1A: los helpers legacy de dorsal (syncBibNumberToProfile,
+    // updateProfileBibNumberUI, generateNextBibNumber) se eliminaron por hacer
+    // SELECT directo a inscripciones desde el navegador sin llamadas vivas.
+    // Las tarjetas usan bib_number vía /api/me/registrations (ver loadUserInscriptions).
 
     // Sidebar navigation (mantener tu código original)
     const navItems = Array.from(document.querySelectorAll(".profile-nav-item[data-section]"));
@@ -3938,35 +3916,13 @@ function setupSupabase() {
           });
         }
 
-        // ====================== loadUserInscriptions (MULTI-CARRERA) ======================
+        // ====================== loadUserInscriptions (MULTI-CARRERA, vía API) ======================
+        // Batch 1A: sin SELECT directo a inscripciones. ownership = JWT server-side.
         async function loadUserInscriptions() {
-          const client = await ensureSupabaseClient();
-          if (!client) return;
-
-          const { data: { session } } = await client.auth.getSession();
-          const user = session?.user;
-          if (!user) return;
-
-          const email = user.email.trim().toLowerCase();
-
-          const { data, error } = await client
-            .from("inscripciones")
-            .select(`
-      id, 
-      created_at, 
-      stripe_session_id, 
-      email, 
-      full_name, 
-      event_slug, 
-      distance,
-      amount_paid, 
-      payment_status,
-      bib_number          
-    `)
-            .eq("email", email)
-            .order("created_at", { ascending: false });
-
-          if (error) {
+          let inscriptions = null;
+          try {
+            inscriptions = await fetchMyRegistrations();
+          } catch (error) {
             console.error("❌ Error al cargar inscripciones:", error);
             renderRaces([]);
             updateReminder([]);
@@ -3974,7 +3930,9 @@ function setupSupabase() {
             return;
           }
 
-          const inscriptions = Array.isArray(data) ? data : [];
+          if (!inscriptions) return;
+
+          if (!Array.isArray(inscriptions)) inscriptions = [];
 
           // DB es fuente de verdad: localStorage solo fallback, no debe contradecir DB
           // Solo pending real dispara reminder y mantiene localStorage pending.
@@ -4955,66 +4913,10 @@ function setupCheckoutForm() {
     }
   });
 }
-async function generateNextBibNumber(client) {
-  try {
-    // Contamos cuántas inscripciones ya tienen bib_number asignado
-    const { count, error } = await client
-      .from('inscripciones')
-      .select('*', { count: 'exact', head: true })
-      .not('bib_number', 'is', null);
-
-    if (error) {
-      console.error("Error al contar inscripciones:", error);
-      return "001";
-    }
-
-    const nextNumber = (count || 0) + 1;
-    const formattedBib = String(nextNumber).padStart(3, '0');
-    return formattedBib;
-
-  } catch (err) {
-    console.error("Error generando bib_number:", err);
-    return "000"; // fallback seguro
-  }
-}
-
-async function syncBibNumberToProfile(client, user) {
-  if (!user?.email) return;
-
-  try {
-    const email = user.email.trim().toLowerCase();
-
-    // Buscar la inscripción más reciente pagada
-    const { data: inscription } = await client
-      .from('inscripciones')
-      .select('bib_number')
-      .eq('email', email)
-      .eq('payment_status', 'paid')
-      .order('created_at', { ascending: false })
-      .limit(1)
-      .maybeSingle();
-
-    if (inscription?.bib_number) {
-      // Actualizar o insertar en user_profiles
-      const { error } = await client
-        .from('user_profiles')
-        .upsert({
-          user_id: user.id,
-          email: email,
-          bib_number: inscription.bib_number,
-          updated_at: new Date().toISOString()
-        }, { onConflict: 'user_id' });
-
-      if (!error) {
-      }
-    }
-  } catch (err) {
-    console.warn("Error sincronizando bib_number al perfil:", err);
-  }
-}
-// LEGACY: segunda definición duplicada eliminada. Se mantiene UNA sola syncBibNumberToProfile
-// para compatibilidad con flujos antiguos fuera del perfil multi-carrera. No se invoca
-// desde el perfil (ver setupProfilePage). No borrar columna user_profiles.bib_number.
+// NOTA Batch 1A: generateNextBibNumber y syncBibNumberToProfile eliminados (2026-09-19).
+// Era código muerto sin llamadas vivas: contaban dorsal / hacían SELECT+UPSERT
+// directo a inscripciones/user_profiles desde el navegador. El flujo real
+// asigna dorsales server-side (RPC finalize_paid_order / get_next_event_bib_number).
 
 setupPageLoadIndicator();
 setupAuthCallbackRedirect();
@@ -5053,9 +4955,7 @@ setupCheckoutForm();
 setupEventBuyButtons();
 // ============= CHECKLIST PAYMENT STATUS UPDATE =============
 function setupChecklistPaymentStatus() {
-  const SUPABASE_URL = "https://uycwzhlcnfijjyzkgkem.supabase.co";
-  const SUPABASE_KEY = "sb_publishable_IKwD3YtQwWzzEtE8QkVagA_OJGdV2e4";
-
+  // Batch 1A: estado vía /api/me/registrations (sin Supabase directo).
   const badge = document.getElementById("cl-payment-badge");
   const title = document.getElementById("cl-payment-title");
   const desc = document.getElementById("cl-payment-desc");
@@ -5078,46 +4978,17 @@ function setupChecklistPaymentStatus() {
     card.classList.add("cl-card-completed");
   };
 
-  const waitForSupabase = (maxAttempts = 24, intervalMs = 250) =>
-    new Promise((resolve) => {
-      let attempts = 0;
-      const timer = setInterval(() => {
-        attempts += 1;
-        if (typeof window.supabase !== "undefined") {
-          clearInterval(timer);
-          resolve(window.supabase);
-          return;
-        }
-        if (attempts >= maxAttempts) {
-          clearInterval(timer);
-          resolve(null);
-        }
-      }, intervalMs);
-    });
-
   const checkAndUpdatePaymentStatus = async () => {
+    // Batch 1A: verificado vía /api/me/registrations (sin SELECT directo).
     try {
-      const supabaseSdk = await waitForSupabase();
-      if (!supabaseSdk) return;
+      const registrations = await fetchMyRegistrations();
+      if (!registrations) return;
 
-      const client = supabaseSdk.createClient(SUPABASE_URL, SUPABASE_KEY);
-      const {
-        data: { session },
-      } = await client.auth.getSession();
+      const hasPaid = registrations.some(
+        (item) => String(item?.payment_status || "").toLowerCase().trim() === "paid"
+      );
 
-      const cleanEmail = session?.user?.email?.toLowerCase().trim();
-      if (!cleanEmail) return;
-
-      const { data: inscripcion } = await client
-        .from("inscripciones")
-        .select("id")
-        .eq("email", cleanEmail)
-        .eq("payment_status", "paid")
-        .order("created_at", { ascending: false })
-        .limit(1)
-        .maybeSingle();
-
-      if (inscripcion?.id) {
+      if (hasPaid) {
         applyCompletedState();
       }
     } catch (err) {

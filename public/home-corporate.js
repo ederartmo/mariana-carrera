@@ -22,6 +22,22 @@
     return stage.isOpen && (stage.amount || stage.price) ? currency.format(stage.amount || stage.price) : "Inscripciones cerradas";
   };
 
+  const clinicaPhotos = Array.from({ length: 14 }, (_, index) => String(index + 1).padStart(2, "0"));
+
+  const renderClinicaThumb = (num, position) => `
+    <a href="#clinica-foto-${num}" aria-label="Ver foto ${position} de la clínica deportiva en grande"><img src="assets/clinica-deportiva/gallery/clinica-deportiva-${num}.webp" alt="Clínica deportiva Kinetic Hub, foto ${position} de 14" loading="lazy" decoding="async" /></a>
+  `;
+
+  const renderClinicaLightbox = (num, position) => `
+    <div class="lightbox-overlay" id="clinica-foto-${num}" aria-modal="true" role="dialog" aria-label="Clínica deportiva, foto ${position} en grande">
+      <a class="lightbox-backdrop" href="#" aria-label="Cerrar"></a>
+      <div class="lightbox-content">
+        <a class="lightbox-close" href="#" aria-label="Cerrar">Cerrar</a>
+        <img src="assets/clinica-deportiva/gallery/clinica-deportiva-${num}.webp" alt="Clínica deportiva Kinetic Hub, foto ${position} de 14 en tamaño completo" loading="lazy" />
+      </div>
+    </div>
+  `;
+
   function renderFeaturedEventCard(event) {
     const stage = eventStage(event);
     const status = stage.isOpen ? "Inscripciones abiertas" : "Inscripciones cerradas";
@@ -152,14 +168,13 @@
             <h2 id="communityTitle">Momentos que se quedan contigo</h2>
             <span>Ruta, comunidad, kits y recuerdos de las experiencias que construimos juntos.</span>
           </header>
-          <div class="corporate-gallery">
-            <img class="corporate-gallery-main" src="assets/events/axolote-night-run/gallery/correr.jpg" alt="Comunidad corriendo en un evento Kinetic Hub" loading="lazy" />
-            <img src="assets/events/cascanueces-run/gallery/cascanueces_run_playera.png" alt="Playera conmemorativa Cascanueces Run" loading="lazy" />
-            <img src="assets/events/axolote-night-run/kit/nueva_medalla.jpg" alt="Medalla de evento Kinetic Hub" loading="lazy" />
-            <img src="assets/events/cascanueces-run/gallery/cascanueces_run_mochila.png" alt="Kit conmemorativo Cascanueces Run" loading="lazy" />
+          <p class="corporate-album-label">Clínica deportiva</p>
+          <div class="clinica-gallery">
+            ${clinicaPhotos.map((num, index) => renderClinicaThumb(num, index + 1)).join("")}
           </div>
         </div>
       </section>
+      ${clinicaPhotos.map((num, index) => renderClinicaLightbox(num, index + 1)).join("")}
 
       <section class="corporate-section corporate-content" aria-labelledby="contentTitle">
         <div class="container">
