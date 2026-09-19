@@ -6,6 +6,11 @@ const test = require('node:test');
 process.env.STRIPE_SECRET_KEY = process.env.STRIPE_SECRET_KEY || 'sk_test_mock';
 process.env.SUPABASE_URL = process.env.SUPABASE_URL || 'https://example.supabase.co';
 process.env.SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || 'mock-service-role-key';
+process.env.CHECKOUT_SUMMARY_SECRET = process.env.CHECKOUT_SUMMARY_SECRET || 'test-only-checkout-summary-secret-0123456789';
+
+const { COOKIE_NAME, createCheckoutSummaryClaim } = require('../lib/_checkout-summary-claim');
+
+const TEST_CLAIM_SECRET = 'test-only-checkout-summary-secret-0123456789';
 
 const projectRoot = path.join(__dirname, '..');
 
@@ -31,6 +36,11 @@ function createJsonRes() {
   return {
     statusCode: 200,
     body: null,
+    headers: {},
+    setHeader(name, value) {
+      this.headers[name] = value;
+      return this;
+    },
     status(code) {
       this.statusCode = code;
       return this;
@@ -78,6 +88,7 @@ function createQuery(rows) {
 }
 
 async function withCheckoutSummaryMocks(rows, run) {
+  const calls = { selected: false };
   const restoreStripe = mockModule('stripe', () => ({
     checkout: {
       sessions: {
@@ -94,7 +105,10 @@ async function withCheckoutSummaryMocks(rows, run) {
   const restoreSupabase = mockModule('@supabase/supabase-js', {
     createClient: () => ({
       from: () => ({
-        select: () => createQuery(rows),
+        select: () => {
+          calls.selected = true;
+          return createQuery(rows);
+        },
       }),
     }),
   });
@@ -102,7 +116,7 @@ async function withCheckoutSummaryMocks(rows, run) {
 
   try {
     const handler = require('../api/checkout-summary');
-    await run(handler);
+    await run(handler, calls);
   } finally {
     delete require.cache[require.resolve('../api/checkout-summary')];
     restoreSupabase();
@@ -110,11 +124,19 @@ async function withCheckoutSummaryMocks(rows, run) {
   }
 }
 
-async function invokeSummary(handler) {
+function claimCookie(sessionId, secret = TEST_CLAIM_SECRET) {
+  // nowSeconds fijo en el pasado relativo al TTL real (72h): el handler usa
+  // Date.now() real, así que el claim debe crearse con expiración futura real.
+  const { claim } = createCheckoutSummaryClaim(sessionId, { secret });
+  return `${COOKIE_NAME}=${claim}`;
+}
+
+async function invokeSummary(handler, { sessionId = 'cs_summary_123', cookie } = {}) {
   const res = createJsonRes();
   await handler({
     method: 'GET',
-    query: { session_id: 'cs_summary_123' },
+    headers: { cookie: cookie === undefined ? claimCookie(sessionId) : cookie },
+    query: { session_id: sessionId },
   }, res);
   return res;
 }
@@ -185,4 +207,101 @@ test('success page does not render false #000 bibs for pending payments', () => 
   assert.match(html, /const rawBibNumber = participant\.bibNumber == null \? '' : String\(participant\.bibNumber\)\.trim\(\)/);
   assert.match(html, /: 'Pendiente'/);
   assert.doesNotMatch(html, /String\(participant\.bibNumber \|\| ''\)\.padStart\(3, '0'\)/);
+});
+
+// ---------- Batch 3: claim requerido (casos 11-21) ----------
+
+test('B3-11/21: session_id solo (sin cookie) → 403 sin PII', async () => {
+  await withCheckoutSummaryMocks(createSummaryRows(), async (handler, calls) => {
+    const res = await invokeSummary(handler, { cookie: '' });
+
+    assert.equal(res.statusCode, 403);
+    assert.equal(res.body.error, 'No autorizado para consultar este resumen.');
+    assert.ok(!('email' in res.body));
+    assert.ok(!('participants' in res.body));
+    assert.ok(!('bib_number' in res.body));
+    assert.ok(!('amountPaid' in res.body));
+    assert.equal(calls.selected, false);
+  });
+});
+
+test('B3-12: cookie inválida → 403 sin PII y sin query', async () => {
+  await withCheckoutSummaryMocks(createSummaryRows(), async (handler, calls) => {
+    const res = await invokeSummary(handler, { cookie: `${COOKIE_NAME}=alterado.invalido.firma` });
+
+    assert.equal(res.statusCode, 403);
+    assert.ok(!('email' in res.body));
+    assert.equal(calls.selected, false);
+  });
+});
+
+test('B3-13: cookie de otra sesión → 403', async () => {
+  await withCheckoutSummaryMocks(createSummaryRows(), async (handler, calls) => {
+    const res = await invokeSummary(handler, {
+      sessionId: 'cs_summary_123',
+      cookie: claimCookie('cs_otra_sesion'),
+    });
+
+    assert.equal(res.statusCode, 403);
+    assert.equal(calls.selected, false);
+  });
+});
+
+test('B3-14: cookie expirada → 403', async () => {
+  const { createCheckoutSummaryClaim: create } = require('../lib/_checkout-summary-claim');
+  const pastSeconds = Math.floor(Date.now() / 1000) - (72 * 3600) - 10;
+  const { claim } = create('cs_summary_123', { secret: TEST_CLAIM_SECRET, nowSeconds: pastSeconds });
+
+  await withCheckoutSummaryMocks(createSummaryRows(), async (handler, calls) => {
+    const res = await invokeSummary(handler, { cookie: `${COOKIE_NAME}=${claim}` });
+
+    assert.equal(res.statusCode, 403);
+    assert.equal(calls.selected, false);
+  });
+});
+
+test('B3-17/18/19: cookie válida conserva contrato, multi-ticket y estados', async () => {
+  const rows = [
+    ...createSummaryRows({ id: 't1', full_name: 'Madre Test', bib_number: '011', ticket_index: 1, ticket_count: 2 }),
+    ...createSummaryRows({ id: 't2', full_name: 'Hijo Test', bib_number: '012', ticket_index: 2, ticket_count: 2 }),
+  ];
+  await withCheckoutSummaryMocks(rows, async (handler) => {
+    const res = await invokeSummary(handler);
+
+    assert.equal(res.statusCode, 200);
+    assert.equal(res.body.ticketCount, 2);
+    assert.equal(res.body.participants.length, 2);
+    assert.equal(res.body.participants[1].fullName, 'Hijo Test');
+    assert.equal(res.body.email, 'runner@example.com');
+  });
+
+  for (const paymentStatus of ['pending', 'paid', 'payment_failed']) {
+    await withCheckoutSummaryMocks(createSummaryRows({ payment_status: paymentStatus, bib_number: null }), async (handler) => {
+      const res = await invokeSummary(handler);
+
+      assert.equal(res.statusCode, 200);
+      assert.equal(res.body.payment_status, paymentStatus);
+    });
+  }
+});
+
+test('B3-20: respuesta lleva Cache-Control no-store (200 y 403)', async () => {
+  await withCheckoutSummaryMocks(createSummaryRows(), async (handler) => {
+    const ok = await invokeSummary(handler);
+    assert.equal(ok.headers['Cache-Control'], 'no-store');
+
+    const denied = await invokeSummary(handler, { cookie: '' });
+    assert.equal(denied.statusCode, 403);
+    assert.equal(denied.headers['Cache-Control'], 'no-store');
+  });
+});
+
+test('B3-succes.html: referrer prudente + estado 403 + limpieza de URL', () => {
+  const html = fs.readFileSync(path.join(projectRoot, 'succes.html'), 'utf8');
+
+  assert.match(html, /<meta name="referrer" content="no-referrer" \/>/);
+  assert.match(html, /showPrivateSummaryUnavailable/);
+  assert.match(html, /No pudimos mostrar el resumen privado de esta compra/);
+  assert.match(html, /window\.history\.replaceState/);
+  assert.doesNotMatch(html, /localStorage\.setItem\('kinetic_checkout_claim'|sessionStorage\.setItem\('kh_checkout/);
 });
