@@ -141,7 +141,7 @@ test('PR1: resend-confirmations rechaza POST sin token con 401', async () => {
   }
 });
 
-test('PR1: resend-confirmations rechaza POST con usuario no admin con 401', async () => {
+test('PR1: resend-confirmations rechaza POST con usuario no admin con 403', async () => {
   let emailCalls = 0;
   const restoreSupabase = mockModule('@supabase/supabase-js', {
     createClient: () => ({
@@ -162,7 +162,7 @@ test('PR1: resend-confirmations rechaza POST con usuario no admin con 401', asyn
     const res = createRes();
     await handler({ method: 'POST', headers: { authorization: 'Bearer intruso-token' } }, res);
 
-    assert.equal(res.statusCode, 401);
+    assert.equal(res.statusCode, 403);
     assert.match(res.body.error, /no es admin/i);
     assert.equal(emailCalls, 0);
   } finally {

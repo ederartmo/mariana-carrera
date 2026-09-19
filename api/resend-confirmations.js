@@ -1,41 +1,11 @@
 const { createClient } = require('@supabase/supabase-js');
 const { sendConfirmationEmail } = require('./stripe-webhook');
+const { getAdminUser } = require('../lib/_auth');
 
 const supabase = createClient(
   process.env.SUPABASE_URL,
   process.env.SUPABASE_SERVICE_ROLE_KEY
 );
-
-function getAdminEmails() {
-  const raw = process.env.ADMIN_EMAILS || 'mariana@kinetichub.com.mx,gato.jijen01@gmail.com';
-  return raw
-    .split(',')
-    .map((item) => item.trim().toLowerCase())
-    .filter(Boolean);
-}
-
-async function getAdminUserFromRequest(req) {
-  const authHeader = req.headers.authorization || '';
-  const token = authHeader.startsWith('Bearer ') ? authHeader.slice(7).trim() : '';
-
-  if (!token) {
-    return { error: 'No autorizado: falta token de sesión.' };
-  }
-
-  const { data, error } = await supabase.auth.getUser(token);
-  if (error || !data?.user?.email) {
-    return { error: 'No autorizado: sesión inválida.' };
-  }
-
-  const email = String(data.user.email).trim().toLowerCase();
-  const admins = getAdminEmails();
-
-  if (!admins.includes(email)) {
-    return { error: 'No autorizado: este usuario no es admin.' };
-  }
-
-  return { email };
-}
 
 function htmlPage(title, bodyContent) {
   return `<!DOCTYPE html>
@@ -213,10 +183,12 @@ module.exports = async function handler(req, res) {
   }
 
   try {
-    const auth = await getAdminUserFromRequest(req);
+    const auth = await getAdminUser(req);
     if (auth.error) {
-      return res.status(401).json({ error: auth.error });
+      return res.status(auth.status || 401).json({ error: auth.error });
     }
+
+    console.log(`admin_action=resend_bulk admin=${auth.email} result=started`);
 
     console.log(`📨 resend-confirmations llamado por admin ${auth.email} | method=${req.method}`);
 
