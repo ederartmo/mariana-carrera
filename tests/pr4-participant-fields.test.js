@@ -17,7 +17,7 @@ process.env.SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY ||
 process.env.ADMIN_EMAILS = 'admin@example.com';
 
 const projectRoot = path.join(__dirname, '..');
-const validation = require('../api/_participant-validation');
+const validation = require('../lib/_participant-validation');
 const catalog = require('../location-catalog');
 
 function mockModule(modulePath, exports) {
@@ -176,8 +176,8 @@ async function postCheckoutPR4(tickets) {
   const restoreSupabase = mockModule('@supabase/supabase-js', {
     createClient: () => ({ from: () => ({ upsert: async (payload) => { upserts.push(payload); return { data: null, error: null }; } }) }),
   });
-  const restorePromo = mockModule('../api/_stripe-promo', { resolvePromotionCode: async () => ({ cleanCode: '', preview: null }) });
-  const restoreMeta = mockModule('../api/_meta-capi', { trackMetaEvent: async () => ({ ok: true }) });
+  const restorePromo = mockModule('../lib/_stripe-promo', { resolvePromotionCode: async () => ({ cleanCode: '', preview: null }) });
+  const restoreMeta = mockModule('../lib/_meta-capi', { trackMetaEvent: async () => ({ ok: true }) });
   delete require.cache[require.resolve('../api/create-checkout-session')];
   const restoreLogs = silenceLogs();
   try {
@@ -296,7 +296,7 @@ async function withPR4Webhook({ event, rpcResults = [], resendResults = [] }, ru
   const restoreResend = mockModule('resend', {
     Resend: class { constructor() { this.emails = { send: async (p) => { state.emailSends.push(p); return state.resendResults.shift() || { data: { id: 'email_pr4' }, error: null }; } }; } },
   });
-  const restoreMeta = mockModule('../api/_meta-capi', { trackMetaEvent: async (p) => { state.metaCalls.push(p); return { ok: true }; } });
+  const restoreMeta = mockModule('../lib/_meta-capi', { trackMetaEvent: async (p) => { state.metaCalls.push(p); return { ok: true }; } });
   delete require.cache[require.resolve('../api/stripe-webhook')];
   const webhook = require('../api/stripe-webhook');
   const restoreLogs = silenceLogs();

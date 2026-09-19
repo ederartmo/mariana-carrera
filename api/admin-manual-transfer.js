@@ -7,8 +7,8 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY
 );
 
-const { SHIRT_SIZES: ALLOWED_SHIRT_SIZES, normalizeShirtSize, isValidShirtSize } = require('./_shirt-sizes');
-const { validateParticipant, MAX_TICKETS_PER_ORDER } = require('./_participant-validation');
+const { SHIRT_SIZES: ALLOWED_SHIRT_SIZES, normalizeShirtSize, isValidShirtSize } = require('../lib/_shirt-sizes');
+const { validateParticipant, MAX_TICKETS_PER_ORDER } = require('../lib/_participant-validation');
 const DEFAULT_EVENT_SLUG = 'axolote-night-run';
 const ALLOWED_EVENT_SLUGS = ['axolote-night-run', 'cascanueces-run'];
 const EVENT_DISTANCES = {

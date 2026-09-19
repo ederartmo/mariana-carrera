@@ -8,8 +8,8 @@ process.env.SUPABASE_URL = process.env.SUPABASE_URL || 'https://example.supabase
 process.env.SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || 'mock-service-role-key';
 process.env.ADMIN_EMAILS = 'admin@example.com';
 
-const HANDLER_PATH = path.join(__dirname, '..', 'api', 'admin-list-inscriptions.js');
-const AUTH_PATH = path.join(__dirname, '..', 'api', '_auth.js');
+const HANDLER_PATH = path.join(__dirname, '..', 'lib', 'admin-list-inscriptions.js');
+const AUTH_PATH = path.join(__dirname, '..', 'lib', '_auth.js');
 
 function mockModule(modulePath, exports) {
   const resolved = require.resolve(modulePath);

@@ -1,4 +1,9 @@
 {
   "buildCommand": "node build.js",
-  "outputDirectory": "public"
+  "outputDirectory": "public",
+  "rewrites": [
+    { "source": "/api/me/registrations", "destination": "/api/data?action=me-registrations" },
+    { "source": "/api/admin-list-inscriptions", "destination": "/api/data?action=admin-list-inscriptions" },
+    { "source": "/api/resend-emails-list", "destination": "/api/data?action=resend-emails-list" }
+  ]
 }

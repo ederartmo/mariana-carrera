@@ -16,7 +16,7 @@ process.env.SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY ||
 process.env.ADMIN_EMAILS = 'admin@example.com';
 
 const projectRoot = path.join(__dirname, '..');
-const { SHIRT_SIZES, normalizeShirtSize, isValidShirtSize } = require('../api/_shirt-sizes');
+const { SHIRT_SIZES, normalizeShirtSize, isValidShirtSize } = require('../lib/_shirt-sizes');
 
 const EXPECTED_SIZES = ['XS', 'S', 'M', 'L', 'XL', 'XXL', 'XXXL'];
 
@@ -133,7 +133,7 @@ test('PR3-12: script.js, script.min.js y admin-inscripciones.html usan la misma 
 test('PR3-12: backends usan el helper canónico y no conservan la lista vieja de 5', () => {
   for (const file of ['api/create-checkout-session.js', 'api/stripe-webhook.js', 'api/admin-manual-transfer.js']) {
     const source = fs.readFileSync(path.join(projectRoot, file), 'utf8');
-    assert.ok(source.includes("require('./_shirt-sizes')"), `${file} debe requerir el helper`);
+    assert.ok(source.includes("require('../lib/_shirt-sizes')"), `${file} debe requerir el helper`);
     assert.ok(!source.includes("['XS', 'S', 'M', 'L', 'XL']"), `${file} no debe conservar la lista de 5`);
   }
 });
@@ -188,10 +188,10 @@ async function postCheckout(shirtSize) {
         }),
       }),
     });
-    const restorePromo = mockModule('../api/_stripe-promo', {
+    const restorePromo = mockModule('../lib/_stripe-promo', {
       resolvePromotionCode: async () => ({ cleanCode: '', preview: null }),
     });
-    const restoreMeta = mockModule('../api/_meta-capi', {
+    const restoreMeta = mockModule('../lib/_meta-capi', {
       trackMetaEvent: async () => ({ ok: true }),
     });
     delete require.cache[require.resolve('../api/create-checkout-session')];
@@ -327,7 +327,7 @@ async function invokeWebhookWithShirt(shirtSize) {
       }
     },
   });
-  const restoreMeta = mockModule('../api/_meta-capi', {
+  const restoreMeta = mockModule('../lib/_meta-capi', {
     trackMetaEvent: async () => ({ ok: true }),
   });
   delete require.cache[require.resolve('../api/stripe-webhook')];

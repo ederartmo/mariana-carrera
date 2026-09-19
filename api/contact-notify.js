@@ -1,6 +1,6 @@
 const { Resend } = require('resend');
 const { createClient } = require('@supabase/supabase-js');
-const { trackMetaEvent } = require('./_meta-capi');
+const { trackMetaEvent } = require('../lib/_meta-capi');
 
 const resendApiKey = process.env.RESEND_API_KEY;
 const adminEmail = process.env.CONTACT_ADMIN_EMAIL || 'hola@kinetichub.com.mx';

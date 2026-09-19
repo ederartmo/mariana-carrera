@@ -190,7 +190,7 @@ async function withWebhookMocks({ event, rpcResults = [], resendResults = [], up
       }
     },
   });
-  const restoreMeta = mockModule('../api/_meta-capi', {
+  const restoreMeta = mockModule('../lib/_meta-capi', {
     trackMetaEvent: async (payload) => {
       state.metaCalls.push(payload);
       return { ok: true };

@@ -2,20 +2,20 @@
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 const { Resend } = require('resend');
 const { createClient } = require('@supabase/supabase-js');
-const { trackMetaEvent } = require('./_meta-capi');
+const { trackMetaEvent } = require('../lib/_meta-capi');
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 const supabase = createClient(
   process.env.SUPABASE_URL,
   process.env.SUPABASE_SERVICE_ROLE_KEY
 );
-const { SHIRT_SIZES: ALLOWED_SHIRT_SIZES, normalizeShirtSize, isValidShirtSize } = require('./_shirt-sizes');
+const { SHIRT_SIZES: ALLOWED_SHIRT_SIZES, normalizeShirtSize, isValidShirtSize } = require('../lib/_shirt-sizes');
 const {
   normalizeBirthDate,
   normalizeWhatsapp,
   normalizeState,
   normalizeBoroughForState,
-} = require('./_participant-validation');
+} = require('../lib/_participant-validation');
 const EVENT_CATALOG = {
   'axolote-night-run': {
     slug: 'axolote-night-run',

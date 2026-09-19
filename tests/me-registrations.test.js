@@ -7,8 +7,8 @@ const test = require('node:test');
 process.env.SUPABASE_URL = process.env.SUPABASE_URL || 'https://example.supabase.co';
 process.env.SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || 'mock-service-role-key';
 
-const HANDLER_PATH = path.join(__dirname, '..', 'api', 'me', 'registrations.js');
-const AUTH_PATH = path.join(__dirname, '..', 'api', '_auth.js');
+const HANDLER_PATH = path.join(__dirname, '..', 'lib', 'me-registrations.js');
+const AUTH_PATH = path.join(__dirname, '..', 'lib', '_auth.js');
 
 function mockModule(modulePath, exports) {
   const resolved = require.resolve(modulePath);

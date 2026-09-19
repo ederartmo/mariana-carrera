@@ -8,7 +8,7 @@
 // Auth: mismo patrón Bearer + allowlist que los demás endpoints admin.
 
 const { createClient } = require('@supabase/supabase-js');
-const { validateParticipant } = require('./_participant-validation');
+const { validateParticipant } = require('../lib/_participant-validation');
 
 const supabase = createClient(
   process.env.SUPABASE_URL,

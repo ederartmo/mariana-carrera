@@ -1,6 +1,6 @@
 const { getAxoloteStageByDate } = require('../axolote-stage-config');
 const { getCascanuecesStageByDate } = require('../cascanueces-stage-config');
-const { resolvePromotionCode } = require('./_stripe-promo');
+const { resolvePromotionCode } = require('../lib/_stripe-promo');
 
 const MAX_TICKETS_PER_ORDER = 5;
 

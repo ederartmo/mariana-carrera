@@ -133,13 +133,13 @@ async function createCheckoutSessionPayload(body, {
         }),
       }),
     });
-    const restorePromo = mockModule('../api/_stripe-promo', {
+    const restorePromo = mockModule('../lib/_stripe-promo', {
       resolvePromotionCode: async (payload) => {
         promoCalls.push(payload);
         return promoResult;
       },
     });
-    const restoreMeta = mockModule('../api/_meta-capi', {
+    const restoreMeta = mockModule('../lib/_meta-capi', {
       trackMetaEvent: async () => ({ ok: true }),
     });
     delete require.cache[require.resolve('../api/create-checkout-session')];
@@ -301,10 +301,10 @@ test('create-checkout-session calculates Cascanueces $450 on September 1 Mexico 
         }),
       }),
     });
-    const restorePromo = mockModule('../api/_stripe-promo', {
+    const restorePromo = mockModule('../lib/_stripe-promo', {
       resolvePromotionCode: async () => ({ cleanCode: '', preview: null }),
     });
-    const restoreMeta = mockModule('../api/_meta-capi', {
+    const restoreMeta = mockModule('../lib/_meta-capi', {
       trackMetaEvent: async () => ({ ok: true }),
     });
     delete require.cache[require.resolve('../api/create-checkout-session')];
@@ -390,7 +390,7 @@ test('create-checkout-session with Cascanueces coupon preserves event, distance,
 test('validate-promo-code uses Cascanueces current price when eventSlug is cascanueces-run', async () => {
   await withMockedNow('2026-09-01T00:00:00-06:00', async () => {
     const promoCalls = [];
-    const restorePromo = mockModule('../api/_stripe-promo', {
+    const restorePromo = mockModule('../lib/_stripe-promo', {
       resolvePromotionCode: async (payload) => {
         promoCalls.push(payload);
         return {

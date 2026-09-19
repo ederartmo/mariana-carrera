@@ -2,8 +2,8 @@
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 const { createClient } = require('@supabase/supabase-js');
 const crypto = require('crypto');
-const { trackMetaEvent } = require('./_meta-capi');
-const { resolvePromotionCode } = require('./_stripe-promo');
+const { trackMetaEvent } = require('../lib/_meta-capi');
+const { resolvePromotionCode } = require('../lib/_stripe-promo');
 const { getAxoloteStageByDate } = require('../axolote-stage-config');
 const { getCascanuecesStageByDate } = require('../cascanueces-stage-config');
 
@@ -12,14 +12,14 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY
 );
 
-const { SHIRT_SIZES: ALLOWED_SHIRT_SIZES, normalizeShirtSize, isValidShirtSize } = require('./_shirt-sizes');
+const { SHIRT_SIZES: ALLOWED_SHIRT_SIZES, normalizeShirtSize, isValidShirtSize } = require('../lib/_shirt-sizes');
 const {
   MAX_TICKETS_PER_ORDER,
   MAX_STRIPE_METADATA_KEYS,
   normalizeTicketsPR4,
   buildParticipantsMetadataPR4,
   assertMetadataBudget,
-} = require('./_participant-validation');
+} = require('../lib/_participant-validation');
 
 function getCookieValue(req, name) {
   const raw = req.headers.cookie || '';
