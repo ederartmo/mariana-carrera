@@ -1,5 +1,6 @@
 const { Resend } = require('resend');
 const { createClient } = require('@supabase/supabase-js');
+const { randomUUID } = require('crypto');
 const { trackMetaEvent } = require('../lib/_meta-capi');
 
 const resendApiKey = process.env.RESEND_API_KEY;
@@ -7,6 +8,92 @@ const adminEmail = process.env.CONTACT_ADMIN_EMAIL || 'hola@kinetichub.com.mx';
 const fromEmail = process.env.CONTACT_FROM_EMAIL || 'Kinetic Hub <no-reply@kinetichub.com.mx>';
 const supabaseUrl = process.env.SUPABASE_URL;
 const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+// Batch 6 (rev): contact-private es PRIVADO sin policies anon/auth.
+// El browser NUNCA sube directo: pide upload firmado al backend
+// (action=create_attachment_upload) y luego usa uploadToSignedUrl.
+// El submit final exige UUIDv4 real generado server-side.
+const CONTACT_PRIVATE_BUCKET = 'contact-private';
+const CONTACT_SIGNED_URL_TTL_SECONDS = 3600;
+const CONTACT_UPLOAD_MAX_BYTES = 5 * 1024 * 1024;
+const CONTACT_MIME_EXTENSIONS = {
+  'image/jpeg': 'jpg',
+  'image/png': 'png',
+  'image/webp': 'webp',
+  'application/pdf': 'pdf',
+};
+const ATTACHMENT_PATH_RE = /^contact\/[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}\.(jpg|png|webp|pdf)$/;
+const MAX_ATTACHMENT_PATH_LENGTH = 200;
+
+function isValidAttachmentPath(value) {
+  return typeof value === 'string'
+    && value.length > 0
+    && value.length <= MAX_ATTACHMENT_PATH_LENGTH
+    && ATTACHMENT_PATH_RE.test(value);
+}
+
+function isValidUploadMime(value) {
+  const clean = String(value || '').trim().toLowerCase();
+  return Object.prototype.hasOwnProperty.call(CONTACT_MIME_EXTENSIONS, clean)
+    ? clean
+    : null;
+}
+
+// Modo upload intent: valida MIME+size, genera path server-side y devuelve
+// { path, token } para uploadToSignedUrl. Nunca acepta path del browser.
+async function handleUploadIntent(req, res, supabase) {
+  const { mime_type, size } = req.body || {};
+  const cleanMime = isValidUploadMime(mime_type);
+
+  if (!cleanMime) {
+    return res.status(400).json({ error: 'Tipo de archivo no permitido' });
+  }
+
+  const byteSize = Number(size);
+  if (!Number.isFinite(byteSize) || byteSize <= 0 || byteSize > CONTACT_UPLOAD_MAX_BYTES) {
+    return res.status(400).json({ error: 'Tamaño de archivo inválido' });
+  }
+
+  if (!supabase) {
+    return res.status(500).json({ error: 'Almacenamiento no disponible' });
+  }
+
+  let uploadId;
+  try {
+    uploadId = randomUUID();
+  } catch (error) {
+    console.error('Error generando UUID de adjunto:', error?.message || error);
+    return res.status(500).json({ error: 'No se pudo preparar la subida' });
+  }
+
+  const objectPath = `contact/${uploadId}.${CONTACT_MIME_EXTENSIONS[cleanMime]}`;
+
+  try {
+    const { data, error } = await supabase.storage
+      .from(CONTACT_PRIVATE_BUCKET)
+      .createSignedUploadUrl(objectPath, { upsert: false });
+
+    if (error || !data?.signedUrl) {
+      throw new Error(error?.message || 'sin signedUrl');
+    }
+
+    let token = null;
+    try {
+      token = new URL(data.signedUrl).searchParams.get('token');
+    } catch (parseError) {
+      token = null;
+    }
+
+    if (!token) {
+      throw new Error('token de subida ausente');
+    }
+
+    return res.status(200).json({ path: objectPath, token });
+  } catch (error) {
+    console.error('Error creando upload firmado de contacto:', error?.message || error);
+    return res.status(500).json({ error: 'No se pudo preparar la subida' });
+  }
+}
 
 function sanitize(value) {
   if (value == null) return '';
@@ -50,15 +137,22 @@ module.exports = async function handler(req, res) {
     return res.status(405).json({ message: 'Metodo no permitido' });
   }
 
+  const supabase =
+    supabaseUrl && supabaseServiceRoleKey
+      ? createClient(supabaseUrl, supabaseServiceRoleKey)
+      : null;
+
+  // Modo firmado: NO requiere Resend; solo prepara la subida privada.
+  if (req.body && req.body.action === 'create_attachment_upload') {
+    return handleUploadIntent(req, res, supabase);
+  }
+
+  // Submission normal: aquí sí se exige Resend.
   if (!resendApiKey) {
     return res.status(500).json({ error: 'Falta RESEND_API_KEY en variables de entorno' });
   }
 
   const resend = new Resend(resendApiKey);
-  const supabase =
-    supabaseUrl && supabaseServiceRoleKey
-      ? createClient(supabaseUrl, supabaseServiceRoleKey)
-      : null;
 
   try {
     const {
@@ -69,8 +163,10 @@ module.exports = async function handler(req, res) {
       reason,
       message,
       phone,
-      attachment_url,
+      attachment_path,
     } = req.body || {};
+    // attachment_url del browser se IGNORA por diseño (nunca confiar en URLs
+    // enviadas por el cliente para adjuntos).
 
     const cleanEmail = sanitize(email).toLowerCase();
     const cleanName = sanitize(full_name);
@@ -79,7 +175,7 @@ module.exports = async function handler(req, res) {
     const cleanReason = sanitize(reason) || 'Sin categoria';
     const cleanMessage = sanitize(message);
     const cleanPhone = sanitize(phone) || 'No proporcionado';
-    const cleanAttachment = sanitize(attachment_url);
+    const cleanAttachmentPath = sanitize(attachment_path);
 
     const safeName = escapeHtml(cleanName);
     const safeEmail = escapeHtml(cleanEmail);
@@ -88,7 +184,6 @@ module.exports = async function handler(req, res) {
     const safeReason = escapeHtml(cleanReason);
     const safePhone = escapeHtml(cleanPhone);
     const safeMessage = formatMultiline(cleanMessage);
-    const safeAttachment = escapeHtml(cleanAttachment);
 
     if (!cleanEmail || !cleanEmail.includes('@')) {
       return res.status(400).json({ error: 'Email invalido' });
@@ -98,7 +193,35 @@ module.exports = async function handler(req, res) {
       return res.status(400).json({ error: 'Faltan campos obligatorios' });
     }
 
+    if (cleanAttachmentPath && !isValidAttachmentPath(cleanAttachmentPath)) {
+      return res.status(400).json({ error: 'Adjunto invalido' });
+    }
+
+    const hasAttachment = isValidAttachmentPath(cleanAttachmentPath);
+
+    // Firmar URL corta SOLO para el correo admin. Si falla, el contacto
+    // sigue procesándose (el email dirá "Adjunto no disponible").
+    let attachmentSignedUrl = null;
+
+    if (hasAttachment && supabase) {
+      try {
+        const { data, error: signError } = await supabase.storage
+          .from(CONTACT_PRIVATE_BUCKET)
+          .createSignedUrl(cleanAttachmentPath, CONTACT_SIGNED_URL_TTL_SECONDS);
+
+        if (signError || !data?.signedUrl) {
+          throw new Error(signError?.message || 'sin signedUrl');
+        }
+        attachmentSignedUrl = data.signedUrl;
+      } catch (signError) {
+        console.error('Error firmando adjunto de contacto:', signError?.message || signError);
+      }
+    }
+
     if (supabase) {
+      // attachment_path es UUIDv4 server-side (columna parte del rollout).
+      // attachment_url legacy queda NULL en filas nuevas; las 13 históricas
+      // no se tocan. Sin fallback: si el insert falla, 500 fail closed.
       const { error: insertError } = await supabase.from('contact_messages').insert({
         event_slug: cleanEvent,
         reason: cleanReason,
@@ -107,7 +230,8 @@ module.exports = async function handler(req, res) {
         phone: cleanPhone,
         subject: cleanSubject,
         message: cleanMessage,
-        attachment_url: cleanAttachment || null,
+        attachment_url: null,
+        attachment_path: hasAttachment ? cleanAttachmentPath : null,
       });
 
       if (insertError) {
@@ -152,10 +276,12 @@ module.exports = async function handler(req, res) {
                     </table>
                   </td>
                 </tr>
-                ${cleanAttachment ? `
+                ${hasAttachment ? `
                 <tr>
                   <td style="padding:8px 24px 18px;font-size:14px;line-height:22px;color:#0f172a;">
-                    <strong>Archivo:</strong> <a href="${safeAttachment}" style="color:#1d4ed8;text-decoration:none;">Ver adjunto</a>
+                    ${attachmentSignedUrl
+                      ? `<strong>Archivo:</strong> <a href="${escapeHtml(attachmentSignedUrl)}" style="color:#1d4ed8;text-decoration:none;">Ver adjunto</a>`
+                      : `<strong>Archivo:</strong> Adjunto no disponible`}
                   </td>
                 </tr>` : ''}
                 <tr>
