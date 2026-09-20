@@ -68,7 +68,8 @@ test('B8-csp: directivas base estrictas', () => {
   assert.ok(policy.includes("base-uri 'self'"));
   assert.ok(policy.includes("frame-ancestors 'none'"));
   assert.ok(policy.includes("form-action 'self'"));
-  assert.ok(policy.includes('upgrade-insecure-requests'));
+  // upgrade-insecure-requests se valida en B8-csp: sin ruido report-only
+  // (se ignora en modo report-only; vuelve con enforced).
 });
 
 test('B8-csp: sin comodines ni eval', () => {
