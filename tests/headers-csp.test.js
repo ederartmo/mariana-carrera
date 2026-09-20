@@ -90,6 +90,19 @@ test('B8-csp: orígenes auditados presentes', () => {
   assert.ok(policy.includes('https://images.unsplash.com'), 'imágenes');
 });
 
+test('B8-csp: sin ruido report-only ni tooling de Preview', () => {
+  const policy = reportOnlyPolicy();
+  assert.ok(!policy.includes('upgrade-insecure-requests'), 'deferido hasta enforced');
+  assert.ok(!policy.includes('vercel.live'), 'Preview tooling nunca allowlisteado');
+  // Orígenes requeridos intactos.
+  assert.ok(policy.includes('https://cdn.jsdelivr.net'));
+  assert.ok(policy.includes('https://unpkg.com'));
+  assert.ok(policy.includes('https://connect.facebook.net'));
+  assert.ok(policy.includes('https://fonts.googleapis.com'));
+  assert.ok(policy.includes('https://images.unsplash.com'));
+  assert.ok(policy.includes('https://iframe.videodelivery.net'));
+});
+
 test('B8-csp: audit doc existe con blockers', () => {
   const doc = fs.readFileSync(path.join(projectRoot, 'desc', 'batch8-csp-audit.md'), 'utf8');
   assert.ok(doc.includes('iframe.videodelivery.net'), 'documenta hallazgo videodelivery');

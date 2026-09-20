@@ -53,3 +53,12 @@ d) Solo entonces cambiar a `Content-Security-Policy` enforced, página por pági
 ## 7. Notas API
 
 Los headers globales de Vercel también se envían en `/api/*`. La CSP en respuestas JSON/fetch no tiene efecto de bloqueo en navegadores (solo aplica a documentos/workers), así que el webhook Stripe y las APIs JSON no se ven afectados. No se tocó lógica de APIs.
+
+## 8. Ruido report-only observado en Preview (NO allowlistear)
+
+Validación real en Preview reportó:
+
+1. Toolbar de Vercel Preview (`https://vercel.live/_next-live/feedback/feedback.js`) viola `script-src`, y el iframe de Preview (`https://vercel.live/`) viola `frame-src`. Son **solo tooling de Preview**: NO deben añadirse a la CSP de producción ni ensanchar `script-src`/`frame-src`.
+2. `ERR_BLOCKED_BY_CLIENT` del Pixel es comportamiento de extensiones/ad-blockers, no un problema CSP.
+3. `upgrade-insecure-requests` se retiró de la policy report-only porque el navegador reporta que se ignora en ese modo; volverá cuando la CSP sea enforced.
+4. Deudas runtime separadas (no CSP): `share-modal.js` (`addEventListener` sobre null) y warning de múltiples `GoTrueClient`.
