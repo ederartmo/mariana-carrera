@@ -295,3 +295,44 @@ test('B6-sign-fail: fallo al firmar no pierde el contacto', async () => {
   assert.ok(adminHtml(state).includes('Adjunto no disponible'));
   assert.ok(!adminHtml(state).includes('signed.test'));
 });
+
+test('B6-labels: Cascanueces muestra etiqueta legible en ambos correos', async () => {
+  const state = baseState();
+  const res = await runContact(state, baseBody({
+    full_name: 'María López',
+    event_slug: 'cascanueces-run',
+    reason: 'pago',
+    subject: 'Duda de pago',
+  }));
+
+  assert.equal(res.statusCode, 200);
+  assert.ok(adminHtml(state).includes('Cascanueces Run 2026'));
+  assert.ok(userHtml(state).includes('Cascanueces Run 2026'));
+  assert.ok(adminHtml(state).includes('Aclaración de pago'));
+  assert.ok(userHtml(state).includes('Aclaración de pago'));
+  assert.ok(adminHtml(state).includes('María López'));
+  assert.ok(adminHtml(state).includes('user@example.com'));
+  assert.ok(adminHtml(state).includes('5512345678'));
+  assert.ok(userHtml(state).includes('María López'));
+});
+
+test('B6-labels: DB conserva valores canónicos y subject original', async () => {
+  const state = baseState();
+  await runContact(state, baseBody({ event_slug: 'cascanueces-run', reason: 'facturacion', subject: 'Mi factura' }));
+
+  assert.equal(state.inserts[0].row.event_slug, 'cascanueces-run');
+  assert.equal(state.inserts[0].row.reason, 'facturacion');
+  assert.ok(adminHtml(state).includes('Facturación'));
+  const subjects = state.emailSends.map((e) => e.subject);
+  assert.ok(subjects.some((s) => s.includes('Mi factura')));
+});
+
+test('B6-labels: valor desconocido usa fallback sanitizado', async () => {
+  const state = baseState();
+  await runContact(state, baseBody({ event_slug: 'carrera-futura', reason: 'otro-tema' }));
+
+  assert.equal(state.inserts[0].row.event_slug, 'carrera-futura');
+  assert.ok(adminHtml(state).includes('carrera-futura'));
+  assert.ok(adminHtml(state).includes('otro-tema'));
+});
+

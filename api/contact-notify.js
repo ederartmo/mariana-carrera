@@ -114,6 +114,29 @@ function formatMultiline(value) {
   return escapeHtml(value).replace(/\r?\n/g, '<br>');
 }
 
+// Etiquetas legibles SOLO para render de emails. DB/CAPI conservan los
+// valores canónicos. Fallback seguro: valor original sanitizado.
+const EVENT_LABELS = {
+  'axolote-night-run': 'Axolote Night Run',
+  'cascanueces-run': 'Cascanueces Run 2026',
+};
+
+const REASON_LABELS = {
+  'inscripcion': 'Duda de inscripción',
+  'pago': 'Aclaración de pago',
+  'resultados': 'Soporte de resultados',
+  'facturacion': 'Facturación',
+  'otro': 'Otro',
+};
+
+function labelFor(map, value) {
+  const clean = String(value || '').trim();
+  if (Object.prototype.hasOwnProperty.call(map, clean)) {
+    return map[clean];
+  }
+  return clean;
+}
+
 function splitName(fullName) {
   const value = sanitize(fullName);
   if (!value) return { firstName: '', lastName: '' };
@@ -190,6 +213,8 @@ module.exports = async function handler(req, res) {
     const safeSubject = escapeHtml(cleanSubject);
     const safeEvent = escapeHtml(cleanEvent);
     const safeReason = escapeHtml(cleanReason);
+    const safeEventLabel = escapeHtml(labelFor(EVENT_LABELS, cleanEvent));
+    const safeReasonLabel = escapeHtml(labelFor(REASON_LABELS, cleanReason));
     const safePhone = escapeHtml(cleanPhone);
     const safeMessage = formatMultiline(cleanMessage);
 
@@ -286,8 +311,8 @@ module.exports = async function handler(req, res) {
                       <tr><td width="130" style="padding:6px 0;color:#475569;"><strong>Nombre</strong></td><td style="padding:6px 0;color:#0f172a;">${safeName}</td></tr>
                       <tr><td width="130" style="padding:6px 0;color:#475569;"><strong>Email</strong></td><td style="padding:6px 0;color:#0f172a;"><a href="mailto:${safeEmail}" style="color:#1d4ed8;text-decoration:none;">${safeEmail}</a></td></tr>
                       <tr><td width="130" style="padding:6px 0;color:#475569;"><strong>Telefono</strong></td><td style="padding:6px 0;color:#0f172a;">${safePhone}</td></tr>
-                      <tr><td width="130" style="padding:6px 0;color:#475569;"><strong>Evento</strong></td><td style="padding:6px 0;color:#0f172a;">${safeEvent}</td></tr>
-                      <tr><td width="130" style="padding:6px 0;color:#475569;"><strong>Motivo</strong></td><td style="padding:6px 0;color:#0f172a;">${safeReason}</td></tr>
+                      <tr><td width="130" style="padding:6px 0;color:#475569;"><strong>Evento</strong></td><td style="padding:6px 0;color:#0f172a;">${safeEventLabel}</td></tr>
+                      <tr><td width="130" style="padding:6px 0;color:#475569;"><strong>Motivo</strong></td><td style="padding:6px 0;color:#0f172a;">${safeReasonLabel}</td></tr>
                     </table>
                   </td>
                 </tr>
@@ -345,7 +370,7 @@ module.exports = async function handler(req, res) {
                 <tr>
                   <td style="padding:10px 24px 18px;">
                     <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" bgcolor="#f8fafc" style="border:1px solid #dbe4f0;">
-                      <tr><td style="padding:12px 14px;font-size:14px;line-height:22px;color:#0f172a;"><strong>Asunto:</strong> ${safeSubject}<br><strong>Evento:</strong> ${safeEvent}<br><strong>Motivo:</strong> ${safeReason}</td></tr>
+                      <tr><td style="padding:12px 14px;font-size:14px;line-height:22px;color:#0f172a;"><strong>Asunto:</strong> ${safeSubject}<br><strong>Evento:</strong> ${safeEventLabel}<br><strong>Motivo:</strong> ${safeReasonLabel}</td></tr>
                     </table>
                   </td>
                 </tr>
