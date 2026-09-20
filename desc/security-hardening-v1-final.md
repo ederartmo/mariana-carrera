@@ -6,10 +6,32 @@ Entre Batch 1 y Batch 9 se cerró el acceso directo del navegador a datos
 sensibles, se endurecieron pagos/refunds, admin, perfiles, Storage, rate
 limiting y headers. Estado: 323 tests verdes, 12 Serverless Functions,
 cero secretos reales en árbol e historial, Secret Scanning + Push Protection
-activos en GitHub. Pendiente antes del cierre: aplicar SQL ya preparado
-(Batches 5/6/7) y verificar con `desc/sql-final-security-verification.sql`,
-más activar Dependabot updates y protección de `main` (pasos manuales abajo).
+activos en GitHub. Solo falta la re-verificación final de solo-lectura
+(`desc/sql-final-security-verification.sql`); Dependabot y protección de
+`main` quedan como recomendaciones P2 (ver GitHub security controls).
 La CSP es intencionalmente REPORT-ONLY: existe telemetría, no enforcement.
+
+## Production migrations aplicadas y verificadas
+
+Las migraciones SQL de Batches 5, 6 y 7 YA fueron aplicadas y verificadas
+en producción (NO están pendientes):
+
+- **Batch 5**: `user_profiles` RLS true; anon sin acceso; authenticated con
+  SELECT/INSERT/UPDATE en las 21 columnas; `bib_number` denegado en las tres;
+  3 policies own-user intactas.
+- **Batch 6**: `contact-attachments` (public, 4 MB, jpg/png/webp);
+  `contact-private` (privado, 5 MB, jpg/png/webp/pdf); solo las 3 policies
+  own-profile exactas en `storage.objects`; smoke test de signed upload OK;
+  objeto legacy interno migrado a `contact-private` con `attachment_path`
+  asignado a su fila (conservando `attachment_url` histórico durante la
+  verificación); objeto público viejo eliminado (solo queda
+  `contact/.emptyFolderPlaceholder`); la referencia externa legacy intacta.
+- **Batch 7**: tabla/RLS/índice `api_rate_limits` aplicados (incluido fix del
+  alias); EXECUTE solo service_role; limiter real validado (10×200 luego
+  429 + Retry-After) en Preview y en endpoint de producción tras deploy.
+
+Pendiente SOLO la re-verificación final de solo-lectura
+(`desc/sql-final-security-verification.sql`).
 
 ## Closed findings
 
@@ -46,7 +68,7 @@ La CSP es intencionalmente REPORT-ONLY: existe telemetría, no enforcement.
 `npm ci` falla (lockfile desincronizado preexistente: `@emnapi/*` — documentado,
 no regenerado a ciegas). `npm audit`: 37 → **33** tras minors seguros
 (`resend` 6.12.2→6.28.1, `stripe` 22.0.2→22.6.2, `supabase-js` 2.105.1→2.116.0;
-tests 315/315). Cadena `resend→svix→uuid`, `ws`: RESUELTAS. Restan 25 HIGH +
+tests 323/323). Cadena `resend→svix→uuid`, `ws`: RESUELTAS. Restan 25 HIGH +
 1 CRITICAL (`tar`) + 6 MODERATE, casi todo transitivo del CLI `vercel`
 (herramienta, **nunca importado por la app**) cuyo fix exige major
 `vercel@50.41.0`: NO se migra automáticamente (backlog v2). `vercel` queda
@@ -54,6 +76,15 @@ donde está: moverlo a devDependencies no aporta beneficio probado al deploy.
 Outdated directos: supabase 2.116.0, resend 6.28.1, stripe 22.6.2 (aplicados),
 vercel 54.21.1/59.23.2 (no aplicados: major). Deprecations transitivas: no
 son findings de seguridad por sí solas.
+
+**Actualización cierre**: `npm ci` reparado como efecto del rewrite del
+lockfile durante los minors (drift `@emnapi/*` resuelto sin `--force` ni
+edición manual): `npm ci` **PASS**. `tar` CRITICAL verificado vía
+`npm ls tar`: existe SOLO bajo `vercel` (`@vercel/backends→@vercel/nft→
+@mapbox/node-pre-gyp→tar` y `@vercel/fun→tar`); el runtime KineticHub jamás
+importa ni ejecuta ese CLI. Severidad del advisory: CRITICAL (se preserva);
+riesgo de aplicación: **P2** tooling/supply-chain, remediación (major vercel)
+en v2. No se finge su desaparición.
 
 ## Secret audit
 
@@ -86,37 +117,38 @@ la API re-autoriza).
 Ejecutar `desc/sql-final-security-verification.sql` (solo lectura) y pegar
 salida: RLS/grants de `inscripciones`, columnas permitidas de
 `user_profiles` (bib denegado), buckets/policies Storage, `contact_messages`
-(conteos sin URLs), tabla/RPC de rate limits. Pendiente también aplicar SQL
-de Batches 5/6/7 ya preparados.
+(conteos sin URLs), tabla/RPC de rate limits. Los SQL de Batches 5/6/7 YA
+fueron aplicados; esta verificación es re-confirmación final.
 
 ## GitHub security controls
 
-- Secret Scanning: **ENABLED** ✓
-- Push Protection: **ENABLED** ✓
-- Dependabot security updates: **DISABLED** → activar manual: repo →
-  Settings → Code security → Dependabot → Enable security updates.
-- Branch protection/rulesets en `main`: **ninguna** → activar manual:
-  Settings → Rules → New ruleset → exigir PR + status checks antes de push
-  directo (hoy `main` acepta push directo).
-- Private vulnerability reporting: no habilitado → Enable en la misma página.
+- Secret Scanning: **ENABLED** ✓ (requisito de cierre de secretos cumplido)
+- Push Protection: **ENABLED** ✓ (requisito de cierre de secretos cumplido)
+- Dependabot security updates: **DISABLED** → recomendación manual P2
+  (repo → Settings → Code security → Dependabot → Enable security updates).
+- Branch protection/rulesets en `main`: **ninguna** → recomendación manual
+  P2 (Settings → Rules → New ruleset). Son controles de gobernanza del
+  repositorio, no hallazgos de aplicación: sin path de explotación directa
+  demostrado no se clasifican P1. No se cambian settings automáticamente.
 
 ## Accepted residual risks / v2 backlog
 
-- P1: `tar` CRITICAL transitivo (tooling, sin path de explotación en runtime;
-  se cierra con major `vercel`, backlog v2).
-- P1: `main` sin protección de rama + Dependabot apagado (acciones manuales
-  arriba; sin código que lo resuelva).
+- P2: `tar` CRITICAL transitivo de tooling (ver Dependency audit; sin path
+  en runtime; cierre vía major `vercel` en v2).
+- P2: Dependabot updates + ruleset de `main` (gobernanza manual pendiente).
 - P2: CSP enforced con nonces (requiere arquitectura por-request).
 - P2: reconciliación de refunds parciales acumulados + monitoreo de
   webhooks fallidos.
-- P2: `npm ci` roto por lockfile drift (regenerar lock con revisión).
-- P3: `.env.production` fuera de `.gitignore`; micro-flicker en redirect de
-  perfil no autenticado; selector Cascanueces en contacto (producto, no
-  seguridad).
+- P2: `node_modules` trackeado y divergente del lockfile tras updates
+  (evaluar dejar de trackearlo; NO commitear su churn; no hacer `git rm`
+  masivo en este cierre).
+- P3: micro-flicker en redirect de perfil no autenticado; selector
+  Cascanueces en contacto (producto, no seguridad).
 
 ## Cierre
 
-Hardening v1 está **READY FOR CLOSURE** en código (cero P0, cero P1 de código,
-auditoría verde), **PENDIENTE** de: SQL de verificación con resultado
-conforme + Dependabot/protección de `main` activados. No se afirma seguridad
-absoluta: ver riesgos aceptados.
+Hardening v1: **READY FOR FINAL PRODUCTION VERIFICATION** — P0 de
+aplicación: 0; P1 de aplicación sin resolver: 0; npm Critical documentado
+como residual de tooling (no fingido); Secret Scanning + Push Protection
+confirmados. NO se afirma seguridad absoluta. Falta SOLO revisar el
+resultado del SQL read-only (`desc/sql-final-security-verification.sql).

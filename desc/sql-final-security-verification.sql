@@ -73,16 +73,44 @@ order by cmd, policyname;
 select column_name from information_schema.columns
 where table_schema = 'public' and table_name = 'contact_messages'
 and column_name in ('attachment_path', 'attachment_url');
+-- Esperado: ambas columnas.
 
 select conname, pg_get_constraintdef(oid) as definicion from pg_constraint
 where conrelid = 'public.contact_messages'::regclass
 and conname = 'contact_messages_attachment_path_chk';
+-- Esperado: CHECK UUIDv4 presente.
 
+-- attachment_url histórico puede ser URL pública completa
+-- (.../storage/v1/object/public/contact-attachments/contact/...), no solo
+-- path relativo: clasificar por subcadenas, sin devolver URLs.
 select count(*) as total,
 count(*) filter (where attachment_path is not null) as con_path_nuevo,
-count(*) filter (where attachment_url like 'contact-attachments/contact/%') as legacy_interno,
-count(*) filter (where attachment_url is not null and attachment_url not like 'contact-attachments/contact/%' and attachment_url not like 'contact/%') as legacy_externo
+count(*) filter (where attachment_path is not null
+and attachment_url like '%/storage/v1/object/public/contact-attachments/contact/%') as legacy_interno_migrado,
+count(*) filter (where attachment_path is null
+and attachment_url like '%/storage/v1/object/public/contact-attachments/contact/%') as legacy_interno_sin_resolver,
+count(*) filter (where attachment_url is not null
+and attachment_url not like '%/storage/v1/object/public/contact-attachments/contact/%'
+and attachment_url not like 'contact/%') as refs_externas_otras
 from public.contact_messages;
+-- Esperado: legacy_interno_sin_resolver = 0; refs_externas_otras >= 1 (legacy
+-- externo intacto); con_path_nuevo >= migrados + nuevos uploads firmados.
+
+-- contact-attachments: cero objetos reales bajo contact/ (excluye el
+-- placeholder del dashboard). Nombres NO expuestos.
+select count(*) as contact_reales_restantes
+from storage.objects
+where bucket_id = 'contact-attachments'
+and name like 'contact/%'
+and name <> 'contact/.emptyFolderPlaceholder';
+-- Esperado: 0.
+
+-- contact-private: objetos migrados + nuevos (conteo, sin nombres).
+select count(*) as contact_privados
+from storage.objects
+where bucket_id = 'contact-private'
+and name like 'contact/%';
+-- Esperado: >= 1 (legacy migrado + uploads firmados posteriores).
 
 -- ============ 6. api_rate_limits ============
 select to_regclass('public.api_rate_limits') is not null as tabla_existe;
