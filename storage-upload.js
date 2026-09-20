@@ -100,6 +100,23 @@ function buildProfileObjectPath({ type, userId, ext }) {
   return `${cleanType}s/${userId}/${cleanType}.${ext}`;
 }
 
+// Cache-buster para media actualizada: el object path en Storage NO cambia
+// (las policies exigen filename exacto), así que la URL de display/persistencia
+// lleva ?v=<timestamp>. Cada llamada genera un v distinto. URL API para no
+// duplicar query params; fallback con ?/& si la URL no parsea.
+function withCacheBuster(baseUrl) {
+  const raw = String(baseUrl || '').trim();
+  if (!raw) return null;
+  const version = String(Date.now());
+  try {
+    const parsed = new URL(raw);
+    parsed.searchParams.set('v', version);
+    return parsed.toString();
+  } catch (parseError) {
+    return `${raw}${raw.includes('?') ? '&' : '?'}v=${version}`;
+  }
+}
+
 const catalog = {
   PROFILE_MEDIA_BUCKET,
   CONTACT_PRIVATE_BUCKET,
@@ -111,6 +128,7 @@ const catalog = {
   validateUploadFile,
   isSafePathSegment,
   buildProfileObjectPath,
+  withCacheBuster,
 };
 
 if (typeof module !== 'undefined' && module.exports) {

@@ -3111,7 +3111,13 @@ function setupSupabase() {
           }
 
           const { data } = client.storage.from(storageHelper.PROFILE_MEDIA_BUCKET).getPublicUrl(objectPath);
-          return { publicUrl: data?.publicUrl || null };
+          const baseUrl = data?.publicUrl || null;
+          if (!baseUrl) {
+            return { publicUrl: null };
+          }
+          // El object path no cambia (policies exigen filename exacto):
+          // se versiona solo la URL de display/persistencia.
+          return { publicUrl: storageHelper.withCacheBuster(baseUrl) || baseUrl };
         };
 
         const coverPositionStorageKey = `kinetic_cover_position:${user.id}`;
