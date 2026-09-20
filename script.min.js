@@ -638,13 +638,30 @@ function setupContactFormSubmission() {
     statusNode.setAttribute("aria-live", "polite");
     statusNode.style.margin = "10px 0 0";
     statusNode.style.fontWeight = "700";
+    // Batch: status SIEMPRE dentro del form para que form.innerHTML del
+    // success lo reemplace junto al resto (sin mensajes stale fuera).
     const submitBtn = form.querySelector('button[type="submit"]');
-    if (submitBtn && submitBtn.parentElement) {
-      submitBtn.parentElement.insertAdjacentElement("afterend", statusNode);
+    if (submitBtn) {
+      submitBtn.insertAdjacentElement("afterend", statusNode);
     } else {
       form.appendChild(statusNode);
     }
   }
+
+  const clearContactStatus = () => {
+    if (!statusNode) return;
+    statusNode.textContent = "";
+    statusNode.style.color = "";
+  };
+
+  const clearStaleContactStatus = () => {
+    if (statusNode && statusNode.textContent) {
+      clearContactStatus();
+    }
+  };
+
+  form.addEventListener("input", clearStaleContactStatus);
+  form.addEventListener("change", clearStaleContactStatus);
 
   const sendContactConfirmation = async ({
     email,
@@ -713,6 +730,7 @@ function setupContactFormSubmission() {
       return;
     }
 
+    clearContactStatus();
     submitBtn.disabled = true;
     const originalText = submitBtn.textContent;
     submitBtn.textContent = "Enviando...";
