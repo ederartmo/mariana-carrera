@@ -130,7 +130,6 @@ test('B9-flash-4/5: reveal tras hidratación avatar/cover y setReadOnlyMode', ()
   assert.ok(script.indexOf('applyAvatarVisual(currentProfile.avatar_url)') !== -1, 'hidrata avatar');
   assert.ok(script.indexOf('applyCoverVisual(currentProfile.cover_url)') !== -1, 'hidrata cover');
   const readonlyIdx = script.search(/setReadOnlyMode\(currentProfile\);\s+\/\/ Batch 9 hotfix/);
-  const revealPos = script.indexOf(revealCall);
   assert.ok(readonlyIdx !== -1 && readonlyIdx < revealPos, 'reveal después de setReadOnlyMode');
 });
 
