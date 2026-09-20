@@ -9,6 +9,7 @@ process.env.STRIPE_SECRET_KEY = process.env.STRIPE_SECRET_KEY || 'sk_test_mock';
 process.env.SUPABASE_URL = process.env.SUPABASE_URL || 'https://example.supabase.co';
 process.env.SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || 'mock-service-role-key';
 process.env.CHECKOUT_SUMMARY_SECRET = process.env.CHECKOUT_SUMMARY_SECRET || 'test-only-checkout-summary-secret-0123456789';
+process.env.RATE_LIMIT_SECRET = process.env.RATE_LIMIT_SECRET || 'test-only-rate-limit-secret-0123456789';
 
 const {
   COOKIE_NAME,
@@ -154,6 +155,7 @@ async function postCheckout({ host = 'localhost:3000', upsertError = null, unset
     }));
     const restoreSupabase = mockModule('@supabase/supabase-js', {
       createClient: () => ({
+        rpc: async () => ({ data: [{ allowed: true, remaining: 9, retry_after_seconds: 0 }], error: null }),
         from: () => ({
           upsert: async (payload) => {
             upsertCalls.push(payload);
