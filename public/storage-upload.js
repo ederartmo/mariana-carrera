@@ -7,6 +7,11 @@
 // Frontera real: RLS/policies/límites en
 // desc/sql-batch6-storage-hardening.sql (el frontend NO es el boundary).
 
+// Todo el código vive dentro de esta IIFE: ningún const/let interno contamina
+// el global scope del navegador cuando se combina con otros helpers.
+(function () {
+'use strict';
+
 // Bucket PÚBLICO: media de perfil (avatares/portadas).
 const PROFILE_MEDIA_BUCKET = 'contact-attachments';
 
@@ -114,3 +119,4 @@ if (typeof module !== 'undefined' && module.exports) {
 if (typeof globalThis !== 'undefined' && globalThis.window) {
   globalThis.window.KineticHubStorageUpload = catalog;
 }
+})();
