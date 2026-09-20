@@ -80,17 +80,70 @@ test('B6-profile-mime: solo imágenes, type enum, oversized, traversal', () => {
   assert.ok(helper.validateUploadFile(file({ type: 'text/html' }), 'avatar') !== '');
 });
 
-test('B6-randomness: sin generadores débiles en helper', () => {
+test('B6-randomness: sin generadores débiles en IDs', () => {
   const raw = fs.readFileSync(path.join(projectRoot, 'storage-upload.js'), 'utf8');
   const code = raw.replace(/\/\/[^\n]*/g, '').replace(/\/\*[\s\S]*?\*\//g, '');
   assert.ok(!code.includes('Math.random'), 'sin Math.random en código');
-  assert.ok(!code.includes('Date.now()'), 'sin Date.now() en código');
+  // Date.now() solo como cache-buster ?v=, nunca como identificador.
+  assert.ok(code.includes("searchParams.set('v'"), 'versión vía URL API');
+  assert.ok(!code.includes('newUploadId'), 'sin IDs generados en browser');
 });
 
 test('B6-profile-upsert: upsert=true propio preservado', () => {
   const script = fs.readFileSync(path.join(projectRoot, 'script.js'), 'utf8');
   const start = script.indexOf('buildProfileObjectPath');
   assert.ok(script.slice(start, start + 2000).includes('upsert: true'), 'profile upsert preserved');
+});
+
+test('B6-cache-path: upload path no cambia (filename exacto)', () => {
+  assert.equal(
+    helper.buildProfileObjectPath({ type: 'avatar', userId: 'u1', ext: 'webp' }),
+    'avatars/u1/avatar.webp'
+  );
+  assert.ok(!helper.buildProfileObjectPath({ type: 'avatar', userId: 'u1', ext: 'webp' }).includes('?v='));
+});
+
+test('B6-cache-buster: URL versionada con ?v= distinto por subida', () => {
+  const realNow = Date.now;
+  try {
+    Date.now = () => 1000;
+    const first = helper.withCacheBuster('https://cdn.test/avatars/u1/avatar.webp');
+    Date.now = () => 2000;
+    const second = helper.withCacheBuster('https://cdn.test/avatars/u1/avatar.webp');
+    assert.ok(first.includes('?v=1000'));
+    assert.ok(second.includes('?v=2000'));
+    assert.notEqual(first, second);
+  } finally {
+    Date.now = realNow;
+  }
+});
+
+test('B6-cache-buster: no duplica query y preserva path', () => {
+  const realNow = Date.now;
+  try {
+    Date.now = () => 3000;
+    const again = helper.withCacheBuster('https://cdn.test/covers/u1/cover.webp?v=1000');
+    assert.equal((again.match(/v=/g) || []).length, 1);
+    assert.ok(again.includes('/covers/u1/cover.webp'));
+    assert.equal(helper.withCacheBuster(''), null);
+    assert.equal(helper.withCacheBuster(null), null);
+  } finally {
+    Date.now = realNow;
+  }
+});
+
+test('B6-cache-persist: avatar_url/cover_url guardan la URL versionada', () => {
+  const script = fs.readFileSync(path.join(projectRoot, 'script.js'), 'utf8');
+  assert.ok(script.includes('withCacheBuster(baseUrl)'), 'upload retorna URL versionada');
+  assert.ok(script.includes('saveProfileMediaUrls({ avatar_url: publicUrl })'), 'avatar persiste versionada');
+  assert.ok(script.includes('saveProfileMediaUrls({ cover_url: publicUrl })'), 'cover persiste versionada');
+});
+
+test('B6-cache-nopolicy: sin cambios de bucket/policy', () => {
+  const script = fs.readFileSync(path.join(projectRoot, 'script.js'), 'utf8');
+  assert.equal(helper.PROFILE_MEDIA_BUCKET, 'contact-attachments');
+  const helperSource = fs.readFileSync(path.join(projectRoot, 'storage-upload.js'), 'utf8');
+  assert.ok(!/CREATE\s+POLICY/i.test(helperSource));
 });
 
 test('B6-html: helper incluido en perfil/checkout/contacto + regen', () => {
