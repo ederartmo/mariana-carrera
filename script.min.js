@@ -2079,6 +2079,26 @@ function setupSupabase() {
       ? window.location.origin
       : "https://www.kinetichub.com.mx";
   const PROFILE_TABLE = "user_profiles";
+  // Batch 5: escritura a user_profiles SOLO vía allowlist de profile-fields.js
+  // (window.KineticHubProfileFields, cargado en perfil.html/checkout.html).
+  // Fail closed: sin helper no se escribe nada.
+  const getProfileFieldPicker = () => {
+    const helper = window.KineticHubProfileFields || null;
+    if (!helper || typeof helper.pickProfileWritableFields !== "function") {
+      console.error("KineticHubProfileFields no disponible; se omite escritura de perfil.");
+      return null;
+    }
+    return helper;
+  };
+
+  // Construye la fila a persistir: allowlist primero, identidad de sesión
+  // al final (siempre gana sobre cualquier input).
+  const buildProfileRow = (picker, input, { userId, email }) => ({
+    ...picker.pickProfileWritableFields(input),
+    user_id: userId,
+    email: email || null,
+    updated_at: new Date().toISOString(),
+  });
   const AXOLOTE_PAYMENT_URL = "checkout.html";
   const AXOLOTE_EVENT_URL = "axolote-night-run.html";
   const AXOLOTE_PAYMENT_STATE_KEY = "kinetic_axolote_payment_state";
@@ -2131,12 +2151,10 @@ function setupSupabase() {
     const saveEmergencyContactForUser = async ({ userId, email }, contact) => {
       if (!userId) return { error: new Error("Usuario no autenticado") };
 
-      const row = {
-        user_id: userId,
-        email: email || null,
-        ...emergencyContactToProfileFields(contact),
-        updated_at: new Date().toISOString(),
-      };
+      const picker = getProfileFieldPicker();
+      if (!picker) return { error: new Error("Perfil no disponible") };
+
+      const row = buildProfileRow(picker, emergencyContactToProfileFields(contact), { userId, email });
 
       const { error } = await client.from(PROFILE_TABLE).upsert(row, { onConflict: "user_id" });
       return { error: error || null };
@@ -3067,12 +3085,10 @@ function setupSupabase() {
         };
 
         const saveProfileMediaUrls = async (updates) => {
-          const row = {
-            user_id: user.id,
-            email: user.email || null,
-            ...updates,
-            updated_at: new Date().toISOString(),
-          };
+          const picker = getProfileFieldPicker();
+          if (!picker) return new Error("Perfil no disponible");
+
+          const row = buildProfileRow(picker, updates, { userId: user.id, email: user.email });
 
           const { error } = await client.from(PROFILE_TABLE).upsert(row, { onConflict: "user_id" });
           return error || null;
@@ -3095,12 +3111,14 @@ function setupSupabase() {
         };
 
         const saveCoverPositionToTable = async (positionY) => {
-          const payload = {
-            user_id: user.id,
-            email: user.email || null,
-            cover_position_y: positionY,
-            updated_at: new Date().toISOString(),
-          };
+          const picker = getProfileFieldPicker();
+          if (!picker) return new Error("Perfil no disponible");
+
+          const payload = buildProfileRow(
+            picker,
+            { cover_position_y: positionY },
+            { userId: user.id, email: user.email }
+          );
 
           const { error } = await client.from(PROFILE_TABLE).upsert(payload, { onConflict: "user_id" });
           return error || null;
@@ -3273,13 +3291,14 @@ function setupSupabase() {
           return data || null;
         };
         const saveProfileInTable = async (profile) => {
-          const row = {
-            user_id: user.id,
-            email: user.email || null,
-            ...profile,
-            full_name: profile.full_name || composeFullName(profile),
-            updated_at: new Date().toISOString(),
-          };
+          const picker = getProfileFieldPicker();
+          if (!picker) return new Error("Perfil no disponible");
+
+          const row = buildProfileRow(
+            picker,
+            { ...profile, full_name: profile.full_name || composeFullName(profile) },
+            { userId: user.id, email: user.email }
+          );
 
           const { error } = await client.from(PROFILE_TABLE).upsert(row, { onConflict: "user_id" });
           return error || null;
