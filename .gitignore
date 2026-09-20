@@ -1,6 +1,8 @@
 .env.local
 .env
 .env*.local
+.env.production
+.env.production.local
 .vscode/
 node_modules/
 .vercel
