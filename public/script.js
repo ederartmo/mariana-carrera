@@ -41,6 +41,31 @@ function setupMenuToggle() {
     }
   });
 }
+// ====================== SUPABASE SINGLETON (BATCH 9) ======================
+// Toda la app navegador reutiliza UN GoTrueClient por página vía
+// window.KineticHubSupabase (supabase-client.js). Cero createClient directos.
+function getSharedSupabaseClient() {
+  const helper = window.KineticHubSupabase || null;
+  if (!helper || typeof helper.getClient !== "function") return null;
+  try {
+    return helper.getClient();
+  } catch (err) {
+    console.warn("No se pudo obtener el cliente Supabase compartido:", err);
+    return null;
+  }
+}
+async function ensureSharedSupabaseClient() {
+  const helper = window.KineticHubSupabase || null;
+  if (helper && typeof helper.ensureClient === "function") {
+    try {
+      return await helper.ensureClient();
+    } catch (err) {
+      console.warn("No se pudo asegurar el cliente Supabase compartido:", err);
+      return null;
+    }
+  }
+  return getSharedSupabaseClient();
+}
 // ====================== MIS CARRERAS VÍA API (BATCH 1A) ======================
 // El navegador NUNCA consulta public.inscripciones directo.
 // Toda lectura va a GET /api/me/registrations con Bearer token; el servidor
@@ -50,12 +75,8 @@ let myRegistrationsPromise = null;
 async function fetchMyRegistrations() {
   if (!myRegistrationsPromise) {
     myRegistrationsPromise = (async () => {
-      if (typeof window.supabase === "undefined") return null;
-
-      const client = window.supabase.createClient(
-        "https://uycwzhlcnfijjyzkgkem.supabase.co",
-        "sb_publishable_IKwD3YtQwWzzEtE8QkVagA_OJGdV2e4"
-      );
+      const client = getSharedSupabaseClient();
+      if (!client) return null;
 
       const { data: { session } } = await client.auth.getSession();
       const token = session?.access_token;
@@ -137,10 +158,8 @@ function setupActiveNavLink() {
     }
 
     try {
-      const client = window.supabase.createClient(
-        "https://uycwzhlcnfijjyzkgkem.supabase.co",
-        "sb_publishable_IKwD3YtQwWzzEtE8QkVagA_OJGdV2e4"
-      );
+      const client = getSharedSupabaseClient();
+      if (!client) return;
 
       const { data: { session } } = await client.auth.getSession();
       isLoggedIn = !!session?.user;
@@ -159,11 +178,10 @@ function setupActiveNavLink() {
         if (logoutBtn) {
           logoutBtn.addEventListener("click", async () => {
             try {
-              const client = window.supabase.createClient(
-                "https://uycwzhlcnfijjyzkgkem.supabase.co",
-                "sb_publishable_IKwD3YtQwWzzEtE8QkVagA_OJGdV2e4"
-              );
-              await client.auth.signOut();
+              const client = getSharedSupabaseClient();
+              if (client) {
+                await client.auth.signOut();
+              }
             } catch (e) { }
             window.location.href = "index.html";
           });
@@ -605,30 +623,12 @@ function setupContactFormSubmission() {
   const CONTACT_CONFIRM_ENDPOINT = "/api/contact-notify";
 
   const ensureSupabaseClient = async () => {
-    if (typeof window.supabase !== "undefined") {
-      return window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    // Batch 9: singleton compartido (con espera al SDK si hace falta).
+    const helper = window.KineticHubSupabase || null;
+    if (helper && typeof helper.ensureClient === "function") {
+      return helper.ensureClient();
     }
-
-    let sdkScript = document.querySelector('script[data-supabase-sdk="true"]');
-    if (!sdkScript) {
-      sdkScript = document.createElement("script");
-      sdkScript.src = "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2";
-      sdkScript.dataset.supabaseSdk = "true";
-      document.head.appendChild(sdkScript);
-    }
-
-    await new Promise((resolve) => {
-      if (typeof window.supabase !== "undefined") {
-        resolve();
-        return;
-      }
-
-      sdkScript.addEventListener("load", () => resolve(), { once: true });
-      sdkScript.addEventListener("error", () => resolve(), { once: true });
-    });
-
-    if (typeof window.supabase === "undefined") return null;
-    return window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    return getSharedSupabaseClient();
   };
 
   let statusNode = form.querySelector(".contact-form-status");
@@ -2031,9 +2031,8 @@ function setupEventRegistrationPanel() {
   const SUPABASE_KEY = "sb_publishable_IKwD3YtQwWzzEtE8QkVagA_OJGdV2e4";
 
   const initSessionState = () => {
-    if (typeof window.supabase === "undefined") return;
-
-    const client = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    const client = getSharedSupabaseClient();
+    if (!client) return;
 
     client.auth.getSession().then(() => {
       applyState();
@@ -2044,74 +2043,10 @@ function setupEventRegistrationPanel() {
     });
   };
 
-  if (typeof window.supabase !== "undefined") {
-    initSessionState();
-    return;
-  }
-
-  let sdkScript = document.querySelector('script[data-supabase-sdk="true"]');
-  if (!sdkScript) {
-    sdkScript = document.createElement("script");
-    sdkScript.src = "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2";
-    sdkScript.dataset.supabaseSdk = "true";
-    document.head.appendChild(sdkScript);
-  }
-
-  if (typeof window.supabase !== "undefined") {
-    initSessionState();
-    return;
-  }
-
-  sdkScript.addEventListener("load", initSessionState, { once: true });
+  initSessionState();
 }
-// === SUPABASE LOADER SEGURO ===
-let supabaseInstance = null;
-let supabasePromise = null;
-
-const ensureSupabaseClient = async () => {
-  if (supabaseInstance) return supabaseInstance;
-
-  if (supabasePromise) return supabasePromise;
-
-  supabasePromise = new Promise(async (resolve) => {
-    if (typeof window.supabase !== "undefined") {
-      supabaseInstance = window.supabase.createClient(
-        // SUPABASE_URL || "https://uycwzhlcnfijjyzkgkem.supabase.co",
-        "https://uycwzhlcnfijjyzkgkem.supabase.co",
-        // SUPABASE_KEY || "sb_publishable_IKwD3YtQwWzzEtE8QkVagA_OJGdV2e4"
-        "sb_publishable_IKwD3YtQwWzzEtE8QkVagA_OJGdV2e4"
-      );
-      resolve(supabaseInstance);
-      return;
-    }
-
-    let sdkScript = document.querySelector('script[data-supabase-sdk="true"]');
-    if (!sdkScript) {
-      sdkScript = document.createElement("script");
-      sdkScript.src = "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2";
-      sdkScript.dataset.supabaseSdk = "true";
-      document.head.appendChild(sdkScript);
-    }
-
-    const onLoad = () => {
-      if (typeof window.supabase !== "undefined") {
-        supabaseInstance = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-        resolve(supabaseInstance);
-      } else {
-        console.error("Supabase SDK failed to load");
-        resolve(null);
-      }
-    };
-
-    sdkScript.addEventListener("load", onLoad, { once: true });
-    sdkScript.addEventListener("error", () => {
-      console.error("Supabase SDK load error");
-      resolve(null);
-    }, { once: true });
-  });
-
-  return supabasePromise;
-};
+// Batch 9: loader duplicado eliminado (cero llamadas vivas). El singleton
+// compartido vive en getSharedSupabaseClient()/window.KineticHubSupabase.
 
 function setupSupabase() {
   const SUPABASE_URL = "https://uycwzhlcnfijjyzkgkem.supabase.co";
@@ -2167,7 +2102,8 @@ function setupSupabase() {
       return "perfil.html";
     };
 
-    const client = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    const client = getSharedSupabaseClient();
+    if (!client) return;
 
     const readEmergencyContactForUser = async (userId) => {
       if (!userId) return null;
@@ -2933,6 +2869,16 @@ function setupSupabase() {
         const pfEstado = document.getElementById("pfEstado");
         const coverUpload = document.getElementById("coverUpload");
         const profileCover = document.getElementById("profileCover");
+        const profileLayout = document.getElementById("profileLayout");
+        const profileLoading = document.getElementById("profileLoading");
+
+        // Batch 9: el shell autenticado inicia oculto (ver perfil.html);
+        // solo se revela con sesión válida y datos iniciales aplicados.
+        const revealAuthenticatedProfile = () => {
+          if (profileLoading) profileLoading.hidden = true;
+          if (profileCover) profileCover.hidden = false;
+          if (profileLayout) profileLayout.hidden = false;
+        };
         const coverAdjustToggle = document.getElementById("coverAdjustToggle");
         const avatarUpload = document.getElementById("avatarUpload");
         const avatarInner = document.getElementById("profileAvatarInner");
@@ -3373,6 +3319,10 @@ function setupSupabase() {
         }
 
         applyHeader(currentProfile);
+
+        // Batch 9: revelar UI autenticada solo con sesión válida y datos
+        // iniciales listos (nunca placeholders antes de validar).
+        revealAuthenticatedProfile();
 
         let currentCoverPosition = readCoverPosition();
         const coverPositionFromTable = await readCoverPositionFromTable();
@@ -4028,8 +3978,15 @@ function setupSupabase() {
           setTimeout(openRegisterModal, 800);
         }
 
-        // Render inicial vacío (evita mostrar Axolote hardcodeado antes de DB)
-        renderEmptyState();
+        // Render inicial en carga (loadUserInscriptions reemplaza al llegar DB)
+        if (racesContainer) {
+          racesContainer.innerHTML = `
+            <div class="profile-card">
+              <div class="profile-empty-state">
+                <p>Cargando tus carreras…</p>
+              </div>
+            </div>`;
+        }
         updateReminder([]);
         updateHeaderBibSummary([]);
 
@@ -5098,23 +5055,6 @@ function setupChecklistProfileStatus() {
     card.classList.add("cl-card-completed");
   };
 
-  const waitForSupabase = (maxAttempts = 24, intervalMs = 250) =>
-    new Promise((resolve) => {
-      let attempts = 0;
-      const timer = setInterval(() => {
-        attempts += 1;
-        if (typeof window.supabase !== "undefined") {
-          clearInterval(timer);
-          resolve(window.supabase);
-          return;
-        }
-        if (attempts >= maxAttempts) {
-          clearInterval(timer);
-          resolve(null);
-        }
-      }, intervalMs);
-    });
-
   const readProfile = async (client, userId) => {
     const byUserId = await client
       .from("user_profiles")
@@ -5139,10 +5079,10 @@ function setupChecklistProfileStatus() {
 
   const checkAndUpdateProfileStatus = async () => {
     try {
-      const supabaseSdk = await waitForSupabase();
-      if (!supabaseSdk) return;
+      // Batch 9: singleton compartido (el helper espera al SDK si hace falta).
+      const client = await ensureSharedSupabaseClient();
+      if (!client) return;
 
-      const client = supabaseSdk.createClient(SUPABASE_URL, SUPABASE_KEY);
       const {
         data: { session },
       } = await client.auth.getSession();

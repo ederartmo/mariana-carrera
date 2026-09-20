@@ -701,7 +701,8 @@ src="https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1"
     ];
   </script>
 
-  <script src="location-catalog.js?v=1789849136484"></script>
+  <script src="location-catalog.js?v=1789882466202"></script>
+  <script src="supabase-client.js?v=1789882466202"></script>
 
   <script>
     // ====================== CONFIG ======================
@@ -720,22 +721,16 @@ src="https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1"
 
     // ====================== VERIFICACIÓN DE ACCESO ======================
     async function checkAdminAccess() {
-      if (typeof window.supabase === "undefined") {
-        const script = document.createElement("script");
-        script.src = "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2";
-        document.head.appendChild(script);
-        await Promise.race([
-          new Promise(r => { script.onload = r; script.onerror = r; }),
-          new Promise(r => setTimeout(r, 10000)),
-        ]);
-      }
+      // Batch 9: singleton compartido (espera al SDK si hace falta).
+      const helper = window.KineticHubSupabase || null;
+      const client = helper && typeof helper.ensureClient === "function"
+        ? await helper.ensureClient()
+        : null;
 
-      if (typeof window.supabase === "undefined") {
+      if (!client) {
         document.getElementById("content").innerHTML = '<div class="error">Error: No se pudo cargar la librería de Supabase. Revisa tu conexión o recarga la página.</div>';
         return null;
       }
-
-      const client = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
       const { data: { session } } = await client.auth.getSession();
       
@@ -1665,6 +1660,19 @@ src="https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1"
           return;
         }
 
+        // Batch 4: confirmación explícita del identificador exacto (el backend
+        // la exige vía confirmTarget y bloquea compras reales/no-test).
+        const expectedTarget = deleteMode === 'order' ? orderSessionId : inscriptionId;
+        const typedTarget = String(window.prompt(
+          `Confirma escribiendo el identificador exacto a eliminar:\n${expectedTarget}`,
+          ''
+        ) || '').trim();
+
+        if (typedTarget !== expectedTarget) {
+          window.alert('Confirmación incorrecta. No se eliminó nada.');
+          return;
+        }
+
         const originalText = button.textContent;
         button.disabled = true;
         button.textContent = 'Eliminando...';
@@ -1685,6 +1693,7 @@ src="https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1"
             body: JSON.stringify({
               inscriptionId,
               orderSessionId: deleteMode === 'order' ? orderSessionId : '',
+              confirmTarget: expectedTarget,
             }),
           });
 
