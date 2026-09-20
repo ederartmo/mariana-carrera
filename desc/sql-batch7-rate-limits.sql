@@ -19,6 +19,11 @@ create table if not exists public.api_rate_limits (
 
 alter table public.api_rate_limits enable row level security;
 
+-- Índice para que la limpieza acotada (expires_at <= now, limit 100) no se
+-- degrade a scan creciente bajo abuso. Idempotente.
+create index if not exists api_rate_limits_expires_at_idx
+  on public.api_rate_limits (expires_at);
+
 -- Sin policies: con RLS activo y cero policies, anon/authenticated no ven nada.
 -- Cinturón adicional a nivel de grants:
 revoke all on public.api_rate_limits from anon, authenticated;
@@ -42,7 +47,7 @@ security definer
 set search_path = '' as $function$
 declare
   v_now pg_catalog.timestamptz := pg_catalog.now();
-  v_epoch integer := pg_catalog.floor(extract(epoch from v_now))::integer;
+  v_epoch bigint := pg_catalog.floor(extract(epoch from v_now))::bigint;
   v_start pg_catalog.timestamptz;
   v_expires pg_catalog.timestamptz;
   v_count integer;
@@ -138,3 +143,8 @@ grant execute on function public.consume_api_rate_limit(text, text, integer, int
 -- C7. Limpieza acotada presente en el cuerpo de la función.
 -- select pg_get_functiondef('public.consume_api_rate_limit(text,text,integer,integer)'::regprocedure)
 --   ilike '%limit 100%';
+
+-- C8. Índice de expiración para el cleanup.
+-- select indexname from pg_indexes
+--  where schemaname='public' and tablename='api_rate_limits'
+--    and indexname='api_rate_limits_expires_at_idx';

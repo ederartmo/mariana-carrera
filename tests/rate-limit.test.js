@@ -440,11 +440,14 @@ test('B7-22: ventana nueva resetea el contador', async () => {
   }
 });
 
-// 23: limpieza acotada en SQL.
+// 23: limpieza acotada en SQL + índice de expiración + bigint.
 test('B6-cleanup: expiración acotada en la función', () => {
   const sql = fs.readFileSync(path.join(projectRoot, 'desc', 'sql-batch7-rate-limits.sql'), 'utf8');
   assert.ok(sql.includes('limit 100'), 'cleanup acotado a 100 filas');
   assert.ok(sql.includes('expires_at'), 'columna de expiración');
+  assert.ok(sql.includes('api_rate_limits_expires_at_idx'), 'índice de expiración');
+  assert.ok(sql.includes('create index if not exists api_rate_limits_expires_at_idx'), 'índice idempotente');
+  assert.ok(/v_epoch\s+bigint/i.test(sql), 'v_epoch usa bigint');
 });
 
 // 24: funciones Vercel.
