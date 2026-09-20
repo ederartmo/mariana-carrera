@@ -1,5 +1,5 @@
-// tests/contact-notify-attachment.test.js - Batch 6 (rev): attachment_path
-// validado + signed URL solo admin. Sin envíos reales.
+// tests/contact-notify-attachment.test.js - Batch 6 (rev): signed uploads.
+// attachment_path UUIDv4 estricto + signed URL solo admin. Sin envíos reales.
 const assert = require('node:assert/strict');
 const path = require('node:path');
 const test = require('node:test');
@@ -9,6 +9,7 @@ process.env.SUPABASE_URL = process.env.SUPABASE_URL || 'https://example.supabase
 process.env.SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || 'mock-service-role-key';
 
 const HANDLER_PATH = path.join(__dirname, '..', 'api', 'contact-notify.js');
+const VALID_PATH = 'contact/550e8400-e29b-41d4-a716-446655440000.pdf';
 
 function mockModule(modulePath, exports) {
   const resolved = require.resolve(modulePath);
@@ -73,6 +74,14 @@ async function runContact(state, body) {
             const next = (state.signResults || []).shift();
             return next || { data: { signedUrl: 'https://signed.test/adjunto' }, error: null };
           },
+          createSignedUploadUrl: async (objectPath, options) => {
+            state.signedUploadCalls.push({ bucket, objectPath, options });
+            const next = (state.signedUploadResults || []).shift();
+            return next || {
+              data: { path: objectPath, signedUrl: `https://up.test/${objectPath}?token=tok_test_123` },
+              error: null,
+            };
+          },
         }),
       },
     }),
@@ -95,7 +104,11 @@ async function runContact(state, body) {
 }
 
 function baseState(overrides = {}) {
-  return { emailSends: [], inserts: [], signCalls: [], insertResults: [], signResults: [], emailResults: [], ...overrides };
+  return {
+    emailSends: [], inserts: [], signCalls: [], signedUploadCalls: [],
+    insertResults: [], signResults: [], signedUploadResults: [], emailResults: [],
+    ...overrides,
+  };
 }
 
 function adminHtml(state) {
@@ -108,16 +121,70 @@ function userHtml(state) {
   return user ? user.html : '';
 }
 
-test('B6-06: attachment_path inválido rechazado', async () => {
+// ---------- Modo upload intent ----------
+
+test('B6-upload-1: MIME válido genera path server-side + token', async () => {
   const state = baseState();
-  const res = await runContact(state, baseBody({ attachment_path: 'contact/../../x.jpg' }));
+  const res = await runContact(state, { action: 'create_attachment_upload', mime_type: 'image/jpeg', size: 1000 });
+
+  assert.equal(res.statusCode, 200);
+  assert.match(res.body.path, /^contact\/[0-9a-f-]{36}\.jpg$/);
+  assert.equal(res.body.token, 'tok_test_123');
+  assert.equal(state.signedUploadCalls.length, 1);
+  assert.equal(state.signedUploadCalls[0].bucket, 'contact-private');
+  assert.deepEqual(state.signedUploadCalls[0].options, { upsert: false });
+});
+
+test('B6-upload-2: MIME inválido rechazado', async () => {
+  const state = baseState();
+  const res = await runContact(state, { action: 'create_attachment_upload', mime_type: 'image/svg+xml', size: 1000 });
+
+  assert.equal(res.statusCode, 400);
+  assert.equal(state.signedUploadCalls.length, 0);
+});
+
+test('B6-upload-3: tamaño >5MB rechazado', async () => {
+  const state = baseState();
+  const res = await runContact(state, { action: 'create_attachment_upload', mime_type: 'image/png', size: 6 * 1024 * 1024 });
+
+  assert.equal(res.statusCode, 400);
+  assert.equal(state.signedUploadCalls.length, 0);
+});
+
+test('B6-upload-4: browser no controla el path', async () => {
+  const state = baseState();
+  const res = await runContact(state, {
+    action: 'create_attachment_upload',
+    mime_type: 'image/png',
+    size: 1000,
+    path: 'contact/yo-lo-elijo.png',
+  });
+
+  assert.equal(res.statusCode, 200);
+  assert.ok(!res.body.path.includes('yo-lo-elijo'));
+  assert.equal(state.signedUploadCalls[0].objectPath, res.body.path);
+});
+
+// ---------- Submit normal ----------
+
+test('B6-submit-uuid: path UUIDv4 válido aceptado', async () => {
+  const state = baseState();
+  const res = await runContact(state, baseBody({ attachment_path: VALID_PATH }));
+
+  assert.equal(res.statusCode, 200);
+  assert.equal(state.inserts[0].row.attachment_path, VALID_PATH);
+  assert.equal(state.inserts[0].row.attachment_url, null);
+});
+
+test('B6-reject-short: contact/a.pdf rechazado', async () => {
+  const state = baseState();
+  const res = await runContact(state, baseBody({ attachment_path: 'contact/a.pdf' }));
 
   assert.equal(res.statusCode, 400);
   assert.equal(state.inserts.length, 0);
-  assert.equal(state.emailSends.length, 0);
 });
 
-test('B6-07: URL absoluta como path rechazada', async () => {
+test('B6-reject-url: URL absoluta rechazada', async () => {
   const state = baseState();
   const res = await runContact(state, baseBody({ attachment_path: 'https://evil.test/x.jpg' }));
 
@@ -125,76 +192,60 @@ test('B6-07: URL absoluta como path rechazada', async () => {
   assert.equal(state.inserts.length, 0);
 });
 
-test('B6-08: ../ rechazado', async () => {
+test('B6-reject-traversal: ../ rechazado', async () => {
   const state = baseState();
-  const res = await runContact(state, baseBody({ attachment_path: '../contact/x.jpg' }));
+  const res = await runContact(state, baseBody({ attachment_path: 'contact/../../x.jpg' }));
 
   assert.equal(res.statusCode, 400);
 });
 
-test('B6-09: prefijo incorrecto rechazado', async () => {
+test('B6-reject-ext: extensión inválida rechazada', async () => {
+  const state = baseState();
+  const res = await runContact(state, baseBody({ attachment_path: 'contact/550e8400-e29b-41d4-a716-446655440000.exe' }));
+
+  assert.equal(res.statusCode, 400);
+});
+
+test('B6-reject-prefix: otro bucket/prefijo rechazado', async () => {
   const state = baseState();
   const res = await runContact(state, baseBody({ attachment_path: 'avatars/u1/avatar.jpg' }));
 
   assert.equal(res.statusCode, 400);
 });
 
-test('B6-10: extensión inválida rechazada', async () => {
+test('B6-sign-ttl: download signed URL TTL 3600 en contact-private', async () => {
   const state = baseState();
-  const res = await runContact(state, baseBody({ attachment_path: 'contact/abc123.exe' }));
-
-  assert.equal(res.statusCode, 400);
-});
-
-test('B6-11/15: path UUID válido aceptado y persistido', async () => {
-  const state = baseState();
-  const valid = 'contact/550e8400-e29b-41d4-a716-446655440000.pdf';
-  const res = await runContact(state, baseBody({ attachment_path: valid }));
-
-  assert.equal(res.statusCode, 200);
-  assert.equal(state.inserts.length, 1);
-  assert.equal(state.inserts[0].row.attachment_path, valid);
-});
-
-test('B6-12/13: signed URL solo en contact-private con TTL 3600', async () => {
-  const state = baseState();
-  const valid = 'contact/550e8400-e29b-41d4-a716-446655440000.jpg';
-  await runContact(state, baseBody({ attachment_path: valid }));
+  await runContact(state, baseBody({ attachment_path: VALID_PATH }));
 
   assert.equal(state.signCalls.length, 1);
   assert.equal(state.signCalls[0].bucket, 'contact-private');
-  assert.equal(state.signCalls[0].objectPath, valid);
+  assert.equal(state.signCalls[0].objectPath, VALID_PATH);
   assert.equal(state.signCalls[0].ttl, 3600);
 });
 
-test('B6-14: signed URL no persistida, attachment_url null', async () => {
+test('B6-admin-only: signed URL solo en email admin', async () => {
   const state = baseState();
-  await runContact(state, baseBody({ attachment_path: 'contact/550e8400-e29b-41d4-a716-446655440000.jpg' }));
+  await runContact(state, baseBody({ attachment_path: VALID_PATH }));
+
+  assert.ok(adminHtml(state).includes('https://signed.test/adjunto'));
+  assert.ok(adminHtml(state).includes('Ver adjunto'));
+  assert.ok(!userHtml(state).includes('signed.test'));
+  assert.ok(!userHtml(state).includes('Ver adjunto'));
+});
+
+test('B6-no-persist-url: signed URL nunca persistida', async () => {
+  const state = baseState();
+  await runContact(state, baseBody({ attachment_path: VALID_PATH }));
 
   const row = state.inserts[0].row;
   assert.equal(row.attachment_url, null);
   assert.ok(!JSON.stringify(row).includes('signed.test'));
 });
 
-test('B6-15b: sin columna attachment_path reintenta sin ella', async () => {
-  const state = baseState({
-    insertResults: [
-      { data: null, error: { message: 'column attachment_path does not exist' } },
-      { data: null, error: null },
-    ],
-  });
-  const res = await runContact(state, baseBody({ attachment_path: 'contact/550e8400-e29b-41d4-a716-446655440000.jpg' }));
-
-  assert.equal(res.statusCode, 200);
-  assert.equal(state.inserts.length, 2);
-  assert.ok('attachment_path' in state.inserts[0].row);
-  assert.ok(!('attachment_path' in state.inserts[1].row));
-});
-
-test('B6-16: attachment_url del browser ignorada', async () => {
+test('B6-browser-url-ignored: attachment_url del browser ignorada', async () => {
   const state = baseState();
   const res = await runContact(state, baseBody({
-    attachment_path: 'contact/550e8400-e29b-41d4-a716-446655440000.jpg',
+    attachment_path: VALID_PATH,
     attachment_url: 'https://evil.test/x.jpg',
   }));
 
@@ -204,25 +255,9 @@ test('B6-16: attachment_url del browser ignorada', async () => {
   assert.ok(!JSON.stringify(state.inserts[0].row).includes('evil.test'));
 });
 
-test('B6-17: admin recibe signed URL', async () => {
-  const state = baseState();
-  await runContact(state, baseBody({ attachment_path: 'contact/550e8400-e29b-41d4-a716-446655440000.jpg' }));
-
-  assert.ok(adminHtml(state).includes('https://signed.test/adjunto'));
-  assert.ok(adminHtml(state).includes('Ver adjunto'));
-});
-
-test('B6-18: usuario NO recibe signed URL ni bloque de adjunto', async () => {
-  const state = baseState();
-  await runContact(state, baseBody({ attachment_path: 'contact/550e8400-e29b-41d4-a716-446655440000.jpg' }));
-
-  assert.ok(!userHtml(state).includes('signed.test'));
-  assert.ok(!userHtml(state).includes('Ver adjunto'));
-});
-
-test('B6-19: fallo al firmar no pierde el contacto', async () => {
+test('B6-sign-fail: fallo al firmar no pierde el contacto', async () => {
   const state = baseState({ signResults: [{ data: null, error: { message: 'sign down' } }] });
-  const res = await runContact(state, baseBody({ attachment_path: 'contact/550e8400-e29b-41d4-a716-446655440000.jpg' }));
+  const res = await runContact(state, baseBody({ attachment_path: VALID_PATH }));
 
   assert.equal(res.statusCode, 200);
   assert.equal(state.inserts.length, 1);

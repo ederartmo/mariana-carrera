@@ -727,9 +727,9 @@ function setupContactFormSubmission() {
 
     let attachmentPath = null;
     if (supportFile) {
-      // Batch 6 (rev): adjuntos al bucket PRIVADO contact-private.
-      // Sin getPublicUrl: el backend firma URL corta solo para el admin.
-      // Se envía attachment_path (validado server-side); attachment_url ya no se usa.
+      // Batch 6 (rev): contact-private SIN policies anon/auth. El browser
+      // NUNCA sube directo ni genera el path: pide upload firmado al backend
+      // (mismo endpoint, action) y usa uploadToSignedUrl con ese token.
       const storageHelper = window.KineticHubStorageUpload || null;
       const contactError = storageHelper
         ? storageHelper.validateUploadFile(supportFile, "contact")
@@ -742,14 +742,30 @@ function setupContactFormSubmission() {
         return;
       }
 
-      const contactExt = storageHelper.extensionForMime(supportFile.type, "contact");
-      const contactPath = storageHelper.buildContactObjectPath({
-        uploadId: storageHelper.newUploadId(),
-        ext: contactExt,
-      });
+      let uploadGrant = null;
+      try {
+        const grantResponse = await fetch(CONTACT_CONFIRM_ENDPOINT, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            action: "create_attachment_upload",
+            mime_type: supportFile.type,
+            size: supportFile.size,
+          }),
+        });
+        if (!grantResponse.ok) {
+          throw new Error("No se pudo preparar la subida.");
+        }
+        uploadGrant = await grantResponse.json();
+      } catch (_grantErr) {
+        statusNode.textContent = "No se pudo preparar la subida del archivo. Intenta de nuevo.";
+        statusNode.style.color = "#ff8a65";
+        resetSubmit(originalText);
+        return;
+      }
 
-      if (!contactPath) {
-        statusNode.textContent = "No se pudo preparar el archivo adjunto.";
+      if (!uploadGrant?.path || !uploadGrant?.token) {
+        statusNode.textContent = "No se pudo preparar la subida del archivo. Intenta de nuevo.";
         statusNode.style.color = "#ff8a65";
         resetSubmit(originalText);
         return;
@@ -757,7 +773,9 @@ function setupContactFormSubmission() {
 
       const { error: uploadError } = await client.storage
         .from(storageHelper.CONTACT_PRIVATE_BUCKET)
-        .upload(contactPath, supportFile, { upsert: false, contentType: supportFile.type });
+        .uploadToSignedUrl(uploadGrant.path, uploadGrant.token, supportFile, {
+          contentType: supportFile.type,
+        });
 
       if (uploadError) {
         statusNode.textContent = `No se pudo subir el archivo: ${uploadError.message || "error desconocido"}`;
@@ -766,7 +784,7 @@ function setupContactFormSubmission() {
         return;
       }
 
-      attachmentPath = contactPath;
+      attachmentPath = uploadGrant.path;
     }
 
     const confirmationSent = await sendContactConfirmation({

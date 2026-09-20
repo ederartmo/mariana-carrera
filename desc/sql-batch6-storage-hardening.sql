@@ -1,32 +1,36 @@
 -- desc/sql-batch6-storage-hardening.sql - Batch 6 (rev).
--- Estado REAL confirmado en producción (NO asumir docs viejos):
---   bucket contact-attachments: public=true, file_size_limit=NULL,
---     allowed_mime_types=NULL.
---   objetos: avatars=14, covers=8, contact=1 (+1 referencia externa legacy
---     en contact_messages, NO interna).
---   contact_messages: 13 filas, 2 con attachment_url (1 interna
---     contact-attachments/contact/..., 1 externa/legacy).
---   policies amplias: "Allow public upload contact attachments"
---     (INSERT anon+authenticated sin path), anon INSERT/SELECT contact/%,
---     public SELECT avatars/% covers/%, authenticated INSERT/UPDATE/DELETE
---     propios en avatars|covers/{uid}.
+-- Estado REAL confirmado en producción:
+--   bucket contact-attachments: public=true, sin límites ni MIME.
+--   objetos: avatars=14, covers=8, contact=1.
+--   contact_messages: 13 filas (1 attachment interno + 1 referencia externa).
+--   7 policies legacy a eliminar (nombres exactos abajo).
 --
--- Arquitectura final:
---   contact-attachments (PUBLIC, solo media de perfil) + contact-private
---   (PRIVADO, adjuntos contact/{uuid}.{ext}, solo signed URLs server-side).
--- NO ejecutar sin revisión humana en SQL Editor.
+-- REGLA: NO DML directo contra storage.buckets (lo administra Supabase).
+-- Buckets/límites se configuran por Dashboard o Storage API (ROLLOUT).
+-- Este SQL solo contiene: ALTER de contact_messages, DROPs/CREATEs de
+-- policies sobre storage.objects. NO ejecutar sin revisión humana.
+--
+-- ROLLOUT SIN DOWNTIME:
+--   PHASE 1 — PREDEPLOY (antes del merge): crear contact-private por
+--     Dashboard (private, 5MB, jpg/png/webp/pdf) + ALTER contact_messages
+--     (sección B0). NO tocar policies de contact-attachments todavía
+--     (main actual usa el flujo viejo).
+--   PHASE 2 — POSTDEPLOY (main Ready): configurar contact-attachments
+--     (public, 4MB, jpg/png/webp), aplicar secciones B1+B2, verificar con C,
+--     probar signed upload + contacto + avatar + cover.
+--   LEGACY (sección D): migrar el único objeto interno después del deploy.
 
 -- ============================================================
 -- SECCIÓN A — INSPECCIÓN (solo lectura). Re-ejecutar antes de B.
 -- ============================================================
 
--- A1. Buckets (esperado pre-B: solo contact-attachments público sin límites).
+-- A1. Buckets (esperado: contact-attachments público sin límites;
+-- contact-private privado 5MB con 4 MIME tras PREDEPLOY).
 select id, name, public, file_size_limit, allowed_mime_types
   from storage.buckets
  where id in ('contact-attachments', 'contact-private');
 
--- A2. Policies sobre storage.objects (anotar nombres EXACTOS, en especial
--- la policy DELETE propia de avatars/covers para el DROP de B3).
+-- A2. Policies sobre storage.objects (nombres exactos para los DROPs).
 select policyname, cmd, roles,
        qual as using_expr,
        with_check as with_check_expr
@@ -34,7 +38,7 @@ select policyname, cmd, roles,
  where schemaname = 'storage' and tablename = 'objects'
  order by cmd, policyname;
 
--- A3. Grants sobre storage.objects para anon/authenticated/service_role.
+-- A3. Grants sobre storage.objects.
 select grantee, privilege_type
   from information_schema.role_table_grants
  where table_schema = 'storage' and table_name = 'objects'
@@ -48,97 +52,92 @@ select split_part(name, '/', 1) as prefix, count(*) as objetos
  group by 1
  order by 2 desc;
 
--- A5. contact_messages con adjuntos (SOLO conteos + prefijos, sin URLs).
+-- A5. contact_messages: conteos + columnas (SIN URLs).
 select count(*) as total,
-       count(*) filter (where attachment_url is not null) as con_attachment_url
+       count(*) filter (where attachment_url is not null) as con_attachment_url,
+       count(*) filter (where attachment_path is not null) as con_attachment_path
   from public.contact_messages;
 
--- A6. Columnas de contact_messages (¿existe attachment_path?).
 select column_name, data_type
   from information_schema.columns
  where table_schema = 'public' and table_name = 'contact_messages'
  order by ordinal_position;
 
 -- ============================================================
--- SECCIÓN B — MIGRACIÓN (transaccional, re-ejecutable).
+-- SECCIÓN B0 — SCHEMA contact_messages (parte del rollout, PREDEPLOY).
+-- Las 13 filas actuales quedan intactas (columna nullable, sin default).
+-- ============================================================
+
+alter table public.contact_messages
+  add column if not exists attachment_path text;
+
+alter table public.contact_messages
+  drop constraint if exists contact_messages_attachment_path_chk;
+
+alter table public.contact_messages
+  add constraint contact_messages_attachment_path_chk
+  check (
+    attachment_path is null
+    or attachment_path ~ '^contact/[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}\.(jpg|png|webp|pdf)$'
+  );
+
+-- ============================================================
+-- SECCIÓN B1+B2 — POLICIES (transaccional, re-ejecutable, POSTDEPLOY).
+-- Dropea las 7 legacy (una amplia anularía el hardening) y crea solo
+-- las finales. contact-private queda SIN policies anon/auth: solo
+-- service_role (signed uploads/downloads).
 -- ============================================================
 
 begin;
 
--- B1. contact-attachments: público solo para media, con límites.
-update storage.buckets
-   set public = true,
-       file_size_limit = 4194304,
-       allowed_mime_types = array['image/jpeg', 'image/png', 'image/webp']
- where id = 'contact-attachments';
-
--- B2. contact-private: privado, 5MB, imágenes + PDF (idempotente).
-insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
-values ('contact-private', 'contact-private', false, 5242880,
-        array['image/jpeg', 'image/png', 'image/webp', 'application/pdf'])
-on conflict (id) do update
-   set public = excluded.public,
-       file_size_limit = excluded.file_size_limit,
-       allowed_mime_types = excluded.allowed_mime_types;
-
--- B3. Eliminar policies legacy amplias (nombres confirmados en producción).
+-- B1. Drops legacy (nombres exactos confirmados en producción).
+drop policy if exists "authenticated delete own avatars covers" on storage.objects;
 drop policy if exists "Allow public upload contact attachments" on storage.objects;
+drop policy if exists "authenticated upload own avatars covers" on storage.objects;
 drop policy if exists contact_attachments_insert_anon on storage.objects;
 drop policy if exists contact_attachments_select_anon on storage.objects;
--- DELETE propio de avatars/covers: confirmar nombre exacto en A2; si difiere,
--- sustituir la línea siguiente por el nombre real.
-drop policy if exists "authenticated delete own avatars covers" on storage.objects;
+drop policy if exists "public read avatars covers" on storage.objects;
+drop policy if exists "authenticated update own avatars covers" on storage.objects;
 
--- B4. Perfil en contact-attachments: INSERT solo propio (re-ejecutable).
+-- B2. Perfil: INSERT solo archivos exactos propios
+-- (avatars/{uid}/avatar.jpg|png|webp, covers/{uid}/cover.jpg|png|webp).
 drop policy if exists storage_profile_insert_own on storage.objects;
 create policy storage_profile_insert_own
   on storage.objects for insert to authenticated
   with check (
     bucket_id = 'contact-attachments'
-    and (name like 'avatars/' || auth.uid()::text || '/%'
-      or name like 'covers/' || auth.uid()::text || '/%')
+    and (name ~ ('^avatars/' || auth.uid()::text || '/avatar\.(jpg|png|webp)$')
+      or name ~ ('^covers/' || auth.uid()::text || '/cover\.(jpg|png|webp)$'))
   );
 
--- B5. Perfil: UPDATE solo propio (requerido por upsert=true).
+-- B3. Perfil: UPDATE mismo alcance (requerido por upsert=true).
 drop policy if exists storage_profile_update_own on storage.objects;
 create policy storage_profile_update_own
   on storage.objects for update to authenticated
   using (
     bucket_id = 'contact-attachments'
-    and (name like 'avatars/' || auth.uid()::text || '/%'
-      or name like 'covers/' || auth.uid()::text || '/%')
+    and (name ~ ('^avatars/' || auth.uid()::text || '/avatar\.(jpg|png|webp)$')
+      or name ~ ('^covers/' || auth.uid()::text || '/cover\.(jpg|png|webp)$'))
   )
   with check (
     bucket_id = 'contact-attachments'
-    and (name like 'avatars/' || auth.uid()::text || '/%'
-      or name like 'covers/' || auth.uid()::text || '/%')
+    and (name ~ ('^avatars/' || auth.uid()::text || '/avatar\.(jpg|png|webp)$')
+      or name ~ ('^covers/' || auth.uid()::text || '/cover\.(jpg|png|webp)$'))
   );
 
--- B6. Perfil: SELECT propio (soporte de upsert/lectura; el download público
--- del bucket NO depende de esta policy).
+-- B4. Perfil: SELECT propio (soporte de upsert/lectura; el download público
+-- del bucket NO depende de esta policy y NO hay list global).
 drop policy if exists storage_profile_select_own on storage.objects;
 create policy storage_profile_select_own
   on storage.objects for select to authenticated
   using (
     bucket_id = 'contact-attachments'
-    and (name like 'avatars/' || auth.uid()::text || '/%'
-      or name like 'covers/' || auth.uid()::text || '/%')
+    and (name ~ ('^avatars/' || auth.uid()::text || '/(avatar|cover)\.(jpg|png|webp)$')
+      or name ~ ('^covers/' || auth.uid()::text || '/(avatar|cover)\.(jpg|png|webp)$'))
   );
 
--- NOTA: si A2 muestra policies propias legacy con OTROS nombres y alcance
--- igual o mayor, dropearlas explícitamente tras comparar (no asumir).
--- Sin policy DELETE: el navegador no borra media.
-
--- B7. contact-private: SOLO INSERT (anon + authenticated), un nivel.
-drop policy if exists storage_contact_insert on storage.objects;
-create policy storage_contact_insert
-  on storage.objects for insert to anon, authenticated
-  with check (
-    bucket_id = 'contact-private'
-    and name like 'contact/%'
-    and name not like 'contact/%/%'
-  );
--- Sin SELECT/UPDATE/DELETE: solo service_role (backend) lee y firma.
+-- Sin policy DELETE: el navegador no borra media. Sin policy PUBLIC SELECT:
+-- el bucket ya es público y getPublicUrl funciona sin ella.
 
 commit;
 
@@ -146,43 +145,55 @@ commit;
 -- SECCIÓN C — VERIFICACIÓN (solo lectura).
 -- ============================================================
 
--- C1. Config de buckets.
--- select id, public, file_size_limit, allowed_mime_types
---   from storage.buckets where id in ('contact-attachments', 'contact-private');
--- Esperado: (true, 4MB, 3 MIME) y (false, 5MB, 4 MIME).
-
--- C2. Policies finales (sin "Allow public upload...", sin *_anon en
--- contact-attachments, sin DELETE propio; con storage_profile_* y
--- storage_contact_insert).
+-- C1. Policies finales: deben existir SOLO storage_profile_insert_own,
+-- storage_profile_update_own, storage_profile_select_own (+ las ajenas a
+-- este hardening que ya existieran para otros buckets, a comparar con A2).
 -- select policyname, cmd, roles from pg_policies
 --  where schemaname='storage' and tablename='objects' order by cmd, policyname;
 
--- C3. Pruebas funcionales desde la app (anon y usuario no-dueño):
---   upload fuera de prefijo → 403; overwrite ajeno → 403;
---   remove/list → 403; upload propio válido → 200;
---   contact anon válido → 200; contact-private download directo → 403.
+-- C2. Las 7 legacy ausentes (cero filas esperado).
+-- select policyname from pg_policies
+--  where schemaname='storage' and tablename='objects'
+--    and policyname in (
+--      'authenticated delete own avatars covers',
+--      'Allow public upload contact attachments',
+--      'authenticated upload own avatars covers',
+--      'contact_attachments_insert_anon',
+--      'contact_attachments_select_anon',
+--      'public read avatars covers',
+--      'authenticated update own avatars covers');
+
+-- C3. contact-private SIN policies anon/auth (cero filas esperado; solo
+-- service_role opera vía API con bypass).
+-- select policyname, cmd, roles from pg_policies
+--  where schemaname='storage' and tablename='objects'
+--    and (qual ilike '%contact-private%' or with_check ilike '%contact-private%');
+
+-- C4. contact_messages con columna + CHECK.
+-- select column_name from information_schema.columns
+--  where table_schema='public' and table_name='contact_messages'
+--    and column_name='attachment_path';
+-- select conname, pg_get_constraintdef(oid) from pg_constraint
+--  where conrelid='public.contact_messages'::regclass
+--    and conname='contact_messages_attachment_path_chk';
+
+-- C5. Pruebas funcionales desde la app: signed upload contact OK,
+-- contacto completo OK, avatar/cover propios OK, upload ajeno → 403,
+-- download directo contact-private → 403, remove/list → 403.
 
 -- ============================================================
--- SECCIÓN D — PLAN LEGACY + CONTACT_MESSAGES (documentación, NO ejecutar).
+-- SECCIÓN D — LEGACY (documentación, NO ejecutar aquí).
 -- ============================================================
 
 -- D1. El objeto legacy contact-attachments/contact/... y su fila
--- contact_messages (la que apunta al path INTERNO) se migran DESPUÉS de B:
---   a) Identificar fila: select id FROM contact_messages
---      WHERE attachment_url LIKE 'contact-attachments/contact/%' (mostrar
---      SOLO id + prefijo, nunca la URL completa en salidas compartidas).
---   b) Identificar objeto exacto en storage.objects por name.
---   c) COPIAR bytes vía Storage API o dashboard (SQL NO mueve binarios):
---      descargar objeto legacy y subirlo a
---      contact-private/contact/<nuevo-uuid>.<ext>.
---   d) update contact_messages set attachment_path = '<nuevo path>'
---      where id = '<id>' (SOLO esa fila; la referencia externa legacy
---      NO se toca).
---   e) Verificar y recién entonces borrar el objeto legacy.
--- Sin Admin API a mano: hacer c) manual vía dashboard Supabase.
-
--- D2. Columna attachment_path (propuesta, NO aplicada):
--- ALTER TABLE public.contact_messages
---   ADD COLUMN IF NOT EXISTS attachment_path text;
--- El backend ya la usa si existe (reintento sin ella si falta); las filas
--- nuevas llevan attachment_url = NULL y las 13 históricas no se tocan.
+-- contact_messages (la del path INTERNO) se migran DESPUÉS del deploy:
+--   a) select id FROM contact_messages WHERE attachment_url LIKE
+--      'contact-attachments/contact/%' (mostrar SOLO id+prefijo).
+--   b) Localizar objeto exacto en storage.objects por name.
+--   c) COPIAR bytes vía Storage API/Dashboard a
+--      contact-private/contact/<nuevo-uuid>.<ext> (SQL NO mueve binarios).
+--   d) update contact_messages set attachment_path='<nuevo path>'
+--      where id='<id>' (SOLO esa fila; la referencia externa NO se toca;
+--      attachment_url legacy se preserva mientras se verifica).
+--   e) Verificado el acceso vía signed URL, borrar el objeto viejo vía
+--      Storage API/Dashboard.

@@ -95,35 +95,6 @@ function buildProfileObjectPath({ type, userId, ext }) {
   return `${cleanType}s/${userId}/${cleanType}.${ext}`;
 }
 
-// contact/{uuid}.{ext}. El nombre original NUNCA controla el path.
-function buildContactObjectPath({ uploadId, ext }) {
-  if (!isSafePathSegment(uploadId)) return null;
-  if (!isSafePathSegment(ext)) return null;
-  return `contact/${uploadId}.${ext}`;
-}
-
-// UUID no predecible. crypto.randomUUID() primero; si no existe,
-// UUIDv4 con crypto.getRandomValues; si tampoco existe: FAIL CLOSED.
-// Nunca generadores débiles ni timestamps para IDs de Storage.
-function randomUuidV4() {
-  const bytes = new Uint8Array(16);
-  crypto.getRandomValues(bytes);
-  bytes[6] = (bytes[6] & 0x0f) | 0x40;
-  bytes[8] = (bytes[8] & 0x3f) | 0x80;
-  const hex = [...bytes].map((b) => b.toString(16).padStart(2, '0')).join('');
-  return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20)}`;
-}
-
-function newUploadId() {
-  if (typeof crypto !== 'undefined' && crypto.randomUUID) {
-    return crypto.randomUUID();
-  }
-  if (typeof crypto !== 'undefined' && crypto.getRandomValues) {
-    return randomUuidV4();
-  }
-  throw new Error('Sin fuente aleatoria segura para IDs de Storage.');
-}
-
 const catalog = {
   PROFILE_MEDIA_BUCKET,
   CONTACT_PRIVATE_BUCKET,
@@ -135,8 +106,6 @@ const catalog = {
   validateUploadFile,
   isSafePathSegment,
   buildProfileObjectPath,
-  buildContactObjectPath,
-  newUploadId,
 };
 
 if (typeof module !== 'undefined' && module.exports) {

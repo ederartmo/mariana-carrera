@@ -1,5 +1,6 @@
 const { Resend } = require('resend');
 const { createClient } = require('@supabase/supabase-js');
+const { randomUUID } = require('crypto');
 const { trackMetaEvent } = require('../lib/_meta-capi');
 
 const resendApiKey = process.env.RESEND_API_KEY;
@@ -8,12 +9,20 @@ const fromEmail = process.env.CONTACT_FROM_EMAIL || 'Kinetic Hub <no-reply@kinet
 const supabaseUrl = process.env.SUPABASE_URL;
 const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
-// Batch 6 (rev): adjuntos viven en bucket PRIVADO contact-private.
-// El browser envía attachment_path (contact/<uuid>.<ext>); NUNCA se acepta
-// attachment_url ni URLs arbitrarias. Solo service_role firma URLs cortas.
+// Batch 6 (rev): contact-private es PRIVADO sin policies anon/auth.
+// El browser NUNCA sube directo: pide upload firmado al backend
+// (action=create_attachment_upload) y luego usa uploadToSignedUrl.
+// El submit final exige UUIDv4 real generado server-side.
 const CONTACT_PRIVATE_BUCKET = 'contact-private';
 const CONTACT_SIGNED_URL_TTL_SECONDS = 3600;
-const ATTACHMENT_PATH_RE = /^contact\/[A-Za-z0-9_-]+\.(jpg|png|webp|pdf)$/;
+const CONTACT_UPLOAD_MAX_BYTES = 5 * 1024 * 1024;
+const CONTACT_MIME_EXTENSIONS = {
+  'image/jpeg': 'jpg',
+  'image/png': 'png',
+  'image/webp': 'webp',
+  'application/pdf': 'pdf',
+};
+const ATTACHMENT_PATH_RE = /^contact\/[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}\.(jpg|png|webp|pdf)$/;
 const MAX_ATTACHMENT_PATH_LENGTH = 200;
 
 function isValidAttachmentPath(value) {
@@ -21,6 +30,69 @@ function isValidAttachmentPath(value) {
     && value.length > 0
     && value.length <= MAX_ATTACHMENT_PATH_LENGTH
     && ATTACHMENT_PATH_RE.test(value);
+}
+
+function isValidUploadMime(value) {
+  const clean = String(value || '').trim().toLowerCase();
+  return Object.prototype.hasOwnProperty.call(CONTACT_MIME_EXTENSIONS, clean)
+    ? clean
+    : null;
+}
+
+// Modo upload intent: valida MIME+size, genera path server-side y devuelve
+// { path, token } para uploadToSignedUrl. Nunca acepta path del browser.
+async function handleUploadIntent(req, res, supabase) {
+  const { mime_type, size } = req.body || {};
+  const cleanMime = isValidUploadMime(mime_type);
+
+  if (!cleanMime) {
+    return res.status(400).json({ error: 'Tipo de archivo no permitido' });
+  }
+
+  const byteSize = Number(size);
+  if (!Number.isFinite(byteSize) || byteSize <= 0 || byteSize > CONTACT_UPLOAD_MAX_BYTES) {
+    return res.status(400).json({ error: 'Tamaño de archivo inválido' });
+  }
+
+  if (!supabase) {
+    return res.status(500).json({ error: 'Almacenamiento no disponible' });
+  }
+
+  let uploadId;
+  try {
+    uploadId = randomUUID();
+  } catch (error) {
+    console.error('Error generando UUID de adjunto:', error?.message || error);
+    return res.status(500).json({ error: 'No se pudo preparar la subida' });
+  }
+
+  const objectPath = `contact/${uploadId}.${CONTACT_MIME_EXTENSIONS[cleanMime]}`;
+
+  try {
+    const { data, error } = await supabase.storage
+      .from(CONTACT_PRIVATE_BUCKET)
+      .createSignedUploadUrl(objectPath, { upsert: false });
+
+    if (error || !data?.signedUrl) {
+      throw new Error(error?.message || 'sin signedUrl');
+    }
+
+    let token = null;
+    try {
+      token = new URL(data.signedUrl).searchParams.get('token');
+    } catch (parseError) {
+      token = null;
+    }
+
+    if (!token) {
+      throw new Error('token de subida ausente');
+    }
+
+    return res.status(200).json({ path: objectPath, token });
+  } catch (error) {
+    console.error('Error creando upload firmado de contacto:', error?.message || error);
+    return res.status(500).json({ error: 'No se pudo preparar la subida' });
+  }
 }
 
 function sanitize(value) {
@@ -74,6 +146,11 @@ module.exports = async function handler(req, res) {
     supabaseUrl && supabaseServiceRoleKey
       ? createClient(supabaseUrl, supabaseServiceRoleKey)
       : null;
+
+  // Modo firmado: NO requiere Resend; solo prepara la subida privada.
+  if (req.body && req.body.action === 'create_attachment_upload') {
+    return handleUploadIntent(req, res, supabase);
+  }
 
   try {
     const {
@@ -140,10 +217,10 @@ module.exports = async function handler(req, res) {
     }
 
     if (supabase) {
-      // attachment_path preferido; attachment_url legacy queda null en filas
-      // nuevas. Si la columna aún no existe (migración pendiente), reintentar
-      // sin ella para no perder el mensaje.
-      const baseRow = {
+      // attachment_path es UUIDv4 server-side (columna parte del rollout).
+      // attachment_url legacy queda NULL en filas nuevas; las 13 históricas
+      // no se tocan. Sin fallback: si el insert falla, 500 fail closed.
+      const { error: insertError } = await supabase.from('contact_messages').insert({
         event_slug: cleanEvent,
         reason: cleanReason,
         full_name: cleanName,
@@ -152,20 +229,11 @@ module.exports = async function handler(req, res) {
         subject: cleanSubject,
         message: cleanMessage,
         attachment_url: null,
-      };
-
-      let insertResult = await supabase.from('contact_messages').insert({
-        ...baseRow,
         attachment_path: hasAttachment ? cleanAttachmentPath : null,
       });
 
-      if (insertResult.error && /attachment_path/i.test(insertResult.error.message || '')) {
-        console.warn('contact_messages sin columna attachment_path; guardando sin path');
-        insertResult = await supabase.from('contact_messages').insert(baseRow);
-      }
-
-      if (insertResult.error) {
-        console.error('Error insert contact_messages desde backend:', insertResult.error);
+      if (insertError) {
+        console.error('Error insert contact_messages desde backend:', insertError);
         return res.status(500).json({ error: 'No se pudo guardar el mensaje de contacto' });
       }
     }
