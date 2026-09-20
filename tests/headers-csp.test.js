@@ -76,7 +76,7 @@ test('B8-csp: sin comodines ni eval', () => {
   assert.ok(!/(^|[\s;])\*(;|$)/.test(policy), 'sin wildcard *');
   const wildcards = policy.match(/\*\.[\w.-]+/g) || [];
   assert.deepEqual(wildcards, ['*.supabase.co'], 'único wildcard: subdominio supabase auditado');
-  assert.ok(!policy.includes('https:'), 'sin esquema https: abierto');
+  assert.ok(!/(^|[\s;])https:(;|$|\s)/.test(policy), 'sin esquema https: abierto como source');
   assert.ok(!policy.includes('unsafe-eval'), 'sin unsafe-eval');
 });
 
