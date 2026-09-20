@@ -4,6 +4,11 @@
 // Frontend (script.js panel checkout, admin-inscripciones.html) NO duplica listas;
 // tests de paridad fallan si divergen.
 
+// Todo el código vive dentro de esta IIFE: ningún const/let/function interno
+// contamina el global scope del navegador cuando se combina con otros helpers.
+(function () {
+'use strict';
+
 const STATES = [
   'Aguascalientes',
   'Baja California',
@@ -157,3 +162,4 @@ if (typeof module !== 'undefined' && module.exports) {
 if (typeof globalThis !== 'undefined' && globalThis.window) {
   globalThis.window.KineticHubLocationCatalog = catalog;
 }
+})();

@@ -8,6 +8,11 @@
 // se descarta aquí Y debe denegarse además en DB (ver
 // desc/sql-batch5-user-profiles-hardening.sql): RLS limita FILAS, no columnas.
 
+// Todo el código vive dentro de esta IIFE: ningún const/let interno contamina
+// el global scope del navegador cuando se combina con otros helpers.
+(function () {
+'use strict';
+
 const PROFILE_WRITABLE_FIELDS = [
   'user_id',
   'email',
@@ -58,3 +63,4 @@ if (typeof module !== 'undefined' && module.exports) {
 if (typeof globalThis !== 'undefined' && globalThis.window) {
   globalThis.window.KineticHubProfileFields = catalog;
 }
+})();
