@@ -36,6 +36,7 @@ src="https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1"
 /></noscript>
 <!-- End Meta Pixel Code -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="supabase-client.js?v=__ASSET_VERSION__"></script>
   <script>
     const CHECKOUT_EMAIL_KEY = 'kinetic_checkout_email';
     const CHECKOUT_SESSION_KEY = 'kinetic_checkout_session_id';
@@ -293,8 +294,9 @@ src="https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1"
           completeProfileLink.onclick = async (e) => {
             e.preventDefault();
             try {
-              if (typeof window.supabase !== "undefined") {
-                const client = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+              const helper = window.KineticHubSupabase || null;
+              const client = helper && typeof helper.getClient === "function" ? helper.getClient() : null;
+              if (client) {
                 const { data: { session } } = await client.auth.getSession();
                 
                 if (session && checkoutEmail) {

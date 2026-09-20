@@ -14,7 +14,7 @@
       href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Sora:wght@500;600;700;800&display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="styles.min.css?v=1789871681187" />
+    <link rel="stylesheet" href="styles.min.css?v=1789883088942" />
     <link rel="icon" type="image/png" href="assets/brand/icon.png" />
   <!-- Meta Pixel Code -->
 <script>
@@ -30,7 +30,7 @@ fbq('init', '917340277990899');
 fbq('track', 'PageView');
 </script>
 </head>
-  <body class="profile-page" data-profile-page>
+  <body class="profile-page profile-is-loading" data-profile-page>
 <noscript><img height="1" width="1" style="display:none"
 src="https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1"
 /></noscript>
@@ -75,8 +75,13 @@ src="https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1"
       </div>
     </section>
 
+    <!-- Estado neutro mientras se valida la sesión (Batch 9: sin placeholders) -->
+    <div class="profile-loading" id="profileLoading" aria-live="polite" style="text-align:center;padding:48px 20px;color:#888;">
+      Cargando perfil…
+    </div>
+
     <!-- COVER BANNER con identidad integrada -->
-    <div class="profile-cover" id="profileCover">
+    <div class="profile-cover" id="profileCover" hidden>
       <label class="profile-cover-btn" for="coverUpload">
         <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
           <path
@@ -129,18 +134,18 @@ src="https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1"
           <input type="file" id="avatarUpload" accept="image/*" class="profile-file-hidden" />
         </div>
         <div class="profile-ident-info">
-          <span class="profile-username">Nombre de usuario</span>
-          <span class="profile-ident-meta">correo@ejemplo.com</span>
-          <span class="profile-ident-meta">55 0000 0000</span>
+          <span class="profile-username"></span>
+          <span class="profile-ident-meta"></span>
+          <span class="profile-ident-meta"></span>
           <span class="profile-ident-meta">
-            Número de corredor: <strong data-bib-number>---</strong>
+            Número de corredor: <strong data-bib-number></strong>
           </span>
         </div>
       </div>
     </div>
 
       <!-- TWO-COLUMN LAYOUT -->
-      <div class="profile-layout">
+      <div class="profile-layout" id="profileLayout" hidden>
 
         <!-- SIDEBAR NAV -->
         <aside class="profile-sidebar">
@@ -427,8 +432,9 @@ src="https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1"
     </footer>
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="profile-fields.js?v=1789871681187"></script>
-    <script src="storage-upload.js?v=1789871681187"></script>
-    <script src="script.min.js?v=1789871681187"></script>
+    <script src="profile-fields.js?v=1789883088942"></script>
+    <script src="storage-upload.js?v=1789883088942"></script>
+    <script src="supabase-client.js?v=1789883088942"></script>
+    <script src="script.min.js?v=1789883088942"></script>
   </body>
 </html>

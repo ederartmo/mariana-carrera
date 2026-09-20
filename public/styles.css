@@ -5881,6 +5881,14 @@ body[data-page="series"] .page-hero .container {
   align-items: start;
 }
 
+/* --- Batch 9 hotfix: fail-closed mientras carga el perfil ---
+   [hidden] solo NO oculta .profile-layout (display:grid del autor vence la
+   regla UA). Estas reglas garantizan shell invisible hasta el reveal. */
+.profile-is-loading #profileCover,
+.profile-is-loading #profileLayout {
+  display: none !important;
+}
+
 /* --- Sidebar --- */
 .profile-sidebar {
   background: #111827;
