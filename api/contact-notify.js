@@ -137,11 +137,6 @@ module.exports = async function handler(req, res) {
     return res.status(405).json({ message: 'Metodo no permitido' });
   }
 
-  if (!resendApiKey) {
-    return res.status(500).json({ error: 'Falta RESEND_API_KEY en variables de entorno' });
-  }
-
-  const resend = new Resend(resendApiKey);
   const supabase =
     supabaseUrl && supabaseServiceRoleKey
       ? createClient(supabaseUrl, supabaseServiceRoleKey)
@@ -151,6 +146,13 @@ module.exports = async function handler(req, res) {
   if (req.body && req.body.action === 'create_attachment_upload') {
     return handleUploadIntent(req, res, supabase);
   }
+
+  // Submission normal: aquí sí se exige Resend.
+  if (!resendApiKey) {
+    return res.status(500).json({ error: 'Falta RESEND_API_KEY en variables de entorno' });
+  }
+
+  const resend = new Resend(resendApiKey);
 
   try {
     const {

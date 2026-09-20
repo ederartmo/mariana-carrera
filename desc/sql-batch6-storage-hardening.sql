@@ -125,15 +125,15 @@ create policy storage_profile_update_own
       or name ~ ('^covers/' || auth.uid()::text || '/cover\.(jpg|png|webp)$'))
   );
 
--- B4. Perfil: SELECT propio (soporte de upsert/lectura; el download público
--- del bucket NO depende de esta policy y NO hay list global).
+-- B4. Perfil: SELECT propio con filenames EXACTOS (igual que INSERT/UPDATE:
+-- avatars/{uid}/avatar.* y covers/{uid}/cover.* — nunca cruzados).
 drop policy if exists storage_profile_select_own on storage.objects;
 create policy storage_profile_select_own
   on storage.objects for select to authenticated
   using (
     bucket_id = 'contact-attachments'
-    and (name ~ ('^avatars/' || auth.uid()::text || '/(avatar|cover)\.(jpg|png|webp)$')
-      or name ~ ('^covers/' || auth.uid()::text || '/(avatar|cover)\.(jpg|png|webp)$'))
+    and (name ~ ('^avatars/' || auth.uid()::text || '/avatar\.(jpg|png|webp)$')
+      or name ~ ('^covers/' || auth.uid()::text || '/cover\.(jpg|png|webp)$'))
   );
 
 -- Sin policy DELETE: el navegador no borra media. Sin policy PUBLIC SELECT:

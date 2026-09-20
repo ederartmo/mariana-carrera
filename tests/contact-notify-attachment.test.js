@@ -43,7 +43,7 @@ function baseBody(overrides = {}) {
   };
 }
 
-async function runContact(state, body) {
+async function runContact(state, body, options = {}) {
   const restoreResend = mockModule('resend', {
     Resend: class {
       constructor() {
@@ -90,12 +90,15 @@ async function runContact(state, body) {
     trackMetaEvent: async () => ({ ok: true }),
   });
   delete require.cache[HANDLER_PATH];
+  const savedResendKey = process.env.RESEND_API_KEY;
+  if (options.withoutResendKey) delete process.env.RESEND_API_KEY;
   try {
     const handler = require(HANDLER_PATH);
     const res = createRes();
     await handler({ method: 'POST', headers: {}, body }, res);
     return res;
   } finally {
+    if (options.withoutResendKey) process.env.RESEND_API_KEY = savedResendKey;
     delete require.cache[HANDLER_PATH];
     restoreMeta();
     restoreSupabase();
@@ -149,6 +152,26 @@ test('B6-upload-3: tamaño >5MB rechazado', async () => {
 
   assert.equal(res.statusCode, 400);
   assert.equal(state.signedUploadCalls.length, 0);
+});
+
+test('B6-upload-intent-sin-resend: funciona sin RESEND_API_KEY', async () => {
+  const state = baseState();
+  const res = await runContact(
+    state,
+    { action: 'create_attachment_upload', mime_type: 'image/png', size: 1000 },
+    { withoutResendKey: true }
+  );
+
+  assert.equal(res.statusCode, 200);
+  assert.ok(res.body.path && res.body.token);
+});
+
+test('B6-submit-sin-resend: submission normal sigue exigiendo RESEND_API_KEY', async () => {
+  const state = baseState();
+  const res = await runContact(state, baseBody({}), { withoutResendKey: true });
+
+  assert.equal(res.statusCode, 500);
+  assert.equal(state.inserts.length, 0);
 });
 
 test('B6-upload-4: browser no controla el path', async () => {

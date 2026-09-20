@@ -127,6 +127,14 @@ test('B6-sql: sin DML a buckets ni INSERT anon en contact-private', () => {
   assert.ok(!/contact-private[^;]*for\s+insert\s+to\s+(anon|authenticated)/i.test(body), 'sin INSERT anon/auth en privado');
 });
 
+test('B6-sql-select-exacto: sin paths cruzados avatar/cover', () => {
+  const sql = fs.readFileSync(path.join(projectRoot, 'desc', 'sql-batch6-storage-hardening.sql'), 'utf8');
+  const selectBlock = sql.slice(sql.indexOf('storage_profile_select_own'));
+  assert.ok(selectBlock.includes("/avatar\\.(jpg|png|webp)$"), 'avatar exacto');
+  assert.ok(selectBlock.includes("/cover\\.(jpg|png|webp)$"), 'cover exacto');
+  assert.ok(!selectBlock.includes('(avatar|cover)'), 'sin alternancia cruzada');
+});
+
 test('B6-sql: profile con filename exacto + ALTER contact_messages', () => {
   const sql = fs.readFileSync(path.join(projectRoot, 'desc', 'sql-batch6-storage-hardening.sql'), 'utf8');
   assert.ok(sql.includes('/avatar\\.(jpg|png|webp)$'), 'regex exacta avatar');
