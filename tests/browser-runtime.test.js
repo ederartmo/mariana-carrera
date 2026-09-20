@@ -99,3 +99,49 @@ test('B9-tags: helper cargado donde se usa Supabase browser', () => {
     assert.match(html, /<script src="supabase-client\.js\?v=__ASSET_VERSION__"><\/script>/, page);
   }
 });
+
+test('B9-flash-1: body inicia en estado loading explícito', () => {
+  const html = readSource('perfil.html');
+  assert.match(html, /<body class="profile-page profile-is-loading"/);
+  assert.match(html, /id="profileLoading"/);
+});
+
+test('B9-flash-2: CSS fail-closed con display:none !important', () => {
+  const css = readSource('styles.css');
+  assert.ok(css.includes('.profile-is-loading #profileCover'), 'cubre cover');
+  assert.ok(css.includes('.profile-is-loading #profileLayout'), 'cubre layout');
+  const start = css.indexOf('.profile-is-loading #profileCover');
+  assert.ok(css.slice(start, start + 300).includes('display: none !important'), '!important presente');
+});
+
+test('B9-flash-3: sin placeholders falsos de identidad', () => {
+  const html = readSource('perfil.html');
+  const identBlock = html.slice(html.indexOf('profile-ident-info'), html.indexOf('profile-ident-info') + 600);
+  assert.ok(!identBlock.includes('Nombre de usuario'), 'sin nombre falso');
+  assert.ok(!identBlock.includes('correo@ejemplo.com'), 'sin email falso');
+  assert.ok(!identBlock.includes('55 0000 0000'), 'sin teléfono falso');
+});
+
+test('B9-flash-4/5: reveal tras hidratación avatar/cover y setReadOnlyMode', () => {
+  const script = readSource('script.js');
+  const revealCall = 'revealAuthenticatedProfile();';
+  assert.equal(script.split(revealCall).length - 1, 1, 'un solo reveal');
+  const revealPos = script.indexOf(revealCall);
+  assert.ok(script.indexOf('applyAvatarVisual(currentProfile.avatar_url)') !== -1, 'hidrata avatar');
+  assert.ok(script.indexOf('applyCoverVisual(currentProfile.cover_url)') !== -1, 'hidrata cover');
+  const readonlyIdx = script.search(/setReadOnlyMode\(currentProfile\);\s+\/\/ Batch 9 hotfix/);
+  const revealPos = script.indexOf(revealCall);
+  assert.ok(readonlyIdx !== -1 && readonlyIdx < revealPos, 'reveal después de setReadOnlyMode');
+});
+
+test('B9-flash-6: redirect sin sesión jamás revela shell', () => {
+  const script = readSource('script.js');
+  assert.ok(script.includes('window.location.replace("auth.html?mode=login")'), 'redirect intacto');
+  assert.ok(script.includes("No pudimos cargar tu perfil"), 'error neutro sin exponer shell');
+});
+
+test('B9-flash-7: carreras cargan async con estado propio', () => {
+  const script = readSource('script.js');
+  assert.ok(script.includes('Cargando tus carreras'), 'estado de carga propio');
+  assert.ok(script.includes('loadUserInscriptions()'), 'carga async preservada');
+});

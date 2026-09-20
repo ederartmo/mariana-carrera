@@ -2872,12 +2872,15 @@ function setupSupabase() {
         const profileLayout = document.getElementById("profileLayout");
         const profileLoading = document.getElementById("profileLoading");
 
-        // Batch 9: el shell autenticado inicia oculto (ver perfil.html);
-        // solo se revela con sesión válida y datos iniciales aplicados.
+        // Batch 9 hotfix: revelar SOLO tras hidratación completa (header,
+        // cover/avatar, formulario en solo-lectura). Nunca antes.
         const revealAuthenticatedProfile = () => {
           if (profileLoading) profileLoading.hidden = true;
           if (profileCover) profileCover.hidden = false;
           if (profileLayout) profileLayout.hidden = false;
+          if (typeof document !== "undefined" && document.body) {
+            document.body.classList.remove("profile-is-loading");
+          }
         };
         const coverAdjustToggle = document.getElementById("coverAdjustToggle");
         const avatarUpload = document.getElementById("avatarUpload");
@@ -3320,9 +3323,6 @@ function setupSupabase() {
 
         applyHeader(currentProfile);
 
-        // Batch 9: revelar UI autenticada solo con sesión válida y datos
-        // iniciales listos (nunca placeholders antes de validar).
-        revealAuthenticatedProfile();
 
         let currentCoverPosition = readCoverPosition();
         const coverPositionFromTable = await readCoverPositionFromTable();
@@ -3996,6 +3996,10 @@ function setupSupabase() {
         let isEditing = false;
         setReadOnlyMode(currentProfile);
 
+        // Batch 9 hotfix: reveal tras header + cover/avatar + solo-lectura.
+        // "Mis carreras" sigue cargando async con su propio estado.
+        revealAuthenticatedProfile();
+
         if (profileForm) {
           profileForm.addEventListener("submit", async (event) => {
             event.preventDefault();
@@ -4132,6 +4136,13 @@ function setupSupabase() {
             changePasswordForm.reset();
             showChangePasswordStatus("Contraseña actualizada correctamente.");
           });
+        }
+      }).catch(() => {
+        // Error de inicialización: jamás exponer el shell; mostrar error neutro.
+        const loader = document.getElementById("profileLoading");
+        if (loader) {
+          loader.hidden = false;
+          loader.textContent = "No pudimos cargar tu perfil. Recarga la página o inicia sesión de nuevo.";
         }
       });
 
