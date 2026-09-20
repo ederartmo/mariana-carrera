@@ -13,6 +13,7 @@ process.env.STRIPE_WEBHOOK_SECRET = process.env.STRIPE_WEBHOOK_SECRET || 'whsec_
 process.env.RESEND_API_KEY = process.env.RESEND_API_KEY || 're_mock';
 process.env.SUPABASE_URL = process.env.SUPABASE_URL || 'https://example.supabase.co';
 process.env.SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || 'mock-service-role-key';
+process.env.RATE_LIMIT_SECRET = process.env.RATE_LIMIT_SECRET || 'test-only-rate-limit-secret-0123456789';
 process.env.CHECKOUT_SUMMARY_SECRET = process.env.CHECKOUT_SUMMARY_SECRET || 'test-only-checkout-summary-secret-0123456789';
 process.env.ADMIN_EMAILS = 'admin@example.com';
 
@@ -181,6 +182,7 @@ async function postCheckout(shirtSize) {
     }));
     const restoreSupabase = mockModule('@supabase/supabase-js', {
       createClient: () => ({
+        rpc: async () => ({ data: [{ allowed: true, remaining: 9, retry_after_seconds: 0 }], error: null }),
         from: () => ({
           upsert: async (payload) => {
             upserts.push(payload);

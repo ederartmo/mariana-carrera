@@ -5,6 +5,7 @@ const test = require('node:test');
 const vm = require('node:vm');
 
 process.env.STRIPE_SECRET_KEY = process.env.STRIPE_SECRET_KEY || 'sk_test_mock';
+process.env.RATE_LIMIT_SECRET = process.env.RATE_LIMIT_SECRET || 'test-only-rate-limit-secret-0123456789';
 process.env.SUPABASE_URL = process.env.SUPABASE_URL || 'https://example.supabase.co';
 process.env.SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || 'mock-service-role-key';
 process.env.CHECKOUT_SUMMARY_SECRET = process.env.CHECKOUT_SUMMARY_SECRET || 'test-only-checkout-summary-secret-0123456789';
@@ -126,6 +127,7 @@ async function createCheckoutSessionPayload(body, {
     }));
     const restoreSupabase = mockModule('@supabase/supabase-js', {
       createClient: () => ({
+        rpc: async () => ({ data: [{ allowed: true, remaining: 29, retry_after_seconds: 0 }], error: null }),
         from: () => ({
           upsert: async (payload) => {
             upserts.push(payload);
@@ -297,6 +299,7 @@ test('create-checkout-session calculates Cascanueces $450 on September 1 Mexico 
     }));
     const restoreSupabase = mockModule('@supabase/supabase-js', {
       createClient: () => ({
+        rpc: async () => ({ data: [{ allowed: true, remaining: 29, retry_after_seconds: 0 }], error: null }),
         from: () => ({
           upsert: async () => ({ data: null, error: null }),
         }),
@@ -400,6 +403,11 @@ test('validate-promo-code uses Cascanueces current price when eventSlug is casca
         };
       },
     });
+    const restoreSupabase = mockModule('@supabase/supabase-js', {
+      createClient: () => ({
+        rpc: async () => ({ data: [{ allowed: true, remaining: 29, retry_after_seconds: 0 }], error: null }),
+      }),
+    });
     delete require.cache[require.resolve('../api/validate-promo-code')];
 
     try {
@@ -407,6 +415,7 @@ test('validate-promo-code uses Cascanueces current price when eventSlug is casca
       const res = createJsonRes();
       await handler({
         method: 'POST',
+        headers: {},
         body: {
           promoCode: 'PROMO10',
           ticketCount: 1,
@@ -420,6 +429,7 @@ test('validate-promo-code uses Cascanueces current price when eventSlug is casca
       assert.equal(res.body.subtotalAmount, 450);
     } finally {
       delete require.cache[require.resolve('../api/validate-promo-code')];
+      restoreSupabase();
       restorePromo();
     }
   });

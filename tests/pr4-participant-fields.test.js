@@ -10,6 +10,7 @@ const test = require('node:test');
 const { Readable } = require('node:stream');
 
 process.env.STRIPE_SECRET_KEY = process.env.STRIPE_SECRET_KEY || 'sk_test_mock';
+process.env.RATE_LIMIT_SECRET = process.env.RATE_LIMIT_SECRET || 'test-only-rate-limit-secret-0123456789';
 process.env.STRIPE_WEBHOOK_SECRET = process.env.STRIPE_WEBHOOK_SECRET || 'whsec_mock';
 process.env.RESEND_API_KEY = process.env.RESEND_API_KEY || 're_mock';
 process.env.SUPABASE_URL = process.env.SUPABASE_URL || 'https://example.supabase.co';
@@ -175,7 +176,10 @@ async function postCheckoutPR4(tickets) {
     checkout: { sessions: { create: async (p) => { createdSessions.push(p); return { id: 'cs_pr4', url: 'https://checkout.test/cs_pr4' }; }, expire: async () => ({}) } },
   }));
   const restoreSupabase = mockModule('@supabase/supabase-js', {
-    createClient: () => ({ from: () => ({ upsert: async (payload) => { upserts.push(payload); return { data: null, error: null }; } }) }),
+    createClient: () => ({
+      rpc: async () => ({ data: [{ allowed: true, remaining: 9, retry_after_seconds: 0 }], error: null }),
+      from: () => ({ upsert: async (payload) => { upserts.push(payload); return { data: null, error: null }; } }),
+    }),
   });
   const restorePromo = mockModule('../lib/_stripe-promo', { resolvePromotionCode: async () => ({ cleanCode: '', preview: null }) });
   const restoreMeta = mockModule('../lib/_meta-capi', { trackMetaEvent: async () => ({ ok: true }) });

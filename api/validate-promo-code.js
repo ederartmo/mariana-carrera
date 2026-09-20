@@ -1,6 +1,7 @@
 const { getAxoloteStageByDate } = require('../axolote-stage-config');
 const { getCascanuecesStageByDate } = require('../cascanueces-stage-config');
 const { resolvePromotionCode } = require('../lib/_stripe-promo');
+const { enforceRateLimit } = require('../lib/_rate-limit');
 
 const MAX_TICKETS_PER_ORDER = 5;
 
@@ -31,6 +32,14 @@ module.exports = async function handler(req, res) {
   }
 
   try {
+    // Rate limit ANTES de consultar Stripe (lookup con costo externo).
+    const blocked = await enforceRateLimit(req, res, {
+      scope: 'promo-ip',
+      limit: 30,
+      windowSeconds: 300,
+    });
+    if (blocked) return blocked;
+
     const { promoCode, ticketCount, eventSlug = 'axolote-night-run' } = req.body || {};
     const quantity = Number.parseInt(String(ticketCount || '1'), 10);
 

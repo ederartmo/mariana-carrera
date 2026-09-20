@@ -2,6 +2,7 @@ const { Resend } = require('resend');
 const { createClient } = require('@supabase/supabase-js');
 const { randomUUID } = require('crypto');
 const { trackMetaEvent } = require('../lib/_meta-capi');
+const { enforceRateLimit } = require('../lib/_rate-limit');
 
 const resendApiKey = process.env.RESEND_API_KEY;
 const adminEmail = process.env.CONTACT_ADMIN_EMAIL || 'hola@kinetichub.com.mx';
@@ -143,7 +144,14 @@ module.exports = async function handler(req, res) {
       : null;
 
   // Modo firmado: NO requiere Resend; solo prepara la subida privada.
+  // Rate limit propio (scope separado del submit) ANTES de firmar.
   if (req.body && req.body.action === 'create_attachment_upload') {
+    const uploadBlocked = await enforceRateLimit(req, res, {
+      scope: 'contact-upload-ip',
+      limit: 10,
+      windowSeconds: 600,
+    });
+    if (uploadBlocked) return uploadBlocked;
     return handleUploadIntent(req, res, supabase);
   }
 
@@ -196,6 +204,23 @@ module.exports = async function handler(req, res) {
     if (cleanAttachmentPath && !isValidAttachmentPath(cleanAttachmentPath)) {
       return res.status(400).json({ error: 'Adjunto invalido' });
     }
+
+    // Rate limits del submit (scopes separados): ANTES de firmar URL,
+    // insertar, enviar correos o CAPI. Email normalizado, nunca crudo en DB.
+    const ipBlocked = await enforceRateLimit(req, res, {
+      scope: 'contact-submit-ip',
+      limit: 10,
+      windowSeconds: 3600,
+    });
+    if (ipBlocked) return ipBlocked;
+
+    const emailBlocked = await enforceRateLimit(req, res, {
+      scope: 'contact-submit-email',
+      limit: 5,
+      windowSeconds: 3600,
+      identity: cleanEmail,
+    });
+    if (emailBlocked) return emailBlocked;
 
     const hasAttachment = isValidAttachmentPath(cleanAttachmentPath);
 

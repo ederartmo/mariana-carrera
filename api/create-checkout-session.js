@@ -25,6 +25,7 @@ const {
   buildCheckoutSummaryCookie,
   shouldSecureCheckoutCookie,
 } = require('../lib/_checkout-summary-claim');
+const { enforceRateLimit } = require('../lib/_rate-limit');
 
 function getCookieValue(req, name) {
   const raw = req.headers.cookie || '';
@@ -153,6 +154,16 @@ module.exports = async function handler(req, res) {
   }
 
   try {
+    // Rate limit por IP ANTES de crear sesión Stripe / escribir DB.
+    // Sin límite por email a propósito: no debe romper guest multi-ticket
+    // ni reintentos legítimos del mismo comprador.
+    const blocked = await enforceRateLimit(req, res, {
+      scope: 'checkout-ip',
+      limit: 10,
+      windowSeconds: 600,
+    });
+    if (blocked) return blocked;
+
     const { email, buyerEmail, shirtSize, tickets, metaEventId, promoCode, eventSlug, distance } = req.body;
     const rawEmail = buyerEmail || email;
     const event = resolveEventSelection(eventSlug, distance);
