@@ -727,12 +727,36 @@ function setupContactFormSubmission() {
 
     let attachmentUrl = null;
     if (supportFile) {
-      const safeFileName = supportFile.name.replace(/[^a-zA-Z0-9._-]/g, "_");
-      const filePath = `contact/${Date.now()}-${safeFileName}`;
+      // Batch 6: adjuntos validados (MIME+tamaño), nombre NO predecible por
+      // timestamp ni controlado por el filename original, sin overwrite.
+      const storageHelper = window.KineticHubStorageUpload || null;
+      const contactError = storageHelper
+        ? storageHelper.validateUploadFile(supportFile, "contact")
+        : "Servicio de archivos no disponible.";
+
+      if (contactError) {
+        statusNode.textContent = contactError;
+        statusNode.style.color = "#ff8a65";
+        resetSubmit(originalText);
+        return;
+      }
+
+      const contactExt = storageHelper.extensionForMime(supportFile.type, "contact");
+      const contactPath = storageHelper.buildContactObjectPath({
+        uploadId: storageHelper.newUploadId(),
+        ext: contactExt,
+      });
+
+      if (!contactPath) {
+        statusNode.textContent = "No se pudo preparar el archivo adjunto.";
+        statusNode.style.color = "#ff8a65";
+        resetSubmit(originalText);
+        return;
+      }
 
       const { error: uploadError } = await client.storage
-        .from("contact-attachments")
-        .upload(filePath, supportFile, { upsert: false });
+        .from(storageHelper.STORAGE_BUCKET)
+        .upload(contactPath, supportFile, { upsert: false, contentType: supportFile.type });
 
       if (uploadError) {
         statusNode.textContent = `No se pudo subir el archivo: ${uploadError.message || "error desconocido"}`;
@@ -741,7 +765,7 @@ function setupContactFormSubmission() {
         return;
       }
 
-      const { data: fileData } = client.storage.from("contact-attachments").getPublicUrl(filePath);
+      const { data: fileData } = client.storage.from(storageHelper.STORAGE_BUCKET).getPublicUrl(contactPath);
       attachmentUrl = fileData?.publicUrl || null;
     }
 
@@ -2956,45 +2980,33 @@ function setupSupabase() {
           emergency_email: (source?.emergency_email || "").trim() || null,
         });
 
-        const PROFILE_MEDIA_BUCKET = "contact-attachments";
-        const PROFILE_ALLOWED_MIME_TYPES = ["image/jpeg", "image/png", "image/webp"];
-        const PROFILE_MEDIA_LIMITS = {
-          avatar: 2 * 1024 * 1024,
-          cover: 4 * 1024 * 1024,
+        // Batch 6: validación centralizada en storage-upload.js
+        // (window.KineticHubStorageUpload). Fail closed sin helper.
+        const getStorageHelper = () => {
+          const helper = window.KineticHubStorageUpload || null;
+          if (!helper || typeof helper.validateUploadFile !== "function") {
+            return null;
+          }
+          return helper;
         };
+
         const PROFILE_MEDIA_OPTIMIZATION = {
           avatar: { maxWidth: 600, maxHeight: 600, quality: 0.86 },
           cover: { maxWidth: 1600, maxHeight: 900, quality: 0.82 },
         };
 
-        const getSafeExtension = (fileName) => {
-          const raw = (fileName || "").split(".").pop() || "jpg";
-          const normalized = raw.toLowerCase().replace(/[^a-z0-9]/g, "");
-          return normalized || "jpg";
-        };
-
-        const mimeToExtension = (mimeType) => {
-          if (mimeType === "image/png") return "png";
-          if (mimeType === "image/webp") return "webp";
-          return "jpg";
-        };
-
         const validateProfileMediaFile = ({ file, type }) => {
-          if (!file) {
-            return "No se detectó archivo.";
+          const storageHelper = getStorageHelper();
+          if (!storageHelper) {
+            return "Servicio de archivos no disponible.";
           }
 
-          if (!PROFILE_ALLOWED_MIME_TYPES.includes(file.type)) {
-            return "Formato no permitido. Usa JPG, PNG o WEBP.";
+          const cleanType = storageHelper.normalizeProfileMediaType(type);
+          if (!cleanType) {
+            return "Tipo de archivo no permitido.";
           }
 
-          const maxBytes = PROFILE_MEDIA_LIMITS[type] || PROFILE_MEDIA_LIMITS.avatar;
-          if (file.size > maxBytes) {
-            const maxMb = Math.round(maxBytes / (1024 * 1024));
-            return `El archivo supera el límite de ${maxMb} MB.`;
-          }
-
-          return "";
+          return storageHelper.validateUploadFile(file, cleanType);
         };
 
         const optimizeProfileMediaFile = async ({ file, type }) => {
@@ -3052,11 +3064,25 @@ function setupSupabase() {
         const uploadProfileMedia = async ({ file, type }) => {
           if (!file) return null;
 
-          const ext = mimeToExtension(file.type) || getSafeExtension(file.name);
-          const objectPath = `${type}s/${user.id}/${type}.${ext}`;
+          const storageHelper = getStorageHelper();
+          if (!storageHelper) {
+            return { error: new Error("Servicio de archivos no disponible.") };
+          }
+
+          // Tipo enum + extensión solo desde MIME permitido + user.id validado.
+          // El nombre original del archivo NUNCA controla el path.
+          const cleanType = storageHelper.normalizeProfileMediaType(type);
+          const ext = storageHelper.extensionForMime(file.type);
+          const objectPath = cleanType
+            ? storageHelper.buildProfileObjectPath({ type: cleanType, userId: user.id, ext })
+            : null;
+
+          if (!objectPath) {
+            return { error: new Error("Archivo o destino no permitido.") };
+          }
 
           const { error: uploadError } = await client.storage
-            .from(PROFILE_MEDIA_BUCKET)
+            .from(storageHelper.STORAGE_BUCKET)
             .upload(objectPath, file, {
               upsert: true,
               contentType: file.type || "image/jpeg",
@@ -3066,7 +3092,7 @@ function setupSupabase() {
             return { error: uploadError };
           }
 
-          const { data } = client.storage.from(PROFILE_MEDIA_BUCKET).getPublicUrl(objectPath);
+          const { data } = client.storage.from(storageHelper.STORAGE_BUCKET).getPublicUrl(objectPath);
           return { publicUrl: data?.publicUrl || null };
         };
 
