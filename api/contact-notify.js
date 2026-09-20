@@ -8,6 +8,21 @@ const fromEmail = process.env.CONTACT_FROM_EMAIL || 'Kinetic Hub <no-reply@kinet
 const supabaseUrl = process.env.SUPABASE_URL;
 const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
+// Batch 6 (rev): adjuntos viven en bucket PRIVADO contact-private.
+// El browser envía attachment_path (contact/<uuid>.<ext>); NUNCA se acepta
+// attachment_url ni URLs arbitrarias. Solo service_role firma URLs cortas.
+const CONTACT_PRIVATE_BUCKET = 'contact-private';
+const CONTACT_SIGNED_URL_TTL_SECONDS = 3600;
+const ATTACHMENT_PATH_RE = /^contact\/[A-Za-z0-9_-]+\.(jpg|png|webp|pdf)$/;
+const MAX_ATTACHMENT_PATH_LENGTH = 200;
+
+function isValidAttachmentPath(value) {
+  return typeof value === 'string'
+    && value.length > 0
+    && value.length <= MAX_ATTACHMENT_PATH_LENGTH
+    && ATTACHMENT_PATH_RE.test(value);
+}
+
 function sanitize(value) {
   if (value == null) return '';
   return String(value).trim();
@@ -69,8 +84,10 @@ module.exports = async function handler(req, res) {
       reason,
       message,
       phone,
-      attachment_url,
+      attachment_path,
     } = req.body || {};
+    // attachment_url del browser se IGNORA por diseño (nunca confiar en URLs
+    // enviadas por el cliente para adjuntos).
 
     const cleanEmail = sanitize(email).toLowerCase();
     const cleanName = sanitize(full_name);
@@ -79,7 +96,7 @@ module.exports = async function handler(req, res) {
     const cleanReason = sanitize(reason) || 'Sin categoria';
     const cleanMessage = sanitize(message);
     const cleanPhone = sanitize(phone) || 'No proporcionado';
-    const cleanAttachment = sanitize(attachment_url);
+    const cleanAttachmentPath = sanitize(attachment_path);
 
     const safeName = escapeHtml(cleanName);
     const safeEmail = escapeHtml(cleanEmail);
@@ -88,7 +105,6 @@ module.exports = async function handler(req, res) {
     const safeReason = escapeHtml(cleanReason);
     const safePhone = escapeHtml(cleanPhone);
     const safeMessage = formatMultiline(cleanMessage);
-    const safeAttachment = escapeHtml(cleanAttachment);
 
     if (!cleanEmail || !cleanEmail.includes('@')) {
       return res.status(400).json({ error: 'Email invalido' });
@@ -98,8 +114,36 @@ module.exports = async function handler(req, res) {
       return res.status(400).json({ error: 'Faltan campos obligatorios' });
     }
 
+    if (cleanAttachmentPath && !isValidAttachmentPath(cleanAttachmentPath)) {
+      return res.status(400).json({ error: 'Adjunto invalido' });
+    }
+
+    const hasAttachment = isValidAttachmentPath(cleanAttachmentPath);
+
+    // Firmar URL corta SOLO para el correo admin. Si falla, el contacto
+    // sigue procesándose (el email dirá "Adjunto no disponible").
+    let attachmentSignedUrl = null;
+
+    if (hasAttachment && supabase) {
+      try {
+        const { data, error: signError } = await supabase.storage
+          .from(CONTACT_PRIVATE_BUCKET)
+          .createSignedUrl(cleanAttachmentPath, CONTACT_SIGNED_URL_TTL_SECONDS);
+
+        if (signError || !data?.signedUrl) {
+          throw new Error(signError?.message || 'sin signedUrl');
+        }
+        attachmentSignedUrl = data.signedUrl;
+      } catch (signError) {
+        console.error('Error firmando adjunto de contacto:', signError?.message || signError);
+      }
+    }
+
     if (supabase) {
-      const { error: insertError } = await supabase.from('contact_messages').insert({
+      // attachment_path preferido; attachment_url legacy queda null en filas
+      // nuevas. Si la columna aún no existe (migración pendiente), reintentar
+      // sin ella para no perder el mensaje.
+      const baseRow = {
         event_slug: cleanEvent,
         reason: cleanReason,
         full_name: cleanName,
@@ -107,11 +151,21 @@ module.exports = async function handler(req, res) {
         phone: cleanPhone,
         subject: cleanSubject,
         message: cleanMessage,
-        attachment_url: cleanAttachment || null,
+        attachment_url: null,
+      };
+
+      let insertResult = await supabase.from('contact_messages').insert({
+        ...baseRow,
+        attachment_path: hasAttachment ? cleanAttachmentPath : null,
       });
 
-      if (insertError) {
-        console.error('Error insert contact_messages desde backend:', insertError);
+      if (insertResult.error && /attachment_path/i.test(insertResult.error.message || '')) {
+        console.warn('contact_messages sin columna attachment_path; guardando sin path');
+        insertResult = await supabase.from('contact_messages').insert(baseRow);
+      }
+
+      if (insertResult.error) {
+        console.error('Error insert contact_messages desde backend:', insertResult.error);
         return res.status(500).json({ error: 'No se pudo guardar el mensaje de contacto' });
       }
     }
@@ -152,10 +206,12 @@ module.exports = async function handler(req, res) {
                     </table>
                   </td>
                 </tr>
-                ${cleanAttachment ? `
+                ${hasAttachment ? `
                 <tr>
                   <td style="padding:8px 24px 18px;font-size:14px;line-height:22px;color:#0f172a;">
-                    <strong>Archivo:</strong> <a href="${safeAttachment}" style="color:#1d4ed8;text-decoration:none;">Ver adjunto</a>
+                    ${attachmentSignedUrl
+                      ? `<strong>Archivo:</strong> <a href="${escapeHtml(attachmentSignedUrl)}" style="color:#1d4ed8;text-decoration:none;">Ver adjunto</a>`
+                      : `<strong>Archivo:</strong> Adjunto no disponible`}
                   </td>
                 </tr>` : ''}
                 <tr>

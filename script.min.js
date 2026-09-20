@@ -654,7 +654,7 @@ function setupContactFormSubmission() {
     reason,
     message,
     phone,
-    attachmentUrl,
+    attachmentPath,
   }) => {
     try {
       const response = await fetch(CONTACT_CONFIRM_ENDPOINT, {
@@ -670,7 +670,7 @@ function setupContactFormSubmission() {
           reason,
           message,
           phone,
-          attachment_url: attachmentUrl,
+          attachment_path: attachmentPath,
         }),
       });
 
@@ -725,10 +725,11 @@ function setupContactFormSubmission() {
       return;
     }
 
-    let attachmentUrl = null;
+    let attachmentPath = null;
     if (supportFile) {
-      // Batch 6: adjuntos validados (MIME+tamaño), nombre NO predecible por
-      // timestamp ni controlado por el filename original, sin overwrite.
+      // Batch 6 (rev): adjuntos al bucket PRIVADO contact-private.
+      // Sin getPublicUrl: el backend firma URL corta solo para el admin.
+      // Se envía attachment_path (validado server-side); attachment_url ya no se usa.
       const storageHelper = window.KineticHubStorageUpload || null;
       const contactError = storageHelper
         ? storageHelper.validateUploadFile(supportFile, "contact")
@@ -755,7 +756,7 @@ function setupContactFormSubmission() {
       }
 
       const { error: uploadError } = await client.storage
-        .from(storageHelper.STORAGE_BUCKET)
+        .from(storageHelper.CONTACT_PRIVATE_BUCKET)
         .upload(contactPath, supportFile, { upsert: false, contentType: supportFile.type });
 
       if (uploadError) {
@@ -765,8 +766,7 @@ function setupContactFormSubmission() {
         return;
       }
 
-      const { data: fileData } = client.storage.from(storageHelper.STORAGE_BUCKET).getPublicUrl(contactPath);
-      attachmentUrl = fileData?.publicUrl || null;
+      attachmentPath = contactPath;
     }
 
     const confirmationSent = await sendContactConfirmation({
@@ -777,7 +777,7 @@ function setupContactFormSubmission() {
       reason,
       message,
       phone,
-      attachmentUrl,
+      attachmentPath,
     });
 
     form.innerHTML = `
@@ -3082,7 +3082,7 @@ function setupSupabase() {
           }
 
           const { error: uploadError } = await client.storage
-            .from(storageHelper.STORAGE_BUCKET)
+            .from(storageHelper.PROFILE_MEDIA_BUCKET)
             .upload(objectPath, file, {
               upsert: true,
               contentType: file.type || "image/jpeg",
@@ -3092,7 +3092,7 @@ function setupSupabase() {
             return { error: uploadError };
           }
 
-          const { data } = client.storage.from(storageHelper.STORAGE_BUCKET).getPublicUrl(objectPath);
+          const { data } = client.storage.from(storageHelper.PROFILE_MEDIA_BUCKET).getPublicUrl(objectPath);
           return { publicUrl: data?.publicUrl || null };
         };
 

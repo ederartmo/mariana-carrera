@@ -1,12 +1,17 @@
-// storage-upload.js - Batch 6: reglas de subida a Supabase Storage (browser).
-// Verdad canónica navegador (window.KineticHubStorageUpload vía
-// <script src="storage-upload.js"> en perfil/checkout/contacto) y tests
-// (require). Vive en raíz para que build.js lo copie a public/.
-// Solo funciones puras: validación MIME/tamaño, construcción de paths y
-// UUIDs. La frontera real (RLS/policies/límites de bucket) vive en
-// desc/sql-batch6-storage-hardening.sql: el frontend NO es el boundary.
+// storage-upload.js - Batch 6 (rev): buckets separados public/private.
+// contact-attachments (PUBLIC): solo media pública de perfil
+//   avatars/{uid}/... covers/{uid}/...
+// contact-private (PRIVADO): adjuntos de contacto contact/{uuid}.{ext}.
+//   Sin getPublicUrl para contacto: el backend firma URLs cortas.
+// Verdad canónica navegador (window.KineticHubStorageUpload) y tests.
+// Frontera real: RLS/policies/límites en
+// desc/sql-batch6-storage-hardening.sql (el frontend NO es el boundary).
 
-const STORAGE_BUCKET = 'contact-attachments';
+// Bucket PÚBLICO: media de perfil (avatares/portadas).
+const PROFILE_MEDIA_BUCKET = 'contact-attachments';
+
+// Bucket PRIVADO: adjuntos de contacto. Nunca getPublicUrl desde browser.
+const CONTACT_PRIVATE_BUCKET = 'contact-private';
 
 const PROFILE_IMAGE_EXTENSIONS = {
   'image/jpeg': 'jpg',
@@ -97,16 +102,31 @@ function buildContactObjectPath({ uploadId, ext }) {
   return `contact/${uploadId}.${ext}`;
 }
 
-// UUID no predecible (el nombre/Date.now() no son identificadores seguros).
+// UUID no predecible. crypto.randomUUID() primero; si no existe,
+// UUIDv4 con crypto.getRandomValues; si tampoco existe: FAIL CLOSED.
+// Nunca generadores débiles ni timestamps para IDs de Storage.
+function randomUuidV4() {
+  const bytes = new Uint8Array(16);
+  crypto.getRandomValues(bytes);
+  bytes[6] = (bytes[6] & 0x0f) | 0x40;
+  bytes[8] = (bytes[8] & 0x3f) | 0x80;
+  const hex = [...bytes].map((b) => b.toString(16).padStart(2, '0')).join('');
+  return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20)}`;
+}
+
 function newUploadId() {
   if (typeof crypto !== 'undefined' && crypto.randomUUID) {
     return crypto.randomUUID();
   }
-  return `${Date.now()}-${Math.random().toString(36).slice(2, 10)}${Math.random().toString(36).slice(2, 10)}`;
+  if (typeof crypto !== 'undefined' && crypto.getRandomValues) {
+    return randomUuidV4();
+  }
+  throw new Error('Sin fuente aleatoria segura para IDs de Storage.');
 }
 
 const catalog = {
-  STORAGE_BUCKET,
+  PROFILE_MEDIA_BUCKET,
+  CONTACT_PRIVATE_BUCKET,
   PROFILE_IMAGE_EXTENSIONS,
   CONTACT_EXTENSIONS,
   STORAGE_SIZE_LIMITS,
