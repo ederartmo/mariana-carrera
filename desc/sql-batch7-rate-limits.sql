@@ -80,8 +80,8 @@ begin
   insert into public.api_rate_limits as r (scope, key_hash, window_start, request_count, expires_at)
   values (p_scope, p_key_hash, v_start, 1, v_expires)
   on conflict (scope, key_hash, window_start)
-  do update set request_count = public.api_rate_limits.request_count + 1
-  returning public.api_rate_limits.request_count into v_count;
+  do update set request_count = r.request_count + 1
+  returning r.request_count into v_count;
 
   if v_count <= p_limit then
     allowed := true;

@@ -410,6 +410,11 @@ test('B7-21: RPC atómica con ON CONFLICT y sin race', () => {
   assert.ok(sql.includes('on conflict (scope, key_hash, window_start)'), 'upsert atómico');
   assert.ok(sql.includes('do update set request_count'), 'incremento atómico');
   assert.ok(!/select\s+\*\s+from\s+public\.api_rate_limits/i.test(sql), 'sin SELECT previo');
+  // Regresión smoke test real: la tabla tiene alias `r`; referenciarla por
+  // nombre calificado rompe (invalid reference to FROM-clause entry).
+  assert.ok(sql.includes('set request_count = r.request_count + 1'), 'usa alias en SET');
+  assert.ok(sql.includes('returning r.request_count'), 'usa alias en RETURNING');
+  assert.ok(!sql.includes('set request_count = public.api_rate_limits.request_count + 1'), 'sin referencia calificada en SET');
 });
 
 // 22: ventana expirada permite de nuevo (contrato: misma key, ventana nueva).
