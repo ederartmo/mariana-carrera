@@ -71,13 +71,37 @@ for (const file of ['admin-inscripciones.html', 'public/admin-inscripciones.html
     assert.ok(source.includes('No aplica'));
   });
 
-  test(`${file}: selector de filas ofrece 10, 30, 50 y todos`, () => {
+  test(`${file}: filtros quedan a la derecha y buscador ocupa el espacio restante`, () => {
     const source = read(file);
+    const toolbar = source.indexOf('class="dashboard-toolbar"');
+    const search = source.indexOf('id="searchFilter"', toolbar);
+    const event = source.indexOf('id="eventFilter"', toolbar);
+    const status = source.indexOf('id="statusFilter"', toolbar);
+    const rows = source.indexOf('id="rowsPerPage"', toolbar);
+    assert.ok(toolbar >= 0 && search > toolbar);
+    assert.ok(event > search && status > event && rows > status);
+    assert.ok(source.includes('.dashboard-search {'));
+    assert.ok(source.includes('flex: 1 1 auto'));
+    assert.ok(source.includes('class="dashboard-filters"'));
+  });
+
+  test(`${file}: filtros y filas inician en Todos, y filas baja 50, 30, 10`, () => {
+    const source = read(file);
+    assert.ok(source.includes('<option value="all" selected>Todas las carreras</option>'));
+    assert.ok(source.includes('<option value="all" selected>Todos</option>'));
     assert.ok(source.includes('id="rowsPerPage"'));
-    for (const value of ['10', '30', '50', 'all']) {
-      assert.ok(source.includes(`<option value="${value}"`));
+    const rowsStart = source.indexOf('id="rowsPerPage"');
+    const rowsEnd = source.indexOf('</select>', rowsStart);
+    const rowsMarkup = source.slice(rowsStart, rowsEnd);
+    const order = ['value="all" selected', 'value="50"', 'value="30"', 'value="10"'];
+    let cursor = -1;
+    for (const token of order) {
+      const next = rowsMarkup.indexOf(token);
+      assert.ok(next > cursor, `orden incorrecto para ${token}`);
+      cursor = next;
     }
-    assert.ok(source.includes("rowLimit: 30"));
+    assert.ok(source.includes("rowLimit: 'all'"));
+    assert.ok(!source.includes('<label class="rows-control"'));
     assert.ok(source.includes("visibleRows.forEach"));
   });
 }
