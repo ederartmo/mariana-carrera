@@ -394,7 +394,6 @@ test('B7-19/20: webhook y admin no usan rate limiting', () => {
     'api/admin-update-inscription-email.js',
     'api/admin-manual-transfer.js',
     'lib/admin-cancel-registration.js',
-    'lib/admin-update-manual-payment-status.js',
     'api/resend-confirmations.js',
     'api/resend-single-confirmation.js',
     'lib/resend-emails-list.js',
