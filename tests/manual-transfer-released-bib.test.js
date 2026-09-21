@@ -14,16 +14,14 @@ test('manual transfer preserves automatic BIB assignment by default', () => {
   assert.ok(source.includes('await generateNextBibNumber(cleanEventSlug)'));
 });
 
-test('manual transfer validates a released BIB before reusing it', () => {
-  assert.ok(source.includes('async function assertReleasedBibAvailable'));
-  assert.ok(source.includes(".eq('registration_status', 'cancelled')"));
-  assert.ok(source.includes(".eq('cancelled_bib_number', bibNumber)"));
-  assert.ok(source.includes(".eq('registration_status', 'active')"));
-  assert.ok(source.includes(".eq('bib_number', bibNumber)"));
+test('manual transfer validates any requested BIB against the server availability list', () => {
+  assert.ok(source.includes('async function assertAvailableBib'));
+  assert.ok(source.includes("supabase.rpc('get_available_event_bibs'"));
+  assert.ok(source.includes('ya no está disponible para esta carrera'));
 });
 
-test('manual transfer rejects duplicate released BIBs in one order and handles races', () => {
+test('manual transfer rejects duplicate available BIBs in one order and handles races', () => {
   assert.ok(source.includes('new Set(requestedReleasedBibs).size !== requestedReleasedBibs.length'));
   assert.ok(source.includes("error.code === '23505'"));
-  assert.ok(source.includes('dejó de estar disponible'));
+  assert.ok(source.includes('lista de BIBs disponibles'));
 });
