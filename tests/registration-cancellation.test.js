@@ -42,7 +42,9 @@ test('admin exposes cancelled filter and cancel action', () => {
     assert.ok(source.includes('<option value="cancelled">Anuladas</option>'));
     assert.ok(source.includes('data-cancel-registration-id'));
     assert.ok(source.includes('data-cancel-registration-order'));
-    assert.ok(source.includes('duplicado, reembolsado o cancelar'));
+    assert.ok(source.includes('1 = Registro duplicado'));
+    assert.ok(source.includes('2 = Pago reembolsado'));
+    assert.ok(source.includes('3 = Solo cancelar participación'));
     assert.ok(source.includes("cancellationType = 'participation_cancelled'"));
     assert.ok(!source.includes('data-payment-status-id'));
     assert.ok(!source.includes('Estado pago'));
