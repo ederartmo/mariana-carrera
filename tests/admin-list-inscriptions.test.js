@@ -132,12 +132,28 @@ test('admin-list-inscriptions admin → 200 con status paid por defecto', async 
     await handler(req, res);
     assert.equal(res.statusCode, 200);
     assert.deepEqual(res.body.rows, rows);
-    assert.deepEqual(state.eqCalls, [{ col: 'payment_status', val: 'paid' }]);
+    assert.deepEqual(state.eqCalls, [
+      { col: 'payment_status', val: 'paid' },
+      { col: 'registration_status', val: 'active' },
+    ]);
     assert.equal(state.fromTable, 'inscripciones');
     assert.equal(res.body.page, 1);
     assert.equal(res.body.limit, 100);
     assert.equal(res.body.total, 1);
     assert.equal(res.body.hasMore, false);
+  });
+});
+
+test('admin-list-inscriptions status=cancelled filtra por estado operativo', async () => {
+  const state = baseState({ rows: [], count: 0 });
+  await withMocks(state, async (handler) => {
+    const { req, res } = createReqRes({
+      headers: { authorization: 'Bearer admin-token' },
+      query: { status: 'cancelled' },
+    });
+    await handler(req, res);
+    assert.equal(res.statusCode, 200);
+    assert.deepEqual(state.eqCalls, [{ col: 'registration_status', val: 'cancelled' }]);
   });
 });
 
@@ -218,7 +234,7 @@ test('admin-list-inscriptions no expone columnas fuera del panel', async () => {
     for (const col of ['payment_intent_id', 'stripe_event_id', 'stripe_session_id', 'confirmation_email_id']) {
       assert.ok(!state.selectCols.includes(col), `columna inesperada: ${col}`);
     }
-    for (const col of ['birth_date', 'whatsapp', 'state', 'borough', 'email_sent']) {
+    for (const col of ['birth_date', 'whatsapp', 'state', 'borough', 'email_sent', 'registration_status', 'cancelled_bib_number', 'cancelled_at']) {
       assert.ok(state.selectCols.includes(col), `columna faltante: ${col}`);
     }
   });
