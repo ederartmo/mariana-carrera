@@ -955,6 +955,7 @@ src="https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1"
           data-delete-id="${row.id}"
           data-delete-order="${escapeHtml(orderId)}"
           data-delete-name="${escapeHtml(row.full_name || '')}"
+          data-delete-bib="${escapeHtml(row.bib_number || '')}"
         >
           Eliminar prueba
         </button>
@@ -1543,7 +1544,7 @@ src="https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1"
               >
                 ${manualReleasedBibOptions(ticket, index)}
               </select>
-              <span class="cell-muted">${manualReleasedBibs.length ? 'Incluye BIBs liberados y huecos históricos libres de esta carrera.' : 'No hay BIBs disponibles para esta carrera.'}</span>
+              <span class="cell-muted">${manualReleasedBibs.length ? manualReleasedBibs.length + ' BIBs disponibles · incluye liberados y huecos históricos libres.' : 'No hay BIBs disponibles para esta carrera.'}</span>
             </div>
             <div class="span-2">
               ${removeBtn}
@@ -2102,10 +2103,12 @@ src="https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1"
         const inscriptionId = button.getAttribute('data-delete-id') || '';
         const orderSessionId = button.getAttribute('data-delete-order') || '';
         const fullName = button.getAttribute('data-delete-name') || 'este registro';
+        const bib = button.getAttribute('data-delete-bib') || '';
+        const bibNote = bib ? ` El BIB #${bib} quedará disponible para reasignarse.` : '';
 
         const message = deleteMode === 'order'
-          ? `Se eliminará toda la orden ${orderSessionId}. Esta acción no se puede deshacer. ¿Continuar?`
-          : `Se eliminará ${fullName}. Esta acción no se puede deshacer. ¿Continuar?`;
+          ? `Se eliminará toda la orden ${orderSessionId}. Esta acción no se puede deshacer.${bibNote} ¿Continuar?`
+          : `Se eliminará ${fullName}. Esta acción no se puede deshacer.${bibNote} ¿Continuar?`;
 
         if (!window.confirm(message)) {
           return;
@@ -2147,6 +2150,11 @@ src="https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1"
           const data = await response.json();
           if (!response.ok) {
             throw new Error(data?.error || 'No se pudo eliminar el registro.');
+          }
+
+          const releasedBibs = Array.isArray(data?.releasedBibs) ? data.releasedBibs : [];
+          if (releasedBibs.length > 0) {
+            window.alert(`Prueba eliminada. BIB disponible: ${releasedBibs.map((value) => '#' + value).join(', ')}.`);
           }
 
           await loadPaidInscriptions(client, statusFilter?.value || 'paid');
