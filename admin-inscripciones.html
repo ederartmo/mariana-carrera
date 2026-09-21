@@ -350,29 +350,8 @@
     .admin-input {
       min-width: 240px;
     }
-    .toggle-chip {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      background: #11181f;
-      border: 1px solid #2a3a4b;
-      border-radius: 999px;
-      padding: 8px 12px;
-      color: #dce7f3;
-      font-size: 0.88rem;
-      font-weight: 700;
-    }
-    .toggle-chip input {
-      accent-color: #19c88b;
-    }
-    .danger-chip {
-      border-color: #6d2430;
-      color: #ffd9df;
-      background: rgba(109, 36, 48, 0.16);
-    }
-    .toolbar-note {
-      color: #8ea1b7;
-      font-size: 0.82rem;
+    .admin-card.is-collapsed .admin-card-header {
+      margin-bottom: 0;
     }
     .table-card {
       padding: 0;
@@ -607,7 +586,7 @@ src="https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1"
 <!-- End Meta Pixel Code -->
   <div class="container">
     <h1>Panel Admin - Inscripciones Pagadas</h1>
-    <p class="page-intro">Usa este panel para registrar transferencias, revisar compras y, solo si activas la opción de borrar, eliminar órdenes de prueba. <strong>Los usuarios con número 000</strong> son de uso de pruebas.</p>
+    <p class="page-intro">Usa este panel para registrar transferencias y administrar inscripciones. Los registros identificados por el sistema como Stripe TEST muestran su propia acción <strong>Eliminar prueba</strong>.</p>
 
     <div class="dashboard-toolbar">
       <div class="toolbar-group">
@@ -626,21 +605,16 @@ src="https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1"
         </select>
         <input id="searchFilter" class="admin-input" type="search" placeholder="Buscar por nombre, correo u orden" />
       </div>
-      <div class="toolbar-group">
-        <button type="button" id="toggleManualPanelBtn" class="btn-secondary">Mostrar transferencias manuales</button>
-        <label class="toggle-chip danger-chip">
-          <input type="checkbox" id="dangerModeToggle" />
-          Activar opción de borrar
-        </label>
-      </div>
     </div>
-    <div class="toolbar-note" id="dangerModeNote">La opción de borrar se mantiene oculta hasta activarla.</div>
 
     <section id="manualTransferCard" class="admin-card is-collapsed">
       <div class="admin-card-header">
         <div>
           <h2>Registrar pago por transferencia</h2>
           <p>Captura los datos del comprador y de cada participante. Los BIBs se asignan automáticamente al guardar.</p>
+        </div>
+        <div class="table-card-controls">
+          <button type="button" id="toggleManualPanelBtn" class="btn-secondary">Mostrar</button>
         </div>
       </div>
       <div class="admin-card-body">
@@ -798,13 +772,11 @@ src="https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1"
     const SUPABASE_URL = "https://uycwzhlcnfijjyzkgkem.supabase.co";
     const SUPABASE_KEY = "sb_publishable_IKwD3YtQwWzzEtE8QkVagA_OJGdV2e4";
     const adminUiState = {
-      dangerMode: false,
       searchTerm: "",
       eventSlug: "all",
       rowLimit: 30,
     };
     let cachedRows = [];
-    let dangerModeTimer = null;
 
     // ====================== VERIFICACIÓN DE ACCESO ======================
     async function checkAdminAccess() {
@@ -919,23 +891,23 @@ src="https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1"
       `;
     }
 
-    function buildDangerButton(row) {
-      if (!adminUiState.dangerMode) {
-        return `<button type="button" class="btn-danger" hidden>Eliminar</button>`;
-      }
+    function buildTestDeleteButton(row) {
+      const orderId = String(row.order_session_id || '').trim();
+      const stripeId = String(row.stripe_session_id || '').trim();
+      const isVerifiedTest = orderId.startsWith('cs_test_') && stripeId.startsWith('cs_test_');
 
-      const orderId = row.order_session_id || '';
-      const deleteMode = orderId ? 'order' : 'row';
+      if (!isVerifiedTest) return '';
+
       return `
         <button
           type="button"
           class="btn-danger"
-          data-delete-mode="${deleteMode}"
+          data-delete-mode="order"
           data-delete-id="${row.id}"
           data-delete-order="${escapeHtml(orderId)}"
           data-delete-name="${escapeHtml(row.full_name || '')}"
         >
-          ${orderId ? 'Eliminar orden' : 'Eliminar'}
+          Eliminar prueba
         </button>
       `;
     }
@@ -1040,7 +1012,7 @@ src="https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1"
                 ${buildEmailButton(row)}
                 ${buildEditEmailButton(row)}
                 ${buildCancelRegistrationButton(row)}
-                ${buildDangerButton(row)}
+                ${buildTestDeleteButton(row)}
               </div>
             </td>
           </tr>
@@ -1865,10 +1837,6 @@ src="https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1"
       });
 
       contentDiv.addEventListener('click', async (event) => {
-        if (!adminUiState.dangerMode) {
-          return;
-        }
-
         const button = event.target?.closest('[data-delete-mode]');
         if (!button) return;
 
@@ -2043,8 +2011,6 @@ src="https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1"
       const searchFilter = document.getElementById('searchFilter');
       const toggleManualPanelBtn = document.getElementById('toggleManualPanelBtn');
       const manualTransferCard = document.getElementById('manualTransferCard');
-      const dangerModeToggle = document.getElementById('dangerModeToggle');
-      const dangerModeNote = document.getElementById('dangerModeNote');
       const inscriptionsSection = document.getElementById('inscriptionsSection');
       const toggleInscriptionsBtn = document.getElementById('toggleInscriptionsBtn');
       const rowsPerPage = document.getElementById('rowsPerPage');
@@ -2054,9 +2020,7 @@ src="https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1"
       toggleManualPanelBtn?.addEventListener('click', () => {
         const isCollapsed = manualTransferCard?.classList.toggle('is-collapsed');
         toggleManualPanelBtn.classList.toggle('is-active', !isCollapsed);
-        toggleManualPanelBtn.textContent = isCollapsed
-          ? 'Mostrar transferencias manuales'
-          : 'Ocultar transferencias manuales';
+        toggleManualPanelBtn.textContent = isCollapsed ? 'Mostrar' : 'Minimizar';
       });
 
       toggleInscriptionsBtn?.addEventListener('click', () => {
@@ -2081,29 +2045,6 @@ src="https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1"
 
       eventFilter?.addEventListener('change', () => {
         adminUiState.eventSlug = eventFilter.value || 'all';
-        renderPaidInscriptions(cachedRows);
-      });
-
-      dangerModeToggle?.addEventListener('change', () => {
-        adminUiState.dangerMode = Boolean(dangerModeToggle.checked);
-
-        if (dangerModeTimer) {
-          clearTimeout(dangerModeTimer);
-          dangerModeTimer = null;
-        }
-
-        if (adminUiState.dangerMode) {
-          dangerModeNote.textContent = 'Opción de borrar activada por 2 minutos. Ya puedes ver los botones de eliminar.';
-          dangerModeTimer = window.setTimeout(() => {
-            adminUiState.dangerMode = false;
-            dangerModeToggle.checked = false;
-            dangerModeNote.textContent = 'La opción de borrar se mantiene oculta hasta activarla.';
-            renderPaidInscriptions(cachedRows);
-          }, 120000);
-        } else {
-          dangerModeNote.textContent = 'La opción de borrar se mantiene oculta hasta activarla.';
-        }
-
         renderPaidInscriptions(cachedRows);
       });
 
