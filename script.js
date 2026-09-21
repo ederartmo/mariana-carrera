@@ -108,11 +108,12 @@ async function checkIfUserHasPaid() {
     const registrations = await fetchMyRegistrations();
     if (!registrations || registrations.length === 0) return false;
 
-    const latest = [...registrations].sort(
-      (a, b) => new Date(b.created_at) - new Date(a.created_at)
-    )[0];
+    const latest = [...registrations]
+      .filter((item) => String(item?.registration_status || "active").toLowerCase().trim() !== "cancelled")
+      .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))[0];
 
-    return String(latest?.payment_status || "").toLowerCase().trim() === "paid";
+    if (!latest) return false;
+    return String(latest.payment_status || "").toLowerCase().trim() === "paid";
   } catch (err) {
     console.warn("Error en checkIfUserHasPaid():", err);
     return false;
@@ -3695,7 +3696,11 @@ function setupSupabase() {
           fallbackDistance: "5K"
         };
         const getDistance = (ins) => (ins?.distance || getProfileEvent(ins?.event_slug).fallbackDistance || "5K").toUpperCase();
-        const formatStatus = (raw) => {
+        const formatStatus = (raw, registrationStatus = "active") => {
+          const operational = String(registrationStatus || "active").toLowerCase().trim();
+          if (operational === "cancelled") {
+            return { key:"cancelled", label:"Inscripción anulada", cls:"is-pending", isPaid:false };
+          }
           const s = String(raw || "").toLowerCase().trim();
           if (s === "paid") return { key:"paid", label:"Inscripción pagada ✓", cls:"is-paid", isPaid:true };
           if (s === "pending") return { key:"pending", label:"Pendiente de pago", cls:"is-pending", isPaid:false };
@@ -3717,7 +3722,7 @@ function setupSupabase() {
           }
           if (inscriptions.length === 1) {
             const single = inscriptions[0];
-            const s = formatStatus(single.payment_status);
+            const s = formatStatus(single.payment_status, single.registration_status);
             if (s.isPaid && single.bib_number) {
               bibHeaderEl.textContent = `#${String(single.bib_number).replace(/\D/g,"").padStart(3,"0")}`;
             } else {
@@ -3727,7 +3732,7 @@ function setupSupabase() {
             return;
           }
           // Múltiples carreras: resumen neutro, no dorsal arbitrario
-          const paidCount = inscriptions.filter(i => formatStatus(i.payment_status).isPaid).length;
+          const paidCount = inscriptions.filter(i => formatStatus(i.payment_status, i.registration_status).isPaid).length;
           bibHeaderEl.textContent = `${inscriptions.length} carreras · ${paidCount} pagadas`;
           if (bibHeaderWrapper) bibHeaderWrapper.style.display = "";
         };
@@ -3826,7 +3831,7 @@ function setupSupabase() {
 
           racesContainer.innerHTML = inscriptions.map((inscription) => {
             const event = getProfileEvent(inscription.event_slug);
-            const status = formatStatus(inscription.payment_status);
+            const status = formatStatus(inscription.payment_status, inscription.registration_status);
             const distance = getDistance(inscription);
             const bib = inscription.bib_number ? String(inscription.bib_number).replace(/\D/g,"").padStart(3,"0") : null;
             const bibHTML = bib && status.isPaid
@@ -3834,7 +3839,9 @@ function setupSupabase() {
               : (bib ? `<p class="profile-race-meta bib-number-display" style="color:#888; font-size:0.95rem; margin:10px 0 0;">Dorsal asignado: #${escapeHtml(bib)} · Esperando confirmación</p>` : "");
             const amountLabel = inscription.amount_paid ? ` · $${Number(inscription.amount_paid).toFixed(0)} MXN` : "";
             const dateLine = `${escapeHtml(event.dateLocation)} · ${escapeHtml(event.categoryLabel)} ${escapeHtml(distance)}${amountLabel}`;
-            const payBtn = !status.isPaid ? `<a class="profile-race-pay-btn" href="checkout.html?event=${encodeURIComponent(inscription.event_slug)}&distance=${encodeURIComponent(distance)}">Pagar para asegurar lugar</a>` : "";
+            const payBtn = !status.isPaid && status.key !== "cancelled"
+              ? `<a class="profile-race-pay-btn" href="checkout.html?event=${encodeURIComponent(inscription.event_slug)}&distance=${encodeURIComponent(distance)}">Pagar para asegurar lugar</a>`
+              : "";
             const docsBtn = status.isPaid ? `<button type="button" class="profile-reminder-cta profile-legal-documents-btn" data-event-slug="${escapeHtml(inscription.event_slug)}" style="background:#19c88b;color:white;border:none;">Ver documentos</button>` : "";
 
             return `
@@ -3871,7 +3878,7 @@ function setupSupabase() {
             return;
           }
           const pending = inscriptions.filter(i => {
-            const s = formatStatus(i.payment_status).key;
+            const s = formatStatus(i.payment_status, i.registration_status).key;
             return s === "pending";
           });
           if (pending.length === 0) {
@@ -3975,7 +3982,7 @@ function setupSupabase() {
           // Solo pending real dispara reminder y mantiene localStorage pending.
           // paid y paid_no_email se consideran pagados (no CTA, no reminder). DB gana.
           if (inscriptions.length > 0) {
-            const hasPending = inscriptions.some(i => formatStatus(i.payment_status).key === "pending");
+            const hasPending = inscriptions.some(i => formatStatus(i.payment_status, i.registration_status).key === "pending");
             if (hasPending) writePaymentState("pending");
             else localStorage.removeItem(AXOLOTE_PAYMENT_STATE_KEY);
           } else {
