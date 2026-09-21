@@ -414,7 +414,6 @@
       color: #8ea1b7;
       font-size: 0.88rem;
     }
-    .table-scroll-top,
     .table-scroll {
       width: 100%;
       overflow-x: scroll;
@@ -422,35 +421,49 @@
       scrollbar-gutter: stable;
       scrollbar-width: auto;
       scrollbar-color: #19c88b #0b1118;
+      padding-bottom: 2px;
     }
-    .table-scroll-top {
-      position: sticky;
-      top: 0;
-      z-index: 8;
-      height: 18px;
-      background: #0b1118;
-      border-bottom: 1px solid #233243;
-    }
-    .table-scroll-top-spacer {
-      height: 1px;
-    }
-    .table-scroll-top::-webkit-scrollbar,
     .table-scroll::-webkit-scrollbar {
       height: 14px;
     }
-    .table-scroll-top::-webkit-scrollbar-track,
     .table-scroll::-webkit-scrollbar-track {
       background: #0b1118;
     }
-    .table-scroll-top::-webkit-scrollbar-thumb,
     .table-scroll::-webkit-scrollbar-thumb {
       background: #19c88b;
       border: 3px solid #0b1118;
       border-radius: 999px;
     }
-    .table-scroll-top::-webkit-scrollbar-thumb:hover,
     .table-scroll::-webkit-scrollbar-thumb:hover {
       background: #37e0a4;
+    }
+    .table-card-controls {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 8px;
+    }
+    .rows-control {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      color: #9fb1c5;
+      font-size: 0.82rem;
+      font-weight: 700;
+    }
+    .rows-control select {
+      background: #0b1118;
+      color: #e8edf3;
+      border: 1px solid #2a3a4b;
+      border-radius: 8px;
+      padding: 8px 10px;
+      min-height: 38px;
+    }
+    .rows-summary {
+      padding: 8px 18px 0;
+      color: #8ea1b7;
+      font-size: 0.82rem;
     }
     .table-scroll table {
       box-shadow: none;
@@ -688,16 +701,31 @@ src="https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1"
       </div>
     </section>
 
-    <section class="admin-card table-card">
+    <section id="inscriptionsSection" class="admin-card table-card">
       <div class="table-card-header">
         <div>
           <h2>Inscripciones</h2>
-          <p>Usa la barra horizontal verde para desplazarte a la derecha y ver todas las acciones.</p>
+          <p>Usa la barra horizontal inferior para desplazarte a la derecha y ver todas las acciones.</p>
+        </div>
+        <div class="table-card-controls">
+          <label class="rows-control" for="rowsPerPage">
+            Mostrar
+            <select id="rowsPerPage">
+              <option value="10">10</option>
+              <option value="30" selected>30</option>
+              <option value="50">50</option>
+              <option value="all">Todos</option>
+            </select>
+            filas
+          </label>
+          <button type="button" id="toggleInscriptionsBtn" class="btn-secondary">Minimizar</button>
         </div>
       </div>
-      <div id="inscriptionsFeedback" class="manual-feedback" style="margin-bottom:10px;"></div>
-      <div id="content">
-        <div class="loading">Cargando inscripciones...</div>
+      <div class="admin-card-body">
+        <div id="inscriptionsFeedback" class="manual-feedback" style="margin:0 18px 10px;"></div>
+        <div id="content">
+          <div class="loading">Cargando inscripciones...</div>
+        </div>
       </div>
     </section>
 
@@ -707,10 +735,15 @@ src="https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1"
           <h2>Emails enviados (Resend)</h2>
           <p>Últimos emails de confirmación enviados desde Resend. Solo visible para admins.</p>
         </div>
-        <button type="button" id="refreshEmailsBtn" class="btn-secondary" style="flex-shrink:0;">Actualizar</button>
+        <div class="table-card-controls">
+          <button type="button" id="refreshEmailsBtn" class="btn-secondary">Actualizar</button>
+          <button type="button" id="toggleResendEmailsBtn" class="btn-secondary">Mostrar</button>
+        </div>
       </div>
-      <div id="resendEmailsContent">
-        <div class="loading" style="padding:20px;">Cargando emails...</div>
+      <div class="admin-card-body">
+        <div id="resendEmailsContent">
+          <div class="loading" style="padding:20px;">Cargando emails...</div>
+        </div>
       </div>
     </section>
   </div>
@@ -787,6 +820,7 @@ src="https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1"
       dangerMode: false,
       searchTerm: "",
       eventSlug: "all",
+      rowLimit: 30,
     };
     let cachedRows = [];
     let dangerModeTimer = null;
@@ -961,6 +995,9 @@ src="https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1"
     function renderPaidInscriptions(rows) {
       const contentDiv = document.getElementById("content");
       const filteredRows = filterRows(rows);
+      const visibleRows = adminUiState.rowLimit === 'all'
+        ? filteredRows
+        : filteredRows.slice(0, Number(adminUiState.rowLimit) || 30);
 
       if (!filteredRows.length) {
         contentDiv.innerHTML = `<div class="no-data">No hay resultados con los filtros actuales.</div>`;
@@ -968,9 +1005,7 @@ src="https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1"
       }
 
       let html = `
-        <div class="table-scroll-top" aria-label="Desplazamiento horizontal de la tabla">
-          <div class="table-scroll-top-spacer"></div>
-        </div>
+        <div class="rows-summary">Mostrando ${visibleRows.length} de ${filteredRows.length} inscripciones.</div>
         <div class="table-scroll">
           <table>
             <thead>
@@ -993,7 +1028,7 @@ src="https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1"
             <tbody>
       `;
 
-      filteredRows.forEach((row) => {
+      visibleRows.forEach((row) => {
         const date = new Date(row.created_at).toLocaleDateString('es-MX', {
           year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit'
         });
@@ -1042,43 +1077,6 @@ src="https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1"
 
       html += `</tbody></table></div>`;
       contentDiv.innerHTML = html;
-      setupTableHorizontalScroll(contentDiv);
-    }
-
-    function setupTableHorizontalScroll(contentDiv) {
-      const topScroll = contentDiv.querySelector('.table-scroll-top');
-      const bottomScroll = contentDiv.querySelector('.table-scroll');
-      const spacer = contentDiv.querySelector('.table-scroll-top-spacer');
-      const table = bottomScroll?.querySelector('table');
-
-      if (!topScroll || !bottomScroll || !spacer || !table) return;
-
-      const syncWidth = () => {
-        spacer.style.width = `${table.scrollWidth}px`;
-      };
-
-      let syncing = false;
-      topScroll.addEventListener('scroll', () => {
-        if (syncing) return;
-        syncing = true;
-        bottomScroll.scrollLeft = topScroll.scrollLeft;
-        syncing = false;
-      });
-
-      bottomScroll.addEventListener('scroll', () => {
-        if (syncing) return;
-        syncing = true;
-        topScroll.scrollLeft = bottomScroll.scrollLeft;
-        syncing = false;
-      });
-
-      syncWidth();
-      if (typeof ResizeObserver !== 'undefined') {
-        const observer = new ResizeObserver(syncWidth);
-        observer.observe(table);
-      } else {
-        window.setTimeout(syncWidth, 0);
-      }
     }
 
     // Batch 1A: lectura vía /api/admin-list-inscriptions (Bearer + allowlist
@@ -2106,6 +2104,11 @@ src="https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1"
       const manualTransferCard = document.getElementById('manualTransferCard');
       const dangerModeToggle = document.getElementById('dangerModeToggle');
       const dangerModeNote = document.getElementById('dangerModeNote');
+      const inscriptionsSection = document.getElementById('inscriptionsSection');
+      const toggleInscriptionsBtn = document.getElementById('toggleInscriptionsBtn');
+      const rowsPerPage = document.getElementById('rowsPerPage');
+      const resendEmailsSection = document.getElementById('resendEmailsSection');
+      const toggleResendEmailsBtn = document.getElementById('toggleResendEmailsBtn');
 
       toggleManualPanelBtn?.addEventListener('click', () => {
         const isCollapsed = manualTransferCard?.classList.toggle('is-collapsed');
@@ -2113,6 +2116,21 @@ src="https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1"
         toggleManualPanelBtn.textContent = isCollapsed
           ? 'Mostrar transferencias manuales'
           : 'Ocultar transferencias manuales';
+      });
+
+      toggleInscriptionsBtn?.addEventListener('click', () => {
+        const isCollapsed = inscriptionsSection?.classList.toggle('is-collapsed');
+        toggleInscriptionsBtn.textContent = isCollapsed ? 'Mostrar' : 'Minimizar';
+      });
+
+      toggleResendEmailsBtn?.addEventListener('click', () => {
+        const isCollapsed = resendEmailsSection?.classList.toggle('is-collapsed');
+        toggleResendEmailsBtn.textContent = isCollapsed ? 'Mostrar' : 'Minimizar';
+      });
+
+      rowsPerPage?.addEventListener('change', () => {
+        adminUiState.rowLimit = rowsPerPage.value === 'all' ? 'all' : Number(rowsPerPage.value || 30);
+        renderPaidInscriptions(cachedRows);
       });
 
       searchFilter?.addEventListener('input', () => {
