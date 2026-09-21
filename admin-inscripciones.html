@@ -1030,11 +1030,12 @@ src="https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1"
     const ADMIN_LIST_PAGE_LIMIT = 100;
     const ADMIN_LIST_MAX_PAGES = 20;
 
-    async function fetchAdminInscriptionsPage(token, status, page) {
+    async function fetchAdminInscriptionsPage(token, status, page, eventSlug = 'all') {
       const params = new URLSearchParams({
         status: status || 'paid',
         page: String(page),
         limit: String(ADMIN_LIST_PAGE_LIMIT),
+        event: eventSlug || 'all',
       });
       const response = await fetch(`/api/admin-list-inscriptions?${params.toString()}`, {
         headers: { Authorization: `Bearer ${token}` },
@@ -1196,8 +1197,11 @@ src="https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1"
       whatsapp: '',
       state: '',
       borough: null,
+      bibMode: 'auto',
+      releasedBib: '',
     });
     let manualTickets = [MANUAL_EMPTY_TICKET()];
+    let manualReleasedBibs = [];
 
     function getManualLocationCatalog() {
       return window.KineticHubLocationCatalog || null;
@@ -1271,6 +1275,89 @@ src="https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1"
       return normalizeManualWhatsapp(value) !== null;
     }
 
+    function manualReleasedBibLabel(item) {
+      const bib = String(item?.bib || '').padStart(3, '0');
+      const rawDate = item?.cancelledAt ? new Date(item.cancelledAt) : null;
+      const date = rawDate && !Number.isNaN(rawDate.getTime())
+        ? rawDate.toLocaleDateString('es-MX', { day: 'numeric', month: 'short' })
+        : '';
+      return date ? `#${bib} — liberado ${date}` : `#${bib} — liberado`;
+    }
+
+    function manualReleasedBibOptions(ticket, ticketIndex) {
+      const usedElsewhere = new Set(
+        manualTickets
+          .map((item, index) => index !== ticketIndex && item.bibMode === 'released'
+            ? String(item.releasedBib || '')
+            : '')
+          .filter(Boolean)
+      );
+
+      if (!manualReleasedBibs.length) {
+        return '<option value="">No hay BIBs liberados disponibles</option>';
+      }
+
+      return [
+        '<option value="">Selecciona un BIB liberado</option>',
+        ...manualReleasedBibs.map((item) => {
+          const bib = String(item.bib || '');
+          const selected = String(ticket.releasedBib || '') === bib ? 'selected' : '';
+          const disabled = usedElsewhere.has(bib) ? 'disabled' : '';
+          return `<option value="${escapeHtml(bib)}" ${selected} ${disabled}>${escapeHtml(manualReleasedBibLabel(item))}</option>`;
+        }),
+      ].join('');
+    }
+
+    async function loadManualReleasedBibs(client, eventSlug) {
+      try {
+        const { data: { session } } = await client.auth.getSession();
+        const token = session?.access_token;
+        if (!token) throw new Error('Sesión no válida, vuelve a iniciar sesión.');
+
+        const rows = [];
+        for (let page = 1; page <= ADMIN_LIST_MAX_PAGES; page += 1) {
+          const payload = await fetchAdminInscriptionsPage(token, 'all', page, eventSlug);
+          if (Array.isArray(payload?.rows)) rows.push(...payload.rows);
+          if (!payload?.hasMore) break;
+        }
+
+        const activeBibs = new Set(
+          rows
+            .filter((row) => row.registration_status === 'active' && row.bib_number)
+            .map((row) => String(row.bib_number))
+        );
+
+        const releasedByBib = new Map();
+        rows
+          .filter((row) => row.registration_status === 'cancelled' && row.cancelled_bib_number)
+          .forEach((row) => {
+            const bib = String(row.cancelled_bib_number);
+            if (activeBibs.has(bib)) return;
+            const current = releasedByBib.get(bib);
+            if (!current || String(row.cancelled_at || '') > String(current.cancelledAt || '')) {
+              releasedByBib.set(bib, { bib, cancelledAt: row.cancelled_at || null });
+            }
+          });
+
+        manualReleasedBibs = Array.from(releasedByBib.values())
+          .sort((a, b) => Number(a.bib) - Number(b.bib));
+
+        const available = new Set(manualReleasedBibs.map((item) => String(item.bib)));
+        manualTickets.forEach((ticket) => {
+          if (ticket.bibMode === 'released' && !available.has(String(ticket.releasedBib || ''))) {
+            ticket.bibMode = 'auto';
+            ticket.releasedBib = '';
+          }
+        });
+
+        renderManualTickets();
+      } catch (error) {
+        console.error('No se pudieron cargar los BIBs liberados:', error);
+        manualReleasedBibs = [];
+        renderManualTickets();
+      }
+    }
+
     function manualTicketError(ticket) {
       const name = String(ticket.fullName || '').trim().replace(/\s+/g, ' ');
       if (name.length < 3) return 'Completa el nombre del participante (mínimo 3 letras).';
@@ -1284,6 +1371,11 @@ src="https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1"
         : !!state;
       if (!stateOk) return 'Selecciona un estado válido.';
       if (isManualCdmxTicket(ticket) && !ticket.borough) return 'Selecciona la alcaldía (obligatoria en CDMX).';
+      if (ticket.bibMode === 'released') {
+        const releasedBib = String(ticket.releasedBib || '');
+        const isAvailable = manualReleasedBibs.some((item) => String(item.bib) === releasedBib);
+        if (!releasedBib || !isAvailable) return 'Selecciona un BIB liberado disponible.';
+      }
       return null;
     }
 
@@ -1375,6 +1467,29 @@ src="https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1"
                 ${manualBoroughOptions(ticket)}
               </select>
             </div>
+            <div>
+              <label for="manualTicketBibMode${ticketNum}">Asignación de BIB</label>
+              <select
+                id="manualTicketBibMode${ticketNum}"
+                data-manual-field="bibMode"
+                data-manual-index="${index}"
+              >
+                <option value="auto" ${ticket.bibMode !== 'released' ? 'selected' : ''}>Automático — siguiente disponible</option>
+                <option value="released" ${ticket.bibMode === 'released' ? 'selected' : ''} ${manualReleasedBibs.length ? '' : 'disabled'}>Usar un BIB liberado</option>
+              </select>
+            </div>
+            <div>
+              <label for="manualTicketReleasedBib${ticketNum}">BIB liberado</label>
+              <select
+                id="manualTicketReleasedBib${ticketNum}"
+                data-manual-field="releasedBib"
+                data-manual-index="${index}"
+                ${ticket.bibMode === 'released' && manualReleasedBibs.length ? '' : 'disabled'}
+              >
+                ${manualReleasedBibOptions(ticket, index)}
+              </select>
+              <span class="cell-muted">${manualReleasedBibs.length ? 'Solo muestra BIBs libres de esta carrera.' : 'No hay BIBs liberados disponibles para esta carrera.'}</span>
+            </div>
             <div class="span-2">
               ${removeBtn}
             </div>
@@ -1405,13 +1520,21 @@ src="https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1"
       };
 
       renderManualTickets();
+      loadManualReleasedBibs(client, manualEventSlug?.value || 'axolote-night-run');
 
       const updateManualDistances = () => {
         if (!manualDistance) return;
         const distances = manualEventSlug?.value === 'cascanueces-run' ? ['5K', '10K'] : ['5K'];
         manualDistance.innerHTML = distances.map((value) => `<option value="${value}">${value}</option>`).join('');
       };
-      manualEventSlug?.addEventListener('change', updateManualDistances);
+      manualEventSlug?.addEventListener('change', () => {
+        updateManualDistances();
+        manualTickets.forEach((ticket) => {
+          ticket.bibMode = 'auto';
+          ticket.releasedBib = '';
+        });
+        loadManualReleasedBibs(client, manualEventSlug.value || 'axolote-night-run');
+      });
       updateManualDistances();
 
       addBtn.addEventListener('click', () => {
@@ -1466,6 +1589,30 @@ src="https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1"
           const next = String(event.target.value || '');
           manualTickets[index].borough = next || null;
         }
+
+        if (field === 'bibMode') {
+          const nextMode = String(event.target.value || 'auto') === 'released' ? 'released' : 'auto';
+          manualTickets[index].bibMode = nextMode;
+          if (nextMode === 'auto') {
+            manualTickets[index].releasedBib = '';
+          } else if (!manualTickets[index].releasedBib) {
+            const alreadyUsed = new Set(
+              manualTickets
+                .map((item, i) => i !== index && item.bibMode === 'released' ? String(item.releasedBib || '') : '')
+                .filter(Boolean)
+            );
+            const firstAvailable = manualReleasedBibs.find((item) => !alreadyUsed.has(String(item.bib)));
+            manualTickets[index].releasedBib = firstAvailable ? String(firstAvailable.bib) : '';
+          }
+          renderManualTickets();
+          return;
+        }
+
+        if (field === 'releasedBib') {
+          manualTickets[index].releasedBib = String(event.target.value || '');
+          renderManualTickets();
+          return;
+        }
       });
 
       form.addEventListener('submit', async (event) => {
@@ -1504,6 +1651,8 @@ src="https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1"
             whatsapp: String(ticket.whatsapp || '').trim(),
             state: String(ticket.state || '').trim(),
             borough: isCdmx ? (String(ticket.borough || '').trim() || null) : null,
+            bibMode: ticket.bibMode === 'released' ? 'released' : 'auto',
+            releasedBib: ticket.bibMode === 'released' ? String(ticket.releasedBib || '') : '',
           });
         }
 
@@ -1545,6 +1694,7 @@ src="https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1"
 
           form.reset();
           manualTickets = [MANUAL_EMPTY_TICKET()];
+          await loadManualReleasedBibs(client, eventSlug);
           renderManualTickets();
 
           await loadPaidInscriptions(client, statusFilter?.value || 'paid');
