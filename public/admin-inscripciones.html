@@ -79,17 +79,37 @@
     }
     .dashboard-toolbar {
       display: flex;
-      flex-wrap: wrap;
-      gap: 12px;
-      align-items: center;
-      justify-content: space-between;
-      margin: 0 0 16px;
-    }
-    .toolbar-group {
-      display: flex;
-      flex-wrap: wrap;
       gap: 10px;
       align-items: center;
+      margin: 0 0 16px;
+    }
+    .dashboard-search {
+      flex: 1 1 auto;
+      min-width: 260px;
+    }
+    .dashboard-search .admin-input {
+      width: 100%;
+      min-width: 0;
+    }
+    .dashboard-filters {
+      display: flex;
+      flex: 0 0 auto;
+      gap: 8px;
+      align-items: center;
+      margin-left: auto;
+    }
+    .dashboard-filters .admin-select {
+      width: auto;
+      min-width: 0;
+    }
+    #eventFilter {
+      min-width: 150px;
+    }
+    #statusFilter {
+      min-width: 132px;
+    }
+    #rowsPerPage {
+      min-width: 78px;
     }
     .admin-card {
       background: #11181f;
@@ -459,22 +479,6 @@
       justify-content: flex-end;
       gap: 8px;
     }
-    .rows-control {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      color: #9fb1c5;
-      font-size: 0.82rem;
-      font-weight: 700;
-    }
-    .rows-control select {
-      background: #0b1118;
-      color: #e8edf3;
-      border: 1px solid #2a3a4b;
-      border-radius: 8px;
-      padding: 8px 10px;
-      min-height: 38px;
-    }
     .rows-summary {
       padding: 8px 18px 0;
       color: #8ea1b7;
@@ -613,10 +617,24 @@
         width: 100%;
       }
       .dashboard-toolbar,
-      .toolbar-group,
       .table-card-header,
       .admin-card-header {
         align-items: stretch;
+      }
+      .dashboard-toolbar {
+        flex-wrap: wrap;
+      }
+      .dashboard-search {
+        flex: 1 1 100%;
+      }
+      .dashboard-filters {
+        width: 100%;
+        margin-left: 0;
+        flex-wrap: wrap;
+      }
+      .dashboard-filters .admin-select {
+        flex: 1 1 120px;
+        width: auto;
       }
     }
   </style>
@@ -644,22 +662,30 @@ src="https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1"
     <p class="page-intro">Usa este panel para registrar transferencias y administrar inscripciones. Los registros identificados por el sistema como Stripe TEST muestran su propia acción <strong>Eliminar prueba</strong>.</p>
 
     <div class="dashboard-toolbar">
-      <div class="toolbar-group">
-        <select id="eventFilter" class="admin-select">
+      <div class="dashboard-search">
+        <input id="searchFilter" class="admin-input" type="search" placeholder="Buscar por nombre, correo u orden" />
+      </div>
+      <div class="dashboard-filters" aria-label="Filtros de inscripciones">
+        <select id="eventFilter" class="admin-select" aria-label="Carrera" title="Carrera">
           <option value="all" selected>Todas las carreras</option>
           <option value="axolote-night-run">Axolote Night Run</option>
           <option value="cascanueces-run">Cascanueces Run</option>
         </select>
-        <select id="statusFilter" class="admin-select">
-          <option value="paid" selected>Solo pagadas</option>
-          <option value="all">Todos</option>
+        <select id="statusFilter" class="admin-select" aria-label="Estado" title="Estado">
+          <option value="all" selected>Todos</option>
+          <option value="paid">Solo pagadas</option>
           <option value="payment_failed">Pago fallido</option>
           <option value="refunded">Reembolsadas</option>
           <option value="paid_no_email">Pagadas sin email</option>
           <option value="cancelled">Anuladas</option>
           <option value="archived">Archivadas</option>
         </select>
-        <input id="searchFilter" class="admin-input" type="search" placeholder="Buscar por nombre, correo u orden" />
+        <select id="rowsPerPage" class="admin-select" aria-label="Filas visibles" title="Filas visibles">
+          <option value="all" selected>Todos</option>
+          <option value="50">50</option>
+          <option value="30">30</option>
+          <option value="10">10</option>
+        </select>
       </div>
     </div>
 
@@ -719,16 +745,6 @@ src="https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1"
           <p>La barra horizontal te seguirá mientras recorres la tabla para que siempre puedas moverte a izquierda y derecha.</p>
         </div>
         <div class="table-card-controls">
-          <label class="rows-control" for="rowsPerPage">
-            Mostrar
-            <select id="rowsPerPage">
-              <option value="10">10</option>
-              <option value="30" selected>30</option>
-              <option value="50">50</option>
-              <option value="all">Todos</option>
-            </select>
-            filas
-          </label>
           <button type="button" id="toggleInscriptionsBtn" class="btn-secondary">Minimizar</button>
         </div>
       </div>
@@ -830,7 +846,7 @@ src="https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1"
     const adminUiState = {
       searchTerm: "",
       eventSlug: "all",
-      rowLimit: 30,
+      rowLimit: 'all',
     };
     let cachedRows = [];
     let tableScrollFollowerCleanup = null;
@@ -1870,7 +1886,7 @@ src="https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1"
           await loadManualReleasedBibs(client, manualEventSlug?.value || 'axolote-night-run');
           renderManualTickets();
 
-          await loadPaidInscriptions(client, statusFilter?.value || 'paid');
+          await loadPaidInscriptions(client, statusFilter?.value || 'all');
         } catch (err) {
           setFeedback(err.message || 'Error guardando transferencia.', 'err');
         } finally {
@@ -2151,7 +2167,7 @@ src="https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1"
               ? 'Pago reembolsado'
               : 'Participación cancelada';
           window.alert(`Inscripción anulada correctamente: ${resultLabel}.${released}`);
-          await loadPaidInscriptions(client, statusFilter?.value || 'paid');
+          await loadPaidInscriptions(client, statusFilter?.value || 'all');
         } catch (err) {
           window.alert(err.message || 'No se pudo anular la inscripción.');
           button.disabled = false;
@@ -2201,7 +2217,7 @@ src="https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1"
           }
 
           window.alert('Intento archivado. Puedes consultarlo en el filtro “Archivadas”.');
-          await loadPaidInscriptions(client, statusFilter?.value || 'paid');
+          await loadPaidInscriptions(client, statusFilter?.value || 'all');
         } catch (err) {
           window.alert(err.message || 'No se pudo archivar el intento.');
           button.disabled = false;
@@ -2271,7 +2287,7 @@ src="https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1"
             window.alert(`Prueba eliminada. BIB disponible: ${releasedBibs.map((value) => '#' + value).join(', ')}.`);
           }
 
-          await loadPaidInscriptions(client, statusFilter?.value || 'paid');
+          await loadPaidInscriptions(client, statusFilter?.value || 'all');
         } catch (err) {
           window.alert(err.message || 'No se pudo eliminar el registro.');
           button.disabled = false;
@@ -2314,7 +2330,7 @@ src="https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1"
           }
 
           window.alert(`Correo de confirmación reenviado a ${data.email}`);
-          await loadPaidInscriptions(client, statusFilter?.value || 'paid');
+          await loadPaidInscriptions(client, statusFilter?.value || 'all');
         } catch (err) {
           window.alert(err.message || 'Error al enviar el correo.');
           button.disabled = false;
@@ -2376,7 +2392,7 @@ src="https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1"
           }
 
           window.alert(`Correo actualizado a ${data.email}. Ahora puedes enviar la confirmación al correo correcto.`);
-          await loadPaidInscriptions(client, statusFilter?.value || 'paid');
+          await loadPaidInscriptions(client, statusFilter?.value || 'all');
         } catch (err) {
           window.alert(err.message || 'No se pudo actualizar el correo.');
           button.disabled = false;
@@ -2414,7 +2430,7 @@ src="https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1"
       });
 
       rowsPerPage?.addEventListener('change', () => {
-        adminUiState.rowLimit = rowsPerPage.value === 'all' ? 'all' : Number(rowsPerPage.value || 30);
+        adminUiState.rowLimit = rowsPerPage.value === 'all' ? 'all' : Number(rowsPerPage.value || 50);
         renderPaidInscriptions(cachedRows);
       });
 
@@ -2429,7 +2445,7 @@ src="https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1"
       });
 
       statusFilter?.addEventListener('change', async () => {
-        await loadPaidInscriptions(client, statusFilter.value || 'paid');
+        await loadPaidInscriptions(client, statusFilter.value || 'all');
       });
 
       const refreshEmailsBtn = document.getElementById('refreshEmailsBtn');
@@ -2452,7 +2468,7 @@ src="https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1"
         setupParticipantModal(client);
         setupDeleteActions(client);
         console.log('[Admin] setup functions done, loading inscriptions...');
-        await loadPaidInscriptions(client, statusFilter?.value || "paid");
+        await loadPaidInscriptions(client, statusFilter?.value || "all");
         console.log('[Admin] loadPaidInscriptions done, loading emails...');
         loadResendEmails(client);
         console.log('[Admin] init complete');
