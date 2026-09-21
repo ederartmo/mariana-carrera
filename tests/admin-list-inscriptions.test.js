@@ -31,6 +31,7 @@ function createSupabaseMock(state) {
   const chain = {
     select(cols, opts) { state.selectCols = cols; state.selectOpts = opts; return chain; },
     eq(col, val) { state.eqCalls.push({ col, val }); return chain; },
+    neq(col, val) { state.neqCalls.push({ col, val }); return chain; },
     or(expr) { state.orCalls.push(expr); return chain; },
     order(col, opts) { state.orderCalls.push({ col, opts }); return chain; },
     range(from, to) {
@@ -68,7 +69,7 @@ function baseState(overrides = {}) {
       'admin-token': { id: 'admin-1', email: 'Admin@Example.com' },
       'user-token': { id: 'user-1', email: 'user@example.com' },
     },
-    eqCalls: [], orCalls: [], orderCalls: [], rangeCalls: [],
+    eqCalls: [], neqCalls: [], orCalls: [], orderCalls: [], rangeCalls: [],
     rows: [], count: 0,
     ...overrides,
   };
@@ -157,7 +158,7 @@ test('admin-list-inscriptions status=cancelled filtra por registration_status', 
   });
 });
 
-test('admin-list-inscriptions status=all no filtra por estado', async () => {
+test('admin-list-inscriptions status=all excluye archivadas del trabajo diario', async () => {
   const state = baseState({ rows: [], count: 0 });
   await withMocks(state, async (handler) => {
     const { req, res } = createReqRes({
@@ -167,6 +168,20 @@ test('admin-list-inscriptions status=all no filtra por estado', async () => {
     await handler(req, res);
     assert.equal(res.statusCode, 200);
     assert.ok(!state.eqCalls.some((c) => c.col === 'payment_status'));
+    assert.deepEqual(state.neqCalls, [{ col: 'registration_status', val: 'archived' }]);
+  });
+});
+
+test('admin-list-inscriptions status=archived filtra por registration_status', async () => {
+  const state = baseState({ rows: [], count: 0 });
+  await withMocks(state, async (handler) => {
+    const { req, res } = createReqRes({
+      headers: { authorization: 'Bearer admin-token' },
+      query: { status: 'archived' },
+    });
+    await handler(req, res);
+    assert.equal(res.statusCode, 200);
+    assert.deepEqual(state.eqCalls, [{ col: 'registration_status', val: 'archived' }]);
   });
 });
 
