@@ -60,39 +60,21 @@ function normalizeReleasedBib(value) {
   return String(numeric).padStart(3, '0');
 }
 
-async function assertReleasedBibAvailable(eventSlug, bibNumber) {
-  const { data: releasedRows, error: releasedError } = await supabase
-    .from('inscripciones')
-    .select('id')
-    .eq('event_slug', eventSlug)
-    .eq('registration_status', 'cancelled')
-    .eq('cancelled_bib_number', bibNumber)
-    .limit(1);
+async function assertAvailableBib(eventSlug, bibNumber) {
+  const { data, error } = await supabase.rpc('get_available_event_bibs', {
+    p_event_slug: eventSlug,
+  });
 
-  if (releasedError) {
-    throw new Error(`No se pudo validar el BIB #${bibNumber}: ${releasedError.message}`);
+  if (error) {
+    throw new Error(`No se pudo validar el BIB #${bibNumber}: ${error.message}`);
   }
 
-  if (!Array.isArray(releasedRows) || releasedRows.length === 0) {
-    const err = new Error(`El BIB #${bibNumber} no aparece como liberado para esta carrera.`);
-    err.statusCode = 409;
-    throw err;
-  }
+  const available = (Array.isArray(data) ? data : []).some(
+    (row) => String(row?.bib_number || '') === String(bibNumber)
+  );
 
-  const { data: activeRows, error: activeError } = await supabase
-    .from('inscripciones')
-    .select('id')
-    .eq('event_slug', eventSlug)
-    .eq('registration_status', 'active')
-    .eq('bib_number', bibNumber)
-    .limit(1);
-
-  if (activeError) {
-    throw new Error(`No se pudo comprobar el BIB #${bibNumber}: ${activeError.message}`);
-  }
-
-  if (Array.isArray(activeRows) && activeRows.length > 0) {
-    const err = new Error(`El BIB #${bibNumber} ya fue asignado a otra inscripción activa.`);
+  if (!available) {
+    const err = new Error(`El BIB #${bibNumber} ya no está disponible para esta carrera.`);
     err.statusCode = 409;
     throw err;
   }
@@ -156,7 +138,7 @@ module.exports = async function handler(req, res) {
           : null;
 
         if (bibMode === 'released' && !releasedBib) {
-          throw new Error(`Ticket ${index + 1}: selecciona un BIB liberado válido.`);
+          throw new Error(`Ticket ${index + 1}: selecciona un BIB disponible válido.`);
         }
 
         return {
@@ -195,12 +177,12 @@ module.exports = async function handler(req, res) {
 
     if (new Set(requestedReleasedBibs).size !== requestedReleasedBibs.length) {
       return res.status(400).json({
-        error: 'No puedes asignar el mismo BIB liberado a dos participantes de la misma operación.',
+        error: 'No puedes asignar el mismo BIB disponible a dos participantes de la misma operación.',
       });
     }
 
     for (const bibNumber of requestedReleasedBibs) {
-      await assertReleasedBibAvailable(cleanEventSlug, bibNumber);
+      await assertAvailableBib(cleanEventSlug, bibNumber);
     }
 
     const amountParts = splitAmountInCents(amount, normalizedTickets.length);
@@ -244,7 +226,7 @@ module.exports = async function handler(req, res) {
       if (error) {
         const insertError = new Error(
           error.code === '23505' && ticket.bibMode === 'released'
-            ? `El BIB #${bibNumber} dejó de estar disponible. Recarga la lista de BIBs liberados e inténtalo de nuevo.`
+            ? `El BIB #${bibNumber} dejó de estar disponible. Recarga la lista de BIBs disponibles e inténtalo de nuevo.`
             : `Error guardando ticket ${i + 1}: ${error.message}`
         );
         if (error.code === '23505' && ticket.bibMode === 'released') {
