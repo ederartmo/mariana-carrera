@@ -414,10 +414,43 @@
       color: #8ea1b7;
       font-size: 0.88rem;
     }
+    .table-scroll-top,
     .table-scroll {
       width: 100%;
-      overflow-x: auto;
+      overflow-x: scroll;
       overflow-y: hidden;
+      scrollbar-gutter: stable;
+      scrollbar-width: auto;
+      scrollbar-color: #19c88b #0b1118;
+    }
+    .table-scroll-top {
+      position: sticky;
+      top: 0;
+      z-index: 8;
+      height: 18px;
+      background: #0b1118;
+      border-bottom: 1px solid #233243;
+    }
+    .table-scroll-top-spacer {
+      height: 1px;
+    }
+    .table-scroll-top::-webkit-scrollbar,
+    .table-scroll::-webkit-scrollbar {
+      height: 14px;
+    }
+    .table-scroll-top::-webkit-scrollbar-track,
+    .table-scroll::-webkit-scrollbar-track {
+      background: #0b1118;
+    }
+    .table-scroll-top::-webkit-scrollbar-thumb,
+    .table-scroll::-webkit-scrollbar-thumb {
+      background: #19c88b;
+      border: 3px solid #0b1118;
+      border-radius: 999px;
+    }
+    .table-scroll-top::-webkit-scrollbar-thumb:hover,
+    .table-scroll::-webkit-scrollbar-thumb:hover {
+      background: #37e0a4;
     }
     .table-scroll table {
       box-shadow: none;
@@ -659,7 +692,7 @@ src="https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1"
       <div class="table-card-header">
         <div>
           <h2>Inscripciones</h2>
-          <p>La tabla mantiene su propio scroll horizontal para evitar desbordar toda la página.</p>
+          <p>Usa la barra horizontal verde para desplazarte a la derecha y ver todas las acciones.</p>
         </div>
       </div>
       <div id="inscriptionsFeedback" class="manual-feedback" style="margin-bottom:10px;"></div>
@@ -935,6 +968,9 @@ src="https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1"
       }
 
       let html = `
+        <div class="table-scroll-top" aria-label="Desplazamiento horizontal de la tabla">
+          <div class="table-scroll-top-spacer"></div>
+        </div>
         <div class="table-scroll">
           <table>
             <thead>
@@ -1006,6 +1042,43 @@ src="https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1"
 
       html += `</tbody></table></div>`;
       contentDiv.innerHTML = html;
+      setupTableHorizontalScroll(contentDiv);
+    }
+
+    function setupTableHorizontalScroll(contentDiv) {
+      const topScroll = contentDiv.querySelector('.table-scroll-top');
+      const bottomScroll = contentDiv.querySelector('.table-scroll');
+      const spacer = contentDiv.querySelector('.table-scroll-top-spacer');
+      const table = bottomScroll?.querySelector('table');
+
+      if (!topScroll || !bottomScroll || !spacer || !table) return;
+
+      const syncWidth = () => {
+        spacer.style.width = `${table.scrollWidth}px`;
+      };
+
+      let syncing = false;
+      topScroll.addEventListener('scroll', () => {
+        if (syncing) return;
+        syncing = true;
+        bottomScroll.scrollLeft = topScroll.scrollLeft;
+        syncing = false;
+      });
+
+      bottomScroll.addEventListener('scroll', () => {
+        if (syncing) return;
+        syncing = true;
+        topScroll.scrollLeft = bottomScroll.scrollLeft;
+        syncing = false;
+      });
+
+      syncWidth();
+      if (typeof ResizeObserver !== 'undefined') {
+        const observer = new ResizeObserver(syncWidth);
+        observer.observe(table);
+      } else {
+        window.setTimeout(syncWidth, 0);
+      }
     }
 
     // Batch 1A: lectura vía /api/admin-list-inscriptions (Bearer + allowlist
