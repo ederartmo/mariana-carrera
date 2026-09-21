@@ -1333,11 +1333,16 @@ src="https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1"
 
     function manualReleasedBibLabel(item) {
       const bib = String(item?.bib || '').padStart(3, '0');
-      const rawDate = item?.cancelledAt ? new Date(item.cancelledAt) : null;
+      const rawDate = item?.releasedAt ? new Date(item.releasedAt) : null;
       const date = rawDate && !Number.isNaN(rawDate.getTime())
         ? rawDate.toLocaleDateString('es-MX', { day: 'numeric', month: 'short' })
         : '';
-      return date ? `#${bib} — liberado ${date}` : `#${bib} — liberado`;
+
+      if (item?.source === 'released') {
+        return date ? `#${bib} — liberado ${date}` : `#${bib} — liberado`;
+      }
+
+      return `#${bib} — disponible`;
     }
 
     function manualReleasedBibOptions(ticket, ticketIndex) {
@@ -1350,11 +1355,11 @@ src="https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1"
       );
 
       if (!manualReleasedBibs.length) {
-        return '<option value="">No hay BIBs liberados disponibles</option>';
+        return '<option value="">No hay BIBs disponibles</option>';
       }
 
       return [
-        '<option value="">Selecciona un BIB liberado</option>',
+        '<option value="">Selecciona un BIB disponible</option>',
         ...manualReleasedBibs.map((item) => {
           const bib = String(item.bib || '');
           const selected = String(ticket.releasedBib || '') === bib ? 'selected' : '';
@@ -1370,33 +1375,27 @@ src="https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1"
         const token = session?.access_token;
         if (!token) throw new Error('Sesión no válida, vuelve a iniciar sesión.');
 
-        const rows = [];
-        for (let page = 1; page <= ADMIN_LIST_MAX_PAGES; page += 1) {
-          const payload = await fetchAdminInscriptionsPage(token, 'all', page, eventSlug);
-          if (Array.isArray(payload?.rows)) rows.push(...payload.rows);
-          if (!payload?.hasMore) break;
-        }
-
-        const activeBibs = new Set(
-          rows
-            .filter((row) => row.registration_status === 'active' && row.bib_number)
-            .map((row) => String(row.bib_number))
+        const response = await fetch(
+          `/api/admin-list-available-bibs?event=${encodeURIComponent(eventSlug)}`,
+          { headers: { Authorization: `Bearer ${token}` } }
         );
 
-        const releasedByBib = new Map();
-        rows
-          .filter((row) => row.registration_status === 'cancelled' && row.cancelled_bib_number)
-          .forEach((row) => {
-            const bib = String(row.cancelled_bib_number);
-            if (activeBibs.has(bib)) return;
-            const current = releasedByBib.get(bib);
-            if (!current || String(row.cancelled_at || '') > String(current.cancelledAt || '')) {
-              releasedByBib.set(bib, { bib, cancelledAt: row.cancelled_at || null });
-            }
-          });
+        const payload = await response.json().catch(() => ({}));
+        if (!response.ok) {
+          throw new Error(payload?.error || 'No se pudieron cargar los BIBs disponibles.');
+        }
 
-        manualReleasedBibs = Array.from(releasedByBib.values())
-          .sort((a, b) => Number(a.bib) - Number(b.bib));
+        manualReleasedBibs = Array.isArray(payload?.bibs)
+          ? payload.bibs
+              .map((item) => ({
+                bib: String(item?.bib || ''),
+                source: item?.source === 'released' ? 'released' : 'gap',
+                releasedAt: item?.releasedAt || null,
+                reason: item?.reason || null,
+              }))
+              .filter((item) => item.bib)
+              .sort((a, b) => Number(a.bib) - Number(b.bib))
+          : [];
 
         const available = new Set(manualReleasedBibs.map((item) => String(item.bib)));
         manualTickets.forEach((ticket) => {
@@ -1408,7 +1407,7 @@ src="https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1"
 
         renderManualTickets();
       } catch (error) {
-        console.error('No se pudieron cargar los BIBs liberados:', error);
+        console.error('No se pudieron cargar los BIBs disponibles:', error);
         manualReleasedBibs = [];
         renderManualTickets();
       }
@@ -1430,7 +1429,7 @@ src="https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1"
       if (ticket.bibMode === 'released') {
         const releasedBib = String(ticket.releasedBib || '');
         const isAvailable = manualReleasedBibs.some((item) => String(item.bib) === releasedBib);
-        if (!releasedBib || !isAvailable) return 'Selecciona un BIB liberado disponible.';
+        if (!releasedBib || !isAvailable) return 'Selecciona un BIB disponible.';
       }
       return null;
     }
@@ -1531,11 +1530,11 @@ src="https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1"
                 data-manual-index="${index}"
               >
                 <option value="auto" ${ticket.bibMode !== 'released' ? 'selected' : ''}>Automático — siguiente disponible</option>
-                <option value="released" ${ticket.bibMode === 'released' ? 'selected' : ''} ${manualReleasedBibs.length ? '' : 'disabled'}>Usar un BIB liberado</option>
+                <option value="released" ${ticket.bibMode === 'released' ? 'selected' : ''} ${manualReleasedBibs.length ? '' : 'disabled'}>Usar un BIB disponible</option>
               </select>
             </div>
             <div>
-              <label for="manualTicketReleasedBib${ticketNum}">BIB liberado</label>
+              <label for="manualTicketReleasedBib${ticketNum}">BIB disponible</label>
               <select
                 id="manualTicketReleasedBib${ticketNum}"
                 data-manual-field="releasedBib"
@@ -1544,7 +1543,7 @@ src="https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1"
               >
                 ${manualReleasedBibOptions(ticket, index)}
               </select>
-              <span class="cell-muted">${manualReleasedBibs.length ? 'Solo muestra BIBs libres de esta carrera.' : 'No hay BIBs liberados disponibles para esta carrera.'}</span>
+              <span class="cell-muted">${manualReleasedBibs.length ? 'Incluye BIBs liberados y huecos históricos libres de esta carrera.' : 'No hay BIBs disponibles para esta carrera.'}</span>
             </div>
             <div class="span-2">
               ${removeBtn}
