@@ -40,18 +40,20 @@ for (const file of ['admin-inscripciones.html', 'public/admin-inscripciones.html
     assert.ok(!source.includes('Activar opción de borrar'));
     assert.ok(source.includes("orderId.startsWith('cs_test_') && stripeId.startsWith('cs_test_')"));
     assert.ok(source.includes('Eliminar prueba'));
+    assert.ok(source.includes('data-delete-bib'));
+    assert.ok(source.includes('quedará disponible para reasignarse'));
   });
 
 
-  test(`${file}: transferencias manuales permiten usar BIB liberado por participante`, () => {
+  test(`${file}: transferencias manuales permiten usar cualquier BIB disponible por participante`, () => {
     const source = read(file);
     assert.ok(source.includes('Automático — siguiente disponible'));
-    assert.ok(source.includes('Usar un BIB liberado'));
+    assert.ok(source.includes('Usar un BIB disponible'));
     assert.ok(source.includes('data-manual-field="bibMode"'));
     assert.ok(source.includes('data-manual-field="releasedBib"'));
-    assert.ok(source.includes("fetchAdminInscriptionsPage(token, 'all', page, eventSlug)"));
-    assert.ok(source.includes("row.registration_status === 'cancelled' && row.cancelled_bib_number"));
-    assert.ok(source.includes("row.registration_status === 'active' && row.bib_number"));
+    assert.ok(source.includes('/api/admin-list-available-bibs?event='));
+    assert.ok(source.includes("item?.source === 'released'"));
+    assert.ok(source.includes('BIBs disponibles · incluye liberados y huecos históricos libres'));
   });
 
 
