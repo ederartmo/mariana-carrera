@@ -42,6 +42,18 @@ for (const file of ['admin-inscripciones.html', 'public/admin-inscripciones.html
     assert.ok(source.includes('Eliminar prueba'));
   });
 
+
+  test(`${file}: transferencias manuales permiten usar BIB liberado por participante`, () => {
+    const source = read(file);
+    assert.ok(source.includes('Automático — siguiente disponible'));
+    assert.ok(source.includes('Usar un BIB liberado'));
+    assert.ok(source.includes('data-manual-field="bibMode"'));
+    assert.ok(source.includes('data-manual-field="releasedBib"'));
+    assert.ok(source.includes("fetchAdminInscriptionsPage(token, 'all', page, eventSlug)"));
+    assert.ok(source.includes("row.registration_status === 'cancelled' && row.cancelled_bib_number"));
+    assert.ok(source.includes("row.registration_status === 'active' && row.bib_number"));
+  });
+
   test(`${file}: selector de filas ofrece 10, 30, 50 y todos`, () => {
     const source = read(file);
     assert.ok(source.includes('id="rowsPerPage"'));
