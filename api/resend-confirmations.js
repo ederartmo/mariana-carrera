@@ -59,6 +59,7 @@ async function sendForAllPaid() {
     .from('inscripciones')
     .select('*')
     .eq('payment_status', 'paid')
+    .eq('registration_status', 'active')
     .order('order_session_id')
     .order('ticket_index');
 
