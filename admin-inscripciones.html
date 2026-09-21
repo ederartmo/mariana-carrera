@@ -267,6 +267,25 @@
       opacity: 0.5;
       cursor: not-allowed;
     }
+    .btn-payment-status {
+      background: transparent;
+      color: #c7a6ff;
+      border: 1px solid #6f52a8;
+      border-radius: 6px;
+      padding: 4px 10px;
+      font-size: 0.78rem;
+      font-weight: 700;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+    .btn-payment-status:hover {
+      background: #6f52a8;
+      color: #fff;
+    }
+    .btn-payment-status:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
     .btn-danger[hidden] {
       display: none;
     }
@@ -812,6 +831,36 @@ src="https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1"
       `;
     }
 
+    function paymentStatusLabel(status) {
+      const labels = {
+        paid: 'Pagado',
+        refunded: 'Reembolsado',
+        duplicate: 'Duplicado',
+        pending: 'Pendiente',
+        payment_failed: 'Pago fallido',
+        paid_no_email: 'Pagado sin email',
+      };
+      return labels[String(status || '').trim()] || String(status || '-');
+    }
+
+    function buildManualPaymentStatusButton(row) {
+      const orderId = String(row.order_session_id || '').trim();
+      if (!orderId.startsWith('manual_')) return '';
+      return `
+        <button
+          type="button"
+          class="btn-payment-status"
+          data-payment-status-id="${row.id}"
+          data-payment-status-email="${escapeHtml(row.email || '')}"
+          data-payment-status-current="${escapeHtml(row.payment_status || '')}"
+          data-payment-status-registration="${escapeHtml(row.registration_status || 'active')}"
+          data-payment-status-name="${escapeHtml(row.full_name || '')}"
+        >
+          Estado pago
+        </button>
+      `;
+    }
+
     function buildCancelRegistrationButton(row) {
       if (row.registration_status === 'cancelled') return '';
       const paymentStatus = String(row.payment_status || '').trim();
@@ -930,7 +979,7 @@ src="https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1"
             <td><span class="cell-strong">${escapeHtml(eventName)}</span></td>
             <td><span class="cell-strong">${escapeHtml(row.distance || '—')}</span></td>
             <td><span class="truncate" title="${escapeHtml(row.buyer_email || row.email || '')}">${row.buyer_email || row.email || '-'}</span></td>
-            <td>${row.registration_status === 'cancelled' ? '<strong style="color:#ffb454;">Anulada</strong><span class="cell-muted">Pago: ' + escapeHtml(row.payment_status || '-') + '</span>' : escapeHtml(row.payment_status || '-')}</td>
+            <td>${row.registration_status === 'cancelled' ? '<strong style="color:#ffb454;">Anulada</strong><span class="cell-muted">Pago: ' + escapeHtml(paymentStatusLabel(row.payment_status)) + '</span>' : escapeHtml(paymentStatusLabel(row.payment_status))}</td>
             <td>${row.email_sent ? '<span style="color:#19c88b;">✓ Enviado</span>' : '<span style="color:#ff6b6b;">✗ Pendiente</span>'}</td>
             <td><strong>$${parseFloat(row.amount_paid || 0).toLocaleString('es-MX')}</strong></td>
             <td style="font-weight:700; color:#ff8c42;">${row.shirt_size || '—'}</td>
@@ -946,6 +995,7 @@ src="https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1"
                 ${buildEditParticipantButton(row)}
                 ${buildEmailButton(row)}
                 ${buildEditEmailButton(row)}
+                ${buildManualPaymentStatusButton(row)}
                 ${buildCancelRegistrationButton(row)}
                 ${buildDangerButton(row)}
               </div>
@@ -1682,6 +1732,84 @@ src="https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1"
       if (!contentDiv) return;
 
       contentDiv.addEventListener('click', async (event) => {
+        const button = event.target?.closest('[data-payment-status-id]');
+        if (!button) return;
+
+        const inscriptionId = button.getAttribute('data-payment-status-id') || '';
+        const email = button.getAttribute('data-payment-status-email') || '';
+        const currentStatus = button.getAttribute('data-payment-status-current') || '';
+        const registrationStatus = button.getAttribute('data-payment-status-registration') || 'active';
+        const fullName = button.getAttribute('data-payment-status-name') || 'esta inscripción';
+
+        const currentLabel = paymentStatusLabel(currentStatus).toLowerCase();
+        const answer = String(window.prompt(
+          `Estado del pago manual para ${fullName}. Escribe: pagado, reembolsado o duplicado.`,
+          currentLabel
+        ) || '').trim().toLowerCase();
+
+        if (!answer) return;
+
+        const statusMap = {
+          pagado: 'paid',
+          paid: 'paid',
+          reembolsado: 'refunded',
+          refunded: 'refunded',
+          duplicado: 'duplicate',
+          duplicate: 'duplicate',
+        };
+        const paymentStatus = statusMap[answer];
+
+        if (!paymentStatus) {
+          window.alert('Usa una de estas opciones: pagado, reembolsado o duplicado.');
+          return;
+        }
+
+        if (paymentStatus === currentStatus) return;
+
+        if (paymentStatus !== 'paid' && registrationStatus !== 'cancelled') {
+          window.alert('Primero anula la inscripción. Una inscripción activa no puede quedar como reembolsada o duplicada.');
+          return;
+        }
+
+        if (!window.confirm(
+          `Cambiar el estado de pago de ${fullName} de "${paymentStatusLabel(currentStatus)}" a "${paymentStatusLabel(paymentStatus)}"? El monto histórico no se modificará.`
+        )) {
+          return;
+        }
+
+        button.disabled = true;
+        const originalText = button.textContent;
+        button.textContent = 'Guardando...';
+
+        try {
+          const { data: { session } } = await client.auth.getSession();
+          const token = session?.access_token;
+          if (!token) throw new Error('Sesión no válida, vuelve a iniciar sesión.');
+
+          const response = await fetch('/api/admin-update-manual-payment-status', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: `Bearer ${token}`,
+            },
+            body: JSON.stringify({ inscriptionId, email, paymentStatus }),
+          });
+
+          const data = await response.json();
+          if (!response.ok) {
+            throw new Error(data?.error || 'No se pudo actualizar el estado del pago.');
+          }
+
+          window.alert(`Estado de pago actualizado a "${paymentStatusLabel(data.paymentStatus || paymentStatus)}". El monto histórico se conservó.`);
+          await loadPaidInscriptions(client, statusFilter?.value || 'paid');
+        } catch (err) {
+          window.alert(err.message || 'No se pudo actualizar el estado del pago.');
+          button.disabled = false;
+          button.textContent = originalText;
+        }
+      });
+
+      contentDiv.addEventListener('click', async (event) => {
         const button = event.target?.closest('[data-cancel-registration-id]');
         if (!button) return;
 
@@ -1712,7 +1840,10 @@ src="https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1"
           if (!response.ok) throw new Error(data?.error || 'No se pudo anular la inscripción.');
 
           const released = data?.releasedBibNumber ? ` BIB #${data.releasedBibNumber} liberado.` : '';
-          window.alert(`Inscripción anulada correctamente. El historial del pago se conservó.${released}`);
+          const manualNote = String(data?.inscription?.order_session_id || '').startsWith('manual_')
+            ? ' Si este registro fue duplicado o reembolsado, abre el filtro Anuladas y usa Estado pago.'
+            : '';
+          window.alert(`Inscripción anulada correctamente. El historial del pago se conservó.${released}${manualNote}`);
           await loadPaidInscriptions(client, statusFilter?.value || 'paid');
         } catch (err) {
           window.alert(err.message || 'No se pudo anular la inscripción.');
