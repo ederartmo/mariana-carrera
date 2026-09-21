@@ -8,11 +8,15 @@ const root = path.join(__dirname, '..');
 const read = (file) => fs.readFileSync(path.join(root, file), 'utf8');
 
 for (const file of ['admin-inscripciones.html', 'public/admin-inscripciones.html']) {
-  test(`${file}: usa una sola barra horizontal inferior`, () => {
+  test(`${file}: mantiene una barra horizontal accesible mientras recorres la tabla`, () => {
     const source = read(file);
     assert.ok(source.includes('class="table-scroll"'));
     assert.ok(!source.includes('table-scroll-top'));
-    assert.ok(source.includes('barra horizontal inferior'));
+    assert.ok(source.includes('class="table-scroll-follower"'));
+    assert.ok(source.includes('function setupTableScrollFollower'));
+    assert.ok(source.includes("position: fixed"));
+    assert.ok(source.includes("const nativeBottomVisible = rect.bottom <= viewportHeight - 4"));
+    assert.ok(source.includes('La barra horizontal te seguirá mientras recorres la tabla'));
   });
 
   test(`${file}: permite minimizar inscripciones y Resend`, () => {
