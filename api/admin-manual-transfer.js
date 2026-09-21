@@ -52,6 +52,52 @@ async function generateNextBibNumber(eventSlug) {
   return String(data).padStart(3, '0');
 }
 
+function normalizeReleasedBib(value) {
+  const raw = String(value || '').trim();
+  if (!/^\d{1,6}$/.test(raw)) return null;
+  const numeric = Number.parseInt(raw, 10);
+  if (!Number.isInteger(numeric) || numeric < 1) return null;
+  return String(numeric).padStart(3, '0');
+}
+
+async function assertReleasedBibAvailable(eventSlug, bibNumber) {
+  const { data: releasedRows, error: releasedError } = await supabase
+    .from('inscripciones')
+    .select('id')
+    .eq('event_slug', eventSlug)
+    .eq('registration_status', 'cancelled')
+    .eq('cancelled_bib_number', bibNumber)
+    .limit(1);
+
+  if (releasedError) {
+    throw new Error(`No se pudo validar el BIB #${bibNumber}: ${releasedError.message}`);
+  }
+
+  if (!Array.isArray(releasedRows) || releasedRows.length === 0) {
+    const err = new Error(`El BIB #${bibNumber} no aparece como liberado para esta carrera.`);
+    err.statusCode = 409;
+    throw err;
+  }
+
+  const { data: activeRows, error: activeError } = await supabase
+    .from('inscripciones')
+    .select('id')
+    .eq('event_slug', eventSlug)
+    .eq('registration_status', 'active')
+    .eq('bib_number', bibNumber)
+    .limit(1);
+
+  if (activeError) {
+    throw new Error(`No se pudo comprobar el BIB #${bibNumber}: ${activeError.message}`);
+  }
+
+  if (Array.isArray(activeRows) && activeRows.length > 0) {
+    const err = new Error(`El BIB #${bibNumber} ya fue asignado a otra inscripción activa.`);
+    err.statusCode = 409;
+    throw err;
+  }
+}
+
 module.exports = async function handler(req, res) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Método no permitido.' });
@@ -102,7 +148,27 @@ module.exports = async function handler(req, res) {
           borough: ticket?.borough,
         };
         const v = validateParticipant(source, index);
-        return { fullName: v.fullName, shirtSize: v.shirtSize, birthDate: v.birthDate, whatsapp: v.whatsapp, state: v.state, borough: v.borough };
+        const bibMode = String(ticket?.bibMode || 'auto').trim().toLowerCase() === 'released'
+          ? 'released'
+          : 'auto';
+        const releasedBib = bibMode === 'released'
+          ? normalizeReleasedBib(ticket?.releasedBib)
+          : null;
+
+        if (bibMode === 'released' && !releasedBib) {
+          throw new Error(`Ticket ${index + 1}: selecciona un BIB liberado válido.`);
+        }
+
+        return {
+          fullName: v.fullName,
+          shirtSize: v.shirtSize,
+          birthDate: v.birthDate,
+          whatsapp: v.whatsapp,
+          state: v.state,
+          borough: v.borough,
+          bibMode,
+          releasedBib,
+        };
       });
     } catch (validationError) {
       return res.status(400).json({ error: validationError.message });
@@ -123,6 +189,20 @@ module.exports = async function handler(req, res) {
       return res.status(400).json({ error: 'Monto total inválido.' });
     }
 
+    const requestedReleasedBibs = normalizedTickets
+      .filter((ticket) => ticket.bibMode === 'released')
+      .map((ticket) => ticket.releasedBib);
+
+    if (new Set(requestedReleasedBibs).size !== requestedReleasedBibs.length) {
+      return res.status(400).json({
+        error: 'No puedes asignar el mismo BIB liberado a dos participantes de la misma operación.',
+      });
+    }
+
+    for (const bibNumber of requestedReleasedBibs) {
+      await assertReleasedBibAvailable(cleanEventSlug, bibNumber);
+    }
+
     const amountParts = splitAmountInCents(amount, normalizedTickets.length);
     const orderSessionId = `manual_${Date.now()}_${crypto.randomBytes(4).toString('hex')}`;
     const createdAt = paidAt ? new Date(paidAt).toISOString() : new Date().toISOString();
@@ -131,7 +211,9 @@ module.exports = async function handler(req, res) {
 
     for (let i = 0; i < normalizedTickets.length; i += 1) {
       const ticket = normalizedTickets[i];
-      const bibNumber = await generateNextBibNumber(cleanEventSlug);
+      const bibNumber = ticket.bibMode === 'released'
+        ? ticket.releasedBib
+        : await generateNextBibNumber(cleanEventSlug);
       const stripeSessionId = i === 0 ? orderSessionId : `${orderSessionId}::${i + 1}`;
 
       const { data, error } = await supabase
@@ -160,7 +242,15 @@ module.exports = async function handler(req, res) {
         .single();
 
       if (error) {
-        throw new Error(`Error guardando ticket ${i + 1}: ${error.message}`);
+        const insertError = new Error(
+          error.code === '23505' && ticket.bibMode === 'released'
+            ? `El BIB #${bibNumber} dejó de estar disponible. Recarga la lista de BIBs liberados e inténtalo de nuevo.`
+            : `Error guardando ticket ${i + 1}: ${error.message}`
+        );
+        if (error.code === '23505' && ticket.bibMode === 'released') {
+          insertError.statusCode = 409;
+        }
+        throw insertError;
       }
 
       inserted.push(data);
@@ -215,6 +305,7 @@ module.exports = async function handler(req, res) {
     });
   } catch (error) {
     console.error('Error en admin-manual-transfer:', error);
-    return res.status(500).json({ error: error.message || 'Error interno del servidor.' });
+    const statusCode = Number.isInteger(error?.statusCode) ? error.statusCode : 500;
+    return res.status(statusCode).json({ error: error.message || 'Error interno del servidor.' });
   }
 };
