@@ -132,12 +132,28 @@ test('admin-list-inscriptions admin → 200 con status paid por defecto', async 
     await handler(req, res);
     assert.equal(res.statusCode, 200);
     assert.deepEqual(res.body.rows, rows);
-    assert.deepEqual(state.eqCalls, [{ col: 'payment_status', val: 'paid' }]);
+    assert.deepEqual(state.eqCalls, [
+      { col: 'payment_status', val: 'paid' },
+      { col: 'registration_status', val: 'active' },
+    ]);
     assert.equal(state.fromTable, 'inscripciones');
     assert.equal(res.body.page, 1);
     assert.equal(res.body.limit, 100);
     assert.equal(res.body.total, 1);
     assert.equal(res.body.hasMore, false);
+  });
+});
+
+test('admin-list-inscriptions status=cancelled filtra por registration_status', async () => {
+  const state = baseState({ rows: [], count: 0 });
+  await withMocks(state, async (handler) => {
+    const { req, res } = createReqRes({
+      headers: { authorization: 'Bearer admin-token' },
+      query: { status: 'cancelled' },
+    });
+    await handler(req, res);
+    assert.equal(res.statusCode, 200);
+    assert.deepEqual(state.eqCalls, [{ col: 'registration_status', val: 'cancelled' }]);
   });
 });
 
