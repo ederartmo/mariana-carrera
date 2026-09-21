@@ -416,6 +416,42 @@
     .table-scroll::-webkit-scrollbar-thumb:hover {
       background: #37e0a4;
     }
+    .table-scroll-follower {
+      position: fixed;
+      bottom: 8px;
+      z-index: 60;
+      height: 18px;
+      overflow-x: scroll;
+      overflow-y: hidden;
+      background: #0b1118;
+      border: 1px solid #233243;
+      border-radius: 999px;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+      scrollbar-gutter: stable;
+      scrollbar-width: auto;
+      scrollbar-color: #19c88b #0b1118;
+    }
+    .table-scroll-follower[hidden] {
+      display: none;
+    }
+    .table-scroll-follower-track {
+      height: 1px;
+    }
+    .table-scroll-follower::-webkit-scrollbar {
+      height: 14px;
+    }
+    .table-scroll-follower::-webkit-scrollbar-track {
+      background: #0b1118;
+      border-radius: 999px;
+    }
+    .table-scroll-follower::-webkit-scrollbar-thumb {
+      background: #19c88b;
+      border: 3px solid #0b1118;
+      border-radius: 999px;
+    }
+    .table-scroll-follower::-webkit-scrollbar-thumb:hover {
+      background: #37e0a4;
+    }
     .table-card-controls {
       display: flex;
       flex-wrap: wrap;
@@ -680,7 +716,7 @@ src="https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1"
       <div class="table-card-header">
         <div>
           <h2>Inscripciones</h2>
-          <p>Usa la barra horizontal inferior para desplazarte a la derecha y ver todas las acciones.</p>
+          <p>La barra horizontal te seguirá mientras recorres la tabla para que siempre puedas moverte a izquierda y derecha.</p>
         </div>
         <div class="table-card-controls">
           <label class="rows-control" for="rowsPerPage">
@@ -797,6 +833,7 @@ src="https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1"
       rowLimit: 30,
     };
     let cachedRows = [];
+    let tableScrollFollowerCleanup = null;
 
     // ====================== VERIFICACIÓN DE ACCESO ======================
     async function checkAdminAccess() {
@@ -989,6 +1026,10 @@ src="https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1"
 
     function renderPaidInscriptions(rows) {
       const contentDiv = document.getElementById("content");
+      if (typeof tableScrollFollowerCleanup === 'function') {
+        tableScrollFollowerCleanup();
+        tableScrollFollowerCleanup = null;
+      }
       const filteredRows = filterRows(rows);
       const visibleRows = adminUiState.rowLimit === 'all'
         ? filteredRows
@@ -1076,8 +1117,81 @@ src="https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1"
         `;
       });
 
-      html += `</tbody></table></div>`;
+      html += `
+        </tbody></table></div>
+        <div class="table-scroll-follower" aria-label="Desplazamiento horizontal de la tabla" hidden>
+          <div class="table-scroll-follower-track"></div>
+        </div>
+      `;
       contentDiv.innerHTML = html;
+      tableScrollFollowerCleanup = setupTableScrollFollower(contentDiv);
+    }
+
+    function setupTableScrollFollower(contentDiv) {
+      const scroller = contentDiv.querySelector('.table-scroll');
+      const follower = contentDiv.querySelector('.table-scroll-follower');
+      const track = contentDiv.querySelector('.table-scroll-follower-track');
+      const table = scroller?.querySelector('table');
+
+      if (!scroller || !follower || !track || !table) return null;
+
+      let syncing = false;
+      let resizeObserver = null;
+
+      const syncFollower = () => {
+        if (syncing) return;
+        syncing = true;
+        follower.scrollLeft = scroller.scrollLeft;
+        syncing = false;
+      };
+
+      const syncScroller = () => {
+        if (syncing) return;
+        syncing = true;
+        scroller.scrollLeft = follower.scrollLeft;
+        syncing = false;
+      };
+
+      const updateFollower = () => {
+        const rect = scroller.getBoundingClientRect();
+        const viewportHeight = window.innerHeight || document.documentElement.clientHeight;
+        const viewportWidth = window.innerWidth || document.documentElement.clientWidth;
+        const hasOverflow = scroller.scrollWidth > scroller.clientWidth + 1;
+        const intersectsViewport = rect.bottom > 0 && rect.top < viewportHeight;
+        const nativeBottomVisible = rect.bottom <= viewportHeight - 4;
+        const shouldShow = hasOverflow && intersectsViewport && !nativeBottomVisible;
+
+        follower.hidden = !shouldShow;
+        if (!shouldShow) return;
+
+        const left = Math.max(0, rect.left);
+        const right = Math.min(viewportWidth, rect.right);
+        follower.style.left = `${left}px`;
+        follower.style.width = `${Math.max(0, right - left)}px`;
+        track.style.width = `${scroller.scrollWidth}px`;
+        syncFollower();
+      };
+
+      scroller.addEventListener('scroll', syncFollower, { passive: true });
+      follower.addEventListener('scroll', syncScroller, { passive: true });
+      window.addEventListener('scroll', updateFollower, { passive: true });
+      window.addEventListener('resize', updateFollower);
+
+      if (typeof ResizeObserver !== 'undefined') {
+        resizeObserver = new ResizeObserver(updateFollower);
+        resizeObserver.observe(scroller);
+        resizeObserver.observe(table);
+      }
+
+      updateFollower();
+
+      return () => {
+        scroller.removeEventListener('scroll', syncFollower);
+        follower.removeEventListener('scroll', syncScroller);
+        window.removeEventListener('scroll', updateFollower);
+        window.removeEventListener('resize', updateFollower);
+        resizeObserver?.disconnect();
+      };
     }
 
     // Batch 1A: lectura vía /api/admin-list-inscriptions (Bearer + allowlist
