@@ -231,10 +231,10 @@ test('admin-list-inscriptions no expone columnas fuera del panel', async () => {
     const { req, res } = createReqRes({ headers: { authorization: 'Bearer admin-token' } });
     await handler(req, res);
     assert.equal(res.statusCode, 200);
-    for (const col of ['payment_intent_id', 'stripe_event_id', 'stripe_session_id', 'confirmation_email_id']) {
+    for (const col of ['payment_intent_id', 'stripe_event_id', 'confirmation_email_id']) {
       assert.ok(!state.selectCols.includes(col), `columna inesperada: ${col}`);
     }
-    for (const col of ['birth_date', 'whatsapp', 'state', 'borough', 'email_sent']) {
+    for (const col of ['stripe_session_id', 'birth_date', 'whatsapp', 'state', 'borough', 'email_sent']) {
       assert.ok(state.selectCols.includes(col), `columna faltante: ${col}`);
     }
   });
