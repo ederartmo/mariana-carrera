@@ -1789,17 +1789,20 @@ src="https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1"
 
         if (isManual) {
           const answer = String(window.prompt(
-            `¿Qué pasó con ${fullName}? Escribe: duplicado, reembolsado o cancelar.`,
-            'cancelar'
+            `¿Qué pasó con esta inscripción de ${fullName}?\n\n1 = Registro duplicado\n2 = Pago reembolsado\n3 = Solo cancelar participación`,
+            '3'
           ) || '').trim().toLowerCase();
 
           if (!answer) return;
 
           const typeMap = {
+            '1': 'duplicate',
             duplicado: 'duplicate',
             duplicate: 'duplicate',
+            '2': 'refunded',
             reembolsado: 'refunded',
             refunded: 'refunded',
+            '3': 'participation_cancelled',
             cancelar: 'participation_cancelled',
             cancelado: 'participation_cancelled',
             'solo cancelar': 'participation_cancelled',
@@ -1808,7 +1811,7 @@ src="https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1"
           cancellationType = typeMap[answer] || '';
 
           if (!cancellationType) {
-            window.alert('Usa una de estas opciones: duplicado, reembolsado o cancelar.');
+            window.alert('Elige 1, 2 o 3 según lo que ocurrió con la inscripción.');
             return;
           }
         }
