@@ -38,6 +38,7 @@ module.exports = async function handler(req, res) {
       .from('inscripciones')
       .select('*')
       .eq('order_session_id', cleanOrderId)
+      .eq('registration_status', 'active')
       .order('ticket_index', { ascending: true });
 
     if (queryError) {
