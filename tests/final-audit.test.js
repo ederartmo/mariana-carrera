@@ -32,7 +32,7 @@ test('B10-boundary: sin service_role ni bib writes en browser', () => {
 test('B10-auth: admin server-side autoritativo, sin flags browser', () => {
   const admin = readSource('admin-inscripciones.html');
   assert.ok(!admin.includes('isAdmin = true') && !admin.includes('window.isAdmin'), 'sin flag admin browser');
-  for (const file of ['api/admin-delete-inscription.js', 'api/admin-manual-transfer.js', 'api/admin-update-participant.js', 'api/admin-update-inscription-email.js', 'api/resend-confirmations.js', 'api/resend-single-confirmation.js', 'lib/resend-emails-list.js']) {
+  for (const file of ['api/admin-delete-inscription.js', 'api/admin-manual-transfer.js', 'api/admin-update-participant.js', 'api/admin-update-inscription-email.js', 'lib/admin-cancel-registration.js', 'api/resend-confirmations.js', 'api/resend-single-confirmation.js', 'lib/resend-emails-list.js']) {
     assert.ok(readSource(file).includes('getAdminUser(req)'), `${file} usa auth central`);
   }
 });

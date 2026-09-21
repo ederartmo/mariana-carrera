@@ -81,7 +81,7 @@ module.exports = async function handler(req, res) {
     // Preflight: leer ANTES de borrar.
     let selectQuery = supabase
       .from('inscripciones')
-      .select('id, order_session_id, stripe_session_id, payment_status');
+      .select('id, order_session_id, stripe_session_id, payment_status, event_slug, bib_number');
 
     selectQuery = cleanOrderSessionId
       ? selectQuery.eq('order_session_id', cleanOrderSessionId)
@@ -125,6 +125,33 @@ module.exports = async function handler(req, res) {
       });
     }
 
+    const releasedAt = new Date().toISOString();
+    const releases = targets
+      .filter((row) => /^\d+$/.test(String(row.bib_number || '').trim()))
+      .map((row) => ({
+        source_key: `test_deleted:${row.id}`,
+        event_slug: row.event_slug,
+        bib_number: String(Number.parseInt(String(row.bib_number), 10)).padStart(3, '0'),
+        source_type: 'test_deleted',
+        source_inscription_id: row.id,
+        source_order_session_id: row.order_session_id || null,
+        reason: 'Stripe TEST eliminado desde panel admin',
+        released_by: auth.email,
+        released_at: releasedAt,
+      }));
+
+    // Si un TEST confirmado tenía BIB, primero preservamos ese número en el
+    // ledger. Si esto falla, NO borramos la fila para no perder el historial.
+    if (releases.length > 0) {
+      const { error: releaseError } = await supabase
+        .from('bib_releases')
+        .upsert(releases, { onConflict: 'source_key', ignoreDuplicates: true });
+
+      if (releaseError) {
+        throw new Error(`No se pudo preservar el BIB antes de eliminar la prueba: ${releaseError.message}`);
+      }
+    }
+
     // Batch 4 review: mutar SOLO los IDs verificados en el preflight
     // (cierra ventana TOCTOU: una fila insertada después con el mismo
     // order_session_id jamás se borra). Nada de DELETE por order_session_id.
@@ -158,6 +185,7 @@ module.exports = async function handler(req, res) {
       deletedCount,
       orderSessionId: cleanOrderSessionId || targets[0]?.order_session_id || null,
       deletedIds: (deleted || []).map((item) => item.id),
+      releasedBibs: releases.map((item) => item.bib_number),
       adminEmail: auth.email,
     });
   } catch (error) {

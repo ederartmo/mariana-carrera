@@ -175,6 +175,23 @@ function buildRpcParticipants(participants, buyerEmail) {
 }
 
 async function finalizePaidOrder({ session, event, selectedEvent, cleanEmail, amountTotal, participants, fullName }) {
+  // Si un checkout LIVE fue archivado como intento incompleto y después Stripe
+  // confirma el pago, el pago manda: reactivamos la orden antes de finalizarla.
+  const { error: reactivateArchivedError } = await supabase
+    .from('inscripciones')
+    .update({
+      registration_status: 'active',
+      archived_at: null,
+      archived_by: null,
+      archive_reason: null,
+    })
+    .eq('order_session_id', session.id)
+    .eq('registration_status', 'archived');
+
+  if (reactivateArchivedError) {
+    throw new Error(`No se pudo reactivar una orden archivada: ${reactivateArchivedError.message}`);
+  }
+
   const safeParticipants = participants.length > 0
     ? participants.map((p) => ({
       fullName: p.fullName,

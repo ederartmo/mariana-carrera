@@ -135,7 +135,10 @@ test('me/registrations ignora ?email= malicioso y usa el email del JWT', async (
     assert.equal(res.statusCode, 200);
     assert.deepEqual(res.body.registrations, rows);
     // Ownership = email normalizado del JWT, nunca el query/body.
-    assert.deepEqual(state.eqCalls, [{ col: 'email', val: 'a@example.com' }]);
+    assert.deepEqual(state.eqCalls, [
+      { col: 'email', val: 'a@example.com' },
+      { col: 'registration_status', val: 'active' },
+    ]);
     assert.equal(state.fromTable, 'inscripciones');
   });
 });

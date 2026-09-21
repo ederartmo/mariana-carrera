@@ -38,6 +38,8 @@ module.exports = async function handler(req, res) {
       .from('inscripciones')
       .select('*')
       .eq('order_session_id', cleanOrderId)
+      .eq('registration_status', 'active')
+      .in('payment_status', ['paid', 'paid_no_email'])
       .order('ticket_index', { ascending: true });
 
     if (queryError) {
@@ -46,7 +48,7 @@ module.exports = async function handler(req, res) {
     }
 
     if (!records || records.length === 0) {
-      return res.status(404).json({ error: 'No se encontró la orden.' });
+      return res.status(404).json({ error: 'No se encontró una orden pagada y activa para reenviar.' });
     }
 
     if (!sendConfirmationEmail) {

@@ -79,17 +79,37 @@
     }
     .dashboard-toolbar {
       display: flex;
-      flex-wrap: wrap;
-      gap: 12px;
-      align-items: center;
-      justify-content: space-between;
-      margin: 0 0 16px;
-    }
-    .toolbar-group {
-      display: flex;
-      flex-wrap: wrap;
       gap: 10px;
       align-items: center;
+      margin: 0 0 16px;
+    }
+    .dashboard-search {
+      flex: 1 1 auto;
+      min-width: 260px;
+    }
+    .dashboard-search .admin-input {
+      width: 100%;
+      min-width: 0;
+    }
+    .dashboard-filters {
+      display: flex;
+      flex: 0 0 auto;
+      gap: 8px;
+      align-items: center;
+      margin-left: auto;
+    }
+    .dashboard-filters .admin-select {
+      width: auto;
+      min-width: 0;
+    }
+    #eventFilter {
+      min-width: 150px;
+    }
+    #statusFilter {
+      min-width: 132px;
+    }
+    #rowsPerPage {
+      min-width: 78px;
     }
     .admin-card {
       background: #11181f;
@@ -248,6 +268,44 @@
     .btn-danger:hover {
       background: #873040;
     }
+    .btn-cancel-registration {
+      background: transparent;
+      color: #ffb454;
+      border: 1px solid #8d5a1f;
+      border-radius: 6px;
+      padding: 4px 10px;
+      font-size: 0.78rem;
+      font-weight: 700;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+    .btn-cancel-registration:hover {
+      background: #8d5a1f;
+      color: #fff4e4;
+    }
+    .btn-cancel-registration:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+    .btn-archive-attempt {
+      background: transparent;
+      color: #9fb1c5;
+      border: 1px solid #42556b;
+      border-radius: 6px;
+      padding: 4px 10px;
+      font-size: 0.78rem;
+      font-weight: 700;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+    .btn-archive-attempt:hover {
+      background: #26364a;
+      color: #f0f5fb;
+    }
+    .btn-archive-attempt:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
     .btn-danger[hidden] {
       display: none;
     }
@@ -331,29 +389,8 @@
     .admin-input {
       min-width: 240px;
     }
-    .toggle-chip {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      background: #11181f;
-      border: 1px solid #2a3a4b;
-      border-radius: 999px;
-      padding: 8px 12px;
-      color: #dce7f3;
-      font-size: 0.88rem;
-      font-weight: 700;
-    }
-    .toggle-chip input {
-      accent-color: #19c88b;
-    }
-    .danger-chip {
-      border-color: #6d2430;
-      color: #ffd9df;
-      background: rgba(109, 36, 48, 0.16);
-    }
-    .toolbar-note {
-      color: #8ea1b7;
-      font-size: 0.82rem;
+    .admin-card.is-collapsed .admin-card-header {
+      margin-bottom: 0;
     }
     .table-card {
       padding: 0;
@@ -378,8 +415,74 @@
     }
     .table-scroll {
       width: 100%;
-      overflow-x: auto;
+      overflow-x: scroll;
       overflow-y: hidden;
+      scrollbar-gutter: stable;
+      scrollbar-width: auto;
+      scrollbar-color: #19c88b #0b1118;
+      padding-bottom: 2px;
+    }
+    .table-scroll::-webkit-scrollbar {
+      height: 14px;
+    }
+    .table-scroll::-webkit-scrollbar-track {
+      background: #0b1118;
+    }
+    .table-scroll::-webkit-scrollbar-thumb {
+      background: #19c88b;
+      border: 3px solid #0b1118;
+      border-radius: 999px;
+    }
+    .table-scroll::-webkit-scrollbar-thumb:hover {
+      background: #37e0a4;
+    }
+    .table-scroll-follower {
+      position: fixed;
+      bottom: 8px;
+      z-index: 60;
+      height: 18px;
+      overflow-x: scroll;
+      overflow-y: hidden;
+      background: #0b1118;
+      border: 1px solid #233243;
+      border-radius: 999px;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+      scrollbar-gutter: stable;
+      scrollbar-width: auto;
+      scrollbar-color: #19c88b #0b1118;
+    }
+    .table-scroll-follower[hidden] {
+      display: none;
+    }
+    .table-scroll-follower-track {
+      height: 1px;
+    }
+    .table-scroll-follower::-webkit-scrollbar {
+      height: 14px;
+    }
+    .table-scroll-follower::-webkit-scrollbar-track {
+      background: #0b1118;
+      border-radius: 999px;
+    }
+    .table-scroll-follower::-webkit-scrollbar-thumb {
+      background: #19c88b;
+      border: 3px solid #0b1118;
+      border-radius: 999px;
+    }
+    .table-scroll-follower::-webkit-scrollbar-thumb:hover {
+      background: #37e0a4;
+    }
+    .table-card-controls {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 8px;
+    }
+    .rows-summary {
+      padding: 8px 18px 0;
+      color: #8ea1b7;
+      font-size: 0.82rem;
     }
     .table-scroll table {
       box-shadow: none;
@@ -514,10 +617,24 @@
         width: 100%;
       }
       .dashboard-toolbar,
-      .toolbar-group,
       .table-card-header,
       .admin-card-header {
         align-items: stretch;
+      }
+      .dashboard-toolbar {
+        flex-wrap: wrap;
+      }
+      .dashboard-search {
+        flex: 1 1 100%;
+      }
+      .dashboard-filters {
+        width: 100%;
+        margin-left: 0;
+        flex-wrap: wrap;
+      }
+      .dashboard-filters .admin-select {
+        flex: 1 1 120px;
+        width: auto;
       }
     }
   </style>
@@ -542,39 +659,44 @@ src="https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1"
 <!-- End Meta Pixel Code -->
   <div class="container">
     <h1>Panel Admin - Inscripciones Pagadas</h1>
-    <p class="page-intro">Usa este panel para registrar transferencias, revisar compras y, solo si activas la opción de borrar, eliminar órdenes de prueba. <strong>Los usuarios con número 000</strong> son de uso de pruebas.</p>
+    <p class="page-intro">Usa este panel para registrar transferencias y administrar inscripciones. Los registros identificados por el sistema como Stripe TEST muestran su propia acción <strong>Eliminar prueba</strong>.</p>
 
     <div class="dashboard-toolbar">
-      <div class="toolbar-group">
-        <select id="eventFilter" class="admin-select">
+      <div class="dashboard-search">
+        <input id="searchFilter" class="admin-input" type="search" placeholder="Buscar por nombre, correo u orden" />
+      </div>
+      <div class="dashboard-filters" aria-label="Filtros de inscripciones">
+        <select id="eventFilter" class="admin-select" aria-label="Carrera" title="Carrera">
           <option value="all" selected>Todas las carreras</option>
           <option value="axolote-night-run">Axolote Night Run</option>
           <option value="cascanueces-run">Cascanueces Run</option>
         </select>
-        <select id="statusFilter" class="admin-select">
-          <option value="paid" selected>Solo pagadas</option>
-          <option value="all">Todos</option>
+        <select id="statusFilter" class="admin-select" aria-label="Estado" title="Estado">
+          <option value="all" selected>Todos</option>
+          <option value="paid">Solo pagadas</option>
           <option value="payment_failed">Pago fallido</option>
           <option value="refunded">Reembolsadas</option>
           <option value="paid_no_email">Pagadas sin email</option>
+          <option value="cancelled">Anuladas</option>
+          <option value="archived">Archivadas</option>
         </select>
-        <input id="searchFilter" class="admin-input" type="search" placeholder="Buscar por nombre, correo u orden" />
-      </div>
-      <div class="toolbar-group">
-        <button type="button" id="toggleManualPanelBtn" class="btn-secondary">Mostrar transferencias manuales</button>
-        <label class="toggle-chip danger-chip">
-          <input type="checkbox" id="dangerModeToggle" />
-          Activar opción de borrar
-        </label>
+        <select id="rowsPerPage" class="admin-select" aria-label="Filas visibles" title="Filas visibles">
+          <option value="all" selected>Todos</option>
+          <option value="50">50</option>
+          <option value="30">30</option>
+          <option value="10">10</option>
+        </select>
       </div>
     </div>
-    <div class="toolbar-note" id="dangerModeNote">La opción de borrar se mantiene oculta hasta activarla.</div>
 
     <section id="manualTransferCard" class="admin-card is-collapsed">
       <div class="admin-card-header">
         <div>
           <h2>Registrar pago por transferencia</h2>
           <p>Captura los datos del comprador y de cada participante. Los BIBs se asignan automáticamente al guardar.</p>
+        </div>
+        <div class="table-card-controls">
+          <button type="button" id="toggleManualPanelBtn" class="btn-secondary">Mostrar</button>
         </div>
       </div>
       <div class="admin-card-body">
@@ -616,16 +738,21 @@ src="https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1"
       </div>
     </section>
 
-    <section class="admin-card table-card">
+    <section id="inscriptionsSection" class="admin-card table-card">
       <div class="table-card-header">
         <div>
           <h2>Inscripciones</h2>
-          <p>La tabla mantiene su propio scroll horizontal para evitar desbordar toda la página.</p>
+          <p>La barra horizontal te seguirá mientras recorres la tabla para que siempre puedas moverte a izquierda y derecha.</p>
+        </div>
+        <div class="table-card-controls">
+          <button type="button" id="toggleInscriptionsBtn" class="btn-secondary">Minimizar</button>
         </div>
       </div>
-      <div id="inscriptionsFeedback" class="manual-feedback" style="margin-bottom:10px;"></div>
-      <div id="content">
-        <div class="loading">Cargando inscripciones...</div>
+      <div class="admin-card-body">
+        <div id="inscriptionsFeedback" class="manual-feedback" style="margin:0 18px 10px;"></div>
+        <div id="content">
+          <div class="loading">Cargando inscripciones...</div>
+        </div>
       </div>
     </section>
 
@@ -635,10 +762,15 @@ src="https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1"
           <h2>Emails enviados (Resend)</h2>
           <p>Últimos emails de confirmación enviados desde Resend. Solo visible para admins.</p>
         </div>
-        <button type="button" id="refreshEmailsBtn" class="btn-secondary" style="flex-shrink:0;">Actualizar</button>
+        <div class="table-card-controls">
+          <button type="button" id="refreshEmailsBtn" class="btn-secondary">Actualizar</button>
+          <button type="button" id="toggleResendEmailsBtn" class="btn-secondary">Mostrar</button>
+        </div>
       </div>
-      <div id="resendEmailsContent">
-        <div class="loading" style="padding:20px;">Cargando emails...</div>
+      <div class="admin-card-body">
+        <div id="resendEmailsContent">
+          <div class="loading" style="padding:20px;">Cargando emails...</div>
+        </div>
       </div>
     </section>
   </div>
@@ -712,12 +844,12 @@ src="https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1"
     const SUPABASE_URL = "https://uycwzhlcnfijjyzkgkem.supabase.co";
     const SUPABASE_KEY = "sb_publishable_IKwD3YtQwWzzEtE8QkVagA_OJGdV2e4";
     const adminUiState = {
-      dangerMode: false,
       searchTerm: "",
       eventSlug: "all",
+      rowLimit: 'all',
     };
     let cachedRows = [];
-    let dangerModeTimer = null;
+    let tableScrollFollowerCleanup = null;
 
     // ====================== VERIFICACIÓN DE ACCESO ======================
     async function checkAdminAccess() {
@@ -753,13 +885,19 @@ src="https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1"
 
     // ====================== CARGAR INSCRIPCIONES ======================
     function buildEmailButton(row) {
+      const paymentStatus = String(row.payment_status || '').trim();
+      if (row.registration_status !== 'active') return '';
+      if (!['paid', 'paid_no_email'].includes(paymentStatus)) return '';
       const orderId = row.order_session_id || '';
-      if (!orderId) return '<span class="btn-email-sent">—</span>';
+      if (!orderId) return '';
       const label = row.email_sent ? 'Reenviar email' : 'Enviar email';
       return `<button type="button" class="btn-email" data-resend-order="${escapeHtml(orderId)}" data-resend-name="${escapeHtml(row.full_name || '')}">${label}</button>`;
     }
 
     function buildEditEmailButton(row) {
+      const paymentStatus = String(row.payment_status || '').trim();
+      if (row.registration_status !== 'active') return '';
+      if (!['paid', 'paid_no_email'].includes(paymentStatus)) return '';
       const orderId = row.order_session_id || '';
       const currentEmail = row.buyer_email || row.email || '';
       return `
@@ -777,6 +915,7 @@ src="https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1"
     }
 
     function buildEditParticipantButton(row) {
+      if (row.registration_status === 'cancelled') return '';
       if (String(row.payment_status || '').trim() !== 'paid') return '';
       return `
         <button
@@ -789,23 +928,89 @@ src="https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1"
       `;
     }
 
-    function buildDangerButton(row) {
-      if (!adminUiState.dangerMode) {
-        return `<button type="button" class="btn-danger" hidden>Eliminar</button>`;
-      }
+    function paymentStatusLabel(status) {
+      const labels = {
+        paid: 'Pagado',
+        refunded: 'Reembolsado',
+        duplicate: 'Duplicado',
+        pending: 'Pendiente',
+        payment_failed: 'Pago fallido',
+        paid_no_email: 'Pagado sin email',
+      };
+      return labels[String(status || '').trim()] || String(status || '-');
+    }
 
-      const orderId = row.order_session_id || '';
-      const deleteMode = orderId ? 'order' : 'row';
+    function cancellationTypeLabel(type) {
+      const labels = {
+        duplicate: 'Registro duplicado',
+        refunded: 'Pago reembolsado',
+        participation_cancelled: 'Participación cancelada',
+      };
+      return labels[String(type || '').trim()] || '';
+    }
+
+    function buildCancelRegistrationButton(row) {
+      if (row.registration_status === 'cancelled') return '';
+      const paymentStatus = String(row.payment_status || '').trim();
+      if (!['paid', 'paid_no_email'].includes(paymentStatus)) return '';
+      return `
+        <button
+          type="button"
+          class="btn-cancel-registration"
+          data-cancel-registration-id="${row.id}"
+          data-cancel-registration-email="${escapeHtml(row.email || '')}"
+          data-cancel-registration-name="${escapeHtml(row.full_name || '')}"
+          data-cancel-registration-bib="${escapeHtml(row.bib_number || '')}"
+          data-cancel-registration-order="${escapeHtml(row.order_session_id || '')}"
+        >
+          Anular inscripción
+        </button>
+      `;
+    }
+
+    function buildArchiveAttemptButton(row) {
+      const paymentStatus = String(row.payment_status || '').trim();
+      const orderId = String(row.order_session_id || '').trim();
+      const stripeId = String(row.stripe_session_id || '').trim();
+      const isLiveCheckout = orderId.startsWith('cs_live_') && stripeId.startsWith('cs_live_');
+
+      if (row.registration_status !== 'active') return '';
+      if (!['pending', 'payment_failed'].includes(paymentStatus)) return '';
+      if (row.bib_number) return '';
+      if (!isLiveCheckout) return '';
+
+      return `
+        <button
+          type="button"
+          class="btn-archive-attempt"
+          data-archive-attempt-id="${row.id}"
+          data-archive-attempt-email="${escapeHtml(row.email || '')}"
+          data-archive-attempt-name="${escapeHtml(row.full_name || '')}"
+          data-archive-attempt-payment="${escapeHtml(paymentStatus)}"
+        >
+          Archivar intento
+        </button>
+      `;
+    }
+
+    function buildTestDeleteButton(row) {
+      const orderId = String(row.order_session_id || '').trim();
+      const stripeId = String(row.stripe_session_id || '').trim();
+      const isVerifiedTest = orderId.startsWith('cs_test_') && stripeId.startsWith('cs_test_');
+
+      if (!isVerifiedTest) return '';
+
       return `
         <button
           type="button"
           class="btn-danger"
-          data-delete-mode="${deleteMode}"
+          data-delete-mode="order"
           data-delete-id="${row.id}"
           data-delete-order="${escapeHtml(orderId)}"
           data-delete-name="${escapeHtml(row.full_name || '')}"
+          data-delete-bib="${escapeHtml(row.bib_number || '')}"
         >
-          ${orderId ? 'Eliminar orden' : 'Eliminar'}
+          Eliminar prueba
         </button>
       `;
     }
@@ -837,7 +1042,14 @@ src="https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1"
 
     function renderPaidInscriptions(rows) {
       const contentDiv = document.getElementById("content");
+      if (typeof tableScrollFollowerCleanup === 'function') {
+        tableScrollFollowerCleanup();
+        tableScrollFollowerCleanup = null;
+      }
       const filteredRows = filterRows(rows);
+      const visibleRows = adminUiState.rowLimit === 'all'
+        ? filteredRows
+        : filteredRows.slice(0, Number(adminUiState.rowLimit) || 30);
 
       if (!filteredRows.length) {
         contentDiv.innerHTML = `<div class="no-data">No hay resultados con los filtros actuales.</div>`;
@@ -845,6 +1057,7 @@ src="https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1"
       }
 
       let html = `
+        <div class="rows-summary">Mostrando ${visibleRows.length} de ${filteredRows.length} inscripciones.</div>
         <div class="table-scroll">
           <table>
             <thead>
@@ -867,7 +1080,7 @@ src="https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1"
             <tbody>
       `;
 
-      filteredRows.forEach((row) => {
+      visibleRows.forEach((row) => {
         const date = new Date(row.created_at).toLocaleDateString('es-MX', {
           year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit'
         });
@@ -889,11 +1102,17 @@ src="https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1"
             <td><span class="cell-strong">${escapeHtml(eventName)}</span></td>
             <td><span class="cell-strong">${escapeHtml(row.distance || '—')}</span></td>
             <td><span class="truncate" title="${escapeHtml(row.buyer_email || row.email || '')}">${row.buyer_email || row.email || '-'}</span></td>
-            <td>${row.payment_status || '-'}</td>
-            <td>${row.email_sent ? '<span style="color:#19c88b;">✓ Enviado</span>' : '<span style="color:#ff6b6b;">✗ Pendiente</span>'}</td>
+            <td>${row.registration_status === 'cancelled'
+              ? '<strong style="color:#ffb454;">Anulada</strong><span class="cell-muted">' + escapeHtml(cancellationTypeLabel(row.cancellation_type) || 'Sin clasificar') + ' · Pago: ' + escapeHtml(paymentStatusLabel(row.payment_status)) + '</span>'
+              : row.registration_status === 'archived'
+                ? '<strong style="color:#9fb1c5;">Archivada</strong><span class="cell-muted">Pago: ' + escapeHtml(paymentStatusLabel(row.payment_status)) + (row.archive_reason ? ' · ' + escapeHtml(row.archive_reason) : '') + '</span>'
+                : escapeHtml(paymentStatusLabel(row.payment_status))}</td>
+            <td>${row.registration_status === 'active' && ['paid', 'paid_no_email'].includes(String(row.payment_status || '').trim())
+              ? (row.email_sent ? '<span style="color:#19c88b;">✓ Enviado</span>' : '<span style="color:#ff6b6b;">✗ Pendiente</span>')
+              : '<span class="cell-muted">No aplica</span>'}</td>
             <td><strong>$${parseFloat(row.amount_paid || 0).toLocaleString('es-MX')}</strong></td>
             <td style="font-weight:700; color:#ff8c42;">${row.shirt_size || '—'}</td>
-            <td style="font-weight:800; color:#19c88b;">${row.bib_number ? '#' + row.bib_number : '—'}</td>
+            <td style="font-weight:800; color:#19c88b;">${row.registration_status === 'cancelled' ? (row.cancelled_bib_number ? '<span style="color:#ffb454;">Liberado #' + escapeHtml(row.cancelled_bib_number) + '</span>' : 'Liberado') : (row.bib_number ? '#' + escapeHtml(row.bib_number) : '—')}</td>
             <td>
               <span class="truncate" title="${escapeHtml(orderId)}">${orderId || '—'}</span>
               ${ticketSummary ? `<span class="cell-muted">${ticketSummary}</span>` : ''}
@@ -905,15 +1124,90 @@ src="https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1"
                 ${buildEditParticipantButton(row)}
                 ${buildEmailButton(row)}
                 ${buildEditEmailButton(row)}
-                ${buildDangerButton(row)}
+                ${buildCancelRegistrationButton(row)}
+                ${buildArchiveAttemptButton(row)}
+                ${buildTestDeleteButton(row)}
               </div>
             </td>
           </tr>
         `;
       });
 
-      html += `</tbody></table></div>`;
+      html += `
+        </tbody></table></div>
+        <div class="table-scroll-follower" aria-label="Desplazamiento horizontal de la tabla" hidden>
+          <div class="table-scroll-follower-track"></div>
+        </div>
+      `;
       contentDiv.innerHTML = html;
+      tableScrollFollowerCleanup = setupTableScrollFollower(contentDiv);
+    }
+
+    function setupTableScrollFollower(contentDiv) {
+      const scroller = contentDiv.querySelector('.table-scroll');
+      const follower = contentDiv.querySelector('.table-scroll-follower');
+      const track = contentDiv.querySelector('.table-scroll-follower-track');
+      const table = scroller?.querySelector('table');
+
+      if (!scroller || !follower || !track || !table) return null;
+
+      let syncing = false;
+      let resizeObserver = null;
+
+      const syncFollower = () => {
+        if (syncing) return;
+        syncing = true;
+        follower.scrollLeft = scroller.scrollLeft;
+        syncing = false;
+      };
+
+      const syncScroller = () => {
+        if (syncing) return;
+        syncing = true;
+        scroller.scrollLeft = follower.scrollLeft;
+        syncing = false;
+      };
+
+      const updateFollower = () => {
+        const rect = scroller.getBoundingClientRect();
+        const viewportHeight = window.innerHeight || document.documentElement.clientHeight;
+        const viewportWidth = window.innerWidth || document.documentElement.clientWidth;
+        const hasOverflow = scroller.scrollWidth > scroller.clientWidth + 1;
+        const intersectsViewport = rect.bottom > 0 && rect.top < viewportHeight;
+        const nativeBottomVisible = rect.bottom <= viewportHeight - 4;
+        const shouldShow = hasOverflow && intersectsViewport && !nativeBottomVisible;
+
+        follower.hidden = !shouldShow;
+        if (!shouldShow) return;
+
+        const left = Math.max(0, rect.left);
+        const right = Math.min(viewportWidth, rect.right);
+        follower.style.left = `${left}px`;
+        follower.style.width = `${Math.max(0, right - left)}px`;
+        track.style.width = `${scroller.scrollWidth}px`;
+        syncFollower();
+      };
+
+      scroller.addEventListener('scroll', syncFollower, { passive: true });
+      follower.addEventListener('scroll', syncScroller, { passive: true });
+      window.addEventListener('scroll', updateFollower, { passive: true });
+      window.addEventListener('resize', updateFollower);
+
+      if (typeof ResizeObserver !== 'undefined') {
+        resizeObserver = new ResizeObserver(updateFollower);
+        resizeObserver.observe(scroller);
+        resizeObserver.observe(table);
+      }
+
+      updateFollower();
+
+      return () => {
+        scroller.removeEventListener('scroll', syncFollower);
+        follower.removeEventListener('scroll', syncScroller);
+        window.removeEventListener('scroll', updateFollower);
+        window.removeEventListener('resize', updateFollower);
+        resizeObserver?.disconnect();
+      };
     }
 
     // Batch 1A: lectura vía /api/admin-list-inscriptions (Bearer + allowlist
@@ -923,11 +1217,12 @@ src="https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1"
     const ADMIN_LIST_PAGE_LIMIT = 100;
     const ADMIN_LIST_MAX_PAGES = 20;
 
-    async function fetchAdminInscriptionsPage(token, status, page) {
+    async function fetchAdminInscriptionsPage(token, status, page, eventSlug = 'all') {
       const params = new URLSearchParams({
         status: status || 'paid',
         page: String(page),
         limit: String(ADMIN_LIST_PAGE_LIMIT),
+        event: eventSlug || 'all',
       });
       const response = await fetch(`/api/admin-list-inscriptions?${params.toString()}`, {
         headers: { Authorization: `Bearer ${token}` },
@@ -1089,8 +1384,11 @@ src="https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1"
       whatsapp: '',
       state: '',
       borough: null,
+      bibMode: 'auto',
+      releasedBib: '',
     });
     let manualTickets = [MANUAL_EMPTY_TICKET()];
+    let manualReleasedBibs = [];
 
     function getManualLocationCatalog() {
       return window.KineticHubLocationCatalog || null;
@@ -1164,6 +1462,88 @@ src="https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1"
       return normalizeManualWhatsapp(value) !== null;
     }
 
+    function manualReleasedBibLabel(item) {
+      const bib = String(item?.bib || '').padStart(3, '0');
+      const rawDate = item?.releasedAt ? new Date(item.releasedAt) : null;
+      const date = rawDate && !Number.isNaN(rawDate.getTime())
+        ? rawDate.toLocaleDateString('es-MX', { day: 'numeric', month: 'short' })
+        : '';
+
+      if (item?.source === 'released') {
+        return date ? `#${bib} — liberado ${date}` : `#${bib} — liberado`;
+      }
+
+      return `#${bib} — disponible`;
+    }
+
+    function manualReleasedBibOptions(ticket, ticketIndex) {
+      const usedElsewhere = new Set(
+        manualTickets
+          .map((item, index) => index !== ticketIndex && item.bibMode === 'released'
+            ? String(item.releasedBib || '')
+            : '')
+          .filter(Boolean)
+      );
+
+      if (!manualReleasedBibs.length) {
+        return '<option value="">No hay BIBs disponibles</option>';
+      }
+
+      return [
+        '<option value="">Selecciona un BIB disponible</option>',
+        ...manualReleasedBibs.map((item) => {
+          const bib = String(item.bib || '');
+          const selected = String(ticket.releasedBib || '') === bib ? 'selected' : '';
+          const disabled = usedElsewhere.has(bib) ? 'disabled' : '';
+          return `<option value="${escapeHtml(bib)}" ${selected} ${disabled}>${escapeHtml(manualReleasedBibLabel(item))}</option>`;
+        }),
+      ].join('');
+    }
+
+    async function loadManualReleasedBibs(client, eventSlug) {
+      try {
+        const { data: { session } } = await client.auth.getSession();
+        const token = session?.access_token;
+        if (!token) throw new Error('Sesión no válida, vuelve a iniciar sesión.');
+
+        const response = await fetch(
+          `/api/admin-list-available-bibs?event=${encodeURIComponent(eventSlug)}`,
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+
+        const payload = await response.json().catch(() => ({}));
+        if (!response.ok) {
+          throw new Error(payload?.error || 'No se pudieron cargar los BIBs disponibles.');
+        }
+
+        manualReleasedBibs = Array.isArray(payload?.bibs)
+          ? payload.bibs
+              .map((item) => ({
+                bib: String(item?.bib || ''),
+                source: item?.source === 'released' ? 'released' : 'gap',
+                releasedAt: item?.releasedAt || null,
+                reason: item?.reason || null,
+              }))
+              .filter((item) => item.bib)
+              .sort((a, b) => Number(a.bib) - Number(b.bib))
+          : [];
+
+        const available = new Set(manualReleasedBibs.map((item) => String(item.bib)));
+        manualTickets.forEach((ticket) => {
+          if (ticket.bibMode === 'released' && !available.has(String(ticket.releasedBib || ''))) {
+            ticket.bibMode = 'auto';
+            ticket.releasedBib = '';
+          }
+        });
+
+        renderManualTickets();
+      } catch (error) {
+        console.error('No se pudieron cargar los BIBs disponibles:', error);
+        manualReleasedBibs = [];
+        renderManualTickets();
+      }
+    }
+
     function manualTicketError(ticket) {
       const name = String(ticket.fullName || '').trim().replace(/\s+/g, ' ');
       if (name.length < 3) return 'Completa el nombre del participante (mínimo 3 letras).';
@@ -1177,6 +1557,11 @@ src="https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1"
         : !!state;
       if (!stateOk) return 'Selecciona un estado válido.';
       if (isManualCdmxTicket(ticket) && !ticket.borough) return 'Selecciona la alcaldía (obligatoria en CDMX).';
+      if (ticket.bibMode === 'released') {
+        const releasedBib = String(ticket.releasedBib || '');
+        const isAvailable = manualReleasedBibs.some((item) => String(item.bib) === releasedBib);
+        if (!releasedBib || !isAvailable) return 'Selecciona un BIB disponible.';
+      }
       return null;
     }
 
@@ -1268,6 +1653,29 @@ src="https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1"
                 ${manualBoroughOptions(ticket)}
               </select>
             </div>
+            <div>
+              <label for="manualTicketBibMode${ticketNum}">Asignación de BIB</label>
+              <select
+                id="manualTicketBibMode${ticketNum}"
+                data-manual-field="bibMode"
+                data-manual-index="${index}"
+              >
+                <option value="auto" ${ticket.bibMode !== 'released' ? 'selected' : ''}>Automático — siguiente disponible</option>
+                <option value="released" ${ticket.bibMode === 'released' ? 'selected' : ''} ${manualReleasedBibs.length ? '' : 'disabled'}>Usar un BIB disponible</option>
+              </select>
+            </div>
+            <div>
+              <label for="manualTicketReleasedBib${ticketNum}">BIB disponible</label>
+              <select
+                id="manualTicketReleasedBib${ticketNum}"
+                data-manual-field="releasedBib"
+                data-manual-index="${index}"
+                ${ticket.bibMode === 'released' && manualReleasedBibs.length ? '' : 'disabled'}
+              >
+                ${manualReleasedBibOptions(ticket, index)}
+              </select>
+              <span class="cell-muted">${manualReleasedBibs.length ? manualReleasedBibs.length + ' BIBs disponibles · incluye liberados y huecos históricos libres.' : 'No hay BIBs disponibles para esta carrera.'}</span>
+            </div>
             <div class="span-2">
               ${removeBtn}
             </div>
@@ -1298,13 +1706,23 @@ src="https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1"
       };
 
       renderManualTickets();
+      loadManualReleasedBibs(client, manualEventSlug?.value || 'axolote-night-run');
 
       const updateManualDistances = () => {
         if (!manualDistance) return;
         const distances = manualEventSlug?.value === 'cascanueces-run' ? ['5K', '10K'] : ['5K'];
         manualDistance.innerHTML = distances.map((value) => `<option value="${value}">${value}</option>`).join('');
       };
-      manualEventSlug?.addEventListener('change', updateManualDistances);
+      manualEventSlug?.addEventListener('change', () => {
+        updateManualDistances();
+        manualTickets.forEach((ticket) => {
+          ticket.bibMode = 'auto';
+          ticket.releasedBib = '';
+        });
+        manualReleasedBibs = [];
+        renderManualTickets();
+        loadManualReleasedBibs(client, manualEventSlug.value || 'axolote-night-run');
+      });
       updateManualDistances();
 
       addBtn.addEventListener('click', () => {
@@ -1359,6 +1777,30 @@ src="https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1"
           const next = String(event.target.value || '');
           manualTickets[index].borough = next || null;
         }
+
+        if (field === 'bibMode') {
+          const nextMode = String(event.target.value || 'auto') === 'released' ? 'released' : 'auto';
+          manualTickets[index].bibMode = nextMode;
+          if (nextMode === 'auto') {
+            manualTickets[index].releasedBib = '';
+          } else if (!manualTickets[index].releasedBib) {
+            const alreadyUsed = new Set(
+              manualTickets
+                .map((item, i) => i !== index && item.bibMode === 'released' ? String(item.releasedBib || '') : '')
+                .filter(Boolean)
+            );
+            const firstAvailable = manualReleasedBibs.find((item) => !alreadyUsed.has(String(item.bib)));
+            manualTickets[index].releasedBib = firstAvailable ? String(firstAvailable.bib) : '';
+          }
+          renderManualTickets();
+          return;
+        }
+
+        if (field === 'releasedBib') {
+          manualTickets[index].releasedBib = String(event.target.value || '');
+          renderManualTickets();
+          return;
+        }
       });
 
       form.addEventListener('submit', async (event) => {
@@ -1397,6 +1839,8 @@ src="https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1"
             whatsapp: String(ticket.whatsapp || '').trim(),
             state: String(ticket.state || '').trim(),
             borough: isCdmx ? (String(ticket.borough || '').trim() || null) : null,
+            bibMode: ticket.bibMode === 'released' ? 'released' : 'auto',
+            releasedBib: ticket.bibMode === 'released' ? String(ticket.releasedBib || '') : '',
           });
         }
 
@@ -1438,9 +1882,11 @@ src="https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1"
 
           form.reset();
           manualTickets = [MANUAL_EMPTY_TICKET()];
+          updateManualDistances();
+          await loadManualReleasedBibs(client, manualEventSlug?.value || 'axolote-night-run');
           renderManualTickets();
 
-          await loadPaidInscriptions(client, statusFilter?.value || 'paid');
+          await loadPaidInscriptions(client, statusFilter?.value || 'all');
         } catch (err) {
           setFeedback(err.message || 'Error guardando transferencia.', 'err');
         } finally {
@@ -1640,10 +2086,146 @@ src="https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1"
       if (!contentDiv) return;
 
       contentDiv.addEventListener('click', async (event) => {
-        if (!adminUiState.dangerMode) {
-          return;
+        const button = event.target?.closest('[data-cancel-registration-id]');
+        if (!button) return;
+
+        const inscriptionId = button.getAttribute('data-cancel-registration-id') || '';
+        const email = button.getAttribute('data-cancel-registration-email') || '';
+        const fullName = button.getAttribute('data-cancel-registration-name') || 'esta inscripción';
+        const bib = button.getAttribute('data-cancel-registration-bib') || '';
+        const orderId = button.getAttribute('data-cancel-registration-order') || '';
+        const isManual = orderId.startsWith('manual_');
+
+        let cancellationType = 'participation_cancelled';
+
+        if (isManual) {
+          const answer = String(window.prompt(
+            `¿Qué pasó con esta inscripción de ${fullName}?\n\n1 = Registro duplicado\n2 = Pago reembolsado\n3 = Solo cancelar participación`,
+            '3'
+          ) || '').trim().toLowerCase();
+
+          if (!answer) return;
+
+          const typeMap = {
+            '1': 'duplicate',
+            duplicado: 'duplicate',
+            duplicate: 'duplicate',
+            '2': 'refunded',
+            reembolsado: 'refunded',
+            refunded: 'refunded',
+            '3': 'participation_cancelled',
+            cancelar: 'participation_cancelled',
+            cancelado: 'participation_cancelled',
+            'solo cancelar': 'participation_cancelled',
+          };
+
+          cancellationType = typeMap[answer] || '';
+
+          if (!cancellationType) {
+            window.alert('Elige 1, 2 o 3 según lo que ocurrió con la inscripción.');
+            return;
+          }
         }
 
+        const reason = String(window.prompt(
+          `Nota opcional para ${fullName} (ej. correo mal escrito, pidió cancelar, etc.):`,
+          ''
+        ) || '').trim();
+
+        const bibText = bib ? ` El BIB #${bib} quedará liberado.` : '';
+        const outcomeText = cancellationType === 'duplicate'
+          ? ' El registro quedará marcado como duplicado y no representará otro pago real.'
+          : cancellationType === 'refunded'
+            ? ' El pago manual quedará marcado como reembolsado.'
+            : ' El pago se conservará como pagado y solo se cancelará la participación.';
+
+        if (!window.confirm(
+          `¿Anular la inscripción de ${fullName}?${bibText}${outcomeText}`
+        )) return;
+
+        button.disabled = true;
+        const originalText = button.textContent;
+        button.textContent = 'Anulando...';
+
+        try {
+          const { data: { session } } = await client.auth.getSession();
+          const token = session?.access_token;
+          if (!token) throw new Error('Sesión no válida, vuelve a iniciar sesión.');
+
+          const response = await fetch('/api/admin-cancel-registration', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+            body: JSON.stringify({ inscriptionId, email, reason, cancellationType }),
+          });
+          const data = await response.json();
+          if (!response.ok) throw new Error(data?.error || 'No se pudo anular la inscripción.');
+
+          const released = data?.releasedBibNumber ? ` BIB #${data.releasedBibNumber} liberado.` : '';
+          const resultLabel = cancellationType === 'duplicate'
+            ? 'Registro duplicado'
+            : cancellationType === 'refunded'
+              ? 'Pago reembolsado'
+              : 'Participación cancelada';
+          window.alert(`Inscripción anulada correctamente: ${resultLabel}.${released}`);
+          await loadPaidInscriptions(client, statusFilter?.value || 'all');
+        } catch (err) {
+          window.alert(err.message || 'No se pudo anular la inscripción.');
+          button.disabled = false;
+          button.textContent = originalText;
+        }
+      });
+
+      contentDiv.addEventListener('click', async (event) => {
+        const button = event.target?.closest('[data-archive-attempt-id]');
+        if (!button) return;
+
+        const inscriptionId = button.getAttribute('data-archive-attempt-id') || '';
+        const email = button.getAttribute('data-archive-attempt-email') || '';
+        const fullName = button.getAttribute('data-archive-attempt-name') || 'este intento';
+        const paymentStatus = button.getAttribute('data-archive-attempt-payment') || '';
+
+        const reason = String(window.prompt(
+          `Motivo para archivar ${fullName} (ej. prueba interna):`,
+          'prueba interna'
+        ) || '').trim();
+
+        if (!window.confirm(
+          `¿Archivar este intento de checkout?\n\n${fullName}\nEstado de pago: ${paymentStatus}\n\nNo se borrará el historial de Stripe y no se enviará confirmación.`
+        )) return;
+
+        button.disabled = true;
+        const originalText = button.textContent;
+        button.textContent = 'Archivando...';
+
+        try {
+          const { data: { session } } = await client.auth.getSession();
+          const token = session?.access_token;
+          if (!token) throw new Error('Sesión no válida, vuelve a iniciar sesión.');
+
+          const response = await fetch('/api/admin-archive-attempt', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: `Bearer ${token}`,
+            },
+            body: JSON.stringify({ inscriptionId, email, reason }),
+          });
+
+          const data = await response.json().catch(() => ({}));
+          if (!response.ok) {
+            throw new Error(data?.error || 'No se pudo archivar el intento.');
+          }
+
+          window.alert('Intento archivado. Puedes consultarlo en el filtro “Archivadas”.');
+          await loadPaidInscriptions(client, statusFilter?.value || 'all');
+        } catch (err) {
+          window.alert(err.message || 'No se pudo archivar el intento.');
+          button.disabled = false;
+          button.textContent = originalText;
+        }
+      });
+
+      contentDiv.addEventListener('click', async (event) => {
         const button = event.target?.closest('[data-delete-mode]');
         if (!button) return;
 
@@ -1651,10 +2233,12 @@ src="https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1"
         const inscriptionId = button.getAttribute('data-delete-id') || '';
         const orderSessionId = button.getAttribute('data-delete-order') || '';
         const fullName = button.getAttribute('data-delete-name') || 'este registro';
+        const bib = button.getAttribute('data-delete-bib') || '';
+        const bibNote = bib ? ` El BIB #${bib} quedará disponible para reasignarse.` : '';
 
         const message = deleteMode === 'order'
-          ? `Se eliminará toda la orden ${orderSessionId}. Esta acción no se puede deshacer. ¿Continuar?`
-          : `Se eliminará ${fullName}. Esta acción no se puede deshacer. ¿Continuar?`;
+          ? `Se eliminará toda la orden ${orderSessionId}. Esta acción no se puede deshacer.${bibNote} ¿Continuar?`
+          : `Se eliminará ${fullName}. Esta acción no se puede deshacer.${bibNote} ¿Continuar?`;
 
         if (!window.confirm(message)) {
           return;
@@ -1698,7 +2282,12 @@ src="https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1"
             throw new Error(data?.error || 'No se pudo eliminar el registro.');
           }
 
-          await loadPaidInscriptions(client, statusFilter?.value || 'paid');
+          const releasedBibs = Array.isArray(data?.releasedBibs) ? data.releasedBibs : [];
+          if (releasedBibs.length > 0) {
+            window.alert(`Prueba eliminada. BIB disponible: ${releasedBibs.map((value) => '#' + value).join(', ')}.`);
+          }
+
+          await loadPaidInscriptions(client, statusFilter?.value || 'all');
         } catch (err) {
           window.alert(err.message || 'No se pudo eliminar el registro.');
           button.disabled = false;
@@ -1741,7 +2330,7 @@ src="https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1"
           }
 
           window.alert(`Correo de confirmación reenviado a ${data.email}`);
-          await loadPaidInscriptions(client, statusFilter?.value || 'paid');
+          await loadPaidInscriptions(client, statusFilter?.value || 'all');
         } catch (err) {
           window.alert(err.message || 'Error al enviar el correo.');
           button.disabled = false;
@@ -1803,7 +2392,7 @@ src="https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1"
           }
 
           window.alert(`Correo actualizado a ${data.email}. Ahora puedes enviar la confirmación al correo correcto.`);
-          await loadPaidInscriptions(client, statusFilter?.value || 'paid');
+          await loadPaidInscriptions(client, statusFilter?.value || 'all');
         } catch (err) {
           window.alert(err.message || 'No se pudo actualizar el correo.');
           button.disabled = false;
@@ -1818,15 +2407,31 @@ src="https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1"
       const searchFilter = document.getElementById('searchFilter');
       const toggleManualPanelBtn = document.getElementById('toggleManualPanelBtn');
       const manualTransferCard = document.getElementById('manualTransferCard');
-      const dangerModeToggle = document.getElementById('dangerModeToggle');
-      const dangerModeNote = document.getElementById('dangerModeNote');
+      const inscriptionsSection = document.getElementById('inscriptionsSection');
+      const toggleInscriptionsBtn = document.getElementById('toggleInscriptionsBtn');
+      const rowsPerPage = document.getElementById('rowsPerPage');
+      const resendEmailsSection = document.getElementById('resendEmailsSection');
+      const toggleResendEmailsBtn = document.getElementById('toggleResendEmailsBtn');
 
       toggleManualPanelBtn?.addEventListener('click', () => {
         const isCollapsed = manualTransferCard?.classList.toggle('is-collapsed');
         toggleManualPanelBtn.classList.toggle('is-active', !isCollapsed);
-        toggleManualPanelBtn.textContent = isCollapsed
-          ? 'Mostrar transferencias manuales'
-          : 'Ocultar transferencias manuales';
+        toggleManualPanelBtn.textContent = isCollapsed ? 'Mostrar' : 'Minimizar';
+      });
+
+      toggleInscriptionsBtn?.addEventListener('click', () => {
+        const isCollapsed = inscriptionsSection?.classList.toggle('is-collapsed');
+        toggleInscriptionsBtn.textContent = isCollapsed ? 'Mostrar' : 'Minimizar';
+      });
+
+      toggleResendEmailsBtn?.addEventListener('click', () => {
+        const isCollapsed = resendEmailsSection?.classList.toggle('is-collapsed');
+        toggleResendEmailsBtn.textContent = isCollapsed ? 'Mostrar' : 'Minimizar';
+      });
+
+      rowsPerPage?.addEventListener('change', () => {
+        adminUiState.rowLimit = rowsPerPage.value === 'all' ? 'all' : Number(rowsPerPage.value || 50);
+        renderPaidInscriptions(cachedRows);
       });
 
       searchFilter?.addEventListener('input', () => {
@@ -1839,31 +2444,8 @@ src="https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1"
         renderPaidInscriptions(cachedRows);
       });
 
-      dangerModeToggle?.addEventListener('change', () => {
-        adminUiState.dangerMode = Boolean(dangerModeToggle.checked);
-
-        if (dangerModeTimer) {
-          clearTimeout(dangerModeTimer);
-          dangerModeTimer = null;
-        }
-
-        if (adminUiState.dangerMode) {
-          dangerModeNote.textContent = 'Opción de borrar activada por 2 minutos. Ya puedes ver los botones de eliminar.';
-          dangerModeTimer = window.setTimeout(() => {
-            adminUiState.dangerMode = false;
-            dangerModeToggle.checked = false;
-            dangerModeNote.textContent = 'La opción de borrar se mantiene oculta hasta activarla.';
-            renderPaidInscriptions(cachedRows);
-          }, 120000);
-        } else {
-          dangerModeNote.textContent = 'La opción de borrar se mantiene oculta hasta activarla.';
-        }
-
-        renderPaidInscriptions(cachedRows);
-      });
-
       statusFilter?.addEventListener('change', async () => {
-        await loadPaidInscriptions(client, statusFilter.value || 'paid');
+        await loadPaidInscriptions(client, statusFilter.value || 'all');
       });
 
       const refreshEmailsBtn = document.getElementById('refreshEmailsBtn');
@@ -1886,7 +2468,7 @@ src="https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1"
         setupParticipantModal(client);
         setupDeleteActions(client);
         console.log('[Admin] setup functions done, loading inscriptions...');
-        await loadPaidInscriptions(client, statusFilter?.value || "paid");
+        await loadPaidInscriptions(client, statusFilter?.value || "all");
         console.log('[Admin] loadPaidInscriptions done, loading emails...');
         loadResendEmails(client);
         console.log('[Admin] init complete');

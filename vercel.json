@@ -4,6 +4,9 @@
   "rewrites": [
     { "source": "/api/me/registrations", "destination": "/api/data?action=me-registrations" },
     { "source": "/api/admin-list-inscriptions", "destination": "/api/data?action=admin-list-inscriptions" },
+    { "source": "/api/admin-list-available-bibs", "destination": "/api/data?action=admin-list-available-bibs" },
+    { "source": "/api/admin-cancel-registration", "destination": "/api/data?action=admin-cancel-registration" },
+    { "source": "/api/admin-archive-attempt", "destination": "/api/data?action=admin-archive-attempt" },
     { "source": "/api/resend-emails-list", "destination": "/api/data?action=resend-emails-list" }
   ],
   "headers": [
