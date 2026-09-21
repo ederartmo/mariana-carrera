@@ -54,6 +54,17 @@ for (const file of ['admin-inscripciones.html', 'public/admin-inscripciones.html
     assert.ok(source.includes("row.registration_status === 'active' && row.bib_number"));
   });
 
+
+  test(`${file}: intentos live no pagados se archivan y no ofrecen acciones de email`, () => {
+    const source = read(file);
+    assert.ok(source.includes('<option value="archived">Archivadas</option>'));
+    assert.ok(source.includes('data-archive-attempt-id'));
+    assert.ok(source.includes('Archivar intento'));
+    assert.ok(source.includes("['pending', 'payment_failed'].includes(paymentStatus)"));
+    assert.ok(source.includes("if (!['paid', 'paid_no_email'].includes(paymentStatus)) return '';"));
+    assert.ok(source.includes('No aplica'));
+  });
+
   test(`${file}: selector de filas ofrece 10, 30, 50 y todos`, () => {
     const source = read(file);
     assert.ok(source.includes('id="rowsPerPage"'));
