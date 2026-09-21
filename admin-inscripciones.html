@@ -542,7 +542,7 @@ src="https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1"
 <!-- End Meta Pixel Code -->
   <div class="container">
     <h1>Panel Admin - Inscripciones Pagadas</h1>
-    <p class="page-intro">Usa este panel para registrar transferencias, revisar compras y, solo si activas la opción de borrar, eliminar órdenes de prueba. <strong>Los usuarios con número 000</strong> son de uso de pruebas.</p>
+    <p class="page-intro">Usa este panel para registrar transferencias, revisar compras y administrar participantes. <strong>Anular una inscripción conserva el pago y el historial; eliminar queda reservado para órdenes de prueba.</strong></p>
 
     <div class="dashboard-toolbar">
       <div class="toolbar-group">
@@ -556,6 +556,7 @@ src="https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1"
           <option value="all">Todos</option>
           <option value="payment_failed">Pago fallido</option>
           <option value="refunded">Reembolsadas</option>
+          <option value="cancelled">Anuladas</option>
           <option value="paid_no_email">Pagadas sin email</option>
         </select>
         <input id="searchFilter" class="admin-input" type="search" placeholder="Buscar por nombre, correo u orden" />
@@ -564,11 +565,11 @@ src="https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1"
         <button type="button" id="toggleManualPanelBtn" class="btn-secondary">Mostrar transferencias manuales</button>
         <label class="toggle-chip danger-chip">
           <input type="checkbox" id="dangerModeToggle" />
-          Activar opción de borrar
+          Activar borrado de pruebas
         </label>
       </div>
     </div>
-    <div class="toolbar-note" id="dangerModeNote">La opción de borrar se mantiene oculta hasta activarla.</div>
+    <div class="toolbar-note" id="dangerModeNote">El borrado definitivo solo aparece para órdenes Stripe de prueba. Las inscripciones reales se anulan sin borrar el pago.</div>
 
     <section id="manualTransferCard" class="admin-card is-collapsed">
       <div class="admin-card-header">
@@ -752,7 +753,17 @@ src="https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1"
     }
 
     // ====================== CARGAR INSCRIPCIONES ======================
+    function isCancelledRegistration(row) {
+      return String(row?.registration_status || 'active').trim().toLowerCase() === 'cancelled';
+    }
+
+    function isPaidRegistration(row) {
+      const status = String(row?.payment_status || '').trim().toLowerCase();
+      return status === 'paid' || status === 'paid_no_email';
+    }
+
     function buildEmailButton(row) {
+      if (isCancelledRegistration(row)) return '<span class="btn-email-sent">—</span>';
       const orderId = row.order_session_id || '';
       if (!orderId) return '<span class="btn-email-sent">—</span>';
       const label = row.email_sent ? 'Reenviar email' : 'Enviar email';
@@ -760,6 +771,7 @@ src="https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1"
     }
 
     function buildEditEmailButton(row) {
+      if (isCancelledRegistration(row)) return '';
       const orderId = row.order_session_id || '';
       const currentEmail = row.buyer_email || row.email || '';
       return `
@@ -777,7 +789,7 @@ src="https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1"
     }
 
     function buildEditParticipantButton(row) {
-      if (String(row.payment_status || '').trim() !== 'paid') return '';
+      if (isCancelledRegistration(row) || !isPaidRegistration(row)) return '';
       return `
         <button
           type="button"
@@ -789,23 +801,52 @@ src="https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1"
       `;
     }
 
-    function buildDangerButton(row) {
-      if (!adminUiState.dangerMode) {
-        return `<button type="button" class="btn-danger" hidden>Eliminar</button>`;
-      }
-
-      const orderId = row.order_session_id || '';
-      const deleteMode = orderId ? 'order' : 'row';
+    function buildCancelButton(row) {
+      if (isCancelledRegistration(row) || !isPaidRegistration(row)) return '';
       return `
         <button
           type="button"
           class="btn-danger"
-          data-delete-mode="${deleteMode}"
+          data-cancel-id="${row.id}"
+          data-cancel-name="${escapeHtml(row.full_name || '')}"
+          data-cancel-bib="${escapeHtml(row.bib_number || '')}"
+        >
+          Anular inscripción
+        </button>
+      `;
+    }
+
+    function buildBibButton(row) {
+      if (isCancelledRegistration(row) || !isPaidRegistration(row)) return '';
+      return `
+        <button
+          type="button"
+          class="btn-email btn-edit-email"
+          data-bib-id="${row.id}"
+          data-bib-current="${escapeHtml(row.bib_number || '')}"
+          data-bib-name="${escapeHtml(row.full_name || '')}"
+        >
+          Cambiar BIB
+        </button>
+      `;
+    }
+
+    function buildDangerButton(row) {
+      if (!adminUiState.dangerMode) return '';
+
+      const orderId = row.order_session_id || '';
+      if (!orderId.startsWith('cs_test_')) return '';
+
+      return `
+        <button
+          type="button"
+          class="btn-danger"
+          data-delete-mode="order"
           data-delete-id="${row.id}"
           data-delete-order="${escapeHtml(orderId)}"
           data-delete-name="${escapeHtml(row.full_name || '')}"
         >
-          ${orderId ? 'Eliminar orden' : 'Eliminar'}
+          Eliminar prueba
         </button>
       `;
     }
@@ -874,6 +915,17 @@ src="https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1"
 
         const orderId = row.order_session_id || '';
         const ticketSummary = row.ticket_index ? `T${row.ticket_index}/${row.ticket_count || 1}` : '';
+        const cancelled = isCancelledRegistration(row);
+        const stateHtml = cancelled
+          ? `<span style="font-weight:800;color:#ff8c42;">Anulada</span><span class="cell-muted">Pago: ${escapeHtml(row.payment_status || '—')}</span>`
+          : escapeHtml(row.payment_status || '-');
+        const bibHtml = cancelled
+          ? (row.cancelled_bib_number
+              ? `<span style="font-weight:800;color:#ff8c42;">Liberado #${escapeHtml(row.cancelled_bib_number)}</span>`
+              : '<span class="cell-muted">Sin BIB</span>')
+          : (row.bib_number
+              ? `<span style="font-weight:800;color:#19c88b;">#${escapeHtml(row.bib_number)}</span>`
+              : '—');
         const eventName = row.event_slug === 'cascanueces-run'
           ? 'Cascanueces Run'
           : row.event_slug === 'axolote-night-run'
@@ -889,11 +941,11 @@ src="https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1"
             <td><span class="cell-strong">${escapeHtml(eventName)}</span></td>
             <td><span class="cell-strong">${escapeHtml(row.distance || '—')}</span></td>
             <td><span class="truncate" title="${escapeHtml(row.buyer_email || row.email || '')}">${row.buyer_email || row.email || '-'}</span></td>
-            <td>${row.payment_status || '-'}</td>
+            <td>${stateHtml}</td>
             <td>${row.email_sent ? '<span style="color:#19c88b;">✓ Enviado</span>' : '<span style="color:#ff6b6b;">✗ Pendiente</span>'}</td>
             <td><strong>$${parseFloat(row.amount_paid || 0).toLocaleString('es-MX')}</strong></td>
             <td style="font-weight:700; color:#ff8c42;">${row.shirt_size || '—'}</td>
-            <td style="font-weight:800; color:#19c88b;">${row.bib_number ? '#' + row.bib_number : '—'}</td>
+            <td>${bibHtml}</td>
             <td>
               <span class="truncate" title="${escapeHtml(orderId)}">${orderId || '—'}</span>
               ${ticketSummary ? `<span class="cell-muted">${ticketSummary}</span>` : ''}
@@ -905,6 +957,8 @@ src="https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1"
                 ${buildEditParticipantButton(row)}
                 ${buildEmailButton(row)}
                 ${buildEditEmailButton(row)}
+                ${buildBibButton(row)}
+                ${buildCancelButton(row)}
                 ${buildDangerButton(row)}
               </div>
             </td>
@@ -1640,6 +1694,114 @@ src="https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1"
       if (!contentDiv) return;
 
       contentDiv.addEventListener('click', async (event) => {
+        const button = event.target?.closest('[data-cancel-id]');
+        if (!button) return;
+
+        const inscriptionId = button.getAttribute('data-cancel-id') || '';
+        const fullName = button.getAttribute('data-cancel-name') || 'esta inscripción';
+        const currentBib = button.getAttribute('data-cancel-bib') || '';
+
+        const warning = currentBib
+          ? `Se anulará la inscripción de ${fullName}. El pago NO se borra ni se reembolsa y el BIB #${currentBib} quedará liberado. ¿Continuar?`
+          : `Se anulará la inscripción de ${fullName}. El pago NO se borra ni se reembolsa. ¿Continuar?`;
+
+        if (!window.confirm(warning)) return;
+
+        const reasonInput = window.prompt('Motivo de la anulación (opcional):', '');
+        if (reasonInput === null) return;
+
+        const originalText = button.textContent;
+        button.disabled = true;
+        button.textContent = 'Anulando...';
+
+        try {
+          const { data: { session } } = await client.auth.getSession();
+          const token = session?.access_token;
+          if (!token) throw new Error('Sesión no válida, vuelve a iniciar sesión.');
+
+          const response = await fetch('/api/admin-cancel-registration', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: `Bearer ${token}`,
+            },
+            body: JSON.stringify({
+              inscriptionId,
+              reason: String(reasonInput || '').trim(),
+            }),
+          });
+
+          const data = await response.json().catch(() => ({}));
+          if (!response.ok) {
+            throw new Error(data?.error || 'No se pudo anular la inscripción.');
+          }
+
+          const released = data?.releasedBibNumber
+            ? ` El BIB #${data.releasedBibNumber} quedó libre para reasignarlo.`
+            : '';
+          window.alert(`Inscripción anulada. El registro del pago se conservó.${released}`);
+          await loadPaidInscriptions(client, statusFilter?.value || 'paid');
+        } catch (err) {
+          window.alert(err.message || 'No se pudo anular la inscripción.');
+          button.disabled = false;
+          button.textContent = originalText;
+        }
+      });
+
+      contentDiv.addEventListener('click', async (event) => {
+        const button = event.target?.closest('[data-bib-id]');
+        if (!button) return;
+
+        const inscriptionId = button.getAttribute('data-bib-id') || '';
+        const fullName = button.getAttribute('data-bib-name') || 'esta inscripción';
+        const currentBib = button.getAttribute('data-bib-current') || '';
+        const nextBibInput = window.prompt(
+          `Nuevo BIB para ${fullName}:`,
+          currentBib
+        );
+        if (nextBibInput === null) return;
+
+        const nextBib = String(nextBibInput || '').replace(/\D/g, '');
+        if (!nextBib || Number.parseInt(nextBib, 10) < 1) {
+          window.alert('Ingresa un BIB válido mayor a 0.');
+          return;
+        }
+
+        if (!window.confirm(`¿Asignar el BIB #${nextBib.padStart(3, '0')} a ${fullName}?`)) return;
+
+        const originalText = button.textContent;
+        button.disabled = true;
+        button.textContent = 'Guardando BIB...';
+
+        try {
+          const { data: { session } } = await client.auth.getSession();
+          const token = session?.access_token;
+          if (!token) throw new Error('Sesión no válida, vuelve a iniciar sesión.');
+
+          const response = await fetch('/api/admin-update-bib', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: `Bearer ${token}`,
+            },
+            body: JSON.stringify({ inscriptionId, bibNumber: nextBib }),
+          });
+
+          const data = await response.json().catch(() => ({}));
+          if (!response.ok) {
+            throw new Error(data?.error || 'No se pudo cambiar el BIB.');
+          }
+
+          window.alert(`BIB actualizado a #${data.bibNumber}. El correo quedó listo para reenviarse con el dorsal correcto.`);
+          await loadPaidInscriptions(client, statusFilter?.value || 'paid');
+        } catch (err) {
+          window.alert(err.message || 'No se pudo cambiar el BIB.');
+          button.disabled = false;
+          button.textContent = originalText;
+        }
+      });
+
+      contentDiv.addEventListener('click', async (event) => {
         if (!adminUiState.dangerMode) {
           return;
         }
@@ -1848,15 +2010,15 @@ src="https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1"
         }
 
         if (adminUiState.dangerMode) {
-          dangerModeNote.textContent = 'Opción de borrar activada por 2 minutos. Ya puedes ver los botones de eliminar.';
+          dangerModeNote.textContent = 'Borrado de pruebas activado por 2 minutos. Solo verás “Eliminar prueba” en órdenes cs_test_.';
           dangerModeTimer = window.setTimeout(() => {
             adminUiState.dangerMode = false;
             dangerModeToggle.checked = false;
-            dangerModeNote.textContent = 'La opción de borrar se mantiene oculta hasta activarla.';
+            dangerModeNote.textContent = 'El borrado definitivo solo aparece para órdenes Stripe de prueba. Las inscripciones reales se anulan sin borrar el pago.';
             renderPaidInscriptions(cachedRows);
           }, 120000);
         } else {
-          dangerModeNote.textContent = 'La opción de borrar se mantiene oculta hasta activarla.';
+          dangerModeNote.textContent = 'El borrado definitivo solo aparece para órdenes Stripe de prueba. Las inscripciones reales se anulan sin borrar el pago.';
         }
 
         renderPaidInscriptions(cachedRows);
