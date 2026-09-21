@@ -9,6 +9,7 @@ const ACTIONS = {
   'me-registrations': require('../lib/me-registrations'),
   'admin-list-inscriptions': require('../lib/admin-list-inscriptions'),
   'admin-cancel-registration': require('../lib/admin-cancel-registration'),
+  'admin-archive-attempt': require('../lib/admin-archive-attempt'),
   'resend-emails-list': require('../lib/resend-emails-list'),
 };
 
