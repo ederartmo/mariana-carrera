@@ -248,6 +248,25 @@
     .btn-danger:hover {
       background: #873040;
     }
+    .btn-cancel-registration {
+      background: transparent;
+      color: #ffb454;
+      border: 1px solid #8d5a1f;
+      border-radius: 6px;
+      padding: 4px 10px;
+      font-size: 0.78rem;
+      font-weight: 700;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+    .btn-cancel-registration:hover {
+      background: #8d5a1f;
+      color: #fff4e4;
+    }
+    .btn-cancel-registration:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
     .btn-danger[hidden] {
       display: none;
     }
@@ -557,6 +576,7 @@ src="https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1"
           <option value="payment_failed">Pago fallido</option>
           <option value="refunded">Reembolsadas</option>
           <option value="paid_no_email">Pagadas sin email</option>
+          <option value="cancelled">Anuladas</option>
         </select>
         <input id="searchFilter" class="admin-input" type="search" placeholder="Buscar por nombre, correo u orden" />
       </div>
@@ -753,6 +773,7 @@ src="https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1"
 
     // ====================== CARGAR INSCRIPCIONES ======================
     function buildEmailButton(row) {
+      if (row.registration_status === 'cancelled') return '<span class="btn-email-sent">—</span>';
       const orderId = row.order_session_id || '';
       if (!orderId) return '<span class="btn-email-sent">—</span>';
       const label = row.email_sent ? 'Reenviar email' : 'Enviar email';
@@ -760,6 +781,7 @@ src="https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1"
     }
 
     function buildEditEmailButton(row) {
+      if (row.registration_status === 'cancelled') return '';
       const orderId = row.order_session_id || '';
       const currentEmail = row.buyer_email || row.email || '';
       return `
@@ -777,6 +799,7 @@ src="https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1"
     }
 
     function buildEditParticipantButton(row) {
+      if (row.registration_status === 'cancelled') return '';
       if (String(row.payment_status || '').trim() !== 'paid') return '';
       return `
         <button
@@ -785,6 +808,24 @@ src="https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1"
           data-edit-participant-id="${row.id}"
         >
           Editar
+        </button>
+      `;
+    }
+
+    function buildCancelRegistrationButton(row) {
+      if (row.registration_status === 'cancelled') return '';
+      const paymentStatus = String(row.payment_status || '').trim();
+      if (!['paid', 'paid_no_email'].includes(paymentStatus)) return '';
+      return `
+        <button
+          type="button"
+          class="btn-cancel-registration"
+          data-cancel-registration-id="${row.id}"
+          data-cancel-registration-email="${escapeHtml(row.email || '')}"
+          data-cancel-registration-name="${escapeHtml(row.full_name || '')}"
+          data-cancel-registration-bib="${escapeHtml(row.bib_number || '')}"
+        >
+          Anular inscripción
         </button>
       `;
     }
@@ -889,11 +930,11 @@ src="https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1"
             <td><span class="cell-strong">${escapeHtml(eventName)}</span></td>
             <td><span class="cell-strong">${escapeHtml(row.distance || '—')}</span></td>
             <td><span class="truncate" title="${escapeHtml(row.buyer_email || row.email || '')}">${row.buyer_email || row.email || '-'}</span></td>
-            <td>${row.payment_status || '-'}</td>
+            <td>${row.registration_status === 'cancelled' ? '<strong style="color:#ffb454;">Anulada</strong><span class="cell-muted">Pago: ' + escapeHtml(row.payment_status || '-') + '</span>' : escapeHtml(row.payment_status || '-')}</td>
             <td>${row.email_sent ? '<span style="color:#19c88b;">✓ Enviado</span>' : '<span style="color:#ff6b6b;">✗ Pendiente</span>'}</td>
             <td><strong>$${parseFloat(row.amount_paid || 0).toLocaleString('es-MX')}</strong></td>
             <td style="font-weight:700; color:#ff8c42;">${row.shirt_size || '—'}</td>
-            <td style="font-weight:800; color:#19c88b;">${row.bib_number ? '#' + row.bib_number : '—'}</td>
+            <td style="font-weight:800; color:#19c88b;">${row.registration_status === 'cancelled' ? (row.cancelled_bib_number ? '<span style="color:#ffb454;">Liberado #' + escapeHtml(row.cancelled_bib_number) + '</span>' : 'Liberado') : (row.bib_number ? '#' + escapeHtml(row.bib_number) : '—')}</td>
             <td>
               <span class="truncate" title="${escapeHtml(orderId)}">${orderId || '—'}</span>
               ${ticketSummary ? `<span class="cell-muted">${ticketSummary}</span>` : ''}
@@ -905,6 +946,7 @@ src="https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1"
                 ${buildEditParticipantButton(row)}
                 ${buildEmailButton(row)}
                 ${buildEditEmailButton(row)}
+                ${buildCancelRegistrationButton(row)}
                 ${buildDangerButton(row)}
               </div>
             </td>
@@ -1638,6 +1680,46 @@ src="https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1"
       const contentDiv = document.getElementById('content');
       const statusFilter = document.getElementById('statusFilter');
       if (!contentDiv) return;
+
+      contentDiv.addEventListener('click', async (event) => {
+        const button = event.target?.closest('[data-cancel-registration-id]');
+        if (!button) return;
+
+        const inscriptionId = button.getAttribute('data-cancel-registration-id') || '';
+        const email = button.getAttribute('data-cancel-registration-email') || '';
+        const fullName = button.getAttribute('data-cancel-registration-name') || 'esta inscripción';
+        const bib = button.getAttribute('data-cancel-registration-bib') || '';
+        const reason = String(window.prompt(`Motivo de anulación para ${fullName} (opcional):`, '') || '').trim();
+
+        const bibText = bib ? ` El BIB #${bib} quedará liberado.` : '';
+        if (!window.confirm(`¿Anular la inscripción de ${fullName}? El registro del pago se conservará.${bibText}`)) return;
+
+        button.disabled = true;
+        const originalText = button.textContent;
+        button.textContent = 'Anulando...';
+
+        try {
+          const { data: { session } } = await client.auth.getSession();
+          const token = session?.access_token;
+          if (!token) throw new Error('Sesión no válida, vuelve a iniciar sesión.');
+
+          const response = await fetch('/api/admin-cancel-registration', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+            body: JSON.stringify({ inscriptionId, email, reason }),
+          });
+          const data = await response.json();
+          if (!response.ok) throw new Error(data?.error || 'No se pudo anular la inscripción.');
+
+          const released = data?.releasedBibNumber ? ` BIB #${data.releasedBibNumber} liberado.` : '';
+          window.alert(`Inscripción anulada correctamente. El historial del pago se conservó.${released}`);
+          await loadPaidInscriptions(client, statusFilter?.value || 'paid');
+        } catch (err) {
+          window.alert(err.message || 'No se pudo anular la inscripción.');
+          button.disabled = false;
+          button.textContent = originalText;
+        }
+      });
 
       contentDiv.addEventListener('click', async (event) => {
         if (!adminUiState.dangerMode) {
