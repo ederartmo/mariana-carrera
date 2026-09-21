@@ -86,7 +86,10 @@ function profileRow(overrides = {}) {
     distance: '5K',
     amount_paid: 500,
     payment_status: 'paid',
+    registration_status: 'active',
     bib_number: '001',
+    cancelled_bib_number: null,
+    cancelled_at: null,
     ...overrides,
   };
 }
@@ -182,7 +185,7 @@ test('me/registrations solo expone las columnas del perfil', async () => {
     assert.equal(res.statusCode, 200);
     assert.equal(
       state.selectCols,
-      'id, created_at, stripe_session_id, email, full_name, event_slug, distance, amount_paid, payment_status, bib_number'
+      'id, created_at, stripe_session_id, email, full_name, event_slug, distance, amount_paid, payment_status, registration_status, bib_number, cancelled_bib_number, cancelled_at'
     );
     assert.ok(!state.selectCols.includes('payment_intent_id'));
     assert.ok(!state.selectCols.includes('buyer_email'));
