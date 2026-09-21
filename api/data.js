@@ -9,6 +9,8 @@ const ACTIONS = {
   'me-registrations': require('../lib/me-registrations'),
   'admin-list-inscriptions': require('../lib/admin-list-inscriptions'),
   'resend-emails-list': require('../lib/resend-emails-list'),
+  'admin-cancel-registration': require('../lib/admin-registration-actions'),
+  'admin-update-bib': require('../lib/admin-registration-actions'),
 };
 
 module.exports = async function handler(req, res) {
