@@ -1533,6 +1533,8 @@ src="https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1"
           ticket.bibMode = 'auto';
           ticket.releasedBib = '';
         });
+        manualReleasedBibs = [];
+        renderManualTickets();
         loadManualReleasedBibs(client, manualEventSlug.value || 'axolote-night-run');
       });
       updateManualDistances();
@@ -1694,7 +1696,8 @@ src="https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1"
 
           form.reset();
           manualTickets = [MANUAL_EMPTY_TICKET()];
-          await loadManualReleasedBibs(client, eventSlug);
+          updateManualDistances();
+          await loadManualReleasedBibs(client, manualEventSlug?.value || 'axolote-night-run');
           renderManualTickets();
 
           await loadPaidInscriptions(client, statusFilter?.value || 'paid');
