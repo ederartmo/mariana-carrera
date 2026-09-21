@@ -267,6 +267,25 @@
       opacity: 0.5;
       cursor: not-allowed;
     }
+    .btn-archive-attempt {
+      background: transparent;
+      color: #9fb1c5;
+      border: 1px solid #42556b;
+      border-radius: 6px;
+      padding: 4px 10px;
+      font-size: 0.78rem;
+      font-weight: 700;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+    .btn-archive-attempt:hover {
+      background: #26364a;
+      color: #f0f5fb;
+    }
+    .btn-archive-attempt:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
     .btn-danger[hidden] {
       display: none;
     }
@@ -602,6 +621,7 @@ src="https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1"
           <option value="refunded">Reembolsadas</option>
           <option value="paid_no_email">Pagadas sin email</option>
           <option value="cancelled">Anuladas</option>
+          <option value="archived">Archivadas</option>
         </select>
         <input id="searchFilter" class="admin-input" type="search" placeholder="Buscar por nombre, correo u orden" />
       </div>
@@ -812,15 +832,19 @@ src="https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1"
 
     // ====================== CARGAR INSCRIPCIONES ======================
     function buildEmailButton(row) {
-      if (row.registration_status === 'cancelled') return '<span class="btn-email-sent">—</span>';
+      const paymentStatus = String(row.payment_status || '').trim();
+      if (row.registration_status !== 'active') return '';
+      if (!['paid', 'paid_no_email'].includes(paymentStatus)) return '';
       const orderId = row.order_session_id || '';
-      if (!orderId) return '<span class="btn-email-sent">—</span>';
+      if (!orderId) return '';
       const label = row.email_sent ? 'Reenviar email' : 'Enviar email';
       return `<button type="button" class="btn-email" data-resend-order="${escapeHtml(orderId)}" data-resend-name="${escapeHtml(row.full_name || '')}">${label}</button>`;
     }
 
     function buildEditEmailButton(row) {
-      if (row.registration_status === 'cancelled') return '';
+      const paymentStatus = String(row.payment_status || '').trim();
+      if (row.registration_status !== 'active') return '';
+      if (!['paid', 'paid_no_email'].includes(paymentStatus)) return '';
       const orderId = row.order_session_id || '';
       const currentEmail = row.buyer_email || row.email || '';
       return `
@@ -887,6 +911,31 @@ src="https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1"
           data-cancel-registration-order="${escapeHtml(row.order_session_id || '')}"
         >
           Anular inscripción
+        </button>
+      `;
+    }
+
+    function buildArchiveAttemptButton(row) {
+      const paymentStatus = String(row.payment_status || '').trim();
+      const orderId = String(row.order_session_id || '').trim();
+      const stripeId = String(row.stripe_session_id || '').trim();
+      const isLiveCheckout = orderId.startsWith('cs_live_') && stripeId.startsWith('cs_live_');
+
+      if (row.registration_status !== 'active') return '';
+      if (!['pending', 'payment_failed'].includes(paymentStatus)) return '';
+      if (row.bib_number) return '';
+      if (!isLiveCheckout) return '';
+
+      return `
+        <button
+          type="button"
+          class="btn-archive-attempt"
+          data-archive-attempt-id="${row.id}"
+          data-archive-attempt-email="${escapeHtml(row.email || '')}"
+          data-archive-attempt-name="${escapeHtml(row.full_name || '')}"
+          data-archive-attempt-payment="${escapeHtml(paymentStatus)}"
+        >
+          Archivar intento
         </button>
       `;
     }
@@ -995,8 +1044,14 @@ src="https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1"
             <td><span class="cell-strong">${escapeHtml(eventName)}</span></td>
             <td><span class="cell-strong">${escapeHtml(row.distance || '—')}</span></td>
             <td><span class="truncate" title="${escapeHtml(row.buyer_email || row.email || '')}">${row.buyer_email || row.email || '-'}</span></td>
-            <td>${row.registration_status === 'cancelled' ? '<strong style="color:#ffb454;">Anulada</strong><span class="cell-muted">' + escapeHtml(cancellationTypeLabel(row.cancellation_type) || 'Sin clasificar') + ' · Pago: ' + escapeHtml(paymentStatusLabel(row.payment_status)) + '</span>' : escapeHtml(paymentStatusLabel(row.payment_status))}</td>
-            <td>${row.email_sent ? '<span style="color:#19c88b;">✓ Enviado</span>' : '<span style="color:#ff6b6b;">✗ Pendiente</span>'}</td>
+            <td>${row.registration_status === 'cancelled'
+              ? '<strong style="color:#ffb454;">Anulada</strong><span class="cell-muted">' + escapeHtml(cancellationTypeLabel(row.cancellation_type) || 'Sin clasificar') + ' · Pago: ' + escapeHtml(paymentStatusLabel(row.payment_status)) + '</span>'
+              : row.registration_status === 'archived'
+                ? '<strong style="color:#9fb1c5;">Archivada</strong><span class="cell-muted">Pago: ' + escapeHtml(paymentStatusLabel(row.payment_status)) + (row.archive_reason ? ' · ' + escapeHtml(row.archive_reason) : '') + '</span>'
+                : escapeHtml(paymentStatusLabel(row.payment_status))}</td>
+            <td>${row.registration_status === 'active' && ['paid', 'paid_no_email'].includes(String(row.payment_status || '').trim())
+              ? (row.email_sent ? '<span style="color:#19c88b;">✓ Enviado</span>' : '<span style="color:#ff6b6b;">✗ Pendiente</span>')
+              : '<span class="cell-muted">No aplica</span>'}</td>
             <td><strong>$${parseFloat(row.amount_paid || 0).toLocaleString('es-MX')}</strong></td>
             <td style="font-weight:700; color:#ff8c42;">${row.shirt_size || '—'}</td>
             <td style="font-weight:800; color:#19c88b;">${row.registration_status === 'cancelled' ? (row.cancelled_bib_number ? '<span style="color:#ffb454;">Liberado #' + escapeHtml(row.cancelled_bib_number) + '</span>' : 'Liberado') : (row.bib_number ? '#' + escapeHtml(row.bib_number) : '—')}</td>
@@ -1012,6 +1067,7 @@ src="https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1"
                 ${buildEmailButton(row)}
                 ${buildEditEmailButton(row)}
                 ${buildCancelRegistrationButton(row)}
+                ${buildArchiveAttemptButton(row)}
                 ${buildTestDeleteButton(row)}
               </div>
             </td>
@@ -1984,6 +2040,56 @@ src="https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1"
           await loadPaidInscriptions(client, statusFilter?.value || 'paid');
         } catch (err) {
           window.alert(err.message || 'No se pudo anular la inscripción.');
+          button.disabled = false;
+          button.textContent = originalText;
+        }
+      });
+
+      contentDiv.addEventListener('click', async (event) => {
+        const button = event.target?.closest('[data-archive-attempt-id]');
+        if (!button) return;
+
+        const inscriptionId = button.getAttribute('data-archive-attempt-id') || '';
+        const email = button.getAttribute('data-archive-attempt-email') || '';
+        const fullName = button.getAttribute('data-archive-attempt-name') || 'este intento';
+        const paymentStatus = button.getAttribute('data-archive-attempt-payment') || '';
+
+        const reason = String(window.prompt(
+          `Motivo para archivar ${fullName} (ej. prueba interna):`,
+          'prueba interna'
+        ) || '').trim();
+
+        if (!window.confirm(
+          `¿Archivar este intento de checkout?\n\n${fullName}\nEstado de pago: ${paymentStatus}\n\nNo se borrará el historial de Stripe y no se enviará confirmación.`
+        )) return;
+
+        button.disabled = true;
+        const originalText = button.textContent;
+        button.textContent = 'Archivando...';
+
+        try {
+          const { data: { session } } = await client.auth.getSession();
+          const token = session?.access_token;
+          if (!token) throw new Error('Sesión no válida, vuelve a iniciar sesión.');
+
+          const response = await fetch('/api/admin-archive-attempt', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: `Bearer ${token}`,
+            },
+            body: JSON.stringify({ inscriptionId, email, reason }),
+          });
+
+          const data = await response.json().catch(() => ({}));
+          if (!response.ok) {
+            throw new Error(data?.error || 'No se pudo archivar el intento.');
+          }
+
+          window.alert('Intento archivado. Puedes consultarlo en el filtro “Archivadas”.');
+          await loadPaidInscriptions(client, statusFilter?.value || 'paid');
+        } catch (err) {
+          window.alert(err.message || 'No se pudo archivar el intento.');
           button.disabled = false;
           button.textContent = originalText;
         }
