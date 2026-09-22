@@ -255,7 +255,7 @@ test('PR1: resend-confirmations guarda id y fecha de Resend al reenviar', async 
     assert.equal(updatePayloads.length, 1);
     assert.equal(updatePayloads[0].email_sent, true);
     assert.equal(updatePayloads[0].confirmation_email_id, 'email_bulk_test');
-    assert.match(updatePayloads[0].confirmation_email_sent_at, /^\\d{4}-\\d{2}-\\d{2}T/);
+    assert.match(updatePayloads[0].confirmation_email_sent_at, /^\d{4}-\d{2}-\d{2}T/);
   } finally {
     unloadHandler([restoreWebhook, restoreSupabase]);
   }
