@@ -43,6 +43,7 @@ function createResponse() {
 
 test('resend-single-confirmation passes stored inscription distance to email sender', async () => {
   const emailPayloads = [];
+  const updatePayloads = [];
   const records = [{
     full_name: 'Runner 10K',
     shirt_size: 'M',
@@ -65,7 +66,10 @@ test('resend-single-confirmation passes stored inscription distance to email sen
         }),
       }),
       update: (payload) => ({
-        eq: async (column, value) => ({ data: { table, payload, column, value }, error: null }),
+        eq: async (column, value) => {
+          updatePayloads.push({ table, payload, column, value });
+          return { data: { table, payload, column, value }, error: null };
+        },
       }),
     }),
   };
@@ -105,4 +109,8 @@ test('resend-single-confirmation passes stored inscription distance to email sen
   assert.equal(emailPayloads.length, 1);
   assert.equal(emailPayloads[0].eventSlug, 'cascanueces-run');
   assert.equal(emailPayloads[0].distance, '10K');
+  assert.equal(updatePayloads.length, 1);
+  assert.equal(updatePayloads[0].payload.email_sent, true);
+  assert.equal(updatePayloads[0].payload.confirmation_email_id, 'email_test');
+  assert.match(updatePayloads[0].payload.confirmation_email_sent_at, /^\d{4}-\d{2}-\d{2}T/);
 });
