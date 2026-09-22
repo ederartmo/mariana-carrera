@@ -94,7 +94,11 @@ module.exports = async function handler(req, res) {
     if (emailResult.ok) {
       await supabase
         .from('inscripciones')
-        .update({ email_sent: true })
+        .update({
+          email_sent: true,
+          confirmation_email_id: emailResult.resendId,
+          confirmation_email_sent_at: new Date().toISOString(),
+        })
         .eq('order_session_id', cleanOrderId);
 
       console.log(`admin_action=resend_single admin=${auth.email} target=${cleanOrderId} result=sent`);

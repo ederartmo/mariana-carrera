@@ -138,6 +138,10 @@ test('admin manual Cascanueces 10K stores and emails 10K', async () => {
   assert.equal(state.insertPayloads[0].distance, '10K');
   assert.equal(state.emailPayloads[0].distance, '10K');
   assert.match(state.emailPayloads[0].html, /Distancia: 10K/);
+  assert.equal(state.updateCalls.length, 1);
+  assert.equal(state.updateCalls[0].payload.email_sent, true);
+  assert.equal(state.updateCalls[0].payload.confirmation_email_id, 'email_test');
+  assert.match(state.updateCalls[0].payload.confirmation_email_sent_at, /^\d{4}-\d{2}-\d{2}T/);
 });
 
 test('admin manual Cascanueces 5K stores and emails 5K', async () => {

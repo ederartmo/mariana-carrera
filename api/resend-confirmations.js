@@ -134,7 +134,11 @@ async function sendForAllPaid() {
       if (result?.ok) {
         await supabase
           .from('inscripciones')
-          .update({ email_sent: true })
+          .update({
+            email_sent: true,
+            confirmation_email_id: result.resendId,
+            confirmation_email_sent_at: new Date().toISOString(),
+          })
           .eq('order_session_id', orderSessionId);
         results.push({
           orderSessionId,

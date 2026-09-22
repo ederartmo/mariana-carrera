@@ -208,3 +208,55 @@ test('PR1: resend-confirmations permite POST admin y no expone PII sin auth prev
     unloadHandler([restoreWebhook, restoreSupabase]);
   }
 });
+
+
+test('PR1: resend-confirmations guarda id y fecha de Resend al reenviar', async () => {
+  const records = [{
+    full_name: 'Runner',
+    shirt_size: 'M',
+    bib_number: '123',
+    buyer_email: 'runner@example.com',
+    email: 'runner@example.com',
+    event_slug: 'cascanueces-run',
+    distance: '5K',
+    amount_paid: 450,
+    order_session_id: 'cs_test_bulk',
+  }];
+  const updatePayloads = [];
+  const restoreSupabase = mockModule('@supabase/supabase-js', {
+    createClient: () => ({
+      auth: {
+        getUser: async () => ({ data: { user: { email: 'admin@example.com' } }, error: null }),
+      },
+      from: () => ({
+        select: () => queryResult(records),
+        update: (payload) => ({
+          eq: async () => {
+            updatePayloads.push(payload);
+            return { data: null, error: null };
+          },
+        }),
+      }),
+    }),
+  });
+  const restoreWebhook = mockModule('../api/stripe-webhook', {
+    sendConfirmationEmail: async () => ({ ok: true, resendId: 'email_bulk_test' }),
+  });
+
+  try {
+    const handler = loadHandler();
+    const res = createRes();
+    await handler(
+      { method: 'POST', headers: { authorization: 'Bearer admin-token' }, url: '/api/resend-confirmations' },
+      res
+    );
+
+    assert.equal(res.statusCode, 200);
+    assert.equal(updatePayloads.length, 1);
+    assert.equal(updatePayloads[0].email_sent, true);
+    assert.equal(updatePayloads[0].confirmation_email_id, 'email_bulk_test');
+    assert.match(updatePayloads[0].confirmation_email_sent_at, /^\d{4}-\d{2}-\d{2}T/);
+  } finally {
+    unloadHandler([restoreWebhook, restoreSupabase]);
+  }
+});
