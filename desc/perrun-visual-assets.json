@@ -1,0 +1,64 @@
+{
+  "tool": "built-in image_gen",
+  "variants": "One image per block; responsive CSS cropping, no separate desktop/mobile variants.",
+  "referenceLogo": "assets/events/perrun-2027/visuals/perrun-logo-clienta.png",
+  "referencePoster": "desc/perrun-visual-references/poster-clienta.png",
+  "assets": {
+    "hero": {
+      "filename": "perrun-hero.webp",
+      "maxWidth": 1600,
+      "block": "Hero principal",
+      "source": "C:\\Users\\EderArtMo\\.codex\\generated_images\\01a0f838-8919-7c62-b58c-deda4778538d\\exec-387bb658-9d8a-486f-95c4-792e19a8b631.png",
+      "prompt": "Use case: photorealistic-natural. Create ONE final landscape 4:3 photographic hero asset for the Perrun 2027 website, ideally 1600x1200. Reference image 1 is the supplied gold Perrun Amor y Amistad logo, used only as brand/mood reference; reference image 2 is the client's poster, used only for wardrobe, dog, park and burgundy/gold palette inspiration. Do NOT recreate the poster, embedded dates, price, slogans, typography or collage. Photograph a realistic athletic adult male recreational runner and healthy golden retriever jogging together on a wide natural urban park trail in Mexico City, trees and soft lake greenery, warm natural morning sunlight, genuine candid joy, realistic anatomy and hands, normal safe loose leash. Runner wears deep wine red technical running shirt with small subtle gold Perrun-inspired heart/paw motif, black shorts. Dog wears burgundy bandana. Main runner and entire dog positioned CENTER/RIGHT in the frame, dog visibly alongside runner, full bodies including feet/paws contained within generous 12% safe margins, calm tree background on LEFT, camera at realistic eye level, premium editorial sports photography with authentic fabric and fur, natural colors, restrained gold accents. Scene fills entire rectangle edge to edge, no frame, no white margins, no illustration, no 3D render, no added text or watermark. Composition must tolerate a modest mobile crop without cutting heads or dog.",
+      "editPrompt": "Use case: precise-object-edit. Edit this already generated Perrun hero photograph. Change ONLY the dog's running equipment: add a realistic discreet black chest harness under the burgundy bandana, with a chest strap and a back strap visible on its golden fur, and attach the existing loose black leash to the harness rather than to its neck/collar. This matches the event convocatoria's chest-harness requirement. Keep EXACTLY the same runner, dog breed, anatomy and pose, full-body framing, burgundy/gold wardrobe, composition, 4:3 landscape aspect ratio, sunlight, park trees, lake, background, photographic realism, and no text overlays. Do not change the runner's face, position or dog expression. Keep full paws and runner feet visible and safe margins unchanged.",
+      "width": 1448,
+      "height": 1086,
+      "bytes": 347152,
+      "projectPath": "assets/events/perrun-2027/visuals/perrun-hero.webp"
+    },
+    "dogkit": {
+      "filename": "perrun-kit-perro.webp",
+      "maxWidth": 1000,
+      "block": "Para tu perro",
+      "source": "C:\\Users\\EderArtMo\\.codex\\generated_images\\01a0f838-8919-7c62-b58c-deda4778538d\\exec-b91a421f-766b-4e7f-9743-11e1a8e8a508.png",
+      "prompt": "Use case: product-mockup. Create ONE square 1:1 premium photorealistic product photograph for the Perrun 2027 dog-kit card, ideally 1000x1000. Image 1 is the client's actual gold Perrun Edición Amor y Amistad logo: use it as branding inspiration on fabric, not an overlay. Image 2 is their poster: use its deep burgundy/gold bandana style and natural park mood. Show ONLY a beautiful burgundy triangular dog bandana with understated gold Perrun/heart-paw branding and a polished warm-gold commemorative dog identification tag with metal ring beside it. Flat lay / slightly angled overhead on a warm ivory stone surface with soft natural side light and a small out-of-focus green park background beyond the surface. Both products should be LARGE and clearly visible, occupy central 70% of the frame with a 15% safe margin for modest responsive crops; realistic woven textile, natural folds, brushed metal, refined gold highlights. The photographed surface and background fill the rectangle to all four edges. This must be an authentic-looking premium product photograph, not a poster, cutout with white border, illustration or 3D render. No extra kit items, no medals, no veterinary tools, no claims, no prices, no dates, no promotional text, no watermark.",
+      "width": 1000,
+      "height": 1000,
+      "bytes": 269042,
+      "projectPath": "assets/events/perrun-2027/visuals/perrun-kit-perro.webp"
+    },
+    "humankit": {
+      "filename": "perrun-kit-humano.webp",
+      "maxWidth": 1000,
+      "block": "Para ti",
+      "source": "C:\\Users\\EderArtMo\\.codex\\generated_images\\01a0f838-8919-7c62-b58c-deda4778538d\\exec-486ae77e-2b41-4774-bad6-15a6b1fb1e4c.png",
+      "prompt": "Use case: product-mockup. Create ONE square 1:1 premium photographic flat lay for Perrun 2027 human runner kit, ideally 1000x1000. Reference image 1 is the actual client's gold Perrun Edición Amor y Amistad logo; reference image 2 is their poster showing the burgundy technical running shirt. Make a beautiful realistic deep burgundy running t-shirt (folded neatly but chest gold Perrun logo visible), a white/ivory runner bib with simple text 'PERRUN 2027' and number '14', a refined gold finishers medal with burgundy ribbon, and a clear bottle of water indicating hydration. ONLY these requested objects. The newly supplied event convocatoria confirms the medal and hydration; show them naturally, not as overlaid information. Warm ivory textured stone/paper surface extends edge to edge; subtle natural green reflection/shadow as if near a park, soft morning side lighting. Camera overhead/slightly angled, photoreal fabric, believable metallic detail and realistic water. Entire shirt, medal and bib occupy central 70% with 12-15% safe margin so all important items survive modest responsive crops. Clean coherent luxury-sports product photography in wine red, gold, warm cream. No poster, no collage, no digital illustration, no CGI, no white empty border, no decorative slogans, no dates, no price, no watermark.",
+      "width": 1000,
+      "height": 1000,
+      "bytes": 323532,
+      "projectPath": "assets/events/perrun-2027/visuals/perrun-kit-humano.webp"
+    },
+    "engraving": {
+      "filename": "perrun-placa.webp",
+      "maxWidth": 1000,
+      "block": "Una placa, una historia",
+      "source": "C:\\Users\\EderArtMo\\.codex\\generated_images\\01a0f838-8919-7c62-b58c-deda4778538d\\exec-50c357e5-5df3-455d-a6ef-98a19e8780d6.png",
+      "prompt": "Use case: photorealistic-natural. Create ONE square 1:1 editorial close-up photograph for Perrun's commemorative dog tag / engraving section, ideally 1000x1000. Reference image 1 is the real client's gold Perrun Amor y Amistad logo, reference image 2 is the client's burgundy runner/golden dog poster, reference image 3 is the newly generated dog-kit photograph: MATCH its brushed round gold tag and burgundy bandana. Photograph a golden retriever's upper chest and friendly lower face, burgundy Perrun bandana and ONE brushed-gold round tag in crisp focus at center, a person's hand gently supporting the tag to show its finely engraved gold Perrun heart/paw emblem and a small example name 'LUNA'. Include a discreet proper black chest harness consistent with recreational dog running. Emotion is warmth and bond, not a generic jewelry display. Real fur, realistic hand anatomy, delicate metal lettering, natural leafy park background softly blurred, warm soft daylight, wine/gold/cream/forest palette. Tag is the key subject and must remain entirely visible with ample 20% safe space around the ring and plate for modest responsive crops. Background and fur fill the photograph edge to edge. No text overlays, no dates, prices, eligibility claims, extra tags, posters, CGI, illustration, watermark or white border.",
+      "width": 1000,
+      "height": 1000,
+      "bytes": 231830,
+      "projectPath": "assets/events/perrun-2027/visuals/perrun-placa.webp"
+    },
+    "final": {
+      "filename": "perrun-cta-final.webp",
+      "maxWidth": 1600,
+      "block": "CTA final",
+      "source": "C:\\Users\\EderArtMo\\.codex\\generated_images\\01a0f838-8919-7c62-b58c-deda4778538d\\exec-8bf280d9-d006-46e6-b2a7-41cac5346497.png",
+      "prompt": "Use case: photorealistic-natural. Create ONE wide landscape 16:9 premium emotional photograph for the final Perrun 2027 website CTA banner, ideally 1600x900. Reference 1 is the client's actual gold Perrun Amor y Amistad logo, reference 2 is the client poster mood, reference 3 is the generated hero: keep coherent man, golden retriever, burgundy shirt, gold heart-paw details and same park setting. Capture a candid quiet celebratory pause after a recreational run: athletic curly-haired adult male runner kneeling or crouching beside his healthy golden retriever, gently touching the dog's shoulder, dog smiling looking up at him, genuine warm bond, matching burgundy bandana. Dog has a safe black CHEST HARNESS with a loose leash, no leash attached to neck. Natural wooded urban park in Mexico City, background greenery and soft morning sunlight, realistic skin, hands, fabric and fur. Both subjects together occupy CENTER of the frame; their full heads, face, hands, dog's body and important pose fit within central 70% and 12% edge safety margins for mobile crops. Wider natural park background on both sides, no extreme closeup. Warm gold light, deep wine red wardrobe, forest green, clean natural sports editorial photography. Fill canvas to all edges, no border, no typography, no prices, no dates, no poster elements, no illustration, CGI or watermark.",
+      "width": 1600,
+      "height": 900,
+      "bytes": 365410,
+      "projectPath": "assets/events/perrun-2027/visuals/perrun-cta-final.webp"
+    }
+  }
+}
