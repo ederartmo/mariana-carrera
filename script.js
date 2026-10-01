@@ -3853,7 +3853,7 @@ function setupSupabase() {
                   </div>
                   <p class="profile-race-meta">${dateLine}</p>
                   ${bibHTML}
-                  ${inscription.event_slug === "perrun-2027" ? `<ul class="profile-race-meta">${(inscription.dogs || []).map(dog => `<li>${escapeHtml(dog.dog_name)} · ${escapeHtml(dog.dog_category)} — ${escapeHtml(dog.engraving_status)}</li>`).join("")}</ul>` : ""}
+                  ${inscription.event_slug === "perrun-2027" ? `<ul class="profile-race-meta">${(inscription.dogs || []).map(dog => `<li>${escapeHtml(dog.dog_name)} · ${escapeHtml(dog.dog_category)} — ${escapeHtml(dog.engraving_status)}${window.KineticHubEngraving?.button(inscription.stripe_session_id, dog.dog_index, dog.can_pay_engraving) || ""}</li>`).join("")}</ul>` : ""}
                   <div class="profile-race-actions" style="display:flex; gap:12px; flex-wrap:wrap; margin-top:12px; align-items:center;">
                     <a class="profile-race-detail-btn" href="${escapeHtml(event.detailUrl)}">Ver detalle del evento</a>
                     ${payBtn}

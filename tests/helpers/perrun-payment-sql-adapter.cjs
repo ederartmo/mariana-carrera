@@ -6,7 +6,7 @@ function sqlAdapter(db, calls=[]) {
   return {
     async rpc(name,args){
       calls.push({name,args});
-      const keys={record_perrun_payment_state:['p_order_session_id','p_stripe_event_id','p_payment_status'],finalize_perrun_paid_order:['p_order_session_id','p_payment_intent_id','p_stripe_event_id','p_confirmed_amount_cents','p_confirmed_currency']}[name];
+      const keys={reserve_perrun_engraving_payment:['p_dog_id','p_order_session_id','p_payment_id'],finalize_perrun_engraving_payment:['p_payment_id','p_stripe_session_id','p_payment_intent_id','p_stripe_event_id','p_confirmed_amount_cents','p_confirmed_currency'],record_perrun_engraving_state:['p_payment_id','p_stripe_session_id','p_status','p_stripe_event_id','p_payment_intent_id'],mark_perrun_engraving_email_sent:['p_payment_id','p_provider_id'],record_perrun_payment_state:['p_order_session_id','p_stripe_event_id','p_payment_status'],finalize_perrun_paid_order:['p_order_session_id','p_payment_intent_id','p_stripe_event_id','p_confirmed_amount_cents','p_confirmed_currency']}[name];
       assert.ok(keys,'Unexpected RPC '+name);assert.deepEqual(Object.keys(args).sort(),[...keys].sort());
       try{return {data:(await db.query('select * from public.'+ident(name)+'('+keys.map((_,i)=>'$'+(i+1)).join(',')+')',keys.map(k=>args[k]))).rows,error:null};}
       catch(error){return {data:null,error:{code:error.code,message:error.message}};}
@@ -16,7 +16,7 @@ function sqlAdapter(db, calls=[]) {
       let fields='*',payload=null,pendingEmail=false;const filters=[];
       const q={
         select(s){fields=s;return q;},update(p){payload=p;return q;},
-        or(expr){assert.equal(expr,'email_sent.is.false,email_sent.is.null');pendingEmail=true;return q;},
+        limit(){return q;},or(expr){assert.equal(expr,'email_sent.is.false,email_sent.is.null');pendingEmail=true;return q;},
         eq(k,v){filters.push([k,v,false]);return q;},in(k,v){filters.push([k,v,true]);return q;},order(){return q;},
         async maybeSingle(){const r=await run();return r.error?r:r.data.length>1?{data:null,error:{code:'MULTIPLE'}}:{data:r.data[0]||null,error:null};},
         then(resolve,reject){return run().then(resolve,reject);}

@@ -1,0 +1,8 @@
+'use strict';
+const test=require('node:test'),fs=require('fs'),path=require('path'),assert=require('node:assert/strict');
+const {PGlite}=require('@electric-sql/pglite');const {installFixture}=require('./helpers/perrun-schema-fixture.cjs');const {cases,api}=require('./helpers/perrun-engraving-contract.cjs');
+const root=path.resolve(__dirname,'..'),migration=fs.readFileSync(path.join(root,'supabase/migrations/20261001162118_perrun_engraving_payment_persistence.sql'),'utf8');let db;
+test.before(async()=>{db=new PGlite();await installFixture(db,root);for(const file of ['20261001055227_perrun_phase1_model.sql','20261001113351_perrun_payment_state.sql'])await db.exec(fs.readFileSync(path.join(root,'supabase/migrations',file),'utf8'));await db.exec(migration);});
+test.after(async()=>{await db.close();});
+for(const entry of cases)test(entry.name,async()=>entry.run(api(db)));
+test('6A rollback refuses any payment history, then restores pre-launch schema when empty',async()=>{const t=api(db),f=await t.fixture();await t.reserve(f);const sql=fs.readFileSync(path.join(root,'desc/perrun-phase6a-rollback.sql'),'utf8');await assert.rejects(db.exec(sql),/Rollback refused/);await db.exec('rollback');assert.equal((await t.row('select count(*)::int n from public.perrun_engraving_payments')).n,1);await t.reset();await db.exec(sql);assert.equal((await t.row("select count(*)::int n from information_schema.columns where table_name='perrun_engraving_payments' and column_name='confirmation_email_id'")).n,0);assert.equal((await t.row("select is_nullable from information_schema.columns where table_name='perrun_engraving_payments' and column_name='stripe_session_id'")).is_nullable,'NO');await db.exec(migration);});

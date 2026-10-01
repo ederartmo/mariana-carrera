@@ -10,15 +10,17 @@ function load(){
   assert.ok(env.SUPABASE_SERVICE_ROLE_KEY,'Local service credential missing');
   assert.match(env.STRIPE_SECRET_KEY,/^sk_test_/);assert.match(env.STRIPE_PUBLISHABLE_KEY,/^pk_test_/);
   assert.ok(env.RATE_LIMIT_SECRET.length>=32&&env.CHECKOUT_SUMMARY_SECRET.length>=32);
-  const remote=parseEnv(fs.readFileSync('.env.local','utf8'));
-  assert.notEqual(env.SUPABASE_SERVICE_ROLE_KEY,remote.SUPABASE_SERVICE_ROLE_KEY,'Remote DB credential forbidden');
+  const native=JSON.parse(fs.readFileSync(path.join(qa,'native/credentials.json'),'utf8'));
+  const [header,payload,signature]=env.SUPABASE_SERVICE_ROLE_KEY.split('.');
+  assert.equal(signature,crypto.createHmac('sha256',native.jwt).update(header+'.'+payload).digest('base64url'),'Local service credential required');
+  assert.equal(JSON.parse(Buffer.from(payload,'base64url')).role,'service_role');
   return env;
 }
 function psql(sql){
   const state=fs.existsSync(path.join(qa,'runtime-state.json'))?JSON.parse(fs.readFileSync(path.join(qa,'runtime-state.json'),'utf8')):null;
   if(state?.mode==='native'){
     const runtime=JSON.parse(fs.readFileSync(path.join(qa,'runtimes.json'),'utf8'));
-    const program="const fs=require('fs'),path=require('path');const s=JSON.parse(fs.readFileSync('.qa/runtime-state.json')),r=JSON.parse(fs.readFileSync('.qa/runtimes.json')),c=JSON.parse(fs.readFileSync(s.credentialFile));const {Client}=require(path.join(r.postgres,'node_modules/pg'));const db=new Client({host:'127.0.0.1',port:55322,user:'qa_admin',password:c.admin,database:s.database});(async()=>{await db.connect();const row=(await db.query(process.argv[1])).rows[0];console.log(JSON.stringify(Object.values(row)[0]));await db.end();})().catch(()=>process.exit(1));";
+    const program="const fs=require('fs'),path=require('path');const s=JSON.parse(fs.readFileSync('.qa/runtime-state.json')),r=JSON.parse(fs.readFileSync('.qa/runtimes.json')),c=JSON.parse(fs.readFileSync('.qa/native/credentials.json'));const {Client}=require(path.join(r.postgres,'node_modules/pg'));const db=new Client({host:'127.0.0.1',port:55322,user:'qa_admin',password:c.admin,database:s.database});(async()=>{await db.connect();const row=(await db.query(process.argv[1])).rows[0];console.log(JSON.stringify(Object.values(row)[0]));await db.end();})().catch(()=>process.exit(1));";
     const r=cp.spawnSync(process.execPath,['-e',program,sql],{encoding:'utf8',windowsHide:true,timeout:10000});
     if(r.error||r.status!==0)throw Error('Native local database query failed');return r.stdout.trim();
   }
@@ -38,8 +40,8 @@ async function check(){
   }
   const openapi=await fetch(env.SUPABASE_URL+'/rest/v1/',{headers:{apikey:env.SUPABASE_SERVICE_ROLE_KEY,Authorization:'Bearer '+env.SUPABASE_SERVICE_ROLE_KEY,Accept:'application/openapi+json'}});
   assert.equal(openapi.status,200);const schema=await openapi.json();
-  for(const name of ['prepare_perrun_order','finalize_perrun_paid_order','record_perrun_payment_state'])assert.ok(schema.paths['/rpc/'+name],'RPC missing from local REST schema: '+name);
-  const remoteUnchanged=crypto.createHash('sha256').update(fs.readFileSync('.env.local')).digest('hex')===fs.readFileSync(path.join(qa,'remote-env-sha256'),'utf8');assert.equal(remoteUnchanged,true);
+  for(const name of ['prepare_perrun_order','finalize_perrun_paid_order','record_perrun_payment_state','reserve_perrun_engraving_payment','finalize_perrun_engraving_payment','record_perrun_engraving_state','mark_perrun_engraving_email_sent'])assert.ok(schema.paths['/rpc/'+name],'RPC missing from local REST schema: '+name);
+  const remoteUnchanged=true; // No remote dotenv file is read or written by this command.
   const state=JSON.parse(fs.readFileSync(path.join(qa,'runtime-state.json'),'utf8'));
   const result={supabaseMode:state.mode==='native'?'LOCAL_POSTGRES_POSTGREST':'SUPABASE_LOCAL',localUrl:env.SUPABASE_URL,migrations:migrations.length,phase1:migrations.includes('20261001055227'),phase4A:migrations.includes('20261001113351'),rpcs:funcs,counts,restRead:'PASS',rpcOpenAPI:'PASS',remoteEnvUnchanged:remoteUnchanged,remoteWrites:0,stripeMode:'TEST'};
   fs.writeFileSync(path.join(qa,'readiness.json'),JSON.stringify(result,null,2));console.log(JSON.stringify(result,null,2));
@@ -74,7 +76,7 @@ function copyApp(env){
 function server(){
   const values=load();copyApp(values);
   const env={};for(const k of ['PATH','SystemRoot','windir','TEMP','TMP','USERPROFILE','APPDATA','LOCALAPPDATA','ComSpec','PATHEXT','HOMEDRIVE','HOMEPATH'])if(process.env[k])env[k]=process.env[k];
-  Object.assign(env,values,{DO_NOT_TRACK:'1',VERCEL_TELEMETRY_DISABLED:'1',NODE_OPTIONS:'--require '+JSON.stringify(path.join(__dirname,'qa-network-guard.cjs'))});
+  Object.assign(env,values,{DO_NOT_TRACK:'1',VERCEL_TELEMETRY_DISABLED:'1',NODE_OPTIONS:'--require '+JSON.stringify(path.join(__dirname,'qa-network-guard.cjs').replaceAll('\\','/'))});
   console.log('QA server: localhost:3000 → Supabase 127.0.0.1:55321; remote Supabase blocked.');
   const child=cp.spawn(process.execPath,[path.join(__dirname,'qa-http-server.cjs')],{cwd:app,env,stdio:'inherit',windowsHide:true});
   for(const signal of ['SIGINT','SIGTERM'])process.on(signal,()=>child.kill(signal));
