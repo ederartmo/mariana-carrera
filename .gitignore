@@ -7,3 +7,5 @@
 node_modules/
 .vercel
 public/Kinetichub\ -\ Manual\ 2026.html
+.env*
+!.env.example

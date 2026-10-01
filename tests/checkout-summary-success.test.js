@@ -6,11 +6,12 @@ const test = require('node:test');
 process.env.STRIPE_SECRET_KEY = process.env.STRIPE_SECRET_KEY || 'sk_test_mock';
 process.env.SUPABASE_URL = process.env.SUPABASE_URL || 'https://example.supabase.co';
 process.env.SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || 'mock-service-role-key';
-process.env.CHECKOUT_SUMMARY_SECRET = process.env.CHECKOUT_SUMMARY_SECRET || 'test-only-checkout-summary-secret-0123456789';
 
 const { COOKIE_NAME, createCheckoutSummaryClaim } = require('../lib/_checkout-summary-claim');
 
 const TEST_CLAIM_SECRET = 'test-only-checkout-summary-secret-0123456789';
+// Keep signing and verification isolated from developer credentials.
+process.env.CHECKOUT_SUMMARY_SECRET = TEST_CLAIM_SECRET;
 
 const projectRoot = path.join(__dirname, '..');
 

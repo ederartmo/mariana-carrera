@@ -8,5 +8,8 @@
     "resend": "^6.12.2",
     "stripe": "^22.0.2",
     "vercel": "^54.14.2"
+  },
+  "devDependencies": {
+    "supabase": "^2.119.0"
   }
 }

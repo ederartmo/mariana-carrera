@@ -8,7 +8,7 @@ process.env.RESEND_API_KEY = process.env.RESEND_API_KEY || 're_mock';
 process.env.SUPABASE_URL = process.env.SUPABASE_URL || 'https://example.supabase.co';
 process.env.SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || 'mock-service-role-key';
 // Batch 4: auth admin fail-closed — los tests que usan admin@mocks declaran allowlist explícita.
-process.env.ADMIN_EMAILS = process.env.ADMIN_EMAILS || 'mariana@kinetichub.com.mx,admin@example.com';
+process.env.ADMIN_EMAILS = 'mariana@kinetichub.com.mx,admin@example.com';
 
 function checkoutSession(overrides = {}) {
   return {
@@ -307,10 +307,11 @@ function createJsonRes() {
   };
 }
 
-function queryResult(data, error = null) {
+function queryResult(data, error = null, filters = []) {
   return {
     order() { return this; },
-    eq() { return this; },
+    eq(column, value) { filters.push({ op: 'eq', column, value }); return this; },
+    in(column, values) { filters.push({ op: 'in', column, values }); return this; },
     then(resolve, reject) {
       return Promise.resolve({ data, error }).then(resolve, reject);
     },
@@ -391,12 +392,13 @@ test('sendConfirmationEmail returns failure when Resend returns an error object'
 
 test('resend-single-confirmation passes inscription distance to sendConfirmationEmail', async () => {
   const emailCalls = [];
+  const filters = [];
   const records = [finalizedRow({ distance: '10K', order_session_id: 'order_10k' })];
   const restoreSupabase = mockModule('@supabase/supabase-js', {
     createClient: () => ({
       auth: { getUser: async () => ({ data: { user: { email: 'mariana@kinetichub.com.mx' } }, error: null }) },
       from: (table) => ({
-        select: () => queryResult(records),
+        select: () => queryResult(records, null, filters),
         update: (payload) => ({
           eq: async (column, value) => ({ data: null, error: null, table, payload, column, value }),
         }),
@@ -422,6 +424,11 @@ test('resend-single-confirmation passes inscription distance to sendConfirmation
 
     assert.equal(res.statusCode, 200);
     assert.equal(emailCalls[0].distance, '10K');
+    assert.deepEqual(filters, [
+      { op: 'eq', column: 'order_session_id', value: 'order_10k' },
+      { op: 'eq', column: 'registration_status', value: 'active' },
+      { op: 'in', column: 'payment_status', values: ['paid', 'paid_no_email'] },
+    ]);
   } finally {
     delete require.cache[require.resolve('../api/resend-single-confirmation')];
     restoreWebhook();
@@ -536,6 +543,30 @@ test('admin-manual-transfer passes validated cleanDistance to sendConfirmationEm
   }
 });
 
+// The mock records each filter. Separate archive reactivation from email marking.
+function assertFinalizationUpdates(state, finalizations, confirmations, resendId) {
+  const reactivations = state.updateCalls.filter(call => call.payload.registration_status === 'active');
+  assert.equal(reactivations.length, finalizations * 2);
+  for (let i = 0; i < reactivations.length; i += 2) {
+    assert.equal(reactivations[i].table, 'inscripciones');
+    assert.deepEqual(reactivations[i].payload, {
+      registration_status: 'active', archived_at: null, archived_by: null, archive_reason: null,
+    });
+    assert.deepEqual(reactivations[i].eq, { column: 'order_session_id', value: 'cs_test_123' });
+    assert.deepEqual(reactivations[i + 1].eq, { column: 'registration_status', value: 'archived' });
+  }
+  const marked = state.updateCalls.filter(call => call.payload.email_sent === true);
+  assert.equal(marked.length, confirmations);
+  for (const call of marked) {
+    assert.equal(call.table, 'inscripciones');
+    assert.deepEqual(call.eq, { column: 'order_session_id', value: 'cs_test_123' });
+    assert.equal(call.or, 'email_sent.is.false,email_sent.is.null');
+    assert.match(call.payload.confirmation_email_sent_at, /^\d{4}-\d{2}-\d{2}T/);
+    if (resendId) assert.equal(call.payload.confirmation_email_id, resendId);
+  }
+  assert.equal(state.updateCalls.length, reactivations.length + marked.length);
+}
+
 for (const eventType of ['checkout.session.completed', 'checkout.session.async_payment_succeeded']) {
   test(`${eventType} finalizes paid order and sends one confirmation email`, async () => {
     const event = stripeEvent(eventType);
@@ -554,9 +585,7 @@ for (const eventType of ['checkout.session.completed', 'checkout.session.async_p
       assert.equal(state.rpcCalls[0].args.p_distance, '5K');
       assert.equal(state.rpcCalls[0].args.p_participants.length, 1);
       assert.equal(state.emailSends.length, 1);
-      assert.equal(state.updateCalls.length, 1);
-      assert.equal(state.updateCalls[0].payload.email_sent, true);
-      assert.equal(state.updateCalls[0].payload.confirmation_email_id, 'email_001');
+      assertFinalizationUpdates(state, 1, 1, 'email_001');
     });
   });
 
@@ -577,7 +606,7 @@ for (const eventType of ['checkout.session.completed', 'checkout.session.async_p
       assert.equal(second.statusCode, 200);
       assert.equal(state.rpcCalls.length, 2);
       assert.equal(state.emailSends.length, 1);
-      assert.equal(state.updateCalls.length, 1);
+      assertFinalizationUpdates(state, 2, 1, 'email_001');
       assert.equal(state.rpcCalls[0].args.p_order_session_id, state.rpcCalls[1].args.p_order_session_id);
     });
   });
@@ -593,7 +622,7 @@ for (const eventType of ['checkout.session.completed', 'checkout.session.async_p
       assert.equal(res.statusCode, 500);
       assert.deepEqual(res.body, { received: false, error: 'db_processing_failed' });
       assert.equal(state.emailSends.length, 0);
-      assert.equal(state.updateCalls.length, 0);
+      assertFinalizationUpdates(state, 1, 0);
     });
   });
 
@@ -608,7 +637,7 @@ for (const eventType of ['checkout.session.completed', 'checkout.session.async_p
 
       assert.equal(res.statusCode, 200);
       assert.equal(state.emailSends.length, 1);
-      assert.equal(state.updateCalls.length, 0);
+      assertFinalizationUpdates(state, 1, 0);
     });
   });
 
@@ -623,9 +652,7 @@ for (const eventType of ['checkout.session.completed', 'checkout.session.async_p
 
       assert.equal(res.statusCode, 200);
       assert.equal(state.emailSends.length, 1);
-      assert.equal(state.updateCalls.length, 1);
-      assert.equal(state.updateCalls[0].payload.email_sent, true);
-      assert.equal(state.updateCalls[0].payload.confirmation_email_id, 'email_retry');
+      assertFinalizationUpdates(state, 1, 1, 'email_retry');
     });
   });
 }
@@ -746,7 +773,7 @@ test('checkout.session.async_payment_succeeded duplicate relies on RPC email_sen
     assert.equal(state.rpcCalls[0].args.p_distance, '10K');
     assert.equal(state.rpcCalls[1].args.p_distance, '10K');
     assert.equal(state.emailSends.length, 1);
-    assert.equal(state.updateCalls.length, 1);
+    assertFinalizationUpdates(state, 2, 1, 'email_async_once');
   });
 });
 
@@ -787,7 +814,7 @@ test('payload contradiction returned by RPC produces 5xx and no email', async ()
 
     assert.equal(res.statusCode, 500);
     assert.equal(state.emailSends.length, 0);
-    assert.equal(state.updateCalls.length, 0);
+    assertFinalizationUpdates(state, 1, 0);
   });
 });
 

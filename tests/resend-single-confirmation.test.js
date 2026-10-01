@@ -44,6 +44,7 @@ function createResponse() {
 test('resend-single-confirmation passes stored inscription distance to email sender', async () => {
   const emailPayloads = [];
   const updatePayloads = [];
+  const filters = [];
   const records = [{
     full_name: 'Runner 10K',
     shirt_size: 'M',
@@ -61,9 +62,9 @@ test('resend-single-confirmation passes stored inscription distance to email sen
     },
     from: (table) => ({
       select: () => ({
-        eq: () => ({
-          order: async () => ({ data: records, error: null }),
-        }),
+        eq(column, value) { filters.push({ op: 'eq', column, value }); return this; },
+        in(column, values) { filters.push({ op: 'in', column, values }); return this; },
+        order: async () => ({ data: records, error: null }),
       }),
       update: (payload) => ({
         eq: async (column, value) => {
@@ -106,6 +107,11 @@ test('resend-single-confirmation passes stored inscription distance to email sen
   }
 
   assert.equal(res.statusCode, 200);
+  assert.deepEqual(filters, [
+    { op: 'eq', column: 'order_session_id', value: 'cs_test_order' },
+    { op: 'eq', column: 'registration_status', value: 'active' },
+    { op: 'in', column: 'payment_status', values: ['paid', 'paid_no_email'] },
+  ]);
   assert.equal(emailPayloads.length, 1);
   assert.equal(emailPayloads[0].eventSlug, 'cascanueces-run');
   assert.equal(emailPayloads[0].distance, '10K');
