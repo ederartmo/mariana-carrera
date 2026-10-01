@@ -17,7 +17,7 @@
   }
 
   function formatPrice(amount, currency) {
-    if (!Number.isFinite(Number(amount))) return "Cerrado";
+    if (amount == null || !Number.isFinite(Number(amount))) return "Cerrado";
     return `$${Number(amount).toLocaleString("es-MX")} ${currency}`;
   }
 
@@ -30,6 +30,7 @@
       return `<img class="${className}" src="${escapeHtml(visual.image)}" alt="${escapeHtml(visual.alt || visual.title)}" loading="eager" />`;
     }
 
+    if (visual.editorial) return `<div class="event-landing-editorial ${className}"><span>${escapeHtml(visual.editorial.eyebrow)}</span><strong>${escapeHtml(visual.editorial.title)}</strong><p>${escapeHtml(visual.editorial.description)}</p>${icon(visual.editorial.icon || "paw-print")}</div>`;
     return `
       <div class="event-landing-placeholder ${className}" role="img" aria-label="Imagen pendiente: ${escapeHtml(visual.title)}">
         ${icon("image")}
@@ -49,7 +50,7 @@
   }
 
   function renderHero(event, stage) {
-    const primaryHref = stage.isOpen ? checkoutUrl(event, event.distances[0]) : "contacto.html";
+    const primaryHref = stage.isOpen ? (event.requireDistanceSelection ? "#modalidades" : checkoutUrl(event, event.distances[0])) : "contacto.html";
     const primaryLabel = stage.isOpen ? event.cta.primary : event.cta.closed;
 
     return `
@@ -63,11 +64,11 @@
           <p class="event-landing-subtitle">${escapeHtml(event.subtitle)}</p>
           <dl class="event-landing-hero-meta">
             <div><dt>${icon("calendar-days")}</dt><dd>${escapeHtml(event.date.label)}</dd></div>
-            <div><dt>${icon("clock-3")}</dt><dd>${escapeHtml(event.time.label)}</dd></div>
+            <div><dt>${icon("clock-3")}</dt><dd>${escapeHtml(event.time?.label || "Horario por confirmar")}</dd></div>
             <div><dt>${icon("map-pin")}</dt><dd>${escapeHtml(event.location.name)}, ${escapeHtml(event.location.city)}</dd></div>
           </dl>
           <div class="event-landing-hero-offer">
-            <strong>${escapeHtml(event.distances.join(" y "))}</strong>
+            <strong>${escapeHtml(event.distances.join(event.requireDistanceSelection ? " · " : " y "))}</strong>
             <div class="event-landing-price-stamp">
               <span>${escapeHtml(stage.label)}</span>
               <b>${formatPrice(stage.amount, event.pricing.currency)}</b>
@@ -79,7 +80,7 @@
           </div>
         </div>
         <div class="event-landing-hero-visual reveal">
-          <img src="${escapeHtml(event.images.hero)}" alt="${escapeHtml(event.images.heroAlt)}" />
+          ${renderVisual({ image: event.images.hero, title: event.name, alt: event.images.heroAlt, editorial: event.images.editorial }, "event-landing-hero-media")}
         </div>
       </section>
     `;
@@ -176,7 +177,7 @@
           ${event.pricing.stages.map((stage, index) => {
             const isCurrent = stage.key === currentStage.key;
             const currentIndex = event.pricing.stages.findIndex((item) => item.key === currentStage.key);
-            const isPast = !isCurrent && currentIndex >= 0 && index < currentIndex;
+            const isPast = !currentStage.isOpen || (!isCurrent && currentIndex >= 0 && index < currentIndex);
             const stateClass = isCurrent ? "is-current" : isPast ? "is-past" : "is-future";
             const stateLabel = isCurrent
               ? copy.currentStageLabel || "Etapa vigente"
@@ -197,7 +198,7 @@
         <div class="event-landing-event-summary reveal" aria-label="Resumen del evento">
           <div><span>${escapeHtml(event.name)}</span><strong>${escapeHtml(event.date.label)}</strong></div>
           <div><small>Sede</small><b>${escapeHtml(event.location.name)}, ${escapeHtml(event.location.city)}</b></div>
-          <div><small>Salida</small><b>${escapeHtml(event.time.label)}</b></div>
+          <div><small>Salida</small><b>${escapeHtml(event.time?.label || "Horario por confirmar")}</b></div>
           <div class="event-landing-event-summary-price"><small>Precio actual</small><strong>${formatPrice(currentStage.amount, event.pricing.currency)}</strong><em>${escapeHtml(currentStage.label)}</em></div>
         </div>
       </section>
@@ -272,24 +273,24 @@
             </div>
           </article>
         </div>
-        <div class="event-landing-documents reveal">
+        ${event.documents.length ? `<div class="event-landing-documents reveal">
           <div><p class="event-landing-eyebrow">${escapeHtml(copy.documentsEyebrow || "Documentos oficiales")}</p><h2>${escapeHtml(copy.documentsTitle || "Todo listo antes de correr")}</h2></div>
           <div class="event-landing-document-links">
             ${event.documents.map((document) => `<a class="event-landing-btn event-landing-btn-secondary" href="${escapeHtml(document.href)}" target="_blank" rel="noopener noreferrer" ${document.download ? "download" : ""}>${icon(document.download ? "download" : "file-text")} ${escapeHtml(document.label)}</a>`).join("")}
           </div>
-        </div>
+        </div>` : ""}
       </section>
     `;
   }
 
   function renderFinalCta(event, stage) {
-    const href = stage.isOpen ? checkoutUrl(event, event.distances[0]) : "contacto.html";
+    const href = stage.isOpen ? (event.requireDistanceSelection ? "#modalidades" : checkoutUrl(event, event.distances[0])) : "contacto.html";
     const label = stage.isOpen ? (event.cta.finalLabel || "Inscribirme ahora") : event.cta.closed;
 
     return `
       <section class="event-landing-final reveal" aria-labelledby="event-final-title">
         <div class="event-landing-final-image">
-          <img src="${escapeHtml(event.images.finalBanner || event.images.hero)}" alt="${escapeHtml(event.images.finalBannerAlt || "")}" loading="eager" />
+          ${renderVisual({ image: event.images.finalBanner || event.images.hero, title: event.name, alt: event.images.finalBannerAlt, editorial: event.images.editorial }, "event-landing-final-media")}
         </div>
         <div class="event-landing-final-copy">
           <h2 id="event-final-title">${escapeHtml(event.cta.finalTitle)}</h2>
@@ -308,7 +309,7 @@
   }
 
   function renderMobileCta(event, stage) {
-    const href = stage.isOpen ? checkoutUrl(event, event.distances[0]) : "contacto.html";
+    const href = stage.isOpen ? (event.requireDistanceSelection ? "#modalidades" : checkoutUrl(event, event.distances[0])) : "contacto.html";
     const label = stage.isOpen ? event.cta.primary : event.cta.closed;
     return `
       <div class="event-landing-mobile-cta">
@@ -316,6 +317,15 @@
         <a href="${escapeHtml(href)}">${escapeHtml(label)}</a>
       </div>
     `;
+  }
+
+
+  function renderEditorialSections(sections = []) {
+    return sections.map(section => `<section class="event-landing-section" id="${escapeHtml(section.id)}">${renderSectionHeading(section.eyebrow, section.title, section.subtitle)}<div class="event-landing-experience-grid">${section.items.map(item => `<article class="event-landing-info-card"><h3>${escapeHtml(item.title)}</h3><p>${escapeHtml(item.description)}</p></article>`).join("")}</div></section>`).join("");
+  }
+  function renderCountdown(event) {
+    if (!event.countdown) return "";
+    return `<aside class="event-landing-countdown" aria-label="${escapeHtml(event.countdown.label)}" data-countdown-target="${escapeHtml(event.pricing.salesClose)}"><p>${escapeHtml(event.countdown.deadlineLabel)}</p><strong><span data-countdown-days>0</span> días · <span data-countdown-time>00:00:00</span></strong></aside>`;
   }
 
   function applyTheme(rootElement, theme) {
@@ -337,11 +347,16 @@
       <div class="event-landing-container">
         ${renderHero(event, currentStage)}
         ${renderQuickFacts(event)}
+        ${renderCountdown(event)}
+        ${renderEditorialSections(event.introduction)}
         ${renderKit(event)}
         ${renderExperience(event)}
         ${renderModalities(event, currentStage)}
+        ${renderEditorialSections(event.participantSections)}
         ${renderPricing(event, currentStage)}
+        ${renderEditorialSections(event.engravingSections)}
         ${renderSchedule(event)}
+        ${renderEditorialSections(event.recommendations)}
         ${renderInformation(event)}
         ${renderFinalCta(event, currentStage)}
         ${event.copy?.signoff ? `<p class="event-landing-signoff">${escapeHtml(event.copy.signoff)}</p>` : ""}
@@ -358,7 +373,19 @@
       });
     }
 
-    return { root: rootElement, event, currentStage };
+    let stageTimer;
+    if (event.liveStages) {
+      stageTimer = root.setInterval(() => {
+        if (event.pricing.getCurrentStage(new Date()).key !== currentStage.key) {
+          root.clearInterval(stageTimer);
+          const countdown = rootElement.querySelector?.("[data-countdown-target]");
+          EventLanding({ root: rootElement, event });
+          // Preserve the node already managed by the shared countdown interval.
+          if (countdown) rootElement.querySelector("[data-countdown-target]")?.replaceWith(countdown);
+        }
+      }, 1000);
+    }
+    return { root: rootElement, event, currentStage, destroy() { if (stageTimer) root.clearInterval(stageTimer); } };
   }
 
   root.EventLanding = EventLanding;
