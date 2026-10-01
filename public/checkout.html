@@ -21,6 +21,11 @@
         background: #f8faf9;
       }
 
+      .checkout-page .site-header {
+        position: relative;
+        top: auto;
+      }
+
       .checkout-hero {
         background: linear-gradient(160deg, #3a524c, #2d403b 70%);
         padding: 28px 0;
@@ -39,7 +44,8 @@
 
       /* ─── Breadcrumb ─────────────────────────── */
       .checkout-breadcrumb {
-        display: flex;
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
         gap: 0;
         margin-bottom: 36px;
         border-radius: 8px;
@@ -96,6 +102,8 @@
         margin-bottom: 2px;
       }
 
+      .step-label-short { display: none; }
+
       /* ─── Main Grid ──────────────────────────── */
       .checkout-grid {
         display: grid;
@@ -108,6 +116,8 @@
           grid-template-columns: 1fr;
         }
       }
+
+      #perrunDogs input[type="checkbox"] { width: auto; min-height: auto; }
 
       /* ─── Form Section ──────────────────────── */
       .checkout-form-shell {
@@ -403,13 +413,19 @@
         }
 
         .checkout-breadcrumb {
-          flex-direction: column;
+          margin-bottom: 24px;
         }
 
         .breadcrumb-step {
-          padding: 12px 14px;
-          font-size: 0.85rem;
+          padding: 10px 5px;
+          gap: 5px;
+          min-width: 0;
+          font-size: 0.75rem;
         }
+
+        .breadcrumb-step strong { font-size: 1.15rem; margin: 0; flex-shrink: 0; }
+        .step-label-long { display: none; }
+        .step-label-short { display: inline; }
 
         .breadcrumb-step::after {
           display: none;
@@ -424,6 +440,9 @@
           top: auto;
         }
       }
+      .summary-item[hidden] { display: none !important; }
+      .perrun-birth label { display: flex; flex-direction: column; flex: 1 1 90px; gap: 6px; }
+      .perrun-birth input, .perrun-birth select { width: 100%; box-sizing: border-box; }
     </style>
   <!-- Meta Pixel Code -->
 <script>
@@ -491,7 +510,7 @@ src="https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1"
             </div>
             <div class="breadcrumb-step active">
               <strong>2</strong>
-              <span>Datos de contacto</span>
+              <span><span class="step-label-long">Datos de contacto</span><span class="step-label-short">Datos</span></span>
             </div>
             <div class="breadcrumb-step">
               <strong>3</strong>
@@ -545,6 +564,26 @@ src="https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1"
                 <p style="font-size: 0.85rem; color: #6b7774; margin: 0 0 12px;">
                   Cada ticket se asocia al correo principal. Captura nombre, talla, fecha de nacimiento, WhatsApp, estado y alcaldía (solo CDMX) por corredor.
                 </p>
+                <section id="perrunDogs" class="checkout-section" hidden>
+                  <h3>Tus perros</h3>
+                  <p>Cada inscripción corresponde a 1 participante y 1 perro. Puedes agregar un segundo perro por <span id="perrunCopyFee">$180 MXN</span>, únicamente si ambos pesan entre 3 y 25 kg.</p>
+                  <p>S: 3–10 kg · M: más de 10–25 kg · L: más de 25–50 kg · XL: más de 50–80 kg.</p>
+                  <div class="checkout-form-grid">
+                    <label for="perrunDogName1">Nombre del primer perro</label><input id="perrunDogName1" maxlength="80" disabled required />
+                    <label for="perrunDogWeight1">Peso del primer perro (kg)</label><input id="perrunDogWeight1" type="number" min="3" max="80" step="any" disabled required />
+                    <p>Categoría por peso: <output id="perrunDogCategory1"></output></p>
+                    <label><input id="perrunEngraving1" type="checkbox" disabled /> Solicitar grabado</label>
+                  </div>
+                  <label><input id="perrunAddDog" type="checkbox" disabled /> Agregar segundo perro (+$180 MXN)</label>
+                  <div id="perrunSecondDog" class="checkout-form-grid" hidden>
+                    <label for="perrunDogName2">Nombre del segundo perro</label><input id="perrunDogName2" maxlength="80" disabled required />
+                    <label for="perrunDogWeight2">Peso del segundo perro (kg)</label><input id="perrunDogWeight2" type="number" min="3" max="25" step="any" disabled required />
+                    <p>Categoría por peso: <output id="perrunDogCategory2"></output></p>
+                    <label><input id="perrunEngraving2" type="checkbox" disabled /> Solicitar grabado</label>
+                  </div>
+                  <p>Los primeros 300 perros con inscripción pagada obtienen grabado gratis. Si al confirmarse tu pago los lugares gratuitos ya se agotaron y solicitaste grabado, podrás adquirirlo posteriormente por $35 MXN. Grabado en este checkout: $0; elegibilidad pendiente de confirmación del pago.</p>
+                  <p id="perrunSecondFee" hidden>Segundo perro: +$180 MXN</p>
+                </section>
                 <div id="ticketsList" class="tickets-list"></div>
                 <div class="ticket-actions">
                   <button type="button" id="addTicketBtn" class="ticket-add-btn">+ Agregar ticket</button>
@@ -585,11 +624,11 @@ src="https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1"
                   <strong id="summaryDistance">5K</strong>
                 </div>
                 <div class="summary-item">
-                  <span id="stageLabel">Etapa Regular</span>
+                  <span><span id="summaryBaseLabel"></span><span id="stageLabel">Etapa Regular</span></span>
                   <strong id="stagePrice">$550 MXN</strong>
                 </div>
                 <div class="summary-item">
-                  <span>Cantidad</span>
+                  <span id="summaryQuantityLabel">Cantidad</span>
                   <strong id="ticketCountLabel">1 ticket</strong>
                 </div>
                 <div class="summary-item">
@@ -598,6 +637,9 @@ src="https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1"
                 </div>
               </div>
 
+              <div class="summary-item" id="perrunDogCountRow" hidden><span>Perros</span><strong id="perrunDogCount">1</strong></div>
+              <div class="summary-item" id="perrunSecondPriceRow" hidden><span>Segundo perro</span><strong id="perrunSecondPrice"></strong></div>
+              <div class="summary-item" id="perrunEngravingPriceRow" hidden><span>Grabado en este checkout</span><strong>$0 MXN</strong></div>
               <div class="summary-item total">
                 <span>Total</span>
                 <strong id="totalPrice">$550 MXN</strong>
@@ -687,13 +729,27 @@ src="https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1"
 
     <script src="axolote-stage-config.js?v=1789882466202"></script>
     <script src="cascanueces-stage-config.js?v=1789882466202"></script>
+    <script src="perrun-stage-config.js?v=1789882466202"></script>
+    <script src="perrun-event-data.js?v=1789882466202"></script>
+    <script src="event-catalog.js?v=1789882466202"></script>
     <script>
       const checkoutParams = new URLSearchParams(window.location.search);
-      const checkoutEventSlug = checkoutParams.get('event') === 'cascanueces-run'
-        ? 'cascanueces-run'
-        : 'axolote-night-run';
-      const requestedDistance = String(checkoutParams.get('distance') || '5K').toUpperCase();
-      const checkoutEvent = checkoutEventSlug === 'cascanueces-run'
+      const requestedEventSlug = checkoutParams.get('event');
+      const recognizedEvent = window.KineticHubEventCatalog.resolveEvent(requestedEventSlug || 'axolote-night-run');
+      if (!recognizedEvent || recognizedEvent.checkoutEnabled === false) {
+        window.KineticHubCheckoutSelection = { eventSlug: requestedEventSlug, distance: checkoutParams.get('distance'), checkoutEnabled: false };
+        window.location.replace('eventos.html');
+        throw new Error('Checkout unavailable for selected event');
+      }
+      const checkoutEventSlug = recognizedEvent.slug;
+      const requestedDistance = String(checkoutParams.get('distance') || (checkoutEventSlug === 'perrun-2027' ? '' : '5K')).toUpperCase();
+      const checkoutEvent = checkoutEventSlug === 'perrun-2027'
+        ? { name: recognizedEvent.name, image: '', date: recognizedEvent.date.label,
+            location: recognizedEvent.location.name, returnUrl: 'eventos.html',
+            distance: recognizedEvent.distances.includes(requestedDistance) ? requestedDistance : '',
+            kitIncludes: recognizedEvent.humanKit.join(' + ') + ' · Perro: ' + recognizedEvent.dogKit.join(' + '),
+            stageProvider: window.KineticHubPerrunStageConfig }
+        : checkoutEventSlug === 'cascanueces-run'
         ? {
             name: 'Cascanueces Run',
             image: 'assets/events/cascanueces-run/gallery/cascanueces_run.jpeg',
@@ -727,7 +783,8 @@ src="https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1"
         const distanceSelect = document.getElementById('eventDistance');
         const eventImage = document.getElementById('checkoutEventImage');
         if (eventImage) {
-          eventImage.src = checkoutEvent.image;
+          eventImage.hidden = !checkoutEvent.image;
+          if (checkoutEvent.image) eventImage.src = checkoutEvent.image;
           eventImage.alt = checkoutEvent.name;
         }
         document.getElementById('checkoutEventName').textContent = checkoutEvent.name;
@@ -736,13 +793,14 @@ src="https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1"
         document.getElementById('summaryEventName').textContent = checkoutEvent.name;
         document.getElementById('summaryKitIncludes').textContent = checkoutEvent.kitIncludes;
         document.getElementById('checkoutReturnLink').href = checkoutEvent.returnUrl;
-        if (distanceField) distanceField.hidden = checkoutEventSlug !== 'cascanueces-run';
+        if (distanceField) distanceField.hidden = !['cascanueces-run', 'perrun-2027'].includes(checkoutEventSlug);
         if (distanceSelect) {
-          const availableDistances = checkoutEventSlug === 'cascanueces-run' ? ['5K', '10K'] : ['5K'];
+          const availableDistances = checkoutEventSlug === 'perrun-2027' ? ['', ...recognizedEvent.distances] : checkoutEventSlug === 'cascanueces-run' ? ['5K', '10K'] : ['5K'];
+          distanceSelect.required = checkoutEventSlug === 'perrun-2027';
           distanceSelect.replaceChildren(...availableDistances.map((distance) => {
             const option = document.createElement('option');
             option.value = distance;
-            option.textContent = distance;
+            option.textContent = distance || 'Selecciona distancia';
             return option;
           }));
           distanceSelect.value = checkoutEvent.distance;
@@ -764,14 +822,15 @@ src="https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1"
           ? stageProvider.getAxoloteStageByDate(new Date())
           : stageProvider && typeof stageProvider.getCascanuecesStageByDate === 'function'
             ? stageProvider.getCascanuecesStageByDate(new Date())
-          : null;
+          : stageProvider && typeof stageProvider.getPerrunStageByDate === 'function'
+            ? stageProvider.getPerrunStageByDate(new Date()) : null;
 
         let stageName = 'Etapa Regular';
         let stagePrice = '$550 MXN';
         let stageDates = '1 de junio al 31 de julio de 2026';
         let checkoutOpen = true;
 
-        if (!stageData && checkoutEventSlug === 'cascanueces-run') {
+        if (!stageData && ['cascanueces-run', 'perrun-2027'].includes(checkoutEventSlug)) {
           stageName = 'Inscripciones cerradas';
           stagePrice = 'Cerrado';
           stageDates = 'No se pudo cargar la etapa vigente';
@@ -817,6 +876,7 @@ src="https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1"
       
       // También ejecutar inmediatamente si el script carga tarde
     </script>
+    <script src="perrun-checkout.js?v=1789882466202"></script>
     <script src="profile-fields.js?v=1789882466202"></script>
     <script src="storage-upload.js?v=1789882466202"></script>
     <script src="supabase-client.js?v=1789882466202"></script>

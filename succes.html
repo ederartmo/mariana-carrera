@@ -37,6 +37,7 @@ src="https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1"
 <!-- End Meta Pixel Code -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="supabase-client.js?v=__ASSET_VERSION__"></script>
+  <script src="perrun-engraving-ui.js?v=__ASSET_VERSION__"></script>
   <script>
     const CHECKOUT_EMAIL_KEY = 'kinetic_checkout_email';
     const CHECKOUT_SESSION_KEY = 'kinetic_checkout_session_id';
@@ -275,7 +276,7 @@ src="https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1"
             if (summary.eventSlug === 'perrun-2027' && Array.isArray(summary.dogs)) {
               const list = document.getElementById('participantsList');
               list.insertAdjacentHTML('beforeend', '<div class="ticket-card"><p>Base: $' + escapeHtml(summary.baseAmount) + ' MXN · Segundo perro: $' + escapeHtml(String(summary.secondDogFee)) + ' MXN</p><p><strong>Total principal: $' + escapeHtml(summary.total) + ' MXN</strong> · Grabado cobrado: $0 MXN</p></div>');
-              list.insertAdjacentHTML('beforeend', summary.dogs.map(dog => '<div class="ticket-card"><p><strong>' + escapeHtml(dog.name) + '</strong> · ' + escapeHtml(dog.category) + '</p><p>' + escapeHtml(dog.engravingStatus) + '</p></div>').join(''));
+              list.insertAdjacentHTML('beforeend', summary.dogs.map(dog => '<div class="ticket-card"><p><strong>' + escapeHtml(dog.name) + '</strong> · ' + escapeHtml(dog.category) + '</p><p>' + escapeHtml(dog.engravingStatus) + '</p>' + (typeof window !== 'undefined' && window.KineticHubEngraving ? window.KineticHubEngraving.button(summary.orderSessionId, dog.dogIndex, dog.canPayEngraving) : '') + '</div>').join(''));
             }
           }
         } catch (error) {

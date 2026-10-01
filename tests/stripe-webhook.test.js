@@ -121,7 +121,7 @@ function createSupabaseMock(state) {
         return Promise.resolve({ data: null, error: state.upsertError || null });
       },
       select(cols) {
-        if (table === 'perrun_checkout_orders') { const q={eq(){return q;},maybeSingle:async()=>({data:null,error:null})}; return q; }
+        if (table === 'perrun_checkout_orders' || table === 'perrun_engraving_payments') { const q={eq(){return q;},in(){return q;},limit(){return q;},then(resolve,reject){return Promise.resolve({data:[],error:null}).then(resolve,reject);},maybeSingle:async()=>({data:null,error:null})}; return q; }
         const chain = {
           eq(col, val) { state.selectCalls.push({ table, cols, op: 'eq', col, val }); return chain; },
           in(col, vals) { state.selectCalls.push({ table, cols, op: 'in', col, vals }); return chain; },

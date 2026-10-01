@@ -133,6 +133,10 @@ module.exports = async function handler(req, res) {
     });
     if (blocked) return blocked;
 
+    if (req.body?.flow === 'perrun-engraving-v1') {
+      return require('../lib/_perrun-engraving').handleCheckout({ req, res, stripe, supabase, origin: getRequestOrigin(req) });
+    }
+
     const { email, buyerEmail, shirtSize, tickets, metaEventId, promoCode, eventSlug, distance } = req.body;
     const rawEmail = buyerEmail || email;
     const event = resolveEventSelection(eventSlug, distance);
