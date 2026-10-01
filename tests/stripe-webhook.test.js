@@ -121,6 +121,7 @@ function createSupabaseMock(state) {
         return Promise.resolve({ data: null, error: state.upsertError || null });
       },
       select(cols) {
+        if (table === 'perrun_checkout_orders') { const q={eq(){return q;},maybeSingle:async()=>({data:null,error:null})}; return q; }
         const chain = {
           eq(col, val) { state.selectCalls.push({ table, cols, op: 'eq', col, val }); return chain; },
           in(col, vals) { state.selectCalls.push({ table, cols, op: 'in', col, vals }); return chain; },
@@ -1069,23 +1070,36 @@ test('B2-10: legacy sin payment_intent_id se resuelve por checkout session', asy
 // Phase 3: Perrun cannot fall through into legacy fulfillment at any distance.
 for (const distance of ['1K', '3K', '5K']) {
   for (const type of ['checkout.session.completed', 'checkout.session.async_payment_succeeded', 'checkout.session.async_payment_failed']) {
-    test(`Perrun ${distance} ${type}: guard prevents all legacy writes and fulfillment`, async () => {
+    test(`Perrun ${distance} ${type}: invalid metadata is rejected before legacy writes and fulfillment`, async () => {
       const event = stripeEvent(type, checkoutSession({ metadata: { event_slug: 'perrun-2027', distance }, payment_status: 'paid' }));
       await withWebhookMocks({ event }, async ({ webhook, state }) => {
         const res = await invoke(webhook, event);
-        assert.equal(res.statusCode, type === 'checkout.session.async_payment_failed' ? 200 : 503);
-        assert.equal(res.body.deferred, true);
+        assert.equal(res.statusCode, 200);
+        assert.equal(res.body.rejected, true);
         for (const key of ['rpcCalls','updateCalls','upsertCalls','selectCalls','emailSends','metaCalls']) assert.equal(state[key].length,0,key);
       });
     });
   }
   test(`Perrun ${distance} unpaid OXXO completion: no legacy draft/BIB`, async () => {
     const event = stripeEvent('checkout.session.completed',checkoutSession({ metadata:{event_slug:'perrun-2027',distance},payment_status:'unpaid' }));
-    await withWebhookMocks({event},async({webhook,state})=>{const res=await invoke(webhook,event);assert.equal(res.statusCode,200);assert.equal(res.body.deferred,true);assert.equal(state.rpcCalls.length,0);assert.equal(state.upsertCalls.length,0);});
+    await withWebhookMocks({event},async({webhook,state})=>{const res=await invoke(webhook,event);assert.equal(res.statusCode,200);assert.equal(res.body.rejected,true);assert.equal(state.rpcCalls.length,0);assert.equal(state.upsertCalls.length,0);});
   });
   test(`Perrun ${distance} payment intent failure retrieved by session: no legacy update`, async () => {
     const session=checkoutSession({metadata:{event_slug:'perrun-2027',distance}});
     const event=stripeEvent('payment_intent.payment_failed',{id:'pi_perrun',metadata:{},amount:45000});
     await withWebhookMocks({event,sessionsByPaymentIntent:{pi_perrun:session}},async({webhook,state})=>{const res=await invoke(webhook,event);assert.equal(res.statusCode,200);assert.equal(res.body.flow,'perrun');assert.equal(state.rpcCalls.length,0);assert.equal(state.updateCalls.length,0);});
+  });
+}
+
+// Isolated await regression: verify the same fix for the existing legacy refund path.
+for (const type of ['refund.created','refund.updated']) for (const useRefundPI of [true,false]) {
+  test(type + ' legacy awaits expanded PaymentIntent and falls back to charge identity', async () => {
+    const charge = stripeCharge({payment_intent:{id:'pi_legacy_await'}});
+    const refund = stripeRefund({payment_intent:useRefundPI?{id:'pi_legacy_await'}:null,charge});
+    await withWebhookMocks({event:refundEvent(type,refund),selectResults:[{data:[refundRow({order_session_id:'cs_legacy_await'})],error:null}],updateResultRows:[[{id:'legacy_await'}]]}, async ({webhook,state}) => {
+      const res=await invoke(webhook,state.event);assert.equal(res.statusCode,200);
+      assert.equal(state.selectCalls[0].val,'pi_legacy_await');assert.equal(refundUpdateCalls(state)[0].eq.value,'cs_legacy_await');
+      assert.equal(state.rpcCalls.length,0);assert.equal(state.emailSends.length,0);
+    });
   });
 }

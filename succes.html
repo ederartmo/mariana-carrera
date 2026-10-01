@@ -104,6 +104,17 @@ src="https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1"
         retryPaymentLink.href = `checkout.html?event=${encodeURIComponent(eventSlug)}&distance=${encodeURIComponent(distance)}`;
       }
 
+      if (summary.eventSlug === 'perrun-2027') {
+        const refunded = paymentStatus === 'refunded';
+        if (statusTitle) statusTitle.textContent = refunded ? 'Pago reembolsado' : isPaid ? '¡Inscripción Perrun confirmada!' : isFailed ? 'Pago no completado' : 'Tu pago está pendiente';
+        if (statusIntro) statusIntro.textContent = 'Perrun 2027 · ' + summary.distance;
+        if (statusBadge) statusBadge.textContent = refunded ? 'Reembolsado' : isPaid ? 'Pago confirmado' : isFailed ? 'Pago fallido' : 'Pago pendiente';
+        if (statusCopy) statusCopy.textContent = refunded ? 'Tu inscripción fue reembolsada. Las posiciones históricas de grabado se conservan.' : isPaid ? 'Consulta tu dorsal y el estado del grabado de cada perro en el resumen.' : isFailed ? 'El pago no se confirmó. No se asignaron dorsal ni posiciones de grabado.' : 'Estamos esperando la confirmación de Stripe. Todavía no se asignaron dorsal ni posiciones de grabado.';
+        for (const block of [documentBlock, profileBlock, emailNotice]) if (block) block.style.display = 'none';
+        if (retryPaymentLink) retryPaymentLink.style.display = isFailed ? 'inline-block' : 'none';
+        return;
+      }
+
       if (isPaid) {
         if (statusTitle) statusTitle.textContent = '¡Inscripción Confirmada!';
         if (statusIntro) statusIntro.innerHTML = `Gracias por tu pago. Ya estás inscrito en <strong id="eventConfirmation">${escapeHtml(summary.eventName || 'tu carrera')} · ${escapeHtml(summary.distance || '5K')}</strong>.`;

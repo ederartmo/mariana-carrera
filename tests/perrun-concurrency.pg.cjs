@@ -166,6 +166,7 @@ async function legacyModernTests(){
   await check('post-launch rollback refuses history without altering data',async()=>{const before=await fingerprint();await assert.rejects(admin.query(rollback),/Rollback refused/);await admin.query('rollback');assert.deepEqual(await fingerprint(),before);await verifyPositions(298,3);});
   // Optional 4A tests; the original 19 Phase 1 checks run unchanged first.
   if(process.argv[5]==='--payment-state')await require('./perrun-payment-state-native.cjs')({admin,a,b,check,blockedBy,evidence,prepare,finalize,reset,simultaneous,verifyPositions});
+  if(process.argv[6]==='--webhook')await require('./perrun-webhook-native.cjs')({admin,a,b,check,blockedBy,evidence,prepare,reset,verifyPositions});
   evidence.migrationSHA256=crypto.createHash('sha256').update(migration).digest('hex');
   evidence.result='PASS';console.log('NATIVE_POSTGRES_PASS='+evidence.checks.length);console.log('CONCURRENT_SCENARIO_RUNS='+evidence.concurrency.length);
 })().catch(error=>{evidence.result='FAIL';evidence.error=error.message;console.error('FAIL '+error.message);process.exitCode=1;}).finally(async()=>{

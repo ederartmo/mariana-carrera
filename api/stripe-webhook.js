@@ -1,3 +1,4 @@
+const perrunPayment = require('../lib/_perrun-payment');
 // api/stripe-webhook.js - Versión mejorada y robusta para Vercel
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 const { Resend } = require('resend');
@@ -35,9 +36,7 @@ const EVENT_CATALOG = {
   },
 };
 
-function isPerrunMetadata(metadata = {}) {
-  return String(metadata.event_slug || '').trim().toLowerCase() === 'perrun-2027';
-}
+function isPerrunMetadata(metadata = {}) { return perrunPayment.isPerrunMetadata(metadata); }
 
 function resolveEventFromMetadata(metadata = {}) {
   if (isPerrunMetadata(metadata)) throw new Error('Perrun requiere su propio handler; nunca usar el resolver legacy.');
@@ -364,7 +363,7 @@ function distinctOrderSessionIds(rows) {
 async function findRefundRowsByPaymentIntent(paymentIntentId) {
   const { data, error } = await supabase
     .from('inscripciones')
-    .select('id, order_session_id, payment_status')
+    .select('id, order_session_id, payment_status, event_slug')
     .eq('payment_intent_id', paymentIntentId);
 
   if (error) {
@@ -380,7 +379,7 @@ async function findRefundRowsByPaymentIntent(paymentIntentId) {
 async function findRefundRowsBySession(sessionId) {
   const { data, error } = await supabase
     .from('inscripciones')
-    .select('id, order_session_id, payment_status')
+    .select('id, order_session_id, payment_status, event_slug')
     .or(`stripe_session_id.eq.${sessionId},order_session_id.eq.${sessionId},stripe_session_id.like.${sessionId}::%`);
 
   if (error) {
@@ -401,15 +400,20 @@ async function resolveRefundOrder({ paymentIntentId }) {
       if (orders.length !== 1 || !orders[0]) {
         return { ambiguous: true, step: 'db_by_payment_intent', orderCount: orders.length };
       }
-      return { orderSessionId: orders[0], via: 'payment_intent_id', rowCount: byPi.rows.length };
+      return { orderSessionId: orders[0], perrun: byPi.rows.some(row => row.event_slug === 'perrun-2027'), via: 'payment_intent_id', rowCount: byPi.rows.length };
     }
   }
 
-  const checkoutSession = await findCheckoutSessionByPaymentIntent(paymentIntentId);
+  const checkoutSession = await findCheckoutSessionByPaymentIntent(paymentIntentId, true);
   if (!checkoutSession?.id) {
     return { unresolved: true, step: 'stripe_session_lookup' };
   }
 
+  const perrunDraft = isPerrunMetadata(checkoutSession.metadata)
+    ? null : await perrunPayment.findDraft(supabase, 'order_session_id', checkoutSession.id);
+  if (perrunDraft || isPerrunMetadata(checkoutSession.metadata)) {
+    return { orderSessionId: checkoutSession.id, perrun: true, via: 'checkout_session' };
+  }
   const bySession = await findRefundRowsBySession(checkoutSession.id);
   if (bySession.error) {
     return { error: bySession.error, step: 'db_by_session' };
@@ -461,7 +465,11 @@ async function applyDeterministicRefund({ stripeEventId, refundId, chargeId, pay
     return false;
   }
 
+  // Draft-first routing avoids acknowledging a refund before paid fulfillment arrives.
+  const draft = await perrunPayment.findDraft(supabase, 'payment_intent_id', paymentIntentId);
+  if (draft) return perrunPayment.handlePerrunRefund({ stripe, supabase, draft, sessionId: draft.order_session_id, paymentIntentId });
   const resolved = await resolveRefundOrder({ paymentIntentId });
+  if (resolved.perrun) return perrunPayment.handlePerrunRefund({ stripe, supabase, sessionId: resolved.orderSessionId, paymentIntentId });
 
   if (resolved.error) {
     logRefundEvent({ ...base, result: 'skipped', reason: `db_error:${resolved.step}` });
@@ -494,7 +502,7 @@ async function applyDeterministicRefund({ stripeEventId, refundId, chargeId, pay
   return true;
 }
 
-async function findCheckoutSessionByPaymentIntent(paymentIntentId) {
+async function findCheckoutSessionByPaymentIntent(paymentIntentId, retryOnFailure = false) {
   if (!paymentIntentId) return null;
 
   try {
@@ -504,6 +512,7 @@ async function findCheckoutSessionByPaymentIntent(paymentIntentId) {
     });
     return data?.[0] || null;
   } catch (error) {
+    if (retryOnFailure) throw error;
     console.error(`❌ Error buscando checkout session por payment_intent ${paymentIntentId}:`, error);
     return null;
   }
@@ -768,12 +777,22 @@ module.exports = async (req, res) => {
 
   console.log(`🪝 Evento recibido: ${event.type}`);
 
-  // Phase 3 boundary: replace this branch with the Perrun handler in Phase 4.
-  // Paid events must retry rather than acknowledge fulfillment that has not happened.
-  if (isPerrunMetadata(event.data.object.metadata)) {
-    const paid = event.type === 'checkout.session.async_payment_succeeded'
-      || (event.type === 'checkout.session.completed' && event.data.object.payment_status === 'paid');
-    return res.status(paid ? 503 : 200).json({ received: !paid, deferred: true, flow: 'perrun', reason: 'perrun_handler_pending' });
+  // Central boundary: draft identity also catches stripped/corrupted Perrun metadata.
+  if (perrunPayment.TYPES.has(event.type)) {
+    let draft;
+    try {
+      if (!isPerrunMetadata(event.data.object.metadata)) draft = await perrunPayment.findDraft(supabase, 'order_session_id', event.data.object.id);
+    } catch (error) {
+      const result = perrunPayment.outcome(error);
+      return res.status(result.status).json(result.body);
+    }
+    if (draft || isPerrunMetadata(event.data.object.metadata)) {
+      const result = await perrunPayment.handlePerrunPayment({ stripe, supabase, event, draft });
+      return res.status(result.status).json(result.body);
+    }
+  } else if (isPerrunMetadata(event.data.object.metadata)
+    && !['payment_intent.payment_failed', 'refund.created', 'refund.updated', 'charge.refunded'].includes(event.type)) {
+    return res.status(200).json({ received: true, flow: 'perrun', ignored: true });
   }
 
   // ==================== CHECKOUT SESSION COMPLETED ====================
@@ -1076,8 +1095,15 @@ module.exports = async (req, res) => {
     const paymentIntent = event.data.object;
     const checkoutSession = await findCheckoutSessionByPaymentIntent(paymentIntent.id);
 
-    if (isPerrunMetadata(checkoutSession?.metadata)) {
-      return res.status(200).json({ received: true, deferred: true, flow: 'perrun' });
+    let perrunDraft;
+    if (checkoutSession?.id && !isPerrunMetadata(checkoutSession.metadata)) {
+      try { perrunDraft = await perrunPayment.findDraft(supabase, 'order_session_id', checkoutSession.id); }
+      catch (error) { const result = perrunPayment.outcome(error); return res.status(result.status).json(result.body); }
+    }
+    if (perrunDraft || isPerrunMetadata(checkoutSession?.metadata)) {
+      const result = await perrunPayment.handlePerrunPayment({ stripe, supabase,
+        event: { ...event, data: { object: checkoutSession } }, draft: perrunDraft });
+      return res.status(result.status).json(result.body);
     }
 
     if (checkoutSession?.id) {
@@ -1114,7 +1140,7 @@ module.exports = async (req, res) => {
         stripeEventId: event.id,
         refundId: null,
         chargeId: resolveStripeObjectId(charge?.id),
-        paymentIntentId: resolvePaymentIntentId(charge?.payment_intent),
+        paymentIntentId: (await resolvePaymentIntentId(charge?.payment_intent)),
         sourceEventType: event.type,
         result: 'skipped',
         reason: 'partial_refund',
@@ -1122,7 +1148,10 @@ module.exports = async (req, res) => {
       return res.status(200).json({ received: true });
     }
 
-    await markRefundedFromCharge(charge, event.type, event.id);
+    try {
+      const result = await markRefundedFromCharge(charge, event.type, event.id);
+      if (result?.body) return res.status(result.status).json(result.body);
+    } catch (error) { const result = perrunPayment.outcome(error); return res.status(result.status).json(result.body); }
     return res.status(200).json({ received: true });
   }
 
@@ -1137,7 +1166,7 @@ module.exports = async (req, res) => {
         stripeEventId: event.id,
         refundId: refund?.id || null,
         chargeId: resolveStripeObjectId(refund?.charge),
-        paymentIntentId: resolvePaymentIntentId(refund?.payment_intent),
+        paymentIntentId: (await resolvePaymentIntentId(refund?.payment_intent)),
         sourceEventType: event.type,
         result: 'skipped',
         reason: `refund_status:${refund?.status || 'unknown'}`,
@@ -1156,12 +1185,12 @@ module.exports = async (req, res) => {
           stripeEventId: event.id,
           refundId: refund?.id || null,
           chargeId,
-          paymentIntentId: resolvePaymentIntentId(refund?.payment_intent),
+          paymentIntentId: (await resolvePaymentIntentId(refund?.payment_intent)),
           sourceEventType: event.type,
           result: 'skipped',
           reason: 'charge_lookup_failed',
         });
-        return res.status(200).json({ received: true });
+        return res.status(503).json({ received: false, retry: true, reason: 'charge_lookup_failed' });
       }
     }
 
@@ -1170,7 +1199,7 @@ module.exports = async (req, res) => {
         stripeEventId: event.id,
         refundId: refund?.id || null,
         chargeId,
-        paymentIntentId: resolvePaymentIntentId(refund?.payment_intent),
+        paymentIntentId: (await resolvePaymentIntentId(refund?.payment_intent)),
         sourceEventType: event.type,
         result: 'skipped',
         reason: 'missing_charge',
@@ -1186,7 +1215,7 @@ module.exports = async (req, res) => {
         stripeEventId: event.id,
         refundId: refund?.id || null,
         chargeId: resolveStripeObjectId(charge?.id) || chargeId,
-        paymentIntentId: resolvePaymentIntentId(refund?.payment_intent) || resolvePaymentIntentId(charge?.payment_intent),
+        paymentIntentId: (await resolvePaymentIntentId(refund?.payment_intent)) || (await resolvePaymentIntentId(charge?.payment_intent)),
         sourceEventType: event.type,
         result: 'skipped',
         reason: 'partial_refund',
@@ -1194,13 +1223,15 @@ module.exports = async (req, res) => {
       return res.status(200).json({ received: true });
     }
 
-    await applyDeterministicRefund({
+    let result;
+    try { result = await applyDeterministicRefund({
       stripeEventId: event.id,
       refundId: refund?.id || null,
       chargeId: resolveStripeObjectId(charge?.id) || chargeId,
-      paymentIntentId: resolvePaymentIntentId(refund?.payment_intent) || resolvePaymentIntentId(charge?.payment_intent),
+      paymentIntentId: (await resolvePaymentIntentId(refund?.payment_intent)) || (await resolvePaymentIntentId(charge?.payment_intent)),
       sourceEventType: event.type,
-    });
+    }); } catch (error) { const failed = perrunPayment.outcome(error); return res.status(failed.status).json(failed.body); }
+    if (result?.body) return res.status(result.status).json(result.body);
     return res.status(200).json({ received: true });
   }
 

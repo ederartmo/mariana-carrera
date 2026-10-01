@@ -297,6 +297,7 @@ async function invokeWebhookWithShirt(shirtSize) {
         return { data: finalizedRows, error: null };
       },
       from: () => ({
+        select() { const q={eq(){return q;},maybeSingle:async()=>({data:null,error:null})}; return q; },
         update(payload) {
           const query = {
             eq(column, value) {

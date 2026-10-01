@@ -285,7 +285,7 @@ function createSupabaseMockPR4(state) {
         return q;
       },
       upsert(payload, options) { state.upsertCalls.push({ payload, options }); return Promise.resolve({ data: null, error: null }); },
-      select() { return { eq() { return Promise.resolve({ data: [], error: null }); } }; },
+      select() { const q={eq(){return q;},maybeSingle:async()=>({data:null,error:null}),then(resolve,reject){return Promise.resolve({data:[],error:null}).then(resolve,reject);}}; return q; },
     }),
   };
 }
