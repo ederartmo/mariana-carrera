@@ -1,4 +1,5 @@
 const perrunPayment = require('../lib/_perrun-payment');
+const { sendPerrunConfirmation } = require('../lib/_perrun-confirmation');
 // api/stripe-webhook.js - Versión mejorada y robusta para Vercel
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 const { Resend } = require('resend');
@@ -788,6 +789,10 @@ module.exports = async (req, res) => {
     }
     if (draft || isPerrunMetadata(event.data.object.metadata)) {
       const result = await perrunPayment.handlePerrunPayment({ stripe, supabase, event, draft });
+      if (result.body.finalized) {
+        const email = await sendPerrunConfirmation({ supabase, resend, sessionId: event.data.object.id });
+        if (!email.ok) return res.status(503).json({ received: true, flow: 'perrun', finalized: true, retry: true, email_pending: true });
+      }
       return res.status(result.status).json(result.body);
     }
   } else if (isPerrunMetadata(event.data.object.metadata)

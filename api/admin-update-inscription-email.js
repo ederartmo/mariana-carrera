@@ -43,7 +43,7 @@ module.exports = async function handler(req, res) {
     }
 
     // Pre-read: el target debe existir antes de mutar.
-    let lookup = supabase.from('inscripciones').select('id, order_session_id');
+    let lookup = supabase.from('inscripciones').select('id, order_session_id, event_slug');
     lookup = cleanOrderSessionId
       ? lookup.eq('order_session_id', cleanOrderSessionId)
       : lookup.eq('id', cleanInscriptionId);
@@ -65,6 +65,7 @@ module.exports = async function handler(req, res) {
 
     // Batch 4 review: mutar SOLO los IDs verificados en el pre-read
     // (cierra ventana TOCTOU). Nada de UPDATE por order_session_id.
+    if (existing.some(row => row.event_slug === 'perrun-2027')) return res.status(409).json({ error: 'La edición legacy de email no es compatible con el ledger Perrun.' });
     const verifiedIds = existing.map((row) => row.id);
 
     const { data, error } = await supabase

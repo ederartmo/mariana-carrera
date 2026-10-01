@@ -1,4 +1,6 @@
 const { createClient } = require('@supabase/supabase-js');
+const { Resend } = require('resend');
+const { sendPerrunConfirmation } = require('../lib/_perrun-confirmation');
 
 let sendConfirmationEmail;
 try {
@@ -49,6 +51,11 @@ module.exports = async function handler(req, res) {
 
     if (!records || records.length === 0) {
       return res.status(404).json({ error: 'No se encontró una orden pagada y activa para reenviar.' });
+    }
+
+    if (records[0].event_slug === 'perrun-2027') {
+      const result = await sendPerrunConfirmation({ supabase, resend: new Resend(process.env.RESEND_API_KEY), sessionId: cleanOrderId });
+      return res.status(result.ok ? 200 : 503).json(result.ok ? { ok: true, skipped: !!result.skipped } : { error: result.error });
     }
 
     if (!sendConfirmationEmail) {

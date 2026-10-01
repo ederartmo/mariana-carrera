@@ -69,7 +69,7 @@ module.exports = async function handler(req, res) {
     // filtro impide tocar una fila equivocada aunque el id colisione.
     const { data: existing, error: lookupError } = await supabase
       .from('inscripciones')
-      .select('id, email, payment_status')
+      .select('id, email, payment_status, event_slug')
       .eq('id', cleanId)
       .eq('email', cleanEmail)
       .single();
@@ -77,6 +77,8 @@ module.exports = async function handler(req, res) {
     if (lookupError || !existing) {
       return res.status(404).json({ error: 'No se encontró la inscripción.' });
     }
+
+    if (existing.event_slug === 'perrun-2027') return res.status(409).json({ error: 'La edición legacy no es compatible con el ledger Perrun.' });
 
     if (String(existing.payment_status || '').trim() !== 'paid') {
       return res.status(409).json({ error: 'Solo se pueden editar inscripciones pagadas.' });
