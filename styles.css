@@ -11544,7 +11544,7 @@ body[data-event-landing-page] .site-header {
 /* Perrun visual pass 2: scoped composition on the existing event system. */
 .perrun-page .site-header { position:relative; top:auto; }
 .perrun-page .reveal { opacity:1; transform:none; }
-.perrun-page .event-landing { background:#f7f8ec; }
+.perrun-page .event-landing { background:#fcf8ef; }
 .perrun-page .event-landing-container { max-width:1240px; }
 .perrun-page .event-landing::before,.perrun-page .event-landing::after,
 .perrun-page .event-landing-hero::before,.perrun-page .event-landing-hero::after,
@@ -11560,13 +11560,13 @@ body[data-event-landing-page] .site-header {
 .perrun-page .event-landing-hero-meta div:first-child dd { font-weight:800; font-size:18px; }
 .perrun-page .event-landing-hero-offer { order:3; flex-wrap:wrap; gap:14px; margin-top:20px; }
 .perrun-page .event-landing-hero-offer > strong { font-size:28px; white-space:normal; }
-.perrun-page .event-landing-price-stamp { border:0; outline:0; border-left:3px solid #e26948; padding:6px 12px; min-width:0; text-align:left; }
+.perrun-page .event-landing-price-stamp { border:0; outline:0; border-left:3px solid #b48a42; padding:6px 12px; min-width:0; text-align:left; }
 .perrun-page .event-landing-hero-offer .event-landing-price-stamp b { font-size:24px; }
 .perrun-page .event-landing-actions { order:4; margin-top:18px; gap:10px; }
-.perrun-page .event-landing-subtitle { order:5; width:auto; font-size:16px; font-style:normal; margin:18px 0 0; padding:0; border:0; color:#50635a; line-height:1.5; }
+.perrun-page .event-landing-subtitle { order:5; width:auto; font-size:16px; font-style:normal; margin:18px 0 0; padding:0; border:0; color:#695e55; line-height:1.5; }
 .perrun-page .event-landing-hero-visual { position:relative; inset:auto; align-self:center; min-height:0; aspect-ratio:4 / 3; background:#e6ebe2; border-radius:0; }
 .perrun-page .event-landing-hero-visual .event-landing-hero-media { position:static; width:100%; height:100%; aspect-ratio:4 / 3; object-fit:contain; }
-.perrun-page .event-landing-photo-slot { display:flex; flex-direction:column; align-items:center; justify-content:center; gap:10px; width:100%; height:100%; min-width:0; background:#e6ebe2; border:1px dashed #8ca398; color:#50635a; padding:20px; text-align:center; }
+.perrun-page .event-landing-photo-slot { display:flex; flex-direction:column; align-items:center; justify-content:center; gap:10px; width:100%; height:100%; min-width:0; background:#e6ebe2; border:1px dashed #8ca398; color:#695e55; padding:20px; text-align:center; }
 .perrun-page .event-landing-photo-slot > span { font-size:11px; letter-spacing:.12em; font-weight:700; text-transform:uppercase; }
 .perrun-page .event-landing-photo-slot > strong { font-size:clamp(18px,2.5vw,28px); font-weight:500; line-height:1.25; }
 .perrun-page .event-landing-btn { min-height:48px; padding:12px 18px; white-space:normal; }
@@ -11574,7 +11574,7 @@ body[data-event-landing-page] .site-header {
 .perrun-page .event-landing-facts { width:100%; grid-template-columns:repeat(4,minmax(0,1fr)); margin:18px 0 0; padding:16px 12px; background:transparent; border:0; box-shadow:none; }
 .perrun-page .event-landing-fact strong { font-size:13px; }
 .perrun-page .event-landing-fact small { font-size:12px; }
-.perrun-page .event-landing-countdown { display:flex; justify-content:space-between; align-items:center; gap:20px; padding:20px 24px; margin-top:12px; border-radius:12px; background:#175547; color:white; }
+.perrun-page .event-landing-countdown { display:flex; justify-content:space-between; align-items:center; gap:20px; padding:20px 24px; margin-top:12px; border-radius:12px; background:#702439; color:white; }
 .perrun-page .event-landing-countdown p { margin:0; max-width:440px; font-size:14px; line-height:1.5; }
 .perrun-page .event-landing-countdown strong { font-size:clamp(22px,3vw,30px); font-variant-numeric:tabular-nums; white-space:nowrap; }
 .perrun-page .event-landing-section { padding:48px 0 0; }
@@ -11585,25 +11585,25 @@ body[data-event-landing-page] .site-header {
 .perrun-page .event-landing-info-card h3 { margin:0 0 8px; font-size:22px; line-height:1.2; }
 .perrun-page .event-landing-experience-grid { grid-template-columns:repeat(auto-fit,minmax(min(100%,220px),1fr)); max-width:none; }
 .perrun-page #concepto,.perrun-page #segundo-perro { display:grid; grid-template-columns:1fr 1.35fr; gap:32px; align-items:center; padding:32px; margin-top:40px; border-radius:18px; }
-.perrun-page #concepto { background:#e8edcd; }
-.perrun-page #segundo-perro { background:#f4e2d7; border-left:5px solid #e26948; }
+.perrun-page #concepto { background:#f1e5c9; }
+.perrun-page #segundo-perro { background:#f4e2d7; border-left:5px solid #b48a42; }
 .perrun-page #concepto .event-landing-section-heading,.perrun-page #segundo-perro .event-landing-section-heading { text-align:left; margin:0; }
 .perrun-page #concepto .event-landing-info-card,.perrun-page #segundo-perro .event-landing-info-card { background:transparent; border:0; box-shadow:none; padding:0; }
 .perrun-page #concepto .event-landing-info-card p,.perrun-page #segundo-perro .event-landing-info-card p { margin-bottom:0; font-size:16px; }
 .perrun-page .event-landing-kit-grid { grid-template-columns:repeat(2,minmax(0,1fr)); gap:18px; }
-.perrun-page .event-landing-kit-card { display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr); padding:0; align-items:center; background:#fff; border:1px solid #cfddd2; border-radius:14px; overflow:hidden; }
+.perrun-page .event-landing-kit-card { display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr); padding:0; align-items:center; background:#fff; border:1px solid #e3d8c5; border-radius:14px; overflow:hidden; }
 .perrun-page .event-landing-kit-card .event-landing-kit-media { aspect-ratio:1; height:auto; width:100%; object-fit:contain; padding:18px; border-radius:0; min-height:0; }
 .perrun-page .event-landing-kit-card img.event-landing-kit-media { padding:0; }
-.perrun-page .event-landing-kit-card .event-landing-photo-slot > span { position:static; top:auto; right:auto; width:auto; height:auto; display:block; border:0; background:transparent; border-radius:0; color:#50635a; font-size:10px; }
+.perrun-page .event-landing-kit-card .event-landing-photo-slot > span { position:static; top:auto; right:auto; width:auto; height:auto; display:block; border:0; background:transparent; border-radius:0; color:#695e55; font-size:10px; }
 .perrun-page .event-landing-kit-card .event-landing-photo-slot > strong { font-size:20px; }
 .perrun-page .event-landing-kit-card > div:last-child:not(.event-landing-photo-slot) { padding:20px; min-height:0; }
 .perrun-page .event-landing-kit-card > div:last-child > span { position:static; display:inline; border:0; background:none; }
 .perrun-page .event-landing-kit-card h3 { margin:8px 0; font-size:23px; }
 .perrun-page .event-landing-kit-card p { font-size:14px; }
 .perrun-page .event-landing-includes { margin-top:16px; }
-.perrun-page .event-landing-modalities { padding:32px; margin-top:40px; border-radius:20px; background:#175547; }
+.perrun-page .event-landing-modalities { padding:32px; margin-top:40px; border-radius:20px; background:#702439; }
 .perrun-page .event-landing-modalities .event-landing-section-heading h2 { color:#fff; }
-.perrun-page .event-landing-modalities .event-landing-section-heading p { color:#dae4cd; }
+.perrun-page .event-landing-modalities .event-landing-section-heading p { color:#f1e5c9; }
 .perrun-page .event-landing-modality-grid { grid-template-columns:repeat(3,minmax(0,1fr)); }
 .perrun-page .event-landing-modality-card { min-width:0; padding:24px; border-radius:12px; background:#fff; }
 .perrun-page #categorias .event-landing-section-heading { text-align:left; margin-left:0; }
@@ -11612,27 +11612,27 @@ body[data-event-landing-page] .site-header {
 .perrun-page #categorias .event-landing-info-card h3 { font-size:30px; margin:0; }
 .perrun-page #categorias .event-landing-info-card p { margin:0; font-size:14px; }
 .perrun-page .event-landing-pricing { margin-top:40px; padding:32px; border-radius:18px; background:#eeeeda; }
-.perrun-page .event-landing-price-card.is-current { border:2px solid #175547; background:#dce8b7; }
+.perrun-page .event-landing-price-card.is-current { border:2px solid #702439; background:#f4e7c9; }
 .perrun-page .event-landing-price-note { font-size:14px; line-height:1.6; }
-.perrun-page #grabado { display:grid; grid-template-columns:minmax(0,.9fr) minmax(0,1.1fr); column-gap:40px; row-gap:20px; align-items:center; padding:32px; margin-top:40px; border-radius:22px; background:#153e36; color:white; }
+.perrun-page #grabado { display:grid; grid-template-columns:minmax(0,.9fr) minmax(0,1.1fr); column-gap:40px; row-gap:20px; align-items:center; padding:32px; margin-top:40px; border-radius:22px; background:#42272a; color:white; }
 .perrun-page #grabado .event-landing-section-heading { grid-column:2; grid-row:1; text-align:left; margin:0; }
 .perrun-page #grabado .event-landing-section-heading h2 { color:#fff; font-size:clamp(36px,4vw,54px); }
 .perrun-page #grabado .event-landing-feature-media { grid-column:1; grid-row:1 / span 2; aspect-ratio:1; border-radius:14px; overflow:hidden; }
 .perrun-page .event-landing-feature-photo { width:100%; height:100%; aspect-ratio:1; object-fit:contain; }
 .perrun-page #grabado .event-landing-experience-grid { grid-column:2; grid-row:2; grid-template-columns:1fr; gap:0; }
 .perrun-page #grabado .event-landing-info-card { background:transparent; border:0; box-shadow:none; border-top:1px solid #5b8074; border-radius:0; padding:18px 0; text-align:left; }
-.perrun-page #grabado .event-landing-info-card h3 { color:#e8edcd; font-size:25px; }
+.perrun-page #grabado .event-landing-info-card h3 { color:#f1e5c9; font-size:25px; }
 .perrun-page #grabado .event-landing-info-card p { color:#e0e9e3; font-size:16px; margin:8px 0 0; }
 .perrun-page .event-landing-timeline { grid-template-columns:repeat(2,minmax(0,1fr)); gap:16px; }
 .perrun-page .event-landing-timeline::before { display:none; }
-.perrun-page .event-landing-timeline-item { min-height:0; padding:20px; border:1px solid #cfddd2; border-radius:12px; text-align:left; background:#fff; }
+.perrun-page .event-landing-timeline-item { min-height:0; padding:20px; border:1px solid #e3d8c5; border-radius:12px; text-align:left; background:#fff; }
 .perrun-page .event-landing-step { position:static; margin-bottom:10px; }
 .perrun-page .event-landing-timeline-icon { display:none; }
 .perrun-page .event-landing-timeline-item h3 { min-height:0; font-size:20px; margin:0 0 8px; }
 .perrun-page .event-landing-timeline-item strong,.perrun-page .event-landing-timeline-item time { display:block; font-size:16px; }
 .perrun-page .event-landing-timeline-item p { font-size:14px; margin:8px 0 0; line-height:1.5; }
 .perrun-page #recomendaciones .event-landing-section-heading { text-align:left; margin-left:0; }
-.perrun-page #recomendaciones .event-landing-info-card { background:transparent; border:0; border-top:2px solid #e26948; box-shadow:none; border-radius:0; padding:20px 0; text-align:left; }
+.perrun-page #recomendaciones .event-landing-info-card { background:transparent; border:0; border-top:2px solid #b48a42; box-shadow:none; border-radius:0; padding:20px 0; text-align:left; }
 .perrun-page .event-landing-information { padding-top:32px; }
 .perrun-page .event-landing-info-grid { grid-template-columns:repeat(3,minmax(0,1fr)); gap:16px; }
 .perrun-page .event-landing-info-grid > .event-landing-info-card { padding:24px; }
@@ -11719,4 +11719,38 @@ body[data-event-landing-page] .site-header {
  .perrun-page .event-landing-faq-list summary { font-size:14px; }
  .perrun-page .event-landing-final { margin-top:28px; }
  .perrun-page .event-landing-final-copy { padding:24px; }
+}
+
+/* Perrun photographic assets: edge-to-edge media, no letterboxing. */
+.perrun-page .site-header { background:#5b1e2d; }
+.perrun-page .event-landing-hero h1 { display:flex; align-items:center; gap:14px; font-size:48px; }
+.perrun-page .event-landing-event-logo { display:block; width:230px; height:auto; max-width:100%; }
+.perrun-page .event-landing-hero h1 .event-landing-title-primary { min-width:0; }
+.perrun-page .event-landing-hero-visual { align-self:stretch; aspect-ratio:auto; height:100%; }
+.perrun-page .event-landing-hero-visual img.event-landing-hero-media { object-fit:cover; object-position:58% 50%; aspect-ratio:auto; height:100%; display:block; }
+.perrun-page .event-landing-kit-card { align-items:stretch; min-height:220px; }
+.perrun-page .event-landing-kit-card img.event-landing-kit-media { display:block; width:100%; height:100%; min-height:220px; aspect-ratio:auto; padding:0; object-fit:cover; object-position:50% 50%; border-radius:0; }
+.perrun-page .event-landing-kit-card > div:last-child { display:flex; flex-direction:column; justify-content:center; }
+.perrun-page #grabado { background:#5b1e2d; align-items:stretch; }
+.perrun-page #grabado .event-landing-feature-media { align-self:stretch; }
+.perrun-page #grabado img.event-landing-feature-photo { display:block; width:100%; height:100%; object-fit:cover; object-position:50% 58%; }
+.perrun-page #grabado .event-landing-info-card { border-top-color:#966878; }
+.perrun-page #grabado .event-landing-info-card h3 { color:#f0d79b; }
+.perrun-page #grabado .event-landing-info-card p { color:#f5eae5; }
+.perrun-page .event-landing-final { align-items:stretch; }
+.perrun-page .event-landing-final-image { align-self:stretch; aspect-ratio:auto; }
+.perrun-page .event-landing-final-image img.event-landing-final-media { display:block; width:100%; height:100%; aspect-ratio:auto; object-fit:cover; object-position:50% 50%; }
+.perrun-page .event-landing-photo-slot[data-media-slot="route-map"] { background:#f0eadb; border-color:#baab8b; color:#695e55; }
+@media(max-width:900px){
+ .perrun-page .event-landing-hero-visual { aspect-ratio:4 / 3; height:auto; }
+ .perrun-page .event-landing-final-image { aspect-ratio:16 / 9; height:auto; }
+}
+@media(max-width:600px){
+ .perrun-page .event-landing-hero h1 { font-size:36px; gap:10px; margin-top:0; }
+ .perrun-page .event-landing-event-logo { width:180px; }
+ .perrun-page .event-landing-hero h1 span + span::before { content:none; }
+ .perrun-page .event-landing-hero h1 span { display:block; }
+ .perrun-page .event-landing-kit-card { grid-template-columns:minmax(0,1fr) minmax(0,1fr); min-height:190px; }
+ .perrun-page .event-landing-kit-card img.event-landing-kit-media { min-height:190px; object-position:55% 50%; }
+ .perrun-page #grabado .event-landing-feature-media { width:100%; max-width:340px; }
 }

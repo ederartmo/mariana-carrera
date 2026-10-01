@@ -59,7 +59,7 @@
         <div class="event-landing-hero-copy reveal">
           <p class="event-landing-eyebrow event-landing-hero-eyebrow">${escapeHtml(event.eyebrow)}</p>
           <h1 id="event-landing-title">
-            <span class="event-landing-title-primary">${escapeHtml(event.titleLines[0])}</span>
+            <span class="event-landing-title-primary">${event.images.brandLogo ? `<img class="event-landing-event-logo" src="${escapeHtml(event.images.brandLogo)}" alt="" width="286" height="155" /><span class="sr-only">${escapeHtml(event.titleLines[0])}</span>` : escapeHtml(event.titleLines[0])}</span>
             <span>${escapeHtml(event.titleLines[1])}</span>
           </h1>
           <p class="event-landing-subtitle">${escapeHtml(event.subtitle)}</p>
