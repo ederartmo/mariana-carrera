@@ -35,7 +35,12 @@ const EVENT_CATALOG = {
   },
 };
 
+function isPerrunMetadata(metadata = {}) {
+  return String(metadata.event_slug || '').trim().toLowerCase() === 'perrun-2027';
+}
+
 function resolveEventFromMetadata(metadata = {}) {
+  if (isPerrunMetadata(metadata)) throw new Error('Perrun requiere su propio handler; nunca usar el resolver legacy.');
   const event = EVENT_CATALOG[metadata.event_slug] || EVENT_CATALOG['axolote-night-run'];
   const rawDistance = metadata.distance == null ? '' : String(metadata.distance).trim().toUpperCase();
   const distances = Array.isArray(event.distances) && event.distances.length > 0
@@ -763,6 +768,14 @@ module.exports = async (req, res) => {
 
   console.log(`🪝 Evento recibido: ${event.type}`);
 
+  // Phase 3 boundary: replace this branch with the Perrun handler in Phase 4.
+  // Paid events must retry rather than acknowledge fulfillment that has not happened.
+  if (isPerrunMetadata(event.data.object.metadata)) {
+    const paid = event.type === 'checkout.session.async_payment_succeeded'
+      || (event.type === 'checkout.session.completed' && event.data.object.payment_status === 'paid');
+    return res.status(paid ? 503 : 200).json({ received: !paid, deferred: true, flow: 'perrun', reason: 'perrun_handler_pending' });
+  }
+
   // ==================== CHECKOUT SESSION COMPLETED ====================
   if (event.type === 'checkout.session.completed') {
     const session = event.data.object;
@@ -1062,6 +1075,10 @@ module.exports = async (req, res) => {
   if (event.type === 'payment_intent.payment_failed') {
     const paymentIntent = event.data.object;
     const checkoutSession = await findCheckoutSessionByPaymentIntent(paymentIntent.id);
+
+    if (isPerrunMetadata(checkoutSession?.metadata)) {
+      return res.status(200).json({ received: true, deferred: true, flow: 'perrun' });
+    }
 
     if (checkoutSession?.id) {
       const email = (checkoutSession.customer_email || checkoutSession.customer_details?.email || '').toLowerCase().trim() || null;

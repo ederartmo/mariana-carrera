@@ -141,6 +141,10 @@ module.exports = async function handler(req, res) {
       return res.status(400).json({ error: 'El evento o la distancia seleccionada no son válidos.' });
     }
 
+    if (event.slug === 'perrun-2027') {
+      return require('../lib/_perrun-checkout').handlePerrunCheckout({ req, res, stripe, supabase, origin: getRequestOrigin(req) });
+    }
+
     if (event.checkoutEnabled === false) {
       return res.status(400).json({ error: 'El checkout de Perrun todavía no está habilitado.' });
     }

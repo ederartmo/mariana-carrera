@@ -57,7 +57,7 @@ src="https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1"
     }
 
     async function fetchCheckoutSummary(sessionId) {
-      const response = await fetch(`/api/checkout-summary?session_id=${encodeURIComponent(sessionId)}`);
+      const response = await fetch(`/api/checkout-summary?session_id=${encodeURIComponent(sessionId)}${new URLSearchParams(window.location.search).get('event') === 'perrun-2027' ? '&event=perrun-2027' : ''}`);
       if (response.status === 401 || response.status === 403) {
         const err = new Error('Resumen privado no disponible en este navegador');
         err.status = response.status;
@@ -246,11 +246,11 @@ src="https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1"
             // refresh; retirarlo de la URL evita propagarlo en referrers/copias.
             try {
               if (window.history && typeof window.history.replaceState === 'function') {
-                window.history.replaceState({}, '', window.location.pathname);
+                window.history.replaceState({}, '', window.location.pathname + (summary.eventSlug === 'perrun-2027' ? '?event=perrun-2027' : ''));
               }
             } catch (_) {}
             const eventSlug = summary.eventSlug || 'axolote-night-run';
-            const raceParam = eventSlug === 'cascanueces-run' ? 'cascanueces' : 'axolote';
+            const raceParam = eventSlug === 'perrun-2027' ? 'perrun-2027' : eventSlug === 'cascanueces-run' ? 'cascanueces' : 'axolote';
             const waiverLink = document.getElementById('waiverLink');
 
             if (waiverLink && eventSlug === 'cascanueces-run') {
@@ -261,6 +261,11 @@ src="https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1"
             configureProfileLink(checkoutEmail, raceParam, summary.payment_status);
             applySummaryState(summary);
             renderParticipants(summary);
+            if (summary.eventSlug === 'perrun-2027' && Array.isArray(summary.dogs)) {
+              const list = document.getElementById('participantsList');
+              list.insertAdjacentHTML('beforeend', '<div class="ticket-card"><p>Base: $' + escapeHtml(summary.baseAmount) + ' MXN · Segundo perro: $' + escapeHtml(String(summary.secondDogFee)) + ' MXN</p><p><strong>Total principal: $' + escapeHtml(summary.total) + ' MXN</strong> · Grabado cobrado: $0 MXN</p></div>');
+              list.insertAdjacentHTML('beforeend', summary.dogs.map(dog => '<div class="ticket-card"><p><strong>' + escapeHtml(dog.name) + '</strong> · ' + escapeHtml(dog.category) + '</p><p>' + escapeHtml(dog.engravingStatus) + '</p></div>').join(''));
+            }
           }
         } catch (error) {
           if (error && (error.status === 401 || error.status === 403)) {

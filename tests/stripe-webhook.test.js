@@ -1065,3 +1065,27 @@ test('B2-10: legacy sin payment_intent_id se resuelve por checkout session', asy
     assert.equal(state.sessionListCalls[0].payment_intent, 'pi_L');
   });
 });
+
+// Phase 3: Perrun cannot fall through into legacy fulfillment at any distance.
+for (const distance of ['1K', '3K', '5K']) {
+  for (const type of ['checkout.session.completed', 'checkout.session.async_payment_succeeded', 'checkout.session.async_payment_failed']) {
+    test(`Perrun ${distance} ${type}: guard prevents all legacy writes and fulfillment`, async () => {
+      const event = stripeEvent(type, checkoutSession({ metadata: { event_slug: 'perrun-2027', distance }, payment_status: 'paid' }));
+      await withWebhookMocks({ event }, async ({ webhook, state }) => {
+        const res = await invoke(webhook, event);
+        assert.equal(res.statusCode, type === 'checkout.session.async_payment_failed' ? 200 : 503);
+        assert.equal(res.body.deferred, true);
+        for (const key of ['rpcCalls','updateCalls','upsertCalls','selectCalls','emailSends','metaCalls']) assert.equal(state[key].length,0,key);
+      });
+    });
+  }
+  test(`Perrun ${distance} unpaid OXXO completion: no legacy draft/BIB`, async () => {
+    const event = stripeEvent('checkout.session.completed',checkoutSession({ metadata:{event_slug:'perrun-2027',distance},payment_status:'unpaid' }));
+    await withWebhookMocks({event},async({webhook,state})=>{const res=await invoke(webhook,event);assert.equal(res.statusCode,200);assert.equal(res.body.deferred,true);assert.equal(state.rpcCalls.length,0);assert.equal(state.upsertCalls.length,0);});
+  });
+  test(`Perrun ${distance} payment intent failure retrieved by session: no legacy update`, async () => {
+    const session=checkoutSession({metadata:{event_slug:'perrun-2027',distance}});
+    const event=stripeEvent('payment_intent.payment_failed',{id:'pi_perrun',metadata:{},amount:45000});
+    await withWebhookMocks({event,sessionsByPaymentIntent:{pi_perrun:session}},async({webhook,state})=>{const res=await invoke(webhook,event);assert.equal(res.statusCode,200);assert.equal(res.body.flow,'perrun');assert.equal(state.rpcCalls.length,0);assert.equal(state.updateCalls.length,0);});
+  });
+}
