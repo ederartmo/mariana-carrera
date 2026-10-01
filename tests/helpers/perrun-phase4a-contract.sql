@@ -1,0 +1,8 @@
+select jsonb_build_object(
+'columns',(select jsonb_agg(jsonb_build_object('name',a.attname,'type',format_type(a.atttypid,a.atttypmod),'not_null',a.attnotnull,'default',pg_get_expr(d.adbin,d.adrelid)) order by a.attnum) from pg_attribute a left join pg_attrdef d on d.adrelid=a.attrelid and d.adnum=a.attnum where a.attrelid='public.perrun_checkout_orders'::regclass and a.attnum>0 and not a.attisdropped),
+'constraints',(select jsonb_agg(jsonb_build_object('name',conname,'definition',pg_get_constraintdef(oid)) order by conname) from pg_constraint where conrelid='public.perrun_checkout_orders'::regclass),
+'indexes',(select jsonb_agg(indexdef order by indexname) from pg_indexes where schemaname='public' and tablename='perrun_checkout_orders'),
+'rls',(select relrowsecurity from pg_class where oid='public.perrun_checkout_orders'::regclass),
+'grants',(select jsonb_agg(jsonb_build_object('role',grantee,'privilege',privilege_type) order by grantee,privilege_type) from information_schema.role_table_grants where table_schema='public' and table_name='perrun_checkout_orders'),
+'functions',(select jsonb_agg(jsonb_build_object('schema_name',n.nspname,'name',p.proname,'arguments',pg_get_function_identity_arguments(p.oid),'source',p.prosrc,'definer',p.prosecdef,'config',p.proconfig,'acl',p.proacl::text) order by n.nspname,p.proname) from pg_proc p join pg_namespace n on n.oid=p.pronamespace where n.nspname in ('public','kinetic_perrun_private') and p.proname in ('prepare_perrun_order','finalize_perrun_paid_order'))
+) as contract;

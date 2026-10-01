@@ -1,0 +1,246 @@
+{
+  "projectRef": "uycwzhlcnfijjyzkgkem",
+  "inspectedAt": "2026-10-01",
+  "readOnly": true,
+  "contract": {
+    "rls": true,
+    "grants": [
+      {
+        "role": "postgres",
+        "privilege": "DELETE"
+      },
+      {
+        "role": "postgres",
+        "privilege": "INSERT"
+      },
+      {
+        "role": "postgres",
+        "privilege": "REFERENCES"
+      },
+      {
+        "role": "postgres",
+        "privilege": "SELECT"
+      },
+      {
+        "role": "postgres",
+        "privilege": "TRIGGER"
+      },
+      {
+        "role": "postgres",
+        "privilege": "TRUNCATE"
+      },
+      {
+        "role": "postgres",
+        "privilege": "UPDATE"
+      },
+      {
+        "role": "service_role",
+        "privilege": "SELECT"
+      }
+    ],
+    "columns": [
+      {
+        "name": "order_session_id",
+        "type": "text",
+        "default": null,
+        "not_null": true
+      },
+      {
+        "name": "event_slug",
+        "type": "text",
+        "default": "'perrun-2027'::text",
+        "not_null": true
+      },
+      {
+        "name": "distance",
+        "type": "text",
+        "default": null,
+        "not_null": true
+      },
+      {
+        "name": "buyer_email",
+        "type": "text",
+        "default": null,
+        "not_null": true
+      },
+      {
+        "name": "participant",
+        "type": "jsonb",
+        "default": null,
+        "not_null": true
+      },
+      {
+        "name": "owner_phone",
+        "type": "text",
+        "default": null,
+        "not_null": true
+      },
+      {
+        "name": "dogs",
+        "type": "jsonb",
+        "default": null,
+        "not_null": true
+      },
+      {
+        "name": "price_stage",
+        "type": "text",
+        "default": null,
+        "not_null": true
+      },
+      {
+        "name": "base_amount_cents",
+        "type": "integer",
+        "default": null,
+        "not_null": true
+      },
+      {
+        "name": "amount_cents",
+        "type": "integer",
+        "default": null,
+        "not_null": true
+      },
+      {
+        "name": "currency",
+        "type": "text",
+        "default": "'mxn'::text",
+        "not_null": true
+      },
+      {
+        "name": "quoted_at",
+        "type": "timestamp with time zone",
+        "default": null,
+        "not_null": true
+      },
+      {
+        "name": "created_at",
+        "type": "timestamp with time zone",
+        "default": "now()",
+        "not_null": true
+      },
+      {
+        "name": "finalized_at",
+        "type": "timestamp with time zone",
+        "default": null,
+        "not_null": false
+      },
+      {
+        "name": "payment_intent_id",
+        "type": "text",
+        "default": null,
+        "not_null": false
+      }
+    ],
+    "indexes": [
+      "CREATE UNIQUE INDEX perrun_checkout_orders_payment_intent_id_key ON public.perrun_checkout_orders USING btree (payment_intent_id)",
+      "CREATE UNIQUE INDEX perrun_checkout_orders_pkey ON public.perrun_checkout_orders USING btree (order_session_id)"
+    ],
+    "functions": [
+      {
+        "acl": "{postgres=X/postgres,service_role=X/postgres}",
+        "name": "finalize_perrun_paid_order",
+        "config": [
+          "search_path=\"\""
+        ],
+        "source": "\ndeclare v_order public.perrun_checkout_orders; v_parent public.inscripciones; v_last bigint; v_count integer;\nbegin\n  -- Caller must have verified Stripe webhook signature AND paid status. No browser calls.\n  if nullif(btrim(p_payment_intent_id),'') is null or nullif(btrim(p_stripe_event_id),'') is null then\n    raise exception 'Confirmed Stripe identities required';\n  end if;\n  -- Same event lock as existing finalizer. Lock order is event -> draft -> counter.\n  perform pg_catalog.pg_advisory_xact_lock(123456789, pg_catalog.hashtext('perrun-2027'));\n  select * into strict v_order from public.perrun_checkout_orders where order_session_id = p_order_session_id for update;\n  if p_confirmed_amount_cents is distinct from v_order.amount_cents or p_confirmed_currency is distinct from v_order.currency then\n    raise exception 'Confirmed Stripe amount/currency mismatch';\n  end if;\n  if v_order.finalized_at is not null then\n    if v_order.payment_intent_id is distinct from p_payment_intent_id then raise exception 'Payment identity conflict'; end if;\n    return query select d.* from public.registration_dogs d where d.order_session_id = p_order_session_id order by d.dog_index;\n    return;\n  end if;\n  if exists(select 1 from public.inscripciones where order_session_id = p_order_session_id and payment_status = 'paid') then\n    raise exception 'Perrun paid order without dog ledger; reconciliation required';\n  end if;\n  -- Force one human ticket irrespective of any caller-supplied ticket index.\n  perform public.finalize_paid_order(p_order_session_id,'perrun-2027',v_order.distance,\n    v_order.amount_cents::numeric / 100,v_order.buyer_email,p_payment_intent_id,p_stripe_event_id,\n    jsonb_build_array(v_order.participant || jsonb_build_object('ticketIndex',1,'ticket_index',1,'whatsapp',v_order.owner_phone)));\n  select count(*) into v_count from public.inscripciones where order_session_id = p_order_session_id;\n  if v_count <> 1 then raise exception 'Perrun requires exactly one human registration'; end if;\n  select * into strict v_parent from public.inscripciones where order_session_id = p_order_session_id;\n  if v_parent.event_slug <> 'perrun-2027' or v_parent.payment_status <> 'paid'\n    or v_parent.ticket_index <> 1 or v_parent.ticket_count <> 1\n    or v_parent.registration_status is distinct from 'active' then raise exception 'Invalid finalized Perrun human'; end if;\n  select last_sequence into strict v_last from public.perrun_paid_dog_counter where event_slug = 'perrun-2027' for update;\n  insert into public.registration_dogs(registration_id,registration_email,order_session_id,dog_index,dog_name,weight_kg,category,\n    engraving_requested,engraving_sequence,engraving_free,engraving_payment_required,engraving_payment_amount_cents)\n  select v_parent.id,v_parent.email,p_order_session_id,ordinality::smallint,btrim(d->>'name'),(d->>'weightKg')::numeric,\n    case when (d->>'weightKg')::numeric <= 10 then 'S' when (d->>'weightKg')::numeric <= 25 then 'M'\n      when (d->>'weightKg')::numeric <= 50 then 'L' else 'XL' end,\n    (d->>'engravingRequested')::boolean,v_last+ordinality,v_last+ordinality <= 300,\n    v_last+ordinality > 300 and (d->>'engravingRequested')::boolean,\n    case when v_last+ordinality > 300 and (d->>'engravingRequested')::boolean then 3500 else 0 end\n  from jsonb_array_elements(v_order.dogs) with ordinality as dogs(d,ordinality) order by ordinality;\n  update public.perrun_paid_dog_counter set last_sequence = v_last + jsonb_array_length(v_order.dogs) where event_slug = 'perrun-2027';\n  update public.perrun_checkout_orders set finalized_at = now(), payment_intent_id = p_payment_intent_id where order_session_id = p_order_session_id;\n  return query select d.* from public.registration_dogs d where d.order_session_id = p_order_session_id order by d.dog_index;\nend;\n",
+        "definer": true,
+        "arguments": "p_order_session_id text, p_payment_intent_id text, p_stripe_event_id text, p_confirmed_amount_cents integer, p_confirmed_currency text",
+        "schema_name": "kinetic_perrun_private"
+      },
+      {
+        "acl": "{postgres=X/postgres,service_role=X/postgres}",
+        "name": "prepare_perrun_order",
+        "config": [
+          "search_path=\"\""
+        ],
+        "source": "\ndeclare v_order public.perrun_checkout_orders; v_base integer; v_phone text;\nbegin\n  if not kinetic_perrun_private.valid_dogs(p_dogs) then raise exception 'Invalid Perrun dogs'; end if;\n  if p_participant is null or jsonb_typeof(p_participant) <> 'object' then raise exception 'One human required'; end if;\n  v_phone := btrim(p_participant->>'whatsapp');\n  if v_phone is null or v_phone !~ '^\\+52[0-9]{10}$' then raise exception 'Valid Perrun owner phone required'; end if;\n  v_base := case p_price_stage when 'presale' then 45000 when 'general' then 50000 when 'late' then 55000 else null end;\n  insert into public.perrun_checkout_orders(order_session_id,distance,buyer_email,participant,owner_phone,dogs,price_stage,base_amount_cents,amount_cents,quoted_at)\n    values(p_order_session_id,p_distance,p_buyer_email,p_participant - 'whatsapp',v_phone,p_dogs,p_price_stage,v_base,\n      v_base + case jsonb_array_length(p_dogs) when 2 then 18000 else 0 end,p_quoted_at)\n    on conflict (order_session_id) do nothing;\n  select * into strict v_order from public.perrun_checkout_orders where order_session_id = p_order_session_id;\n  if v_order.distance is distinct from p_distance or v_order.buyer_email is distinct from p_buyer_email\n    or v_order.participant is distinct from (p_participant - 'whatsapp') or v_order.owner_phone is distinct from v_phone\n    or v_order.dogs is distinct from p_dogs\n    or v_order.price_stage is distinct from p_price_stage or v_order.quoted_at is distinct from p_quoted_at then\n    raise exception 'Perrun checkout payload conflict';\n  end if;\n  return v_order;\nend;\n",
+        "definer": true,
+        "arguments": "p_order_session_id text, p_distance text, p_buyer_email text, p_participant jsonb, p_dogs jsonb, p_price_stage text, p_quoted_at timestamp with time zone",
+        "schema_name": "kinetic_perrun_private"
+      },
+      {
+        "acl": "{postgres=X/postgres,service_role=X/postgres}",
+        "name": "finalize_perrun_paid_order",
+        "config": [
+          "search_path=\"\""
+        ],
+        "source": "\n  select * from kinetic_perrun_private.finalize_perrun_paid_order(p_order_session_id,p_payment_intent_id,p_stripe_event_id,p_confirmed_amount_cents,p_confirmed_currency);\n",
+        "definer": false,
+        "arguments": "p_order_session_id text, p_payment_intent_id text, p_stripe_event_id text, p_confirmed_amount_cents integer, p_confirmed_currency text",
+        "schema_name": "public"
+      },
+      {
+        "acl": "{postgres=X/postgres,service_role=X/postgres}",
+        "name": "prepare_perrun_order",
+        "config": [
+          "search_path=\"\""
+        ],
+        "source": "\n  select kinetic_perrun_private.prepare_perrun_order(p_order_session_id,p_distance,p_buyer_email,p_participant,p_dogs,p_price_stage,p_quoted_at);\n",
+        "definer": false,
+        "arguments": "p_order_session_id text, p_distance text, p_buyer_email text, p_participant jsonb, p_dogs jsonb, p_price_stage text, p_quoted_at timestamp with time zone",
+        "schema_name": "public"
+      }
+    ],
+    "constraints": [
+      {
+        "name": "perrun_checkout_orders_buyer_email_check",
+        "definition": "CHECK ((btrim(buyer_email) <> ''::text))"
+      },
+      {
+        "name": "perrun_checkout_orders_currency_check",
+        "definition": "CHECK ((currency = 'mxn'::text))"
+      },
+      {
+        "name": "perrun_checkout_orders_distance_check",
+        "definition": "CHECK ((distance = ANY (ARRAY['1K'::text, '3K'::text, '5K'::text])))"
+      },
+      {
+        "name": "perrun_checkout_orders_dogs_check",
+        "definition": "CHECK (kinetic_perrun_private.valid_dogs(dogs))"
+      },
+      {
+        "name": "perrun_checkout_orders_event_slug_check",
+        "definition": "CHECK ((event_slug = 'perrun-2027'::text))"
+      },
+      {
+        "name": "perrun_checkout_orders_order_session_id_check",
+        "definition": "CHECK ((btrim(order_session_id) <> ''::text))"
+      },
+      {
+        "name": "perrun_checkout_orders_owner_phone_check",
+        "definition": "CHECK ((owner_phone ~ '^\\+52[0-9]{10}$'::text))"
+      },
+      {
+        "name": "perrun_checkout_orders_participant_check",
+        "definition": "CHECK (((jsonb_typeof(participant) = 'object'::text) AND (NOT (participant ? 'whatsapp'::text))))"
+      },
+      {
+        "name": "perrun_checkout_orders_payment_intent_id_key",
+        "definition": "UNIQUE (payment_intent_id)"
+      },
+      {
+        "name": "perrun_checkout_orders_pkey",
+        "definition": "PRIMARY KEY (order_session_id)"
+      },
+      {
+        "name": "perrun_checkout_orders_price_stage_check",
+        "definition": "CHECK ((price_stage = ANY (ARRAY['presale'::text, 'general'::text, 'late'::text])))"
+      },
+      {
+        "name": "perrun_finalization_pair",
+        "definition": "CHECK (((finalized_at IS NULL) = (payment_intent_id IS NULL)))"
+      },
+      {
+        "name": "perrun_main_price",
+        "definition": "CHECK ((amount_cents = (base_amount_cents +\nCASE jsonb_array_length(dogs)\n    WHEN 2 THEN 18000\n    ELSE 0\nEND)))"
+      },
+      {
+        "name": "perrun_quote_time",
+        "definition": "CHECK (((quoted_at < '2027-01-25 22:00:00+00'::timestamp with time zone) AND (price_stage =\nCASE\n    WHEN (quoted_at < '2026-11-01 06:00:00+00'::timestamp with time zone) THEN 'presale'::text\n    WHEN (quoted_at < '2027-01-01 06:00:00+00'::timestamp with time zone) THEN 'general'::text\n    ELSE 'late'::text\nEND)))"
+      },
+      {
+        "name": "perrun_stage_price",
+        "definition": "CHECK ((base_amount_cents =\nCASE price_stage\n    WHEN 'presale'::text THEN 45000\n    WHEN 'general'::text THEN 50000\n    ELSE 55000\nEND))"
+      }
+    ]
+  }
+}
