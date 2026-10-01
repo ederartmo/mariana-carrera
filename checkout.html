@@ -21,6 +21,11 @@
         background: #f8faf9;
       }
 
+      .checkout-page .site-header {
+        position: relative;
+        top: auto;
+      }
+
       .checkout-hero {
         background: linear-gradient(160deg, #3a524c, #2d403b 70%);
         padding: 28px 0;
@@ -39,7 +44,8 @@
 
       /* ─── Breadcrumb ─────────────────────────── */
       .checkout-breadcrumb {
-        display: flex;
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
         gap: 0;
         margin-bottom: 36px;
         border-radius: 8px;
@@ -95,6 +101,8 @@
         line-height: 1;
         margin-bottom: 2px;
       }
+
+      .step-label-short { display: none; }
 
       /* ─── Main Grid ──────────────────────────── */
       .checkout-grid {
@@ -405,13 +413,19 @@
         }
 
         .checkout-breadcrumb {
-          flex-direction: column;
+          margin-bottom: 24px;
         }
 
         .breadcrumb-step {
-          padding: 12px 14px;
-          font-size: 0.85rem;
+          padding: 10px 5px;
+          gap: 5px;
+          min-width: 0;
+          font-size: 0.75rem;
         }
+
+        .breadcrumb-step strong { font-size: 1.15rem; margin: 0; flex-shrink: 0; }
+        .step-label-long { display: none; }
+        .step-label-short { display: inline; }
 
         .breadcrumb-step::after {
           display: none;
@@ -496,7 +510,7 @@ src="https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1"
             </div>
             <div class="breadcrumb-step active">
               <strong>2</strong>
-              <span>Datos de contacto</span>
+              <span><span class="step-label-long">Datos de contacto</span><span class="step-label-short">Datos</span></span>
             </div>
             <div class="breadcrumb-step">
               <strong>3</strong>
