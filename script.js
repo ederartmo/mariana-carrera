@@ -3685,7 +3685,12 @@ function setupSupabase() {
             fallbackDistance: "5K"
           }
         };
-        const getProfileEvent = (eventSlug) => PROFILE_EVENT_CATALOG[eventSlug] || {
+        const getProfileEvent = (eventSlug) => eventSlug === window.KineticHubPerrunEvent?.slug ? {
+          name: window.KineticHubPerrunEvent.name,
+          dateLocation: window.KineticHubPerrunEvent.date.label + ' · ' + window.KineticHubPerrunEvent.location.name,
+          categoryLabel: 'Recreativa', detailUrl: window.KineticHubPerrunEvent.detailUrl,
+          waiverUrl: null, announcementUrl: null, fallbackDistance: ''
+        } : PROFILE_EVENT_CATALOG[eventSlug] || {
           name: eventSlug ? eventSlug.replace(/-/g, " ").replace(/\b\w/g, c => c.toUpperCase()) : "Carrera",
           dateLocation: "Fecha por confirmar",
           categoryLabel: "Distancia",
@@ -3694,7 +3699,9 @@ function setupSupabase() {
           announcementUrl: "assets/events/axolote-night-run/legal/convocatoria.pdf",
           fallbackDistance: "5K"
         };
-        const getDistance = (ins) => (ins?.distance || getProfileEvent(ins?.event_slug).fallbackDistance || "5K").toUpperCase();
+        const getDistance = (ins) => ins?.event_slug === window.KineticHubPerrunEvent?.slug
+          ? (window.KineticHubPerrunEvent.distances.includes(ins?.distance) ? ins.distance : "Por confirmar")
+          : (ins?.distance || getProfileEvent(ins?.event_slug).fallbackDistance || "5K").toUpperCase();
         const formatStatus = (raw) => {
           const s = String(raw || "").toLowerCase().trim();
           if (s === "paid") return { key:"paid", label:"Inscripción pagada ✓", cls:"is-paid", isPaid:true };
@@ -3835,7 +3842,7 @@ function setupSupabase() {
             const amountLabel = inscription.amount_paid ? ` · $${Number(inscription.amount_paid).toFixed(0)} MXN` : "";
             const dateLine = `${escapeHtml(event.dateLocation)} · ${escapeHtml(event.categoryLabel)} ${escapeHtml(distance)}${amountLabel}`;
             const payBtn = !status.isPaid ? `<a class="profile-race-pay-btn" href="checkout.html?event=${encodeURIComponent(inscription.event_slug)}&distance=${encodeURIComponent(distance)}">Pagar para asegurar lugar</a>` : "";
-            const docsBtn = status.isPaid ? `<button type="button" class="profile-reminder-cta profile-legal-documents-btn" data-event-slug="${escapeHtml(inscription.event_slug)}" style="background:#19c88b;color:white;border:none;">Ver documentos</button>` : "";
+            const docsBtn = status.isPaid && event.waiverUrl && event.announcementUrl ? `<button type="button" class="profile-reminder-cta profile-legal-documents-btn" data-event-slug="${escapeHtml(inscription.event_slug)}" style="background:#19c88b;color:white;border:none;">Ver documentos</button>` : "";
 
             return `
               <div class="profile-race-card">
@@ -4472,6 +4479,7 @@ function setupTipsCarousel() {
 //   });
 // }
 function setupCheckoutForm() {
+  if (window.KineticHubCheckoutSelection?.checkoutEnabled === false) return;
   const form = document.getElementById("checkoutForm");
   if (!form) return;
 

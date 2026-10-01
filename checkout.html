@@ -687,11 +687,19 @@ src="https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1"
 
     <script src="axolote-stage-config.js?v=__ASSET_VERSION__"></script>
     <script src="cascanueces-stage-config.js?v=__ASSET_VERSION__"></script>
+    <script src="perrun-stage-config.js?v=__ASSET_VERSION__"></script>
+    <script src="perrun-event-data.js?v=__ASSET_VERSION__"></script>
+    <script src="event-catalog.js?v=__ASSET_VERSION__"></script>
     <script>
       const checkoutParams = new URLSearchParams(window.location.search);
-      const checkoutEventSlug = checkoutParams.get('event') === 'cascanueces-run'
-        ? 'cascanueces-run'
-        : 'axolote-night-run';
+      const requestedEventSlug = checkoutParams.get('event');
+      const recognizedEvent = window.KineticHubEventCatalog.resolveEvent(requestedEventSlug || 'axolote-night-run');
+      if (!recognizedEvent || recognizedEvent.checkoutEnabled === false) {
+        window.KineticHubCheckoutSelection = { eventSlug: requestedEventSlug, distance: checkoutParams.get('distance'), checkoutEnabled: false };
+        window.location.replace('eventos.html');
+        throw new Error('Checkout unavailable for selected event');
+      }
+      const checkoutEventSlug = recognizedEvent.slug;
       const requestedDistance = String(checkoutParams.get('distance') || '5K').toUpperCase();
       const checkoutEvent = checkoutEventSlug === 'cascanueces-run'
         ? {

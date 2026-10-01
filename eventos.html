@@ -117,6 +117,14 @@ src="https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1"
       <section class="section">
         <div class="container events-list">
           <div class="card-grid card-grid-3">
+            <article id="perrunCatalogCard" class="event-card reveal is-locked" data-event-card data-sport="running" data-city="cdmx" data-type="familiar">
+              <div class="event-body">
+                <h3 data-perrun-name></h3>
+                <p data-perrun-date-location></p>
+                <p class="meta" data-perrun-distances></p>
+                <span class="btn btn-small event-locked-btn" aria-disabled="true">Próximamente</span>
+              </div>
+            </article>
             <article class="event-card reveal" data-event-card data-sport="running" data-city="cdmx" data-type="competitiva">
               <div class="event-media media-axolote"></div>
               <div class="event-body">
@@ -249,6 +257,16 @@ src="https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1"
       </div>
     </footer>
 
+    <script src="perrun-stage-config.js?v=__ASSET_VERSION__"></script>
+    <script src="perrun-event-data.js?v=__ASSET_VERSION__"></script>
+    <script>
+      const perrunCatalogEvent = window.KineticHubPerrunEvent;
+      const perrunCatalogCard = document.getElementById('perrunCatalogCard');
+      perrunCatalogCard.dataset.eventSlug = perrunCatalogEvent.slug;
+      perrunCatalogCard.querySelector('[data-perrun-name]').textContent = perrunCatalogEvent.name;
+      perrunCatalogCard.querySelector('[data-perrun-date-location]').textContent = perrunCatalogEvent.date.label + ' · ' + perrunCatalogEvent.location.name;
+      perrunCatalogCard.querySelector('[data-perrun-distances]').textContent = 'Recreativa · Sin premiación · ' + perrunCatalogEvent.distances.join(' / ');
+    </script>
     <script src="supabase-client.js?v=__ASSET_VERSION__"></script>
     <script src="script.min.js?v=__ASSET_VERSION__"></script>
   </body>
