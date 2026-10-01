@@ -35,6 +35,11 @@ module.exports = async function handler(req, res) {
       return res.status(403).json({ error: 'No autorizado para consultar este resumen.' });
     }
 
+    if (req.query.event === 'perrun-2027') {
+      const summary = await require('../lib/_perrun-checkout').getPerrunSummary(supabase, sessionId);
+      return summary ? res.status(200).json(summary) : res.status(404).json({ error: 'No se encontró la compra' });
+    }
+
     const { data, error } = await supabase
       .from('inscripciones')
       .select('id, full_name, email, buyer_email, order_session_id, ticket_index, ticket_count, event_slug, distance, amount_paid, payment_status, bib_number, shirt_size, created_at, stripe_session_id')

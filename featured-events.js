@@ -43,6 +43,17 @@
     },
   ];
 
+  // Home and its floating widget share this projection of the canonical event.
+  const perrun = root.KineticHubPerrunEvent;
+  if (perrun?.featured) events.push({
+    id: perrun.slug, name: perrun.name, href: perrun.detailUrl,
+    date: new Date(perrun.date.iso + 'T12:00:00-06:00'),
+    location: perrun.location.name + ', ' + perrun.location.city,
+    distance: perrun.distances.join(' / '),
+    image: 'assets/events/perrun-2027/visuals/perrun-hero.webp',
+    alt: perrun.name + ' · corredor y perro', theme: 'perrun',
+    getStage() { return perrun.pricing.getCurrentStage(); },
+  });
   root.KineticHubFeaturedEvents = events;
   root.KineticHubEventHelpers = { formatDate, getClosedStage };
 })(typeof globalThis !== "undefined" ? globalThis : window);

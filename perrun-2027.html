@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Kinetic Hub | Perrun 2027</title>
+    <meta name="description" content="Perrun 2027: corre con tu perro el 14 de febrero en el Bosque de San Juan de Aragón. 1K, 3K y 5K." />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500;1,600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="styles.min.css?v=__ASSET_VERSION__" />
+    <link rel="icon" type="image/png" href="assets/brand/icon.png" />
+  </head>
+  <body class="perrun-page" data-event-page data-event-landing-page>
+    <header class="site-header">
+      <div class="container nav-shell">
+        <a href="index.html" class="brand" aria-label="Ir al inicio de Kinetic Hub"><img class="brand-mascot" src="assets/brand/logo-kinect.png" alt="Ajolote Kinetic Hub" /><span class="brand-copy"><strong>Kinetic Hub</strong><small>Run your next challenge</small></span></a>
+        <button class="menu-toggle" id="menuToggle" aria-expanded="false" aria-controls="siteNav">Menú</button>
+        <nav class="site-nav" id="siteNav" aria-label="Navegación principal"><a href="eventos.html">Explorar eventos</a><a href="blog.html">Blog</a><a href="nosotros.html">Nosotros</a><a href="contacto.html">Contacto</a></nav>
+        <div class="nav-actions"><a class="ghost-link" href="auth.html?mode=login">Iniciar Sesión</a></div>
+      </div>
+    </header>
+    <main id="eventLandingRoot" aria-live="polite"></main>
+    <footer class="site-footer">
+      <div class="container footer-grid">
+        <div><a href="index.html" class="footer-brand" aria-label="Inicio Kinetic Hub"><img class="brand-logo" src="assets/brand/kinetic-hub.png" alt="Kinetic Hub" /></a></div>
+        <div><h3>Navegación</h3><a href="eventos.html">Explorar eventos</a><a href="blog.html">Blog</a></div>
+        <div><h3>Comunidad</h3><a href="nosotros.html">Nosotros</a><a href="contacto.html">Contacto</a></div>
+        <div><h3>Newsletter</h3><p>Recibe lanzamientos, promociones y contenido semanal.</p><form class="footer-newsletter" action="#" method="post"><label for="footerMail" class="sr-only">Correo</label><input id="footerMail" type="email" placeholder="Correo" required /><button class="btn btn-small" type="submit">Suscribirme</button></form></div>
+      </div>
+      <div class="footer-bottom"><div class="container footer-bottom-shell"><small>© <span id="yearNow"></span> Kinetic Hub. Todos los derechos reservados.</small><div class="footer-links"><a href="privacidad.html">Privacidad</a><a href="terminos.html">Términos</a><a href="cookies.html">Cookies</a></div></div></div>
+    </footer>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://unpkg.com/lucide@0.468.0/dist/umd/lucide.js"></script>
+    <script src="perrun-stage-config.js?v=__ASSET_VERSION__"></script>
+    <script src="perrun-event-data.js?v=__ASSET_VERSION__"></script>
+    <script src="perrun-landing-data.js?v=__ASSET_VERSION__"></script>
+    <script src="event-landing.js?v=__ASSET_VERSION__"></script>
+    <script>
+      EventLanding({ root: "#eventLandingRoot", event: window.KineticHubPerrunLanding });
+    </script>
+    <script src="supabase-client.js?v=__ASSET_VERSION__"></script>
+    <script src="script.min.js?v=__ASSET_VERSION__"></script>
+  </body>
+</html>

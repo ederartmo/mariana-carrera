@@ -3685,7 +3685,12 @@ function setupSupabase() {
             fallbackDistance: "5K"
           }
         };
-        const getProfileEvent = (eventSlug) => PROFILE_EVENT_CATALOG[eventSlug] || {
+        const getProfileEvent = (eventSlug) => eventSlug === window.KineticHubPerrunEvent?.slug ? {
+          name: window.KineticHubPerrunEvent.name,
+          dateLocation: window.KineticHubPerrunEvent.date.label + ' · ' + window.KineticHubPerrunEvent.location.name,
+          categoryLabel: 'Recreativa', detailUrl: window.KineticHubPerrunEvent.detailUrl,
+          waiverUrl: null, announcementUrl: null, fallbackDistance: ''
+        } : PROFILE_EVENT_CATALOG[eventSlug] || {
           name: eventSlug ? eventSlug.replace(/-/g, " ").replace(/\b\w/g, c => c.toUpperCase()) : "Carrera",
           dateLocation: "Fecha por confirmar",
           categoryLabel: "Distancia",
@@ -3694,7 +3699,9 @@ function setupSupabase() {
           announcementUrl: "assets/events/axolote-night-run/legal/convocatoria.pdf",
           fallbackDistance: "5K"
         };
-        const getDistance = (ins) => (ins?.distance || getProfileEvent(ins?.event_slug).fallbackDistance || "5K").toUpperCase();
+        const getDistance = (ins) => ins?.event_slug === window.KineticHubPerrunEvent?.slug
+          ? (window.KineticHubPerrunEvent.distances.includes(ins?.distance) ? ins.distance : "Por confirmar")
+          : (ins?.distance || getProfileEvent(ins?.event_slug).fallbackDistance || "5K").toUpperCase();
         const formatStatus = (raw) => {
           const s = String(raw || "").toLowerCase().trim();
           if (s === "paid") return { key:"paid", label:"Inscripción pagada ✓", cls:"is-paid", isPaid:true };
@@ -3835,7 +3842,7 @@ function setupSupabase() {
             const amountLabel = inscription.amount_paid ? ` · $${Number(inscription.amount_paid).toFixed(0)} MXN` : "";
             const dateLine = `${escapeHtml(event.dateLocation)} · ${escapeHtml(event.categoryLabel)} ${escapeHtml(distance)}${amountLabel}`;
             const payBtn = !status.isPaid ? `<a class="profile-race-pay-btn" href="checkout.html?event=${encodeURIComponent(inscription.event_slug)}&distance=${encodeURIComponent(distance)}">Pagar para asegurar lugar</a>` : "";
-            const docsBtn = status.isPaid ? `<button type="button" class="profile-reminder-cta profile-legal-documents-btn" data-event-slug="${escapeHtml(inscription.event_slug)}" style="background:#19c88b;color:white;border:none;">Ver documentos</button>` : "";
+            const docsBtn = status.isPaid && event.waiverUrl && event.announcementUrl ? `<button type="button" class="profile-reminder-cta profile-legal-documents-btn" data-event-slug="${escapeHtml(inscription.event_slug)}" style="background:#19c88b;color:white;border:none;">Ver documentos</button>` : "";
 
             return `
               <div class="profile-race-card">
@@ -3846,6 +3853,7 @@ function setupSupabase() {
                   </div>
                   <p class="profile-race-meta">${dateLine}</p>
                   ${bibHTML}
+                  ${inscription.event_slug === "perrun-2027" ? `<ul class="profile-race-meta">${(inscription.dogs || []).map(dog => `<li>${escapeHtml(dog.dog_name)} · ${escapeHtml(dog.dog_category)} — ${escapeHtml(dog.engraving_status)}${window.KineticHubEngraving?.button(inscription.stripe_session_id, dog.dog_index, dog.can_pay_engraving) || ""}</li>`).join("")}</ul>` : ""}
                   <div class="profile-race-actions" style="display:flex; gap:12px; flex-wrap:wrap; margin-top:12px; align-items:center;">
                     <a class="profile-race-detail-btn" href="${escapeHtml(event.detailUrl)}">Ver detalle del evento</a>
                     ${payBtn}
@@ -4472,11 +4480,14 @@ function setupTipsCarousel() {
 //   });
 // }
 function setupCheckoutForm() {
+  if (window.KineticHubCheckoutSelection?.checkoutEnabled === false) return;
   const form = document.getElementById("checkoutForm");
   if (!form) return;
 
   const CHECKOUT_EMAIL_KEY = "kinetic_checkout_email";
-  const MAX_TICKETS_PER_ORDER = 5;
+  const isPerrun = window.KineticHubCheckoutSelection?.eventSlug === "perrun-2027";
+  const MAX_TICKETS_PER_ORDER = isPerrun ? 1 : 5;
+  let perrunCheckout = null;
   const ticketsList = document.getElementById("ticketsList");
   const addTicketBtn = document.getElementById("addTicketBtn");
   const stagePriceEl = document.getElementById("stagePrice");
@@ -4535,9 +4546,10 @@ function setupCheckoutForm() {
   function updateSummary() {
     const quantity = tickets.length;
     const unitAmount = getUnitAmount();
-    const totalAmount = unitAmount * quantity;
+    const totalAmount = unitAmount * quantity + (perrunCheckout?.secondDogFee() || 0);
     totalPriceEl.textContent = formatMXN(totalAmount);
-    ticketCountLabel.textContent = `${quantity} ticket${quantity > 1 ? "s" : ""}`;
+    ticketCountLabel.textContent = isPerrun ? "1" : `${quantity} ticket${quantity > 1 ? "s" : ""}`;
+    if (isPerrun) perrunCheckout?.updateSummary(unitAmount);
 
     if (promoState?.preview) {
       const preview = promoState.preview;
@@ -4570,7 +4582,7 @@ function setupCheckoutForm() {
         return `
           <div class="ticket-card" data-ticket-index="${index}">
             <div class="ticket-card-head">
-              <span>Ticket ${ticketNumber}</span>
+              <span>${isPerrun ? "Participante" : "Ticket"} ${ticketNumber}</span>
               ${canRemove ? `<button type="button" class="ticket-remove-btn" data-remove-ticket="${index}">Quitar</button>` : ""}
             </div>
             <div class="checkout-form-grid">
@@ -4605,7 +4617,7 @@ function setupCheckoutForm() {
                 <option value="XXL" ${ticket.shirtSize === "XXL" ? "selected" : ""}>XXL</option>
                 <option value="XXXL" ${ticket.shirtSize === "XXXL" ? "selected" : ""}>XXXL</option>
               </select>
-              <label for="ticketBirth${ticketNumber}">
+              ${isPerrun ? window.KineticHubPerrunCheckout.birthMarkup(ticketNumber, index, ticket.birthDate) : `              <label for="ticketBirth${ticketNumber}">
                 Fecha de nacimiento <span class="required-mark">*</span>
               </label>
               <input
@@ -4616,6 +4628,7 @@ function setupCheckoutForm() {
                 value="${escapeAttr(ticket.birthDate || "")}"
                 required
               />
+`}
               <label for="ticketWa${ticketNumber}">
                 WhatsApp (10 dígitos) <span class="required-mark">*</span>
               </label>
@@ -4796,6 +4809,10 @@ function setupCheckoutForm() {
 
     const index = Number(target.getAttribute("data-ticket-index"));
     const field = target.getAttribute("data-ticket-field");
+    if (isPerrun && target.hasAttribute("data-birth-part") && tickets[index]) {
+      window.KineticHubPerrunCheckout.updateBirth(target, tickets[index]);
+      return;
+    }
     if (!Number.isInteger(index) || !field || !tickets[index]) return;
 
     if (field === "fullName") {
@@ -4817,6 +4834,10 @@ function setupCheckoutForm() {
     if (!(target instanceof HTMLElement)) return;
     const index = Number(target.getAttribute("data-ticket-index"));
     const field = target.getAttribute("data-ticket-field");
+    if (isPerrun && target.hasAttribute("data-birth-part") && tickets[index]) {
+      window.KineticHubPerrunCheckout.updateBirth(target, tickets[index]);
+      return;
+    }
     if (!Number.isInteger(index) || !field || !tickets[index]) return;
     if (field === "state") {
       tickets[index].state = String(target.value || "");
@@ -4844,6 +4865,16 @@ function setupCheckoutForm() {
     await validatePromoCode();
   });
 
+  if (isPerrun) {
+    addTicketBtn.hidden = true;
+    promoCodeInput.disabled = true;
+    promoCodeInput.closest('.checkout-form-grid').hidden = true;
+    applyPromoBtn.disabled = true;
+    const section = document.getElementById('perrunDogs');
+    section.querySelectorAll('#perrunDogName1, #perrunDogWeight1, #perrunEngraving1').forEach(input => { input.disabled = false; });
+    perrunCheckout = window.KineticHubPerrunCheckout.create({ form, onChange: updateSummary });
+    perrunCheckout.refresh();
+  }
   renderTickets();
 
   form.addEventListener("submit", async (e) => {
@@ -4882,6 +4913,20 @@ function setupCheckoutForm() {
 
     if (!email || !termsCheck || hasInvalidTicket) {
       alert("Completa el correo, nombre, talla, fecha de nacimiento, WhatsApp (10 dígitos), estado y alcaldía (solo CDMX) de cada ticket, y acepta los términos.");
+      return;
+    }
+
+    if (isPerrun) {
+      const button = form.querySelector('button[type="submit"]');
+      button.disabled = true;
+      button.textContent = 'Preparando checkout…';
+      try {
+        const data = await perrunCheckout.submit({ email, buyerEmail: normalizedEmail, tickets: normalizedTickets,
+          eventSlug: 'perrun-2027', distance: window.KineticHubCheckoutSelection.distance });
+        if (!data.url) throw new Error('No se recibió la URL de pago.');
+        window.location.href = data.url;
+      } catch (error) { alert(error.message || 'No se pudo preparar el checkout.'); }
+      finally { button.disabled = false; button.textContent = 'Continuar al pago'; }
       return;
     }
 

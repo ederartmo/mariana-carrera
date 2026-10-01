@@ -13,7 +13,7 @@
   <link
     href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Sora:wght@500;600;700;800&display=swap"
     rel="stylesheet" />
-  <link rel="stylesheet" href="styles.min.css?v=1789882466202" />
+  <link rel="stylesheet" href="styles.min.css?v=PERRUN_RC" />
   <link rel="icon" type="image/png" href="assets/brand/icon.png" />
 <!-- Meta Pixel Code -->
 <script>
@@ -36,7 +36,8 @@ src="https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1"
 /></noscript>
 <!-- End Meta Pixel Code -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="supabase-client.js?v=1789882466202"></script>
+  <script src="supabase-client.js?v=PERRUN_RC"></script>
+  <script src="perrun-engraving-ui.js?v=PERRUN_RC"></script>
   <script>
     const CHECKOUT_EMAIL_KEY = 'kinetic_checkout_email';
     const CHECKOUT_SESSION_KEY = 'kinetic_checkout_session_id';
@@ -57,7 +58,7 @@ src="https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1"
     }
 
     async function fetchCheckoutSummary(sessionId) {
-      const response = await fetch(`/api/checkout-summary?session_id=${encodeURIComponent(sessionId)}`);
+      const response = await fetch(`/api/checkout-summary?session_id=${encodeURIComponent(sessionId)}${new URLSearchParams(window.location.search).get('event') === 'perrun-2027' ? '&event=perrun-2027' : ''}`);
       if (response.status === 401 || response.status === 403) {
         const err = new Error('Resumen privado no disponible en este navegador');
         err.status = response.status;
@@ -102,6 +103,17 @@ src="https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1"
         const eventSlug = summary.eventSlug || 'axolote-night-run';
         const distance = summary.distance || '5K';
         retryPaymentLink.href = `checkout.html?event=${encodeURIComponent(eventSlug)}&distance=${encodeURIComponent(distance)}`;
+      }
+
+      if (summary.eventSlug === 'perrun-2027') {
+        const refunded = paymentStatus === 'refunded';
+        if (statusTitle) statusTitle.textContent = refunded ? 'Pago reembolsado' : isPaid ? '¡Inscripción Perrun confirmada!' : isFailed ? 'Pago no completado' : 'Tu pago está pendiente';
+        if (statusIntro) statusIntro.textContent = 'Perrun 2027 · ' + summary.distance;
+        if (statusBadge) statusBadge.textContent = refunded ? 'Reembolsado' : isPaid ? 'Pago confirmado' : isFailed ? 'Pago fallido' : 'Pago pendiente';
+        if (statusCopy) statusCopy.textContent = refunded ? 'Tu inscripción fue reembolsada. Las posiciones históricas de grabado se conservan.' : isPaid ? 'Consulta tu dorsal y el estado del grabado de cada perro en el resumen.' : isFailed ? 'El pago no se confirmó. No se asignaron dorsal ni posiciones de grabado.' : 'Estamos esperando la confirmación de Stripe. Todavía no se asignaron dorsal ni posiciones de grabado.';
+        for (const block of [documentBlock, profileBlock, emailNotice]) if (block) block.style.display = 'none';
+        if (retryPaymentLink) retryPaymentLink.style.display = isFailed ? 'inline-block' : 'none';
+        return;
       }
 
       if (isPaid) {
@@ -246,11 +258,11 @@ src="https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1"
             // refresh; retirarlo de la URL evita propagarlo en referrers/copias.
             try {
               if (window.history && typeof window.history.replaceState === 'function') {
-                window.history.replaceState({}, '', window.location.pathname);
+                window.history.replaceState({}, '', window.location.pathname + (summary.eventSlug === 'perrun-2027' ? '?event=perrun-2027' : ''));
               }
             } catch (_) {}
             const eventSlug = summary.eventSlug || 'axolote-night-run';
-            const raceParam = eventSlug === 'cascanueces-run' ? 'cascanueces' : 'axolote';
+            const raceParam = eventSlug === 'perrun-2027' ? 'perrun-2027' : eventSlug === 'cascanueces-run' ? 'cascanueces' : 'axolote';
             const waiverLink = document.getElementById('waiverLink');
 
             if (waiverLink && eventSlug === 'cascanueces-run') {
@@ -261,6 +273,11 @@ src="https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1"
             configureProfileLink(checkoutEmail, raceParam, summary.payment_status);
             applySummaryState(summary);
             renderParticipants(summary);
+            if (summary.eventSlug === 'perrun-2027' && Array.isArray(summary.dogs)) {
+              const list = document.getElementById('participantsList');
+              list.insertAdjacentHTML('beforeend', '<div class="ticket-card"><p>Base: $' + escapeHtml(summary.baseAmount) + ' MXN · Segundo perro: $' + escapeHtml(String(summary.secondDogFee)) + ' MXN</p><p><strong>Total principal: $' + escapeHtml(summary.total) + ' MXN</strong> · Grabado cobrado: $0 MXN</p></div>');
+              list.insertAdjacentHTML('beforeend', summary.dogs.map(dog => '<div class="ticket-card"><p><strong>' + escapeHtml(dog.name) + '</strong> · ' + escapeHtml(dog.category) + '</p><p>' + escapeHtml(dog.engravingStatus) + '</p>' + (typeof window !== 'undefined' && window.KineticHubEngraving ? window.KineticHubEngraving.button(summary.orderSessionId, dog.dogIndex, dog.canPayEngraving) : '') + '</div>').join(''));
+            }
           }
         } catch (error) {
           if (error && (error.status === 401 || error.status === 403)) {

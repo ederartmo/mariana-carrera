@@ -668,6 +668,7 @@ src="https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1"
       <div class="dashboard-filters" aria-label="Filtros de inscripciones">
         <select id="eventFilter" class="admin-select" aria-label="Carrera" title="Carrera">
           <option value="all" selected>Todas las carreras</option>
+          <option value="perrun-2027">Perrun 2027</option>
           <option value="axolote-night-run">Axolote Night Run</option>
           <option value="cascanueces-run">Cascanueces Run</option>
         </select>
@@ -680,6 +681,7 @@ src="https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1"
           <option value="cancelled">Anuladas</option>
           <option value="archived">Archivadas</option>
         </select>
+        <button id="exportPerrunCsv" type="button" class="admin-select">Exportar perros Perrun CSV</button>
         <select id="rowsPerPage" class="admin-select" aria-label="Filas visibles" title="Filas visibles">
           <option value="all" selected>Todos</option>
           <option value="50">50</option>
@@ -833,8 +835,8 @@ src="https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1"
     ];
   </script>
 
-  <script src="location-catalog.js?v=1789882466202"></script>
-  <script src="supabase-client.js?v=1789882466202"></script>
+  <script src="location-catalog.js?v=PERRUN_RC"></script>
+  <script src="supabase-client.js?v=PERRUN_RC"></script>
 
   <script>
     // ====================== CONFIG ======================
@@ -890,11 +892,13 @@ src="https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1"
       if (!['paid', 'paid_no_email'].includes(paymentStatus)) return '';
       const orderId = row.order_session_id || '';
       if (!orderId) return '';
-      const label = row.email_sent ? 'Reenviar email' : 'Enviar email';
+      if (row.event_slug === 'perrun-2027' && row.email_sent) return '';
+      const label = row.event_slug === 'perrun-2027' ? 'Reintentar confirmación' : row.email_sent ? 'Reenviar email' : 'Enviar email';
       return `<button type="button" class="btn-email" data-resend-order="${escapeHtml(orderId)}" data-resend-name="${escapeHtml(row.full_name || '')}">${label}</button>`;
     }
 
     function buildEditEmailButton(row) {
+      if (row.event_slug === 'perrun-2027') return '';
       const paymentStatus = String(row.payment_status || '').trim();
       if (row.registration_status !== 'active') return '';
       if (!['paid', 'paid_no_email'].includes(paymentStatus)) return '';
@@ -915,6 +919,7 @@ src="https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1"
     }
 
     function buildEditParticipantButton(row) {
+      if (row.event_slug === 'perrun-2027') return '';
       if (row.registration_status === 'cancelled') return '';
       if (String(row.payment_status || '').trim() !== 'paid') return '';
       return `
@@ -950,6 +955,7 @@ src="https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1"
     }
 
     function buildCancelRegistrationButton(row) {
+      if (row.event_slug === 'perrun-2027') return '';
       if (row.registration_status === 'cancelled') return '';
       const paymentStatus = String(row.payment_status || '').trim();
       if (!['paid', 'paid_no_email'].includes(paymentStatus)) return '';
@@ -969,6 +975,7 @@ src="https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1"
     }
 
     function buildArchiveAttemptButton(row) {
+      if (row.event_slug === 'perrun-2027') return '';
       const paymentStatus = String(row.payment_status || '').trim();
       const orderId = String(row.order_session_id || '').trim();
       const stripeId = String(row.stripe_session_id || '').trim();
@@ -994,6 +1001,7 @@ src="https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1"
     }
 
     function buildTestDeleteButton(row) {
+      if (row.event_slug === 'perrun-2027') return '';
       const orderId = String(row.order_session_id || '').trim();
       const stripeId = String(row.stripe_session_id || '').trim();
       const isVerifiedTest = orderId.startsWith('cs_test_') && stripeId.startsWith('cs_test_');
@@ -1040,6 +1048,16 @@ src="https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1"
       });
     }
 
+    function renderPerrunDogs(row) {
+      if (row.event_slug !== 'perrun-2027') return '<span class="cell-muted">—</span>';
+      return '<span class="cell-strong">' + escapeHtml(row.owner_phone || '—') + '</span>' + (row.dogs || []).map(dog =>
+        '<details style="min-width:240px;margin:8px 0"><summary>' + escapeHtml(dog.dog_name) + ' · ' + escapeHtml(dog.dog_size) + ' · ' + escapeHtml(dog.dog_weight_kg) + ' kg</summary>' +
+        '<p>' + escapeHtml(dog.engraving_status) + '</p><p>Secuencia: ' + escapeHtml(dog.engraving_sequence) + '</p>' +
+        '<p>Solicitado: ' + (dog.engraving_requested ? 'Sí' : 'No') + ' · Gratis: ' + (dog.engraving_free ? 'Sí' : 'No') + ' · Pago requerido: ' + (dog.engraving_payment_required ? 'Sí' : 'No') + '</p>' +
+        '<p>Importe grabado: $' + (Number(dog.engraving_payment_amount) / 100).toFixed(2) + ' MXN · ' + escapeHtml(dog.engraving_payment_status) + '</p>' +
+        '<p>Placa: ' + escapeHtml(dog.plate_status) + '</p></details>').join('') + '<span class="cell-muted">Edición/anulación legacy no habilitada para Perrun.</span>';
+    }
+
     function renderPaidInscriptions(rows) {
       const contentDiv = document.getElementById("content");
       if (typeof tableScrollFollowerCleanup === 'function') {
@@ -1065,6 +1083,7 @@ src="https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1"
                 <th>Nombre</th>
                 <th>Evento</th>
                 <th>Distancia</th>
+                <th>Teléfono / Perros / Grabado</th>
                 <th>Comprador</th>
                 <th>Estado</th>
                 <th>Email</th>
@@ -1086,8 +1105,8 @@ src="https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1"
         });
 
         const orderId = row.order_session_id || '';
-        const ticketSummary = row.ticket_index ? `T${row.ticket_index}/${row.ticket_count || 1}` : '';
-        const eventName = row.event_slug === 'cascanueces-run'
+        const ticketSummary = row.event_slug === 'perrun-2027' ? `1 participante · ${(row.dogs || []).length} ${(row.dogs || []).length === 1 ? 'perro' : 'perros'}` : row.ticket_index ? `T${row.ticket_index}/${row.ticket_count || 1}` : '';
+        const eventName = row.event_slug === 'perrun-2027' ? 'Perrun 2027' : row.event_slug === 'cascanueces-run'
           ? 'Cascanueces Run'
           : row.event_slug === 'axolote-night-run'
             ? 'Axolote Night Run'
@@ -1101,6 +1120,7 @@ src="https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1"
             </td>
             <td><span class="cell-strong">${escapeHtml(eventName)}</span></td>
             <td><span class="cell-strong">${escapeHtml(row.distance || '—')}</span></td>
+            <td>${renderPerrunDogs(row)}</td>
             <td><span class="truncate" title="${escapeHtml(row.buyer_email || row.email || '')}">${row.buyer_email || row.email || '-'}</span></td>
             <td>${row.registration_status === 'cancelled'
               ? '<strong style="color:#ffb454;">Anulada</strong><span class="cell-muted">' + escapeHtml(cancellationTypeLabel(row.cancellation_type) || 'Sin clasificar') + ' · Pago: ' + escapeHtml(paymentStatusLabel(row.payment_status)) + '</span>'
@@ -1112,7 +1132,7 @@ src="https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1"
               : '<span class="cell-muted">No aplica</span>'}</td>
             <td><strong>$${parseFloat(row.amount_paid || 0).toLocaleString('es-MX')}</strong></td>
             <td style="font-weight:700; color:#ff8c42;">${row.shirt_size || '—'}</td>
-            <td style="font-weight:800; color:#19c88b;">${row.registration_status === 'cancelled' ? (row.cancelled_bib_number ? '<span style="color:#ffb454;">Liberado #' + escapeHtml(row.cancelled_bib_number) + '</span>' : 'Liberado') : (row.bib_number ? '#' + escapeHtml(row.bib_number) : '—')}</td>
+            <td style="font-weight:800; color:#19c88b;">${row.registration_status === 'cancelled' && row.event_slug !== 'perrun-2027' ? (row.cancelled_bib_number ? '<span style="color:#ffb454;">Liberado #' + escapeHtml(row.cancelled_bib_number) + '</span>' : 'Liberado') : (row.bib_number ? '#' + escapeHtml(row.bib_number) : '—')}</td>
             <td>
               <span class="truncate" title="${escapeHtml(orderId)}">${orderId || '—'}</span>
               ${ticketSummary ? `<span class="cell-muted">${ticketSummary}</span>` : ''}
@@ -1253,7 +1273,7 @@ src="https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1"
 
         const rows = [];
         for (let page = 1; page <= ADMIN_LIST_MAX_PAGES; page += 1) {
-          const payload = await fetchAdminInscriptionsPage(token, statusFilter, page);
+          const payload = await fetchAdminInscriptionsPage(token, statusFilter, page, adminUiState.eventSlug);
           if (Array.isArray(payload?.rows)) {
             rows.push(...payload.rows);
           }
@@ -2402,6 +2422,19 @@ src="https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1"
     }
 
     function setupDashboardControls(client) {
+      document.getElementById('exportPerrunCsv')?.addEventListener('click', async function() {
+        this.disabled = true;
+        try {
+          const { data: { session } } = await client.auth.getSession();
+          if (!session?.access_token) throw new Error('Sesión no válida.');
+          const params = new URLSearchParams({ action: 'admin-export-perrun', status: document.getElementById('statusFilter').value || 'all', search: adminUiState.searchTerm });
+          const response = await fetch('/api/data?' + params, { headers: { Authorization: 'Bearer ' + session.access_token } });
+          if (!response.ok) throw new Error((await response.json()).error || 'No se pudo exportar.');
+          const url = URL.createObjectURL(await response.blob());
+          const link = document.createElement('a'); link.href = url; link.download = 'perrun-2027-dogs.csv'; link.click();
+          setTimeout(() => URL.revokeObjectURL(url), 1000);
+        } catch (error) { alert(error.message); } finally { this.disabled = false; }
+      });
       const statusFilter = document.getElementById('statusFilter');
       const eventFilter = document.getElementById('eventFilter');
       const searchFilter = document.getElementById('searchFilter');
@@ -2439,9 +2472,9 @@ src="https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1"
         renderPaidInscriptions(cachedRows);
       });
 
-      eventFilter?.addEventListener('change', () => {
+      eventFilter?.addEventListener('change', async () => {
         adminUiState.eventSlug = eventFilter.value || 'all';
-        renderPaidInscriptions(cachedRows);
+        await loadPaidInscriptions(client, statusFilter.value || 'all');
       });
 
       statusFilter?.addEventListener('change', async () => {

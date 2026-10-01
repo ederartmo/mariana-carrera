@@ -1,4 +1,6 @@
 const { createClient } = require('@supabase/supabase-js');
+const { Resend } = require('resend');
+const { sendPerrunConfirmation } = require('../lib/_perrun-confirmation');
 const { sendConfirmationEmail } = require('./stripe-webhook');
 const { getAdminUser } = require('../lib/_auth');
 
@@ -84,6 +86,13 @@ async function sendForAllPaid() {
 
   for (const orderSessionId of orderIds) {
     const records = groups[orderSessionId];
+    if (records[0].event_slug === 'perrun-2027') {
+      const result = await sendPerrunConfirmation({ supabase, resend: new Resend(process.env.RESEND_API_KEY), sessionId: orderSessionId });
+      const status = result.ok ? (result.skipped ? 'skipped' : 'sent') : 'error';
+      results.push({ orderSessionId, email: records[0].buyer_email || records[0].email, tickets: 1, participants: records.map(row => row.full_name), status, reason: result.error || (result.skipped ? 'Confirmación ya enviada o QA sin envío real' : '') });
+      if (status === 'sent') sentCount++; else if (status === 'skipped') skipCount++; else errorCount++;
+      continue;
+    }
     const email = records[0]?.buyer_email || records[0]?.email;
 
     if (!email) {

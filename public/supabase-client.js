@@ -2,7 +2,7 @@
 // Múltiples window.supabase.createClient() con la misma storage key disparan
 // "Multiple GoTrueClient instances" y duplican listeners de sesión.
 // Este helper cachea UNA instancia por página. Solo anon/publishable key:
-// service_role JAMÁS existe en este archivo.
+// la credencial de servicio jamás existe en este archivo ni en el navegador.
 // Uso navegador (window.KineticHubSupabase vía <script src>) y tests (require).
 // Vive en raíz para que build.js lo copie a public/.
 

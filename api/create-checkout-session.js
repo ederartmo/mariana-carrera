@@ -4,8 +4,6 @@ const { createClient } = require('@supabase/supabase-js');
 const crypto = require('crypto');
 const { trackMetaEvent } = require('../lib/_meta-capi');
 const { resolvePromotionCode } = require('../lib/_stripe-promo');
-const { getAxoloteStageByDate } = require('../axolote-stage-config');
-const { getCascanuecesStageByDate } = require('../cascanueces-stage-config');
 
 const supabase = createClient(
   process.env.SUPABASE_URL,
@@ -40,36 +38,7 @@ function getCookieValue(req, name) {
   return '';
 }
 
-const EVENT_CATALOG = {
-  'axolote-night-run': {
-    name: 'Axolote Night Run 2026',
-    distances: ['5K'],
-    defaultDistance: '5K',
-    getStage: getAxoloteStageByDate,
-  },
-  'cascanueces-run': {
-    name: 'Cascanueces Run 2026',
-    distances: ['5K', '10K'],
-    defaultDistance: '5K',
-    getStage: getCascanuecesStageByDate,
-    priceEnvironmentVariables: {
-      preventa: 'STRIPE_CASCANUECES_PREVENTA_PRICE_ID',
-      acceso_general: 'STRIPE_CASCANUECES_GENERAL_PRICE_ID',
-      ultimo_minuto: 'STRIPE_CASCANUECES_LAST_MINUTE_PRICE_ID',
-    },
-  },
-};
-
-function resolveEventSelection(eventSlug, distance) {
-  const cleanSlug = String(eventSlug || 'axolote-night-run').trim().toLowerCase();
-  const event = EVENT_CATALOG[cleanSlug];
-  if (!event) return null;
-
-  const cleanDistance = String(distance || event.defaultDistance).trim().toUpperCase();
-  if (!event.distances.includes(cleanDistance)) return null;
-
-  return { ...event, slug: cleanSlug, distance: cleanDistance };
-}
+const { resolveEventSelection } = require('../event-catalog');
 
 function getCurrentStage(event) {
   const stage = event.getStage(new Date());
@@ -164,12 +133,24 @@ module.exports = async function handler(req, res) {
     });
     if (blocked) return blocked;
 
+    if (req.body?.flow === 'perrun-engraving-v1') {
+      return require('../lib/_perrun-engraving').handleCheckout({ req, res, stripe, supabase, origin: getRequestOrigin(req) });
+    }
+
     const { email, buyerEmail, shirtSize, tickets, metaEventId, promoCode, eventSlug, distance } = req.body;
     const rawEmail = buyerEmail || email;
     const event = resolveEventSelection(eventSlug, distance);
 
     if (!event) {
       return res.status(400).json({ error: 'El evento o la distancia seleccionada no son válidos.' });
+    }
+
+    if (event.slug === 'perrun-2027') {
+      return require('../lib/_perrun-checkout').handlePerrunCheckout({ req, res, stripe, supabase, origin: getRequestOrigin(req) });
+    }
+
+    if (event.checkoutEnabled === false) {
+      return res.status(400).json({ error: 'El checkout de Perrun todavía no está habilitado.' });
     }
 
     if (!rawEmail || typeof rawEmail !== 'string' || !rawEmail.includes('@')) {

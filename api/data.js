@@ -6,6 +6,7 @@
 // Mapa estático: un action no puede invocar la autorización de otro.
 
 const ACTIONS = {
+  'admin-export-perrun': require('../lib/admin-export-perrun'),
   'me-registrations': require('../lib/me-registrations'),
   'admin-list-inscriptions': require('../lib/admin-list-inscriptions'),
   'admin-list-available-bibs': require('../lib/admin-list-available-bibs'),

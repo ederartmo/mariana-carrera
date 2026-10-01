@@ -18,7 +18,7 @@ test('available BIB endpoint is admin-only and routed through consolidated API',
 test('test hard-delete preserves assigned BIB in bib_releases before deleting', () => {
   const source = read('api/admin-delete-inscription.js');
   const releasePos = source.indexOf(".from('bib_releases')");
-  const deletePos = source.indexOf(".from('inscripciones')\n      .delete()");
+  const deletePos = source.search(/\.from\('inscripciones'\)\s*\.delete\(\)/);
   assert.ok(releasePos >= 0);
   assert.ok(deletePos > releasePos, 'el ledger se escribe antes del hard delete');
   assert.ok(source.includes("source_type: 'test_deleted'"));

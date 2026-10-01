@@ -1,14 +1,6 @@
--- desc/sql-finalize-paid-order-pr4.sql - PR4 Parte B (NO APLICAR TODAVÍA EN PROD).
--- Objetivo por participante: birthDate, whatsapp (+52XXXXXXXXXX), state (oficial), borough (solo CDMX else NULL).
--- Reglas:
---  a) paid repetido preserva edición admin (sin error por divergencia, sin overwrite de email/buyer/bib/amount)
---  b) pending finaliza (asigna BIB, marca paid, conserva campos incl. OXXO/async)
---  c) multi-ticket funciona (1..5, consecutivos)
---  d) OXXO conserva campos (misma ruta RPC que card)
---  e) email/buyer_email/bib/amount no cambian en webhook repetido (early-return paid)
--- Firma intacta (8 params) para no romper callers. Edad calculada pero NO gatea (sin 5-120).
--- Correo sin birth_date/whatsapp (no se exponen en template; solo DB).
-
+-- READ-ONLY REFERENCE / DO NOT APPLY.
+-- Already deployed in uycwzhlcnfijjyzkgkem; reference and isolated tests only.
+-- Not a migration. Do not execute against remote databases.
 CREATE OR REPLACE FUNCTION public.finalize_paid_order(p_order_session_id text, p_event_slug text, p_distance text, p_amount_paid numeric, p_buyer_email text, p_payment_intent_id text, p_stripe_event_id text, p_participants jsonb)
  RETURNS SETOF inscripciones
  LANGUAGE plpgsql
@@ -20,6 +12,7 @@ declare
   v_existing_count integer;
   v_next_bib integer;
   v_now timestamptz := pg_catalog.now();
+  v_is_legacy_order boolean := false;
 begin
   if p_order_session_id is null or btrim(p_order_session_id) = '' then
     raise exception 'order_session_id requerido';
@@ -308,8 +301,29 @@ begin
     raise exception 'Orden % tiene payment_intent_id distinto al recibido', p_order_session_id;
   end if;
 
+  -- HOTFIX legacy: si la orden YA existe en DB con al menos una fila con los 4
+  -- campos PR4 en NULL (checkout/webhook anterior a PR4), se finaliza sin exigirlos
+  -- y se conservan como NULL. Órdenes NUEVAS (cero filas previas) siguen estrictas.
+  select exists (
+    select 1
+    from public.inscripciones i
+    where i.order_session_id = p_order_session_id
+      and i.birth_date is null
+      and i.whatsapp is null
+      and i.state is null
+      and i.borough is null
+  ) into v_is_legacy_order;
+
+  if v_is_legacy_order then
+    update pg_temp.finalize_participants
+       set birth_date = null, whatsapp = null, state = null, borough = null;
+    raise notice 'finalize_paid_order: orden legacy % finaliza con PR4 NULL', p_order_session_id;
+  end if;
+
   -- PR4 b) Solo para filas NUEVAS/pending se exige birthDate/whatsapp/state (+borough si CDMX).
-  -- Las filas ya paid (early-return de arriba) no pasan por aquí, así los 835 históricos con NULL siguen intactos.
+  -- Las filas ya paid (early-return de arriba) no pasan por aquí, así los históricos con NULL siguen intactos.
+  -- HOTFIX legacy: todo este bloque estricto se omite cuando v_is_legacy_order es true.
+  if not v_is_legacy_order then
   if exists (
     select 1
     from pg_temp.finalize_participants
@@ -358,6 +372,7 @@ begin
   ) then
     raise exception 'birthDate inválida en participants (YYYY-MM-DD, no futura, >=1900-01-01)';
   end if;
+  end if; -- fin gate HOTFIX legacy: validación estricta solo para órdenes NUEVAS
 
   -- PR4 b+c+d) Upsert pending con nuevos campos; email/buyer se fijan al buyer actual (mismo que checkout).
   insert into public.inscripciones (
@@ -485,4 +500,3 @@ begin
     order by i.ticket_index;
 end;
 $function$
-;

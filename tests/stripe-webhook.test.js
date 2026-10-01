@@ -8,7 +8,7 @@ process.env.RESEND_API_KEY = process.env.RESEND_API_KEY || 're_mock';
 process.env.SUPABASE_URL = process.env.SUPABASE_URL || 'https://example.supabase.co';
 process.env.SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || 'mock-service-role-key';
 // Batch 4: auth admin fail-closed — los tests que usan admin@mocks declaran allowlist explícita.
-process.env.ADMIN_EMAILS = process.env.ADMIN_EMAILS || 'mariana@kinetichub.com.mx,admin@example.com';
+process.env.ADMIN_EMAILS = 'mariana@kinetichub.com.mx,admin@example.com';
 
 function checkoutSession(overrides = {}) {
   return {
@@ -121,6 +121,7 @@ function createSupabaseMock(state) {
         return Promise.resolve({ data: null, error: state.upsertError || null });
       },
       select(cols) {
+        if (table === 'perrun_checkout_orders' || table === 'perrun_engraving_payments') { const q={eq(){return q;},in(){return q;},limit(){return q;},then(resolve,reject){return Promise.resolve({data:[],error:null}).then(resolve,reject);},maybeSingle:async()=>({data:null,error:null})}; return q; }
         const chain = {
           eq(col, val) { state.selectCalls.push({ table, cols, op: 'eq', col, val }); return chain; },
           in(col, vals) { state.selectCalls.push({ table, cols, op: 'in', col, vals }); return chain; },
@@ -307,10 +308,11 @@ function createJsonRes() {
   };
 }
 
-function queryResult(data, error = null) {
+function queryResult(data, error = null, filters = []) {
   return {
     order() { return this; },
-    eq() { return this; },
+    eq(column, value) { filters.push({ op: 'eq', column, value }); return this; },
+    in(column, values) { filters.push({ op: 'in', column, values }); return this; },
     then(resolve, reject) {
       return Promise.resolve({ data, error }).then(resolve, reject);
     },
@@ -391,12 +393,13 @@ test('sendConfirmationEmail returns failure when Resend returns an error object'
 
 test('resend-single-confirmation passes inscription distance to sendConfirmationEmail', async () => {
   const emailCalls = [];
+  const filters = [];
   const records = [finalizedRow({ distance: '10K', order_session_id: 'order_10k' })];
   const restoreSupabase = mockModule('@supabase/supabase-js', {
     createClient: () => ({
       auth: { getUser: async () => ({ data: { user: { email: 'mariana@kinetichub.com.mx' } }, error: null }) },
       from: (table) => ({
-        select: () => queryResult(records),
+        select: () => queryResult(records, null, filters),
         update: (payload) => ({
           eq: async (column, value) => ({ data: null, error: null, table, payload, column, value }),
         }),
@@ -422,6 +425,11 @@ test('resend-single-confirmation passes inscription distance to sendConfirmation
 
     assert.equal(res.statusCode, 200);
     assert.equal(emailCalls[0].distance, '10K');
+    assert.deepEqual(filters, [
+      { op: 'eq', column: 'order_session_id', value: 'order_10k' },
+      { op: 'eq', column: 'registration_status', value: 'active' },
+      { op: 'in', column: 'payment_status', values: ['paid', 'paid_no_email'] },
+    ]);
   } finally {
     delete require.cache[require.resolve('../api/resend-single-confirmation')];
     restoreWebhook();
@@ -536,6 +544,30 @@ test('admin-manual-transfer passes validated cleanDistance to sendConfirmationEm
   }
 });
 
+// The mock records each filter. Separate archive reactivation from email marking.
+function assertFinalizationUpdates(state, finalizations, confirmations, resendId) {
+  const reactivations = state.updateCalls.filter(call => call.payload.registration_status === 'active');
+  assert.equal(reactivations.length, finalizations * 2);
+  for (let i = 0; i < reactivations.length; i += 2) {
+    assert.equal(reactivations[i].table, 'inscripciones');
+    assert.deepEqual(reactivations[i].payload, {
+      registration_status: 'active', archived_at: null, archived_by: null, archive_reason: null,
+    });
+    assert.deepEqual(reactivations[i].eq, { column: 'order_session_id', value: 'cs_test_123' });
+    assert.deepEqual(reactivations[i + 1].eq, { column: 'registration_status', value: 'archived' });
+  }
+  const marked = state.updateCalls.filter(call => call.payload.email_sent === true);
+  assert.equal(marked.length, confirmations);
+  for (const call of marked) {
+    assert.equal(call.table, 'inscripciones');
+    assert.deepEqual(call.eq, { column: 'order_session_id', value: 'cs_test_123' });
+    assert.equal(call.or, 'email_sent.is.false,email_sent.is.null');
+    assert.match(call.payload.confirmation_email_sent_at, /^\d{4}-\d{2}-\d{2}T/);
+    if (resendId) assert.equal(call.payload.confirmation_email_id, resendId);
+  }
+  assert.equal(state.updateCalls.length, reactivations.length + marked.length);
+}
+
 for (const eventType of ['checkout.session.completed', 'checkout.session.async_payment_succeeded']) {
   test(`${eventType} finalizes paid order and sends one confirmation email`, async () => {
     const event = stripeEvent(eventType);
@@ -554,9 +586,7 @@ for (const eventType of ['checkout.session.completed', 'checkout.session.async_p
       assert.equal(state.rpcCalls[0].args.p_distance, '5K');
       assert.equal(state.rpcCalls[0].args.p_participants.length, 1);
       assert.equal(state.emailSends.length, 1);
-      assert.equal(state.updateCalls.length, 1);
-      assert.equal(state.updateCalls[0].payload.email_sent, true);
-      assert.equal(state.updateCalls[0].payload.confirmation_email_id, 'email_001');
+      assertFinalizationUpdates(state, 1, 1, 'email_001');
     });
   });
 
@@ -577,7 +607,7 @@ for (const eventType of ['checkout.session.completed', 'checkout.session.async_p
       assert.equal(second.statusCode, 200);
       assert.equal(state.rpcCalls.length, 2);
       assert.equal(state.emailSends.length, 1);
-      assert.equal(state.updateCalls.length, 1);
+      assertFinalizationUpdates(state, 2, 1, 'email_001');
       assert.equal(state.rpcCalls[0].args.p_order_session_id, state.rpcCalls[1].args.p_order_session_id);
     });
   });
@@ -593,7 +623,7 @@ for (const eventType of ['checkout.session.completed', 'checkout.session.async_p
       assert.equal(res.statusCode, 500);
       assert.deepEqual(res.body, { received: false, error: 'db_processing_failed' });
       assert.equal(state.emailSends.length, 0);
-      assert.equal(state.updateCalls.length, 0);
+      assertFinalizationUpdates(state, 1, 0);
     });
   });
 
@@ -608,7 +638,7 @@ for (const eventType of ['checkout.session.completed', 'checkout.session.async_p
 
       assert.equal(res.statusCode, 200);
       assert.equal(state.emailSends.length, 1);
-      assert.equal(state.updateCalls.length, 0);
+      assertFinalizationUpdates(state, 1, 0);
     });
   });
 
@@ -623,9 +653,7 @@ for (const eventType of ['checkout.session.completed', 'checkout.session.async_p
 
       assert.equal(res.statusCode, 200);
       assert.equal(state.emailSends.length, 1);
-      assert.equal(state.updateCalls.length, 1);
-      assert.equal(state.updateCalls[0].payload.email_sent, true);
-      assert.equal(state.updateCalls[0].payload.confirmation_email_id, 'email_retry');
+      assertFinalizationUpdates(state, 1, 1, 'email_retry');
     });
   });
 }
@@ -746,7 +774,7 @@ test('checkout.session.async_payment_succeeded duplicate relies on RPC email_sen
     assert.equal(state.rpcCalls[0].args.p_distance, '10K');
     assert.equal(state.rpcCalls[1].args.p_distance, '10K');
     assert.equal(state.emailSends.length, 1);
-    assert.equal(state.updateCalls.length, 1);
+    assertFinalizationUpdates(state, 2, 1, 'email_async_once');
   });
 });
 
@@ -787,7 +815,7 @@ test('payload contradiction returned by RPC produces 5xx and no email', async ()
 
     assert.equal(res.statusCode, 500);
     assert.equal(state.emailSends.length, 0);
-    assert.equal(state.updateCalls.length, 0);
+    assertFinalizationUpdates(state, 1, 0);
   });
 });
 
@@ -1038,3 +1066,40 @@ test('B2-10: legacy sin payment_intent_id se resuelve por checkout session', asy
     assert.equal(state.sessionListCalls[0].payment_intent, 'pi_L');
   });
 });
+
+// Phase 3: Perrun cannot fall through into legacy fulfillment at any distance.
+for (const distance of ['1K', '3K', '5K']) {
+  for (const type of ['checkout.session.completed', 'checkout.session.async_payment_succeeded', 'checkout.session.async_payment_failed']) {
+    test(`Perrun ${distance} ${type}: invalid metadata is rejected before legacy writes and fulfillment`, async () => {
+      const event = stripeEvent(type, checkoutSession({ metadata: { event_slug: 'perrun-2027', distance }, payment_status: 'paid' }));
+      await withWebhookMocks({ event }, async ({ webhook, state }) => {
+        const res = await invoke(webhook, event);
+        assert.equal(res.statusCode, 200);
+        assert.equal(res.body.rejected, true);
+        for (const key of ['rpcCalls','updateCalls','upsertCalls','selectCalls','emailSends','metaCalls']) assert.equal(state[key].length,0,key);
+      });
+    });
+  }
+  test(`Perrun ${distance} unpaid OXXO completion: no legacy draft/BIB`, async () => {
+    const event = stripeEvent('checkout.session.completed',checkoutSession({ metadata:{event_slug:'perrun-2027',distance},payment_status:'unpaid' }));
+    await withWebhookMocks({event},async({webhook,state})=>{const res=await invoke(webhook,event);assert.equal(res.statusCode,200);assert.equal(res.body.rejected,true);assert.equal(state.rpcCalls.length,0);assert.equal(state.upsertCalls.length,0);});
+  });
+  test(`Perrun ${distance} payment intent failure retrieved by session: no legacy update`, async () => {
+    const session=checkoutSession({metadata:{event_slug:'perrun-2027',distance}});
+    const event=stripeEvent('payment_intent.payment_failed',{id:'pi_perrun',metadata:{},amount:45000});
+    await withWebhookMocks({event,sessionsByPaymentIntent:{pi_perrun:session}},async({webhook,state})=>{const res=await invoke(webhook,event);assert.equal(res.statusCode,200);assert.equal(res.body.flow,'perrun');assert.equal(state.rpcCalls.length,0);assert.equal(state.updateCalls.length,0);});
+  });
+}
+
+// Isolated await regression: verify the same fix for the existing legacy refund path.
+for (const type of ['refund.created','refund.updated']) for (const useRefundPI of [true,false]) {
+  test(type + ' legacy awaits expanded PaymentIntent and falls back to charge identity', async () => {
+    const charge = stripeCharge({payment_intent:{id:'pi_legacy_await'}});
+    const refund = stripeRefund({payment_intent:useRefundPI?{id:'pi_legacy_await'}:null,charge});
+    await withWebhookMocks({event:refundEvent(type,refund),selectResults:[{data:[refundRow({order_session_id:'cs_legacy_await'})],error:null}],updateResultRows:[[{id:'legacy_await'}]]}, async ({webhook,state}) => {
+      const res=await invoke(webhook,state.event);assert.equal(res.statusCode,200);
+      assert.equal(state.selectCalls[0].val,'pi_legacy_await');assert.equal(refundUpdateCalls(state)[0].eq.value,'cs_legacy_await');
+      assert.equal(state.rpcCalls.length,0);assert.equal(state.emailSends.length,0);
+    });
+  });
+}

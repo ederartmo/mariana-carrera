@@ -110,6 +110,7 @@ module.exports = async function handler(req, res) {
       return res.status(409).json({ error: 'La orden contiene registros inconsistentes; no se eliminó nada.' });
     }
 
+    if (targets.some(row => row.event_slug === 'perrun-2027')) return res.status(409).json({ error: 'Perrun conserva su ledger; la eliminación legacy no está habilitada.' });
     const classifications = targets.map(classifyRow);
     const overall = classifications.every((c) => c === 'test')
       ? 'test'
