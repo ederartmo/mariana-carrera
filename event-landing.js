@@ -30,6 +30,7 @@
       return `<img class="${className}" src="${escapeHtml(visual.image)}" alt="${escapeHtml(visual.alt || visual.title)}" loading="eager" />`;
     }
 
+    if (visual.slot) return `<div class="event-landing-photo-slot ${className}" data-media-slot="${escapeHtml(visual.slot.key)}" aria-label="Fotografía pendiente: ${escapeHtml(visual.slot.label)}"><span>Fotografía pendiente</span><strong>${escapeHtml(visual.slot.label)}</strong></div>`;
     if (visual.editorial) return `<div class="event-landing-editorial ${className}"><span>${escapeHtml(visual.editorial.eyebrow)}</span><strong>${escapeHtml(visual.editorial.title)}</strong><p>${escapeHtml(visual.editorial.description)}</p>${icon(visual.editorial.icon || "paw-print")}</div>`;
     return `
       <div class="event-landing-placeholder ${className}" role="img" aria-label="Imagen pendiente: ${escapeHtml(visual.title)}">
@@ -63,15 +64,15 @@
           </h1>
           <p class="event-landing-subtitle">${escapeHtml(event.subtitle)}</p>
           <dl class="event-landing-hero-meta">
-            <div><dt>${icon("calendar-days")}</dt><dd>${escapeHtml(event.date.label)}</dd></div>
-            <div><dt>${icon("clock-3")}</dt><dd>${escapeHtml(event.time?.label || "Horario por confirmar")}</dd></div>
+            <div><dt>${icon("calendar-days")}</dt><dd>${escapeHtml(event.heroDateLabel || event.date.label)}</dd></div>
+            ${event.compactHero ? "" : `<div><dt>${icon("clock-3")}</dt><dd>${escapeHtml(event.time?.label || "Horario por confirmar")}</dd></div>`}
             <div><dt>${icon("map-pin")}</dt><dd>${escapeHtml(event.location.name)}, ${escapeHtml(event.location.city)}</dd></div>
           </dl>
           <div class="event-landing-hero-offer">
             <strong>${escapeHtml(event.distances.join(event.requireDistanceSelection ? " · " : " y "))}</strong>
             <div class="event-landing-price-stamp">
               <span>${escapeHtml(stage.label)}</span>
-              <b>${formatPrice(stage.amount, event.pricing.currency)}</b>
+              <b>${stage.isOpen && event.heroPricePrefix ? `${escapeHtml(event.heroPricePrefix)} ` : ""}${formatPrice(stage.amount, event.pricing.currency)}</b>
             </div>
           </div>
           <div class="event-landing-actions">
@@ -80,7 +81,7 @@
           </div>
         </div>
         <div class="event-landing-hero-visual reveal">
-          ${renderVisual({ image: event.images.hero, title: event.name, alt: event.images.heroAlt, editorial: event.images.editorial }, "event-landing-hero-media")}
+          ${renderVisual({ image: event.images.hero, title: event.name, alt: event.images.heroAlt, editorial: event.images.editorial, slot: event.images.heroSlot }, "event-landing-hero-media")}
         </div>
       </section>
     `;
@@ -230,7 +231,9 @@
   function renderInformation(event) {
     const copy = event.copy?.information || {};
     const routeMap = event.routeMap || {};
-    const mapVisual = event.routeMap.image
+    const mapVisual = routeMap.slot && !routeMap.image
+      ? renderVisual({ title: routeMap.title, slot: routeMap.slot }, "event-landing-info-media")
+      : event.routeMap.image
       ? renderVisual({ image: event.routeMap.image, title: event.routeMap.title, alt: `Mapa del recorrido de ${event.name}` }, "event-landing-info-media")
       : `<div class="event-landing-route-art event-landing-info-media" aria-label="Recorrido de ${escapeHtml(event.distances.join(" y "))}"><span>${escapeHtml(routeMap.fallbackTitle || event.distances.join(" / "))}</span><i aria-hidden="true"></i><small>${escapeHtml(routeMap.fallbackDescription || "Recorrido por confirmar")}</small></div>`;
 
@@ -290,7 +293,7 @@
     return `
       <section class="event-landing-final reveal" aria-labelledby="event-final-title">
         <div class="event-landing-final-image">
-          ${renderVisual({ image: event.images.finalBanner || event.images.hero, title: event.name, alt: event.images.finalBannerAlt, editorial: event.images.editorial }, "event-landing-final-media")}
+          ${renderVisual({ image: event.images.finalBanner || event.images.hero, title: event.name, alt: event.images.finalBannerAlt, editorial: event.images.editorial, slot: event.images.finalSlot }, "event-landing-final-media")}
         </div>
         <div class="event-landing-final-copy">
           <h2 id="event-final-title">${escapeHtml(event.cta.finalTitle)}</h2>
@@ -321,7 +324,7 @@
 
 
   function renderEditorialSections(sections = []) {
-    return sections.map(section => `<section class="event-landing-section" id="${escapeHtml(section.id)}">${renderSectionHeading(section.eyebrow, section.title, section.subtitle)}<div class="event-landing-experience-grid">${section.items.map(item => `<article class="event-landing-info-card"><h3>${escapeHtml(item.title)}</h3><p>${escapeHtml(item.description)}</p></article>`).join("")}</div></section>`).join("");
+    return sections.map(section => `<section class="event-landing-section" id="${escapeHtml(section.id)}">${renderSectionHeading(section.eyebrow, section.title, section.subtitle)}${section.media ? `<div class="event-landing-feature-media">${renderVisual(section.media, "event-landing-feature-photo")}</div>` : ""}<div class="event-landing-experience-grid">${section.items.map(item => `<article class="event-landing-info-card"><h3>${escapeHtml(item.title)}</h3><p>${escapeHtml(item.description)}</p></article>`).join("")}</div></section>`).join("");
   }
   function renderCountdown(event) {
     if (!event.countdown) return "";

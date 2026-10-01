@@ -1,9 +1,26 @@
-# Perrun landing
+# Perrun landing — visual pass 2
 
-Source: perrun-2027.html + perrun-landing-data.js. Uses EventLanding, styles.css, existing Perrun event/stage config and setupEventCountdown. Core event data and checkout are unchanged.
+Presentation only: existing EventLanding, section order, event configuration, stage provider, countdown and checkout URLs are preserved. No event rules, pricing backend, engraving eligibility or dates changed.
 
-No Perrun image assets exist. Current hero/final use typographic CSS panels, not substitute photos. To replace: set images.hero and images.finalBanner in landing data; set experience[].image for kit photos.
+## Image slots
 
-Needed: hero runner with dog, 1600×1200 (4:3); final banner 1600×900 (16:9); dog kit and human kit 1000×1000 (1:1); official route map 1600×1200 (4:3). Suggested directory assets/events/perrun-2027/. Do not add a route or departure time until confirmed.
+All slots are visibly labeled as photography pending. No images were generated or added. Set the image path in perrun-landing-data.js; the renderer replaces the slot when an image is present.
 
-Validation: original suite 673/673 PASS; expanded suite 679/679 PASS (6 landing tests). Local fixture environment only: STRIPE_SECRET_KEY=sk_test_local_fixture, SUPABASE_URL=https://example.invalid, SUPABASE_SERVICE_ROLE_KEY=local_fixture. No remote data writes. Build PASS. Browser Chromium: 390, 430, 768, 1440 px, no horizontal overflow, correct 3 checkout URLs, relative header and no page errors. Existing Axolote/Cascanueces renderer initializes with original slugs.
+| Slot | Property | Recommended image | Fit |
+| --- | --- | --- | --- |
+| Hero: runner + dog | images.hero | 1600×1200, 4:3 | contain, no distortion/cropping |
+| Final banner | images.finalBanner | 1600×900, 16:9 | contain |
+| Dog kit | experience[0].image | 1000×1000, 1:1 | contain |
+| Human kit | experience[1].image | 1000×1000, 1:1 | contain |
+| Plate / dog | engravingSections[0].media.image | 1000×1000, 1:1 | contain |
+| Official map | routeMap.image | 1600×1200, 4:3 | contain |
+
+Suggested asset directory: assets/events/perrun-2027/. Add descriptive alt text when installing real images. No map or departure time is fabricated.
+
+## Composition
+
+Hero: image takes 58% of desktop composition; mobile shows title, date/place, distances, live stage price and CTA before photography. Concept and second-dog sections use horizontal editorial compositions. Engraving uses a strong forest-green photo/copy block. Kit cards use square photography next to kit content. Categories use 2×2 on mobile. Distances and schedule are compact; existing native details/summary FAQ accordion remains in place.
+
+Validation and screenshots are recorded after browser checks in this work pass.
+
+Validation: 679/679 tests PASS with local fixture configuration; build PASS. Chromium 390/430/768/1440: no horizontal overflow, all six image slots present, hero measured at 4:3, mobile CTA before image, categories 2x2, and FAQ accordion opens/closes. No browser page errors. Mobile full-page height at 390px reduced from 12457px to 9496px (~24%). Approved kit/section/schedule/FAQ/modality content compared before/after and identical. Axolote and Cascanueces still initialize with their original slugs.
