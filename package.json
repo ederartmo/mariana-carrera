@@ -10,6 +10,7 @@
     "vercel": "^54.14.2"
   },
   "devDependencies": {
+    "@electric-sql/pglite": "0.5.8",
     "supabase": "^2.119.0"
   }
 }

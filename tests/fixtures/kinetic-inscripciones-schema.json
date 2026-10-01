@@ -1,0 +1,311 @@
+{
+  "serverVersion": "17.6",
+  "columns": [
+    {
+      "default": "gen_random_uuid()",
+      "name": "id",
+      "nullable": "NO",
+      "type": "uuid",
+      "udt": "uuid"
+    },
+    {
+      "default": "now()",
+      "name": "created_at",
+      "nullable": "NO",
+      "type": "timestamp with time zone",
+      "udt": "timestamptz"
+    },
+    {
+      "default": null,
+      "name": "stripe_session_id",
+      "nullable": "NO",
+      "type": "text",
+      "udt": "text"
+    },
+    {
+      "default": null,
+      "name": "email",
+      "nullable": "NO",
+      "type": "text",
+      "udt": "text"
+    },
+    {
+      "default": null,
+      "name": "full_name",
+      "nullable": "YES",
+      "type": "text",
+      "udt": "text"
+    },
+    {
+      "default": null,
+      "name": "event_slug",
+      "nullable": "YES",
+      "type": "text",
+      "udt": "text"
+    },
+    {
+      "default": null,
+      "name": "amount_paid",
+      "nullable": "YES",
+      "type": "numeric",
+      "udt": "numeric"
+    },
+    {
+      "default": null,
+      "name": "payment_status",
+      "nullable": "YES",
+      "type": "text",
+      "udt": "text"
+    },
+    {
+      "default": null,
+      "name": "bib_number",
+      "nullable": "YES",
+      "type": "text",
+      "udt": "text"
+    },
+    {
+      "default": null,
+      "name": "shirt_size",
+      "nullable": "YES",
+      "type": "text",
+      "udt": "text"
+    },
+    {
+      "default": null,
+      "name": "buyer_email",
+      "nullable": "YES",
+      "type": "text",
+      "udt": "text"
+    },
+    {
+      "default": null,
+      "name": "order_session_id",
+      "nullable": "YES",
+      "type": "text",
+      "udt": "text"
+    },
+    {
+      "default": null,
+      "name": "ticket_index",
+      "nullable": "YES",
+      "type": "integer",
+      "udt": "int4"
+    },
+    {
+      "default": null,
+      "name": "ticket_count",
+      "nullable": "YES",
+      "type": "integer",
+      "udt": "int4"
+    },
+    {
+      "default": "false",
+      "name": "email_sent",
+      "nullable": "YES",
+      "type": "boolean",
+      "udt": "bool"
+    },
+    {
+      "default": null,
+      "name": "distance",
+      "nullable": "YES",
+      "type": "text",
+      "udt": "text"
+    },
+    {
+      "default": null,
+      "name": "payment_intent_id",
+      "nullable": "YES",
+      "type": "text",
+      "udt": "text"
+    },
+    {
+      "default": null,
+      "name": "stripe_event_id",
+      "nullable": "YES",
+      "type": "text",
+      "udt": "text"
+    },
+    {
+      "default": null,
+      "name": "processed_at",
+      "nullable": "YES",
+      "type": "timestamp with time zone",
+      "udt": "timestamptz"
+    },
+    {
+      "default": null,
+      "name": "confirmation_email_id",
+      "nullable": "YES",
+      "type": "text",
+      "udt": "text"
+    },
+    {
+      "default": null,
+      "name": "confirmation_email_sent_at",
+      "nullable": "YES",
+      "type": "timestamp with time zone",
+      "udt": "timestamptz"
+    },
+    {
+      "default": null,
+      "name": "birth_date",
+      "nullable": "YES",
+      "type": "date",
+      "udt": "date"
+    },
+    {
+      "default": null,
+      "name": "whatsapp",
+      "nullable": "YES",
+      "type": "text",
+      "udt": "text"
+    },
+    {
+      "default": null,
+      "name": "state",
+      "nullable": "YES",
+      "type": "text",
+      "udt": "text"
+    },
+    {
+      "default": null,
+      "name": "borough",
+      "nullable": "YES",
+      "type": "text",
+      "udt": "text"
+    },
+    {
+      "default": "'active'::text",
+      "name": "registration_status",
+      "nullable": "NO",
+      "type": "text",
+      "udt": "text"
+    },
+    {
+      "default": null,
+      "name": "cancelled_at",
+      "nullable": "YES",
+      "type": "timestamp with time zone",
+      "udt": "timestamptz"
+    },
+    {
+      "default": null,
+      "name": "cancelled_by",
+      "nullable": "YES",
+      "type": "text",
+      "udt": "text"
+    },
+    {
+      "default": null,
+      "name": "cancellation_reason",
+      "nullable": "YES",
+      "type": "text",
+      "udt": "text"
+    },
+    {
+      "default": null,
+      "name": "cancelled_bib_number",
+      "nullable": "YES",
+      "type": "text",
+      "udt": "text"
+    },
+    {
+      "default": null,
+      "name": "cancellation_type",
+      "nullable": "YES",
+      "type": "text",
+      "udt": "text"
+    },
+    {
+      "default": null,
+      "name": "archived_at",
+      "nullable": "YES",
+      "type": "timestamp with time zone",
+      "udt": "timestamptz"
+    },
+    {
+      "default": null,
+      "name": "archived_by",
+      "nullable": "YES",
+      "type": "text",
+      "udt": "text"
+    },
+    {
+      "default": null,
+      "name": "archive_reason",
+      "nullable": "YES",
+      "type": "text",
+      "udt": "text"
+    }
+  ],
+  "constraints": [
+    {
+      "definition": "CHECK (((cancellation_type IS NULL) OR (cancellation_type = ANY (ARRAY['duplicate'::text, 'refunded'::text, 'participation_cancelled'::text]))))",
+      "name": "inscripciones_cancellation_type_check"
+    },
+    {
+      "definition": "CHECK (((distance IS NULL) OR ((event_slug = 'axolote-night-run'::text) AND (distance = '5K'::text)) OR ((event_slug = 'cascanueces-run'::text) AND (distance = ANY (ARRAY['5K'::text, '10K'::text])))))",
+      "name": "inscripciones_distance_chk"
+    },
+    {
+      "definition": "PRIMARY KEY (id, email)",
+      "name": "inscripciones_pkey"
+    },
+    {
+      "definition": "CHECK ((registration_status = ANY (ARRAY['active'::text, 'cancelled'::text, 'archived'::text])))",
+      "name": "inscripciones_registration_status_check"
+    },
+    {
+      "definition": "CHECK (((shirt_size IS NULL) OR (shirt_size = ANY (ARRAY['XS'::text, 'S'::text, 'M'::text, 'L'::text, 'XL'::text, 'XXL'::text, 'XXXL'::text]))))",
+      "name": "inscripciones_shirt_size_check"
+    },
+    {
+      "definition": "UNIQUE (stripe_session_id)",
+      "name": "inscripciones_stripe_session_id_key"
+    },
+    {
+      "definition": "CHECK (((ticket_count IS NULL) OR (ticket_count >= 1)))",
+      "name": "inscripciones_ticket_count_positive_chk"
+    },
+    {
+      "definition": "CHECK (((ticket_index IS NULL) OR (ticket_index >= 1)))",
+      "name": "inscripciones_ticket_index_positive_chk"
+    }
+  ],
+  "indexes": [
+    {
+      "definition": "CREATE UNIQUE INDEX inscripciones_order_ticket_unique_idx ON public.inscripciones USING btree (order_session_id, ticket_index) WHERE ((order_session_id IS NOT NULL) AND (ticket_index IS NOT NULL))",
+      "name": "inscripciones_order_ticket_unique_idx"
+    },
+    {
+      "definition": "CREATE UNIQUE INDEX inscripciones_stripe_session_id_key ON public.inscripciones USING btree (stripe_session_id)",
+      "name": "inscripciones_stripe_session_id_key"
+    },
+    {
+      "definition": "CREATE UNIQUE INDEX inscripciones_pkey ON public.inscripciones USING btree (id, email)",
+      "name": "inscripciones_pkey"
+    },
+    {
+      "definition": "CREATE INDEX inscripciones_order_session_idx ON public.inscripciones USING btree (order_session_id)",
+      "name": "inscripciones_order_session_idx"
+    },
+    {
+      "definition": "CREATE INDEX inscripciones_buyer_email_idx ON public.inscripciones USING btree (lower(TRIM(BOTH FROM buyer_email)))",
+      "name": "inscripciones_buyer_email_idx"
+    },
+    {
+      "definition": "CREATE INDEX inscripciones_event_distance_idx ON public.inscripciones USING btree (event_slug, distance)",
+      "name": "inscripciones_event_distance_idx"
+    },
+    {
+      "definition": "CREATE UNIQUE INDEX inscripciones_unique_event_bib_paid_idx ON public.inscripciones USING btree (event_slug, bib_number) WHERE ((payment_status = 'paid'::text) AND (event_slug IS NOT NULL) AND (bib_number IS NOT NULL) AND (bib_number ~ '^[0-9]+$'::text))",
+      "name": "inscripciones_unique_event_bib_paid_idx"
+    },
+    {
+      "definition": "CREATE UNIQUE INDEX inscripciones_active_event_bib_unique ON public.inscripciones USING btree (event_slug, bib_number) WHERE ((registration_status = 'active'::text) AND (bib_number IS NOT NULL))",
+      "name": "inscripciones_active_event_bib_unique"
+    }
+  ]
+}
