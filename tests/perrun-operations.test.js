@@ -34,7 +34,7 @@ function fixture(count = 1, start = 1) {
     if (!state.delivered.has(options.idempotencyKey)) state.delivered.set(options.idempotencyKey, payload);
     return { data: { id: 'resend-fixture' } };
   } } };
-  const send = () => sendPerrunConfirmation({ supabase: client, resend, sessionId: human.order_session_id, qa: false });
+  const send = () => sendPerrunConfirmation({ supabase: client, resend, mockProvider: resend, sessionId: human.order_session_id, qa: false });
   return { human, dogs, state, client, resend, send };
 }
 for (const count of [1,2]) test('Admin: ' + count + ' dogs, one human/BIB, authoritative owner phone', async () => {
@@ -89,3 +89,7 @@ for(const [file,body] of [
  const mocked=name=>name==='@supabase/supabase-js'?{createClient:()=>client}:name.includes('_auth')?{getAdminUser:async()=>({email:'admin@example.invalid'}),normalizeEmail:v=>String(v||'').trim().toLowerCase()}:realRequire(name);
  vm.runInNewContext(fs.readFileSync(filename,'utf8'),{require:mocked,module,exports:module.exports,process,console:{log(){},error(){}},Date},{filename});const res=response();await module.exports({method:'POST',body},res);assert.equal(res.statusCode,409);assert.equal(writes,0);
 });
+
+for (const count of [1,2]) test('Production confirmation contains persisted principal amount '+count,async()=>{const f=fixture(count);await f.send();assert.ok(f.state.sends[0].payload.text.includes('Total principal pagado: $'+(count===2?'630':'450')+'.00 MXN'));});
+test('Pending engraving explains subsequent optional payment',async()=>{const f=fixture(1,301);await f.send();assert.match(f.state.sends[0].payload.text,/se paga posteriormente; no fue cobrado/);});
+test('Missing authoritative paid amount fails before provider',async()=>{const f=fixture();delete f.human.amount_paid;assert.equal((await f.send()).ok,false);assert.equal(f.state.sends.length,0);});

@@ -779,7 +779,7 @@ module.exports = async (req, res) => {
   console.log(`🪝 Evento recibido: ${event.type}`);
 
   // Engraving is resolved BEFORE either registration handler, including missing metadata.
-  const engravingResult = await require('../lib/_perrun-engraving').routeEvent({ stripe, supabase, event });
+  const engravingResult = await require('../lib/_perrun-engraving').routeEvent({ stripe, supabase, event, resend });
   if (engravingResult) return res.status(engravingResult.status).json(engravingResult.body);
 
   // Central boundary: draft identity also catches stripped/corrupted Perrun metadata.
