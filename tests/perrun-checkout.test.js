@@ -184,7 +184,7 @@ test('Checkout adapter uses real isolated SQL RPC: retry gives one draft, zero f
 function browserFixture(confirmValue=true) {
   const nodes=new Map(),handlers=new Map();
   function node(id){if(!nodes.has(id))nodes.set(id,{value:'',checked:false,hidden:false,disabled:false,textContent:'',addEventListener(type,fn){handlers.set(id+':'+type,fn);},querySelectorAll(){return [node('perrunDogName2'),node('perrunDogWeight2'),node('perrunEngraving2')];}});return nodes.get(id);}
-  const calls=[];const context={KineticHubPerrunEvent:require('../perrun-event-data'),document:{getElementById:node},confirm:()=>confirmValue,fetch:async(url,opts)=>{const input=JSON.parse(opts.body);calls.push(input);return {ok:true,status:200,json:async()=>input.action==='quote'?{quoteToken:'fixture_quote',total:630}:{url:'https://checkout.stripe.com/test'}};}};
+  const calls=[];const context={KineticHubPerrunEvent:require('../perrun-event-data'),document:{getElementById:node},confirm:()=>confirmValue,fetch:async(url,opts)=>{const input=JSON.parse(opts.body);calls.push(input);return {ok:true,status:200,json:async()=>input.action==='quote'?{quoteToken:'fixture_quote',baseAmount:450,secondDogFee:180,total:630}:{url:'https://checkout.stripe.com/test'}};}};
   vm.runInNewContext(fs.readFileSync(path.join(__dirname,'../perrun-checkout.js'),'utf8'),context);
   const api=context.KineticHubPerrunCheckout.create({form:{addEventListener(type,fn){handlers.set('form:'+type,fn);}},onChange(){}});
   node('perrunDogName1').value='Luna';node('perrunDogWeight1').value='10';handlers.get('perrunDogWeight1:change')();
@@ -235,11 +235,11 @@ test('Actual checkout page preserves all Perrun distances and explicitly asks wh
 test('Actual checkout form limits Perrun to one human and hides promo/add-ticket controls',()=>{
   const nodes=new Map(),handlers=new Map();
   function node(id){if(!nodes.has(id))nodes.set(id,{value:'',textContent:id==='stagePrice'?'$450 MXN':'',style:{},hidden:false,disabled:false,innerHTML:'',addEventListener(type,fn){handlers.set(id+':'+type,fn);},closest(){return node('promoGroup');},querySelectorAll(){return [node('perrunDogName1'),node('perrunDogWeight1'),node('perrunEngraving1')];}});return nodes.get(id);}
-  const context={Date,HTMLElement:class {},window:{KineticHubCheckoutSelection:{eventSlug:'perrun-2027',distance:'1K'},KineticHubPerrunCheckout:{create({onChange}){return {secondDogFee:()=>0,refresh:onChange};}}},document:{getElementById:node}};
+  const context={Date,HTMLElement:class {},window:{KineticHubCheckoutSelection:{eventSlug:'perrun-2027',distance:'1K'},KineticHubPerrunCheckout:{birthMarkup(){return "<fieldset>Día Mes Año</fieldset>";},create({onChange}){return {secondDogFee:()=>0,refresh:onChange,updateSummary(){}};}}},document:{getElementById:node}};
   const source=fs.readFileSync(path.join(__dirname,'../script.js'),'utf8'),start=source.indexOf('\nfunction setupCheckoutForm() {')+1,end=source.indexOf('// NOTA Batch 1A:',start);
   vm.runInNewContext(source.slice(start,end)+'setupCheckoutForm();',context);
   assert.equal(node('addTicketBtn').hidden,true);assert.equal(node('promoCode').disabled,true);assert.equal(node('promoGroup').hidden,true);
-  assert.equal(node('ticketCountLabel').textContent,'1 ticket');handlers.get('addTicketBtn:click')();assert.equal(node('ticketCountLabel').textContent,'1 ticket');assert.equal((node('ticketsList').innerHTML.match(/class="ticket-card"/g)||[]).length,1);
+  assert.equal(node('ticketCountLabel').textContent,'1');handlers.get('addTicketBtn:click')();assert.equal(node('ticketCountLabel').textContent,'1');assert.equal((node('ticketsList').innerHTML.match(/class="ticket-card"/g)||[]).length,1);
 });
 test('Summary removes only session id from URL, preserving Perrun routing on refresh',()=>{
   const html=fs.readFileSync(path.join(__dirname,'../succes.html'),'utf8');
@@ -259,4 +259,26 @@ test('Checkout and success inline scripts parse; dog names are escaped and zero 
   let rendered='';
   vm.runInNewContext(escaped+branch,{summary:{baseAmount:450,secondDogFee:0,total:450,dogs:[{name:'<script>alert(1)</script>',category:'S',engravingStatus:'Pendiente'}]},document:{getElementById(){return {insertAdjacentHTML(where,value){rendered+=value;}}}}});
   assert.ok(rendered.includes('Segundo perro: $0 MXN'));assert.ok(rendered.includes('&lt;script&gt;'));assert.equal(rendered.includes('<script>'),false);
+});
+
+test('Perrun DOB direct entry keeps ISO contract for old dates and rejects invalid/future dates',()=>{
+  const context={Date};vm.runInNewContext(fs.readFileSync(path.join(__dirname,'../perrun-checkout.js'),'utf8'),context);
+  const api=context.KineticHubPerrunCheckout, today=new Date(2026,9,1);
+  assert.equal(api.birthISO('15','6','1995',today),'1995-06-15');
+  assert.equal(api.birthISO('29','2','2000',today),'2000-02-29');
+  for(const parts of [['29','2','1995'],['31','4','1995'],['1','10','2026'],['1','1','2027'],['1','1','1899'],['1','1','95']])assert.equal(api.birthISO(...parts,today),'');
+  const markup=api.birthMarkup(1,0);assert.ok(markup.includes('placeholder="AAAA"'));assert.equal(markup.includes('type="date"'),false);
+});
+test('Perrun summary uses shared second-dog fee and authoritative quote amounts',()=>{
+ const f=browserFixture(true);f.api.updateSummary(450);assert.equal(f.node('perrunSecondPriceRow').hidden,true);assert.equal(f.node('totalPrice').textContent,'$450 MXN');
+ f.node('perrunAddDog').checked=true;f.api.updateSummary(450);assert.equal(f.node('perrunSecondPriceRow').hidden,false);assert.equal(f.node('perrunSecondPrice').textContent,'+$180 MXN');assert.equal(f.node('totalPrice').textContent,'$630 MXN');assert.equal(f.node('perrunDogCount').textContent,'2');assert.equal(f.node('ticketCountLabel').textContent,'1');
+ f.api.updateSummary(450,{baseAmount:500,secondDogFee:180,total:680});assert.equal(f.node('stagePrice').textContent,'$500 MXN');assert.equal(f.node('totalPrice').textContent,'$680 MXN');
+});
+
+test('Direct DOB input synchronizes ticket and hidden ISO for existing backend validation',()=>{
+ const context={Date};vm.runInNewContext(fs.readFileSync(path.join(__dirname,'../perrun-checkout.js'),'utf8'),context);const nodes={day:{value:'15',setCustomValidity(value){this.error=value}},month:{value:'6'},year:{value:'1995'},hidden:{value:''}};
+ const group={querySelector(selector){if(selector.includes('birthDate'))return nodes.hidden;return nodes[selector.match(/="(.*?)"/)[1]];}};const ticket={};context.KineticHubPerrunCheckout.updateBirth({closest(){return group}},ticket);
+ assert.equal(ticket.birthDate,'1995-06-15');assert.equal(nodes.hidden.value,'1995-06-15');assert.equal(nodes.day.max,'30');assert.equal(nodes.day.error,'');
+ const input=body([8,20]);input.tickets[0].birthDate=ticket.birthDate;assert.equal(helper.normalizePerrunPayload(input).participant.birthDate,'1995-06-15');
+ nodes.day.value='31';context.KineticHubPerrunCheckout.updateBirth({closest(){return group}},ticket);assert.equal(ticket.birthDate,'');assert.ok(nodes.day.error);
 });

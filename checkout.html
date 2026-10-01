@@ -426,6 +426,9 @@
           top: auto;
         }
       }
+      .summary-item[hidden] { display: none !important; }
+      .perrun-birth label { display: flex; flex-direction: column; flex: 1 1 90px; gap: 6px; }
+      .perrun-birth input, .perrun-birth select { width: 100%; box-sizing: border-box; }
     </style>
   <!-- Meta Pixel Code -->
 <script>
@@ -549,7 +552,7 @@ src="https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1"
                 </p>
                 <section id="perrunDogs" class="checkout-section" hidden>
                   <h3>Tus perros</h3>
-                  <p>Un participante humano con uno o dos perros. Dos perros sólo si ambos pesan entre 3 y 25 kg.</p>
+                  <p>Cada inscripción corresponde a 1 participante y 1 perro. Puedes agregar un segundo perro por <span id="perrunCopyFee">$180 MXN</span>, únicamente si ambos pesan entre 3 y 25 kg.</p>
                   <p>S: 3–10 kg · M: más de 10–25 kg · L: más de 25–50 kg · XL: más de 50–80 kg.</p>
                   <div class="checkout-form-grid">
                     <label for="perrunDogName1">Nombre del primer perro</label><input id="perrunDogName1" maxlength="80" disabled required />
@@ -607,11 +610,11 @@ src="https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1"
                   <strong id="summaryDistance">5K</strong>
                 </div>
                 <div class="summary-item">
-                  <span id="stageLabel">Etapa Regular</span>
+                  <span><span id="summaryBaseLabel"></span><span id="stageLabel">Etapa Regular</span></span>
                   <strong id="stagePrice">$550 MXN</strong>
                 </div>
                 <div class="summary-item">
-                  <span>Cantidad</span>
+                  <span id="summaryQuantityLabel">Cantidad</span>
                   <strong id="ticketCountLabel">1 ticket</strong>
                 </div>
                 <div class="summary-item">
@@ -620,6 +623,9 @@ src="https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1"
                 </div>
               </div>
 
+              <div class="summary-item" id="perrunDogCountRow" hidden><span>Perros</span><strong id="perrunDogCount">1</strong></div>
+              <div class="summary-item" id="perrunSecondPriceRow" hidden><span>Segundo perro</span><strong id="perrunSecondPrice"></strong></div>
+              <div class="summary-item" id="perrunEngravingPriceRow" hidden><span>Grabado en este checkout</span><strong>$0 MXN</strong></div>
               <div class="summary-item total">
                 <span>Total</span>
                 <strong id="totalPrice">$550 MXN</strong>

@@ -4547,7 +4547,8 @@ function setupCheckoutForm() {
     const unitAmount = getUnitAmount();
     const totalAmount = unitAmount * quantity + (perrunCheckout?.secondDogFee() || 0);
     totalPriceEl.textContent = formatMXN(totalAmount);
-    ticketCountLabel.textContent = `${quantity} ticket${quantity > 1 ? "s" : ""}`;
+    ticketCountLabel.textContent = isPerrun ? "1" : `${quantity} ticket${quantity > 1 ? "s" : ""}`;
+    if (isPerrun) perrunCheckout?.updateSummary(unitAmount);
 
     if (promoState?.preview) {
       const preview = promoState.preview;
@@ -4580,7 +4581,7 @@ function setupCheckoutForm() {
         return `
           <div class="ticket-card" data-ticket-index="${index}">
             <div class="ticket-card-head">
-              <span>Ticket ${ticketNumber}</span>
+              <span>${isPerrun ? "Participante" : "Ticket"} ${ticketNumber}</span>
               ${canRemove ? `<button type="button" class="ticket-remove-btn" data-remove-ticket="${index}">Quitar</button>` : ""}
             </div>
             <div class="checkout-form-grid">
@@ -4615,7 +4616,7 @@ function setupCheckoutForm() {
                 <option value="XXL" ${ticket.shirtSize === "XXL" ? "selected" : ""}>XXL</option>
                 <option value="XXXL" ${ticket.shirtSize === "XXXL" ? "selected" : ""}>XXXL</option>
               </select>
-              <label for="ticketBirth${ticketNumber}">
+              ${isPerrun ? window.KineticHubPerrunCheckout.birthMarkup(ticketNumber, index, ticket.birthDate) : `              <label for="ticketBirth${ticketNumber}">
                 Fecha de nacimiento <span class="required-mark">*</span>
               </label>
               <input
@@ -4626,6 +4627,7 @@ function setupCheckoutForm() {
                 value="${escapeAttr(ticket.birthDate || "")}"
                 required
               />
+`}
               <label for="ticketWa${ticketNumber}">
                 WhatsApp (10 dígitos) <span class="required-mark">*</span>
               </label>
@@ -4806,6 +4808,10 @@ function setupCheckoutForm() {
 
     const index = Number(target.getAttribute("data-ticket-index"));
     const field = target.getAttribute("data-ticket-field");
+    if (isPerrun && target.hasAttribute("data-birth-part") && tickets[index]) {
+      window.KineticHubPerrunCheckout.updateBirth(target, tickets[index]);
+      return;
+    }
     if (!Number.isInteger(index) || !field || !tickets[index]) return;
 
     if (field === "fullName") {
@@ -4827,6 +4833,10 @@ function setupCheckoutForm() {
     if (!(target instanceof HTMLElement)) return;
     const index = Number(target.getAttribute("data-ticket-index"));
     const field = target.getAttribute("data-ticket-field");
+    if (isPerrun && target.hasAttribute("data-birth-part") && tickets[index]) {
+      window.KineticHubPerrunCheckout.updateBirth(target, tickets[index]);
+      return;
+    }
     if (!Number.isInteger(index) || !field || !tickets[index]) return;
     if (field === "state") {
       tickets[index].state = String(target.value || "");
