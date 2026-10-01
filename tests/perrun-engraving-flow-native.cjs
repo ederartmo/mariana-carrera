@@ -2,7 +2,7 @@
 const assert=require('node:assert/strict');
 const {cases,fixture}=require('./helpers/perrun-engraving-flow-contract.cjs'),{sqlAdapter}=require('./helpers/perrun-payment-sql-adapter.cjs'),engraving=require('../lib/_perrun-engraving');
 module.exports=async({admin,a,b,check,blockedBy,evidence})=>{
- process.env.PERRUN_QA_LOCAL='1'; // Native isolated QA never contacts an email provider.
+ process.env.SUPABASE_URL='http://127.0.0.1:55321';process.env.PERRUN_QA_LOCAL='1'; // Native isolated QA never contacts an email provider.
  process.env.STRIPE_SECRET_KEY='sk_test_native_engraving_fixture';process.env.CHECKOUT_SUMMARY_SECRET='native_engraving_checkout_claim_fixture_32_characters';delete process.env.VERCEL_ENV;
  const initial=evidence.checks.length;
  for(const c of cases)await check('Native '+c.name,()=>c.run(admin));

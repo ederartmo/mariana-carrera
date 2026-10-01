@@ -33,21 +33,19 @@ async succeeded finalize before emailing. Unpaid / async failed do not send paid
 confirmation; refunds do not trigger it. email_sent prevents sequential duplicates.
 Legacy currently has no provider idempotency key for concurrent sends; unchanged.
 
-## Production readiness checks
-- Confirm RESEND_API_KEY exists in Vercel Production and belongs to the sending account.
-- Confirm kinetichub.com.mx is verified and enabled for sending in that account.
-- PERRUN_QA_LOCAL must be absent or different from 1 in Production.
-- Existing requireTestMode rejects VERCEL_ENV=production and Stripe LIVE. This audit
-  deliberately does not change that payment guard. A separately authorized release
-  change is required before actual production Perrun payments can trigger emails.
-- No deploy, real email, Stripe change or remote database write was performed here.
+## Production readiness
+Operationally confirmed by the user: the correct Resend account is KineticHub,
+recent Axolote/Cascanueces messages are Delivered, and RESEND_API_KEY exists in
+Vercel Production. Sender/domain/key/infrastructure remain unchanged. No further
+connector verification is required or performed.
 
-The user reconnected the account labeled KineticHub - Resend. Earlier domain reads
-returned an older account inventory; after reconnection the connector returned
-Unknown tool. Direct credential-domain and Vercel project reads were unavailable.
-Production key presence and sender-domain verification remain unconfirmed by this
-audit; no conclusion about the newly connected account domain status is implied.
+Production requires the existing Stripe LIVE key and PERRUN_QA_LOCAL absent or
+not 1. Perrun now validates sessions/events against the environment's mode:
+Production LIVE, local/Preview TEST. QA marker additionally requires loopback
+Supabase and rejects Production. The QA launcher network block remains unchanged.
+Checkout, registration settlement/refunds and engraving settlement/refunds use
+this same policy. No pricing, dog rules, SQL migrations or legacy flow changed.
 
-Validation: Node 781/781, native PostgreSQL 146/146, 31 concurrency scenarios, build PASS.
-No real emails were sent. The pre-existing uncommitted QA launcher adjustment is
-outside this email patch.
+The email implementation remains commit 71f4fd2. No deploy, real email, Stripe
+configuration change or remote database write was performed. The pre-existing
+uncommitted QA launcher adjustment is outside these production changes.

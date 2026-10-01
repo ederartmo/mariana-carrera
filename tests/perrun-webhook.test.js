@@ -12,13 +12,13 @@ const human={fullName:'Webhook Owner',shirtSize:'M',birthDate:'1990-01-01',whats
 const dog={name:'Luna',weightKg:10,engravingRequested:true};
 const metadata={event_slug:'perrun-2027',flow_version:'perrun_v1',ticket_count:'1',order_ref:'11111111-2222-4333-8444-555555555555'};
 let db,next=0;
-async function fixture({count=1,distance='3K',requested=true}={}){
-  const id='cs_test_phase4_'+(++next),calls=[];
+async function fixture({count=1,distance='3K',requested=true,live=false}={}){
+  const id=(live?'cs_live_phase4_':'cs_test_phase4_')+(++next),calls=[];
   await db.query('select public.prepare_perrun_order($1,$2,$3,$4::jsonb,$5::jsonb,$6,$7::timestamptz)',[id,distance,'owner@example.invalid',JSON.stringify(human),JSON.stringify(Array.from({length:count},(_,i)=>({...dog,name:i?'Sol':'Luna',engravingRequested:requested}))),'presale','2026-10-01T12:00:00-06:00']);
-  const session={id,mode:'payment',livemode:false,payment_status:'paid',amount_total:45000+(count-1)*18000,currency:'mxn',payment_intent:'pi_'+id,metadata:{...metadata}};
+  const session={id,mode:'payment',livemode:live,payment_status:'paid',amount_total:45000+(count-1)*18000,currency:'mxn',payment_intent:'pi_'+id,metadata:{...metadata}};
   const supabase=sqlAdapter(db,calls),state={session,calls,supabase,retrieveCalls:[],sends:0,meta:0};
   const stripe={checkout:{sessions:{retrieve:async id=>{state.retrieveCalls.push(id);if(state.retrieveError)throw Error('network');return structuredClone(state.session);},list:async()=>({data:[structuredClone(state.session)]})}},charges:{retrieve:async()=>{if(state.chargeError)throw Error('network');return state.charge;}}};
-  function event(type='checkout.session.completed',changes={}){return {id:'evt_'+(++next),type,livemode:false,data:{object:{...structuredClone(session),...changes}}};}
+  function event(type='checkout.session.completed',changes={}){return {id:'evt_'+(++next),type,livemode:live,data:{object:{...structuredClone(session),...changes}}};}
   async function run(e){return payment.handlePerrunPayment({stripe,supabase:state.supabase,event:e});}
   async function row(table='perrun_checkout_orders'){return (await db.query('select * from public.'+table+' where order_session_id=$1',[id])).rows;}
   return {...state,state,stripe,event,run,row,id};
@@ -129,3 +129,5 @@ test('Webhook email provider error returns retryable 503 without repeating final
 });
 
 test('OXXO pending then paid async success sends exactly one confirmation',async()=>{const f=await fixture();f.state.session.payment_status='unpaid';await api(f,f.event('checkout.session.completed',{payment_status:'unpaid'}));assert.equal(f.state.sends,0);f.state.session.payment_status='paid';const e=f.event('checkout.session.async_payment_succeeded');assert.equal((await api(f,e)).statusCode,200);assert.equal(f.state.sends,1);assert.equal((await api(f,e)).statusCode,200);assert.equal(f.state.sends,1);});
+
+for(const type of ['checkout.session.completed','checkout.session.async_payment_succeeded'])test('Production LIVE '+type+' finalizes and emails once',async()=>{const old={key:process.env.STRIPE_SECRET_KEY,env:process.env.VERCEL_ENV,qa:process.env.PERRUN_QA_LOCAL};try{process.env.STRIPE_SECRET_KEY='sk_live_fixture';process.env.VERCEL_ENV='production';delete process.env.PERRUN_QA_LOCAL;const f=await fixture({live:true});const e=f.event(type);assert.equal((await api(f,e)).statusCode,200);assert.equal((await f.row())[0].payment_status,'paid');assert.equal(f.state.sends,1);assert.equal((await api(f,e)).statusCode,200);assert.equal(f.state.sends,1);assert.equal((await payment.handlePerrunRefund({stripe:f.stripe,supabase:f.supabase,sessionId:f.id,paymentIntentId:f.session.payment_intent})).status,200);assert.equal((await f.row('inscripciones'))[0].payment_status,'refunded');}finally{process.env.STRIPE_SECRET_KEY=old.key;if(old.env===undefined)delete process.env.VERCEL_ENV;else process.env.VERCEL_ENV=old.env;if(old.qa===undefined)delete process.env.PERRUN_QA_LOCAL;else process.env.PERRUN_QA_LOCAL=old.qa;}});
