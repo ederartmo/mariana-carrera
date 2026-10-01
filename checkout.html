@@ -744,8 +744,8 @@ src="https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1"
       const checkoutEventSlug = recognizedEvent.slug;
       const requestedDistance = String(checkoutParams.get('distance') || (checkoutEventSlug === 'perrun-2027' ? '' : '5K')).toUpperCase();
       const checkoutEvent = checkoutEventSlug === 'perrun-2027'
-        ? { name: recognizedEvent.name, image: '', date: recognizedEvent.date.label,
-            location: recognizedEvent.location.name, returnUrl: 'eventos.html',
+        ? { name: recognizedEvent.name, image: 'assets/events/perrun-2027/visuals/perrun-hero.webp', date: recognizedEvent.date.label,
+            location: recognizedEvent.location.name, returnUrl: recognizedEvent.detailUrl,
             distance: recognizedEvent.distances.includes(requestedDistance) ? requestedDistance : '',
             kitIncludes: recognizedEvent.humanKit.join(' + ') + ' · Perro: ' + recognizedEvent.dogKit.join(' + '),
             stageProvider: window.KineticHubPerrunStageConfig }

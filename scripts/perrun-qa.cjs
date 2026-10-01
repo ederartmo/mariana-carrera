@@ -76,8 +76,9 @@ function copyApp(env){
 function server(){
   const values=load();copyApp(values);
   const env={};for(const k of ['PATH','SystemRoot','windir','TEMP','TMP','USERPROFILE','APPDATA','LOCALAPPDATA','ComSpec','PATHEXT','HOMEDRIVE','HOMEPATH'])if(process.env[k])env[k]=process.env[k];
-  Object.assign(env,values,{DO_NOT_TRACK:'1',VERCEL_TELEMETRY_DISABLED:'1',NODE_OPTIONS:'--require '+JSON.stringify(path.join(__dirname,'qa-network-guard.cjs').replaceAll('\\','/'))});
-  console.log('QA server: localhost:3000 → Supabase 127.0.0.1:55321; remote Supabase blocked.');
+  Object.assign(env,values,{QA_HTTP_PORT:process.env.QA_HTTP_PORT||'3000',DO_NOT_TRACK:'1',VERCEL_TELEMETRY_DISABLED:'1',NODE_OPTIONS:'--require '+JSON.stringify(path.join(__dirname,'qa-network-guard.cjs').replaceAll('\\','/'))});
+  assert.ok(/^[0-9]+$/.test(env.QA_HTTP_PORT)&&Number(env.QA_HTTP_PORT)>=1024&&Number(env.QA_HTTP_PORT)<=65535,'Invalid QA HTTP port');
+  console.log('QA server: localhost:'+env.QA_HTTP_PORT+' → Supabase 127.0.0.1:55321; remote Supabase blocked.');
   const child=cp.spawn(process.execPath,[path.join(__dirname,'qa-http-server.cjs')],{cwd:app,env,stdio:'inherit',windowsHide:true});
   for(const signal of ['SIGINT','SIGTERM'])process.on(signal,()=>child.kill(signal));
   child.on('exit',code=>process.exitCode=code||0);
