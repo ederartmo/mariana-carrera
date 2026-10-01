@@ -9,3 +9,6 @@ node_modules/
 public/Kinetichub\ -\ Manual\ 2026.html
 .env*
 !.env.example
+
+# Isolated Perrun local QA runtime, credentials and logs
+.qa/
