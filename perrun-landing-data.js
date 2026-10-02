@@ -24,5 +24,5 @@
     copy:{kit:{eyebrow:'UN EQUIPO DE DOS',title:'Tu inscripción, su aventura.',subtitle:'Conoce el kit de cada integrante.'},schedule:{title:'Dos fechas para tu agenda'},pricing:{title:'Elige tu momento para inscribirte.'},signoff:'Nos vemos el 14 de febrero de 2027.'},
     cta:{primary:'Elegir distancia',secondary:'Ver el kit',finalTitle:'La próxima meta es juntos.',finalText:'Elige tu distancia y comparte Perrun 2027 con tu mejor compañero.',finalLabel:'Elegir distancia',closed:'Inscripciones cerradas'}
   };
-  root.KineticHubPerrunLanding.engravingSections[0].media={image:'assets/events/perrun-2027/visuals/perrun-placa-oficial.webp',alt:'Placa oficial Perrun 2027 en forma de hueso',slot:{key:'engraving',label:'Placa / perro'}};
+  root.KineticHubPerrunLanding.engravingSections[0].media={image:'assets/events/perrun-2027/visuals/perrun-placa-historia.webp',alt:'Placa oficial Perrun 2027 en forma de hueso',slot:{key:'engraving',label:'Placa / perro'}};
 })(globalThis);
