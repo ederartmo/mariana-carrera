@@ -170,6 +170,7 @@ async function legacyModernTests(){
   if(process.argv[7]==='--engraving')await require('./perrun-engraving-native.cjs')({admin,a,b,check,blockedBy,evidence});
   if(process.argv[8]==='--engraving-flow')await require('./perrun-engraving-flow-native.cjs')({admin,a,b,check,blockedBy,evidence});
   if(process.argv.includes('--manual'))await require('./perrun-manual-transfer-native.cjs')({admin,a,b,check,blockedBy,evidence});
+  if(process.argv.includes('--admin-edit'))await require('./perrun-admin-edit-native.cjs')({admin,a,b,check,blockedBy,evidence});
   evidence.migrationSHA256=crypto.createHash('sha256').update(migration).digest('hex');
   evidence.result='PASS';console.log('NATIVE_POSTGRES_PASS='+evidence.checks.length);console.log('CONCURRENT_SCENARIO_RUNS='+evidence.concurrency.length);
 })().catch(error=>{evidence.result='FAIL';evidence.error=error.message;console.error('FAIL '+error.message);process.exitCode=1;}).finally(async()=>{

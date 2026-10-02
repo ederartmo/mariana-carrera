@@ -863,6 +863,7 @@ src="https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1"
   <script src="location-catalog.js?v=__ASSET_VERSION__"></script>
   <script src="perrun-stage-config.js?v=__ASSET_VERSION__"></script>
   <script src="perrun-event-data.js?v=__ASSET_VERSION__"></script>
+  <script src="admin-perrun-edit-ui.js?v=__ASSET_VERSION__"></script>
   <script src="admin-perrun-manual-ui.js?v=__ASSET_VERSION__"></script>
   <script src="supabase-client.js?v=__ASSET_VERSION__"></script>
 
@@ -947,7 +948,8 @@ src="https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1"
     }
 
     function buildEditParticipantButton(row) {
-      if (row.event_slug === 'perrun-2027') return '';
+      if (row.event_slug === 'perrun-2027') return row.registration_status === 'active' && ['paid','paid_no_email'].includes(row.payment_status)
+        ? '<button type="button" class="btn-email" data-perrun-edit-order="'+escapeHtml(row.order_session_id)+'">Editar</button>' : '';
       if (row.registration_status === 'cancelled') return '';
       if (String(row.payment_status || '').trim() !== 'paid') return '';
       return `
@@ -2541,6 +2543,8 @@ src="https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1"
         setupDashboardControls(client);
         setupManualTransferForm(client);
         setupParticipantModal(client);
+        window.createPerrunEditUI({document, getToken:async()=>{const {data:{session}}=await client.auth.getSession();return session?.access_token;},
+          refresh:()=>loadPaidInscriptions(client,statusFilter?.value||'all')});
         setupDeleteActions(client);
         console.log('[Admin] setup functions done, loading inscriptions...');
         await loadPaidInscriptions(client, statusFilter?.value || "all");

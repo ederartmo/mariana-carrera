@@ -30,14 +30,18 @@ module.exports = async function handler(req, res) {
     // Batch 3: autorización ANTES de consultar/armar PII. Sin claim válido
     // para ESTA sesión → 403 genérico (sin distinguir el motivo al cliente).
     const claimCheck = verifyCheckoutSummaryClaim(req.headers?.cookie, sessionId);
-    if (!claimCheck.ok) {
+    if (!claimCheck.ok && req.query.event !== 'perrun-2027') {
       console.warn(`⛔ checkout-summary no autorizado | session_id=${sessionId} | reason=${claimCheck.reason || 'unknown'}`);
       return res.status(403).json({ error: 'No autorizado para consultar este resumen.' });
     }
 
+    const perrunSummary = async () => {
+      if (!await require('../lib/_perrun-current-ownership').authorizePerrunOrder(req,supabase,sessionId)) return res.status(403).json({error:'No autorizado para consultar este resumen.'});
+      const summary = await require('../lib/_perrun-checkout').getPerrunSummary(supabase,sessionId);
+      return summary ? res.status(200).json(summary) : res.status(404).json({error:'No se encontró la compra'});
+    };
     if (req.query.event === 'perrun-2027') {
-      const summary = await require('../lib/_perrun-checkout').getPerrunSummary(supabase, sessionId);
-      return summary ? res.status(200).json(summary) : res.status(404).json({ error: 'No se encontró la compra' });
+      return await perrunSummary();
     }
 
     const { data, error } = await supabase
@@ -55,6 +59,9 @@ module.exports = async function handler(req, res) {
     if (!data || data.length === 0) {
       return res.status(404).json({ error: 'No se encontró la compra' });
     }
+
+    // Omitting event must not bypass revoked Perrun ownership cookies.
+    if (data.some(row=>row.event_slug==='perrun-2027')) return await perrunSummary();
 
     let sessionMetadata = {};
     try {
