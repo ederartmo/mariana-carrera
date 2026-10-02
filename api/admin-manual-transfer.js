@@ -91,6 +91,10 @@ module.exports = async function handler(req, res) {
       return res.status(auth.status || 401).json({ error: auth.error });
     }
 
+    if (String(req.body?.eventSlug || '').trim() === 'perrun-2027') {
+      return require('../lib/_perrun-manual-transfer').handlePerrunManualTransfer({ req, res, supabase, auth });
+    }
+
     const {
       buyerEmail,
       tickets,

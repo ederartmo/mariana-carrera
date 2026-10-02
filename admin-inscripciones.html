@@ -145,6 +145,28 @@
       gap: 12px;
       margin-bottom: 12px;
     }
+    #manualTransferForm [hidden] { display: none !important; }
+    #manualTransferForm:has(#manualEventSlug option[value="perrun-2027"]:checked) input[type="date"] {
+      background: #0b1118; color: #e8edf3; border: 1px solid #2a3a4b;
+      border-radius: 8px; min-height: 42px; padding: 9px 10px; color-scheme: dark;
+    }
+    #manualTransferForm:has(#manualEventSlug option[value="perrun-2027"]:checked) input[type="date"]:focus {
+      outline: 2px solid #8ea1b7; outline-offset: 2px; border-color: #8ea1b7;
+    }
+    #manualTransferForm:has(#manualEventSlug option[value="perrun-2027"]:checked) input[type="date"]::-webkit-calendar-picker-indicator { cursor: pointer; opacity: 1; }
+    .manual-second-dog { display: flex; align-items: center; gap: 8px; margin: 12px 0; }
+    #manualPerrunTotal { color: #e8edf3; margin-left: auto; }
+    #manualTransferForm:has(#manualEventSlug option[value="perrun-2027"]:checked) #saveManualTransferBtn:disabled,
+    #manualTransferForm:has(#manualEventSlug option[value="perrun-2027"]:checked) #saveManualTransferBtn:disabled:hover {
+      opacity: 0.45;
+      cursor: not-allowed;
+      background: #3a4652;
+      color: #c0cad4;
+      box-shadow: none;
+      transform: none;
+      filter: none;
+    }
+    #manualPerrunDogs fieldset { margin: 12px 0; border: 1px solid #233243; border-radius: 8px; padding: 12px; }
     .manual-grid label {
       display: block;
       font-size: 0.82rem;
@@ -709,6 +731,7 @@ src="https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1"
               <select id="manualEventSlug" required>
                 <option value="axolote-night-run">Axolote Night Run 2026</option>
                 <option value="cascanueces-run">Cascanueces Run 2026</option>
+                <option value="perrun-2027">Perrun 2027</option>
               </select>
             </div>
             <div>
@@ -731,8 +754,10 @@ src="https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1"
             </div>
           </div>
           <div id="manualTickets" class="tickets-wrap"></div>
+          <div id="manualPerrunDogs" hidden></div>
           <div class="manual-actions">
             <button type="button" id="addManualTicketBtn" class="btn-secondary">+ Agregar ticket</button>
+            <strong id="manualPerrunTotal" aria-live="polite" hidden></strong>
             <button type="submit" id="saveManualTransferBtn" class="btn-primary">Guardar transferencia</button>
           </div>
           <div id="manualTransferFeedback" class="manual-feedback"></div>
@@ -836,6 +861,9 @@ src="https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1"
   </script>
 
   <script src="location-catalog.js?v=__ASSET_VERSION__"></script>
+  <script src="perrun-stage-config.js?v=__ASSET_VERSION__"></script>
+  <script src="perrun-event-data.js?v=__ASSET_VERSION__"></script>
+  <script src="admin-perrun-manual-ui.js?v=__ASSET_VERSION__"></script>
   <script src="supabase-client.js?v=__ASSET_VERSION__"></script>
 
   <script>
@@ -1409,6 +1437,7 @@ src="https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1"
     });
     let manualTickets = [MANUAL_EMPTY_TICKET()];
     let manualReleasedBibs = [];
+    let manualPerrunUI;
 
     function getManualLocationCatalog() {
       return window.KineticHubLocationCatalog || null;
@@ -1521,6 +1550,7 @@ src="https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1"
     }
 
     async function loadManualReleasedBibs(client, eventSlug) {
+      if (eventSlug === 'perrun-2027') { manualReleasedBibs = []; return; }
       try {
         const { data: { session } } = await client.auth.getSession();
         const token = session?.access_token;
@@ -1589,6 +1619,8 @@ src="https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1"
       const wrap = document.getElementById('manualTickets');
       const addBtn = document.getElementById('addManualTicketBtn');
       if (!wrap || !addBtn) return;
+      const perrun = document.getElementById('manualEventSlug')?.value === 'perrun-2027';
+      if (perrun) manualTickets = manualTickets.slice(0, 1).map(ticket => ({ ...ticket, bibMode: 'auto', releasedBib: '' }));
 
       wrap.innerHTML = manualTickets.map((ticket, index) => {
         const ticketNum = index + 1;
@@ -1603,10 +1635,10 @@ src="https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1"
         return `
           <div class="ticket-row">
             <div class="ticket-row-head">
-              <span>Ticket ${ticketNum}</span>
+              <span>${perrun ? 'Participante humano' : 'Ticket ' + ticketNum}</span>
             </div>
             <div class="span-2">
-              <label for="manualTicketName${ticketNum}">Nombre ticket ${ticketNum}</label>
+              <label for="manualTicketName${ticketNum}">${perrun ? 'Nombre del participante' : 'Nombre ticket ' + ticketNum}</label>
               <input
                 id="manualTicketName${ticketNum}"
                 type="text"
@@ -1673,7 +1705,7 @@ src="https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1"
                 ${manualBoroughOptions(ticket)}
               </select>
             </div>
-            <div>
+            <div ${perrun ? 'hidden' : ''}>
               <label for="manualTicketBibMode${ticketNum}">Asignación de BIB</label>
               <select
                 id="manualTicketBibMode${ticketNum}"
@@ -1684,7 +1716,7 @@ src="https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1"
                 <option value="released" ${ticket.bibMode === 'released' ? 'selected' : ''} ${manualReleasedBibs.length ? '' : 'disabled'}>Usar un BIB disponible</option>
               </select>
             </div>
-            <div>
+            <div ${perrun ? 'hidden' : ''}>
               <label for="manualTicketReleasedBib${ticketNum}">BIB disponible</label>
               <select
                 id="manualTicketReleasedBib${ticketNum}"
@@ -1718,6 +1750,13 @@ src="https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1"
       const statusFilter = document.getElementById('statusFilter');
       const manualEventSlug = document.getElementById('manualEventSlug');
       const manualDistance = document.getElementById('manualDistance');
+      manualPerrunUI = window.createPerrunManualUI({ document, event: window.KineticHubPerrunEvent,
+        uuid: () => crypto.randomUUID(), escapeHtml,
+        isFormValid: () => {
+          const email = String(document.getElementById('buyerEmail')?.value || '').trim();
+          return email.includes('@') && manualTickets.length === 1 && !manualTicketError(manualTickets[0]);
+        } });
+      manualPerrunUI.sync();
       if (!form || !ticketsWrap || !addBtn || !feedback || !saveBtn) return;
 
       const setFeedback = (message, type) => {
@@ -1730,10 +1769,11 @@ src="https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1"
 
       const updateManualDistances = () => {
         if (!manualDistance) return;
-        const distances = manualEventSlug?.value === 'cascanueces-run' ? ['5K', '10K'] : ['5K'];
+        const distances = manualPerrunUI.isPerrun() ? window.KineticHubPerrunEvent.distances : manualEventSlug?.value === 'cascanueces-run' ? ['5K', '10K'] : ['5K'];
         manualDistance.innerHTML = distances.map((value) => `<option value="${value}">${value}</option>`).join('');
       };
       manualEventSlug?.addEventListener('change', () => {
+        manualPerrunUI.sync();
         updateManualDistances();
         manualTickets.forEach((ticket) => {
           ticket.bibMode = 'auto';
@@ -1866,8 +1906,11 @@ src="https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1"
 
         saveBtn.disabled = true;
         saveBtn.textContent = 'Guardando...';
+        manualPerrunUI.setBusy(true);
 
         try {
+          let body = { buyerEmail, totalAmount, transferReference, tickets, eventSlug, distance };
+          if (manualPerrunUI.isPerrun()) body = manualPerrunUI.payload(body);
           const { data: { session } } = await client.auth.getSession();
           const token = session?.access_token;
           if (!token) {
@@ -1880,27 +1923,25 @@ src="https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1"
               'Content-Type': 'application/json',
               Authorization: `Bearer ${token}`,
             },
-            body: JSON.stringify({
-              buyerEmail,
-              totalAmount,
-              transferReference,
-              tickets,
-              eventSlug,
-              distance,
-            }),
+            body: JSON.stringify(body),
           });
 
           const data = await response.json();
           if (!response.ok) {
+            if (data?.totalAmount && manualPerrunUI.isPerrun()) {
+              manualPerrunUI.refreshPrice();
+              document.getElementById('totalAmount').value = data.totalAmount;
+            }
             throw new Error(data?.error || 'No se pudo guardar la transferencia.');
           }
 
           const bibList = Array.isArray(data.tickets)
             ? data.tickets.map((t) => `#${t.bib_number}`).join(', ')
             : '';
-          setFeedback(`Transferencia guardada. Orden: ${data.orderSessionId}. Bibs: ${bibList}`, 'ok');
+          setFeedback(`Transferencia guardada. Orden: ${data.orderSessionId}. Bibs: ${bibList}${data.eventSlug === 'perrun-2027' ? (data.emailPending ? '. Correo pendiente: usa Reintentar confirmación.' : data.emailSent ? '. Confirmación enviada.' : '. Correo no enviado en modo QA.') : ''}`, 'ok');
 
           form.reset();
+          manualPerrunUI.reset();
           manualTickets = [MANUAL_EMPTY_TICKET()];
           updateManualDistances();
           await loadManualReleasedBibs(client, manualEventSlug?.value || 'axolote-night-run');
@@ -1912,6 +1953,7 @@ src="https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1"
         } finally {
           saveBtn.disabled = false;
           saveBtn.textContent = 'Guardar transferencia';
+          manualPerrunUI.setBusy(false);
         }
       });
     }
