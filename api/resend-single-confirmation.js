@@ -1,3 +1,4 @@
+const { randomUUID } = require('node:crypto');
 const { createClient } = require('@supabase/supabase-js');
 const { Resend } = require('resend');
 const { sendPerrunConfirmation } = require('../lib/_perrun-confirmation');
@@ -54,7 +55,7 @@ module.exports = async function handler(req, res) {
     }
 
     if (records[0].event_slug === 'perrun-2027') {
-      const result = await sendPerrunConfirmation({ supabase, resend: new Resend(process.env.RESEND_API_KEY), sessionId: cleanOrderId });
+      const result = await sendPerrunConfirmation({ supabase, resend: new Resend(process.env.RESEND_API_KEY), sessionId: cleanOrderId, resendRequestId: req.body?.waiverUpdate === true ? 'perrun-waiver-2027-v1' : randomUUID() });
       return res.status(result.ok ? 200 : 503).json(result.ok ? { ok: true, skipped: !!result.skipped } : { error: result.error });
     }
 
