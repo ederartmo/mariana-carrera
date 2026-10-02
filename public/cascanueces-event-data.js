@@ -51,8 +51,8 @@
       },
       {
         distance: "10K",
-        name: "Competitiva",
-        description: "Para quienes buscan un mayor desafío y mejorar su marca personal.",
+        name: "Reto 10K",
+        description: "Para disfrutar un recorrido de 10K y vivir la experiencia a tu ritmo.",
         facts: [
           { label: "Categoría única", value: "Femenil y varonil" },
           { label: "Salida", value: "08:00 h" },
@@ -89,7 +89,7 @@
       },
     ],
     kitIncludes: [
-      "Número de competidor",
+      "Número de corredor",
       "Hidratación en ruta y meta",
       "Servicio médico",
       "Resultados",
@@ -179,7 +179,7 @@
     faqs: [
       {
         question: "¿Qué incluye mi inscripción?",
-        answer: "Número de competidor, playera, morral, hidratación en ruta y meta, servicio médico, resultados y medalla al cruzar la meta.",
+        answer: "Número de corredor, playera, morral, hidratación en ruta y meta, servicio médico, resultados y medalla al cruzar la meta.",
       },
       {
         question: "¿Dónde recojo mi paquete?",

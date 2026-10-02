@@ -120,7 +120,7 @@
         title: "Inicio de carrera",
         date: "31 de octubre",
         time: "18:00 h",
-        description: "Primera oleada competitiva con chip activo, control de ruta y cronometraje oficial.",
+        description: "Inicio de carrera con chip activo, control de ruta y cronometraje oficial.",
       },
       {
         step: "3",
