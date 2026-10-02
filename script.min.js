@@ -4923,6 +4923,8 @@ function setupCheckoutForm() {
       try {
         const data = await perrunCheckout.submit({ email, buyerEmail: normalizedEmail, tickets: normalizedTickets,
           eventSlug: 'perrun-2027', distance: window.KineticHubCheckoutSelection.distance });
+        if (data.cancelled) return;
+        if (data.refresh && data.sessionId) { window.location.href = '/succes.html?event=perrun-2027&session_id='+encodeURIComponent(data.sessionId); return; }
         if (!data.url) throw new Error('No se recibió la URL de pago.');
         window.location.href = data.url;
       } catch (error) { alert(error.message || 'No se pudo preparar el checkout.'); }

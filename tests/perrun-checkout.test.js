@@ -181,14 +181,16 @@ test('Checkout adapter uses real isolated SQL RPC: retry gives one draft, zero f
   }finally{await db.close();}
 });
 
-function browserFixture(confirmValue=true) {
+function browserFixture(confirmValue=true, quoteOverrides={}) {
   const nodes=new Map(),handlers=new Map();
   function node(id){if(!nodes.has(id))nodes.set(id,{value:'',checked:false,hidden:false,disabled:false,textContent:'',addEventListener(type,fn){handlers.set(id+':'+type,fn);},querySelectorAll(){return [node('perrunDogName2'),node('perrunDogWeight2'),node('perrunEngraving2')];}});return nodes.get(id);}
-  const calls=[];const context={KineticHubPerrunEvent:require('../perrun-event-data'),document:{getElementById:node},confirm:()=>confirmValue,fetch:async(url,opts)=>{const input=JSON.parse(opts.body);calls.push(input);return {ok:true,status:200,json:async()=>input.action==='quote'?{quoteToken:'fixture_quote',baseAmount:450,secondDogFee:180,total:630}:{url:'https://checkout.stripe.com/test'}};}};
+  const storage=new Map();
+  const messages=[];
+  const calls=[];const context={crypto:require('node:crypto').webcrypto,TextEncoder,localStorage:{getItem:k=>storage.get(k),setItem:(k,v)=>storage.set(k,v),removeItem:k=>storage.delete(k)},KineticHubPerrunEvent:require('../perrun-event-data'),document:{getElementById:node},confirm:text=>{messages.push(text);return confirmValue;},fetch:async(url,opts)=>{const input=JSON.parse(opts.body);calls.push(input);if(input.action==='create'&&context.failCreate)return {ok:false,status:503,json:async()=>({error:'Retry same reservation'})};return {ok:true,status:200,json:async()=>input.action==='quote'?{quoteToken:'fixture_quote',baseAmount:450,secondDogFee:180,total:630,...quoteOverrides}:{url:'https://checkout.stripe.com/test'}};}};
   vm.runInNewContext(fs.readFileSync(path.join(__dirname,'../perrun-checkout.js'),'utf8'),context);
   const api=context.KineticHubPerrunCheckout.create({form:{addEventListener(type,fn){handlers.set('form:'+type,fn);}},onChange(){}});
   node('perrunDogName1').value='Luna';node('perrunDogWeight1').value='10';handlers.get('perrunDogWeight1:change')();
-  return {node,handlers,api,calls};
+  return {node,handlers,api,calls,context,messages};
 }
 test('Browser requires weight, derives category and enables second dog only for S/M',()=>{
   const f=browserFixture();assert.equal(f.node('perrunDogCategory1').textContent,'S');assert.equal(f.node('perrunAddDog').disabled,false);
@@ -204,6 +206,14 @@ test('Browser keeps second dog and restores previous weight when removal is decl
 test('Browser retries identical payload with same quote, invalidates quote after input edits',async()=>{
   const f=browserFixture(),input=body();await f.api.submit(input);await f.api.submit(input);assert.deepEqual(f.calls.map(x=>x.action),['quote','create','create']);assert.equal(f.calls[1].quoteToken,f.calls[2].quoteToken);
   f.handlers.get('form:input')();await f.api.submit(input);assert.equal(f.calls[3].action,'quote');
+});
+test('V2 browser shows authoritative benefits and 665 breakdown before agreeing to single payment',async()=>{
+ const f=browserFixture(true,{pricingModelVersion:2,reservationId:'fixture-reservation',engravingAmount:35,total:665,benefits:[{dogIndex:1,free:true,engravingRequested:true},{dogIndex:2,free:false,engravingRequested:true}]});f.node('perrunAddDog').checked=true;f.node('perrunDogName2').value='Sol';f.node('perrunDogWeight2').value='20';
+ await f.api.submit(body([8,20]));assert.equal(f.node('perrunEngravingPrice').textContent,'$35 MXN');assert.equal(f.node('totalPrice').textContent,'$665 MXN');assert.match(f.messages.at(-1),/Perro 1: beneficio gratuito reservado/);assert.match(f.messages.at(-1),/Perro 2: grabado \$35/);assert.equal(f.calls[1].reservationId,'fixture-reservation');
+});
+test('V2 browser declining final amount creates no Checkout; HTTP failure retains original reservation',async()=>{
+ const declined=browserFixture(false,{pricingModelVersion:2,reservationId:'fixture-reservation',engravingAmount:35,total:485});assert.equal((await declined.api.submit(body())).cancelled,true);assert.deepEqual(declined.calls.map(x=>x.action),['quote']);
+ const f=browserFixture(true,{pricingModelVersion:2,reservationId:'fixture-reservation',engravingAmount:35,total:485});f.context.failCreate=true;await assert.rejects(f.api.submit(body()),/Retry same/);f.context.failCreate=false;await f.api.submit(body());assert.deepEqual(f.calls.map(x=>x.action),['quote','create','create']);assert.equal(f.calls[1].reservationId,f.calls[2].reservationId);assert.equal(f.calls[1].quoteToken,f.calls[2].quoteToken);
 });
 
 for(const weights of [[3,10],[3,25],[25,3],[11,25]])test('Valid S/M pair '+weights.join('+')+' remains one human',()=>{

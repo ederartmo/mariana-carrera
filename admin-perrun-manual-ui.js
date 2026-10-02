@@ -16,11 +16,11 @@
     if (!isPerrun()) return;
     const stage = event.pricing.getCurrentStage(now());
     const fee = second ? event.dogRules.secondDogFee : 0;
-    amount.value = stage.isOpen ? stage.amount + fee : '';
-    document.getElementById('manualPerrunPrice').textContent = stage.isOpen
+    if (!operation?.quote) amount.value = stage.isOpen ? stage.amount + fee : '';
+    if (!operation?.quote) document.getElementById('manualPerrunPrice').textContent = stage.isOpen
       ? `${stage.label}: $${stage.amount} MXN · Segundo perro: +$${event.dogRules.secondDogFee} MXN · Grabado posterior: $${event.dogRules.engravingPaidPrice} por perro si aplica (no está incluido en el total). La elegibilidad gratuita se confirma al guardar.`
       : 'Inscripciones Perrun cerradas.';
-    total.textContent = stage.isOpen ? `Total a registrar: $${amount.value} MXN` : 'Inscripciones cerradas';
+    if (!operation?.quote) total.textContent = stage.isOpen ? `Total a registrar: $${amount.value} MXN` : 'Inscripciones cerradas';
     const selected = dogs.slice(0, second ? 2 : 1);
     const invalidPair = second && selected.some(dog => !Number.isFinite(Number(dog.dog_weight_kg)) || Number(dog.dog_weight_kg) < 3 || Number(dog.dog_weight_kg) > 25);
     const error = document.getElementById('manualPerrunDogError');
@@ -83,6 +83,7 @@
     const signature = JSON.stringify({ buyerEmail: body.buyerEmail, distance: body.distance, tickets: body.tickets, dogs: selected, transferReference: body.transferReference });
     // Preserve identity and displayed amount on an identical retry, even across a tariff boundary.
     if (!operation || operation.signature !== signature) operation = { signature, id: uuid(), total: body.totalAmount };
+    if (operation.quote) operation.total = body.totalAmount;
     return { ...body, dogs: selected, manualPaymentId: operation.id, totalAmount: operation.total };
   }
   function reset() {
@@ -91,5 +92,20 @@
     sync();
   }
   function refreshPrice() { operation = null; update(); }
-  return { isPerrun, sync, payload, reset, update, refreshPrice, setBusy };
+  async function reserve(body, token, request = fetch, confirm = globalThis.confirm) {
+    const response = await request('/api/admin-manual-transfer', { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` }, body: JSON.stringify({ ...body, action: 'quote' }) });
+    const quote = await response.json();
+    if (!response.ok) { if (quote.newAttemptRequired) operation = null; throw new Error(quote.error || 'No se pudo reservar la tarifa.'); }
+    operation.quote = quote;
+    const benefits = (quote.benefits || []).map(d => `Perro ${d.dogIndex}: ${d.free ? 'beneficio gratuito reservado' : d.engravingRequested ? 'grabado $35 MXN' : 'grabado no solicitado'}`).join(' · ');
+    const breakdown = `Inscripción: $${quote.baseAmount} MXN · Segundo perro: $${quote.secondDogFee} MXN · ${benefits} · Grabado: $${quote.engravingAmount} MXN · Total: $${quote.total} MXN`;
+    document.getElementById('manualPerrunPrice').textContent = breakdown;
+    total.textContent = `Total a registrar: $${quote.total} MXN`;
+    // The received amount must not be silently replaced by the quoted amount.
+    if (body.totalAmount !== quote.total) { amount.readOnly = false; throw new Error(breakdown + '. Captura el monto realmente recibido y vuelve a confirmar.'); }
+    if (!confirm(breakdown + '\n¿Confirmas que recibiste exactamente este monto?')) throw new Error('Registro cancelado; no se guardó el pago.');
+    operation.total = quote.total;
+    return { ...body, reservationId: quote.reservationId, quoteToken: quote.quoteToken };
+  }
+  return { isPerrun, sync, payload, reset, update, refreshPrice, setBusy, reserve };
 });

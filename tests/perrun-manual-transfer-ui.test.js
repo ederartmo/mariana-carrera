@@ -79,3 +79,11 @@ test('UX correction keeps save blocked until remaining human fields are valid',(
   assert.equal(x.get('manualPerrunDogError').hidden,true);assert.equal(x.get('saveManualTransferBtn').disabled,true);
   valid=true;x.get('manualTransferForm').handlers.input();assert.equal(x.get('saveManualTransferBtn').disabled,false);
 });
+test('V2 manual quote shows benefits and surcharge, rejects mismatched received amount, confirms exact total',async()=>{
+ const x=fixture();x.select();x.input(0,'dog_name','Dog');x.input(0,'dog_weight_kg','10');
+ const quote={pricingModelVersion:2,baseAmount:450,secondDogFee:0,engravingAmount:35,total:485,reservationId:'fixture-reservation',quoteToken:'fixture-token',benefits:[{dogIndex:1,free:false,engravingRequested:true,surcharge:35}]};
+ const request=async()=>({ok:true,json:async()=>quote});let confirmations=0;
+ let input=x.ui.payload(x.body());await assert.rejects(x.ui.reserve(input,'mock-token',request,()=>{confirmations++;return true;}),/monto realmente recibido/);assert.equal(confirmations,0);assert.equal(x.get('totalAmount').readOnly,false);
+ x.get('totalAmount').value='485';x.ui.update();assert.equal(x.get('totalAmount').value,'485');assert.match(x.get('manualPerrunPrice').textContent,/Grabado: \$35/);
+ input=x.ui.payload(x.body());const result=await x.ui.reserve(input,'mock-token',request,()=>{confirmations++;return true;});assert.equal(result.totalAmount,485);assert.equal(result.reservationId,quote.reservationId);assert.equal(confirmations,1);
+});

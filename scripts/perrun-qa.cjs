@@ -5,6 +5,7 @@ const root=path.resolve(__dirname,'..'),qa=path.join(root,'.qa'),app=path.join(q
 process.chdir(root);
 function load(){
   const env=parseEnv(fs.readFileSync('.env.qa.local','utf8'));
+  if(process.env.PERRUN_PAYMENT_V2==='1')env.PERRUN_PAYMENT_V2='1';
   assert.equal(env.PERRUN_QA_LOCAL,'1','Missing explicit local QA marker');
   const url=new URL(env.SUPABASE_URL);assert.equal(url.hostname,'127.0.0.1');assert.equal(url.port,'55321');
   assert.ok(env.SUPABASE_SERVICE_ROLE_KEY,'Local service credential missing');

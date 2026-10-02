@@ -581,7 +581,7 @@ src="https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1"
                     <p>Categoría por peso: <output id="perrunDogCategory2"></output></p>
                     <label><input id="perrunEngraving2" type="checkbox" disabled /> Solicitar grabado</label>
                   </div>
-                  <p>Los primeros 300 perros con inscripción pagada obtienen grabado gratis. Si al confirmarse tu pago los lugares gratuitos ya se agotaron y solicitaste grabado, podrás adquirirlo posteriormente por $35 MXN. Grabado en este checkout: $0; elegibilidad pendiente de confirmación del pago.</p>
+                  <p id="perrunEngravingCopy">Los primeros 300 perros tienen beneficio de grabado gratuito. Antes de abrir el pago confirmaremos los beneficios disponibles y el importe del grabado solicitado.</p>
                   <p id="perrunSecondFee" hidden>Segundo perro: +$180 MXN</p>
                 </section>
                 <div id="ticketsList" class="tickets-list"></div>
@@ -639,9 +639,9 @@ src="https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1"
 
               <div class="summary-item" id="perrunDogCountRow" hidden><span>Perros</span><strong id="perrunDogCount">1</strong></div>
               <div class="summary-item" id="perrunSecondPriceRow" hidden><span>Segundo perro</span><strong id="perrunSecondPrice"></strong></div>
-              <div class="summary-item" id="perrunEngravingPriceRow" hidden><span>Grabado en este checkout</span><strong>$0 MXN</strong></div>
+              <div class="summary-item" id="perrunEngravingPriceRow" hidden><span>Grabado en este checkout</span><strong id="perrunEngravingPrice">Por confirmar</strong></div>
               <div class="summary-item total">
-                <span>Total</span>
+                <span id="summaryTotalLabel">Total</span>
                 <strong id="totalPrice">$550 MXN</strong>
               </div>
 

@@ -1919,6 +1919,8 @@ src="https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1"
             throw new Error('Sesión no válida, vuelve a iniciar sesión.');
           }
 
+          if (manualPerrunUI.isPerrun()) body = await manualPerrunUI.reserve(body, token);
+
           const response = await fetch('/api/admin-manual-transfer', {
             method: 'POST',
             headers: {

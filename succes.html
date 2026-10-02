@@ -275,7 +275,7 @@ src="https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1"
             renderParticipants(summary);
             if (summary.eventSlug === 'perrun-2027' && Array.isArray(summary.dogs)) {
               const list = document.getElementById('participantsList');
-              list.insertAdjacentHTML('beforeend', '<div class="ticket-card"><p>Base: $' + escapeHtml(summary.baseAmount) + ' MXN · Segundo perro: $' + escapeHtml(String(summary.secondDogFee)) + ' MXN</p><p><strong>Total principal: $' + escapeHtml(summary.total) + ' MXN</strong> · Grabado cobrado: $0 MXN</p></div>');
+              list.insertAdjacentHTML('beforeend', '<div class="ticket-card"><p>Base: $' + escapeHtml(summary.baseAmount) + ' MXN · Segundo perro: $' + escapeHtml(String(summary.secondDogFee)) + ' MXN</p><p><strong>Total principal: $' + escapeHtml(summary.total) + ' MXN</strong> · Grabado cobrado: $' + escapeHtml(String(summary.engravingAmount || 0)) + ' MXN</p></div>');
               list.insertAdjacentHTML('beforeend', summary.dogs.map(dog => '<div class="ticket-card"><p><strong>' + escapeHtml(dog.name) + '</strong> · ' + escapeHtml(dog.category) + '</p><p>' + escapeHtml(dog.engravingStatus) + '</p>' + (typeof window !== 'undefined' && window.KineticHubEngraving ? window.KineticHubEngraving.button(summary.orderSessionId, dog.dogIndex, dog.canPayEngraving) : '') + '</div>').join(''));
             }
           }

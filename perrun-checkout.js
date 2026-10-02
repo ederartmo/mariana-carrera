@@ -40,6 +40,19 @@
       const firstWeight = document.getElementById('perrunDogWeight1');
       let previousWeight = firstWeight.value;
       let cachedQuote = null;
+      let currentAttemptStorageKey = null;
+      // One identity per unchanged form, also shared by tabs/reloads. No personal data is stored.
+      async function attemptFor(key) {
+        const bytes = await root.crypto.subtle.digest('SHA-256', new TextEncoder().encode(key));
+        const storageKey = 'perrun-v2-attempt/' + Array.from(new Uint8Array(bytes), b => b.toString(16).padStart(2, '0')).join('');
+        currentAttemptStorageKey = storageKey;
+        const assign = () => {
+          let id = root.localStorage.getItem(storageKey);
+          if (!id) { id = root.crypto.randomUUID(); root.localStorage.setItem(storageKey, id); }
+          return id;
+        };
+        return root.navigator?.locks ? root.navigator.locks.request(storageKey, assign) : assign();
+      }
       section.hidden = false;
       document.getElementById('perrunCopyFee').textContent = '$'+event.dogRules.secondDogFee+' MXN';
       function updateSummary(baseAmount, quote) {
@@ -52,6 +65,8 @@
         document.getElementById('perrunSecondPriceRow').hidden = !toggle.checked;
         document.getElementById('perrunSecondPrice').textContent = '+$'+fee+' MXN';
         document.getElementById('perrunEngravingPriceRow').hidden = false;
+        document.getElementById('perrunEngravingPrice').textContent = quote ? '$'+(quote.engravingAmount || 0)+' MXN' : 'Por confirmar';
+        document.getElementById('summaryTotalLabel').textContent = quote ? 'Total confirmado' : 'Subtotal · Grabado por confirmar';
         if (quote) document.getElementById('stagePrice').textContent = '$'+quote.baseAmount+' MXN';
         document.getElementById('totalPrice').textContent = '$'+(quote ? quote.total : baseAmount + fee)+' MXN';
       }
@@ -101,7 +116,8 @@
         const response = await fetch('/api/create-checkout-session', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
         const data = await response.json();
         if (!response.ok) {
-          if (response.status === 409 || response.status === 503) cachedQuote = null;
+          // A timeout may follow Stripe creation. Keep the SAME reservation and idempotency key.
+          if (data.newAttemptRequired) { root.localStorage.removeItem(currentAttemptStorageKey); cachedQuote = null; }
           throw new Error(data.error || 'No se pudo preparar el checkout.');
         }
         return data;
@@ -118,11 +134,17 @@
           const body = { ...payload, dogs, promoCode: '' };
           const key = JSON.stringify(body);
           if (!cachedQuote || cachedQuote.key !== key) {
-            const quote = await request({ ...body, action: 'quote' });
-            cachedQuote = { key, token: quote.quoteToken };
+            const quote = await request({ ...body, action: 'quote', attemptId: await attemptFor(key) });
+            cachedQuote = { key, token: quote.quoteToken, reservationId: quote.reservationId, quote };
             updateSummary(quote.baseAmount, quote);
           }
-          return request({ ...body, action: 'create', quoteToken: cachedQuote.token });
+          const quote = cachedQuote.quote;
+          const benefits = (quote.benefits || []).map(d => 'Perro '+d.dogIndex+': '+(d.free ? 'beneficio gratuito reservado' : d.engravingRequested ? 'grabado $35 MXN' : 'grabado no solicitado')).join('\n');
+          if (quote.pricingModelVersion === 2 && !root.confirm('Inscripción: $'+quote.baseAmount+' MXN\nSegundo perro: $'+quote.secondDogFee+' MXN\n'+benefits+'\nGrabado solicitado: $'+quote.engravingAmount+' MXN\nTotal de este único pago: $'+quote.total+' MXN\n\n¿Continuar al pago?')) return { cancelled: true };
+          document.getElementById('perrunEngravingCopy').textContent = quote.pricingModelVersion === 2
+            ? 'El beneficio reservado y el grabado solicitado están incluidos en el total confirmado. No habrá un segundo pago de grabado.'
+            : 'El grabado gratuito se confirma al pagar. Si no aplica, el grabado opcional de $35 MXN se paga posteriormente.';
+          return request({ ...body, action: 'create', reservationId: cachedQuote.reservationId, quoteToken: cachedQuote.token });
         },
       };
     },
