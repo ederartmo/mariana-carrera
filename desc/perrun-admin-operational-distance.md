@@ -42,7 +42,7 @@ distancia actual de inscripciones. Las pruebas de correo usan transporte mock.
 
 ## Publicación pendiente
 
-Aplicar primero la migración principal: ambos backends son compatibles. Publicar después backend/UI nuevos. Sólo tras verificar que todas las instancias usan ocho argumentos, aplicar separadamente 20261003043000_perrun_admin_operational_distance_remove_legacy_rpc.sql. Este cleanup elimina únicamente las dos firmas legacy, sin CASCADE ni cambios de datos. NO incluirlo en un db push general previo al deploy. La principal está aplicada y reconciliada; el cleanup sigue sin aplicar.
+Aplicar primero la migración principal: ambos backends son compatibles. Publicar después backend/UI nuevos. Sólo tras verificar que todas las instancias usan ocho argumentos, aplicar separadamente 20261003042548_perrun_admin_operational_distance_remove_legacy_rpc.sql. Este cleanup elimina únicamente las dos firmas legacy, sin CASCADE ni cambios de datos. NO incluirlo en un db push general previo al deploy. La principal está aplicada y reconciliada; el cleanup sigue sin aplicar.
 
 ## Validación local
 
