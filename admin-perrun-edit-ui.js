@@ -20,7 +20,10 @@
   current=data;const h=data.registration,o=data.order;
   dialog.innerHTML='<form><h2 id="perrunEditTitle">Editar inscripción Perrun</h2><p>No cambia la compra original, pagos, dorsal ni posiciones. No envía correo al guardar.</p><div class="perrun-edit-grid">'
    +ro('BIB',String(h.bib_number||'').padStart(3,'0'))+ro('Distancia',h.distance)+ro('Monto pagado',Number(h.amount_paid).toFixed(2)+' MXN')+ro('Origen de pago',o.payment_source||'stripe')+ro('Cantidad de perros',h.dogs.length)+ro('Teléfono original de compra',o.owner_phone)
-   +(h.production_status==='closed'?ro('Número de producción',String(h.production_number).padStart(3,'0')):'')+'</div>'
+   +'</div><fieldset><legend>Producción</legend><div class="perrun-edit-grid">'
+   +ro('Estado de producción',h.production_status==='closed'?'Producción cerrada':h.production_status==='not_produced'?'Pendiente de producción':'No disponible')
+   +ro('Lote',h.production_status==='closed'?h.production_batch_id:null)
+   +ro('Número de producción',h.production_status==='closed'&&h.production_number!=null?String(h.production_number).padStart(3,'0'):null)+'</div></fieldset>'
    +(h.production_status==='closed'?'<p class="warning">Esta inscripción ya pertenece a un lote de producción cerrado. Las correcciones actuales no modificarán los datos que ya fueron enviados a producción.</p>':'')+'<fieldset><legend>Participante</legend><div class="perrun-edit-grid">'
    +field('fullName','Nombre completo',h.full_name,'text','required maxlength="80" minlength="3"')+field('email','Correo',h.email,'email','required maxlength="254"')
    +'<label>Talla<select name="shirtSize">'+opts(['XS','S','M','L','XL','XXL','XXXL'],h.shirt_size)+'</select></label>'
