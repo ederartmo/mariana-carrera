@@ -207,14 +207,7 @@ test('Browser retries identical payload with same quote, invalidates quote after
   const f=browserFixture(),input=body();await f.api.submit(input);await f.api.submit(input);assert.deepEqual(f.calls.map(x=>x.action),['quote','create','create']);assert.equal(f.calls[1].quoteToken,f.calls[2].quoteToken);
   f.handlers.get('form:input')();await f.api.submit(input);assert.equal(f.calls[3].action,'quote');
 });
-test('V2 browser shows authoritative benefits and 665 breakdown before agreeing to single payment',async()=>{
- const f=browserFixture(true,{pricingModelVersion:2,reservationId:'fixture-reservation',engravingAmount:35,total:665,benefits:[{dogIndex:1,free:true,engravingRequested:true},{dogIndex:2,free:false,engravingRequested:true}]});f.node('perrunAddDog').checked=true;f.node('perrunDogName2').value='Sol';f.node('perrunDogWeight2').value='20';
- await f.api.submit(body([8,20]));assert.equal(f.node('perrunEngravingPrice').textContent,'$35 MXN');assert.equal(f.node('totalPrice').textContent,'$665 MXN');assert.match(f.messages.at(-1),/Perro 1: beneficio gratuito reservado/);assert.match(f.messages.at(-1),/Perro 2: grabado \$35/);assert.equal(f.calls[1].reservationId,'fixture-reservation');
-});
-test('V2 browser declining final amount creates no Checkout; HTTP failure retains original reservation',async()=>{
- const declined=browserFixture(false,{pricingModelVersion:2,reservationId:'fixture-reservation',engravingAmount:35,total:485});assert.equal((await declined.api.submit(body())).cancelled,true);assert.deepEqual(declined.calls.map(x=>x.action),['quote']);
- const f=browserFixture(true,{pricingModelVersion:2,reservationId:'fixture-reservation',engravingAmount:35,total:485});f.context.failCreate=true;await assert.rejects(f.api.submit(body()),/Retry same/);f.context.failCreate=false;await f.api.submit(body());assert.deepEqual(f.calls.map(x=>x.action),['quote','create','create']);assert.equal(f.calls[1].reservationId,f.calls[2].reservationId);assert.equal(f.calls[1].quoteToken,f.calls[2].quoteToken);
-});
+// V2 price acceptance contracts now live in perrun-payment-v2-ux.test.js.
 
 for(const weights of [[3,10],[3,25],[25,3],[11,25]])test('Valid S/M pair '+weights.join('+')+' remains one human',()=>{
   const payload=helper.normalizePerrunPayload(body(weights));assert.equal(payload.dogs.length,2);assert.equal(helper.priceFor(payload,now).total,630);

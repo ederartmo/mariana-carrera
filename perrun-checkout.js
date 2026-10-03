@@ -40,6 +40,44 @@
       const firstWeight = document.getElementById('perrunDogWeight1');
       let previousWeight = firstWeight.value;
       let cachedQuote = null;
+      let displayedAmountCents = null;
+      const cents = value => {
+        const amount = typeof value === 'number' ? value * 100 : NaN;
+        if (!Number.isFinite(amount) || amount < 0 || !Number.isSafeInteger(Math.round(amount)) || Math.abs(amount - Math.round(amount)) > 0.000001) throw new Error('El checkout devolvió un importe inconsistente. Reintenta.');
+        return Math.round(amount);
+      };
+      const money = value => '$'+(value / 100).toLocaleString('es-MX', {maximumFractionDigits:2})+' MXN';
+      function validateQuote(quote, dogs) {
+        const finalAmountCents = cents(quote.total);
+        const base = cents(quote.baseAmount), second = cents(quote.secondDogFee), engraving = cents(quote.engravingAmount);
+        if (finalAmountCents <= 0 || base + second + engraving !== finalAmountCents || quote.currency !== 'MXN' || quote.dogCount !== dogs.length || quote.ticketCount !== 1 || !quote.reservationId || !quote.quoteToken || !Array.isArray(quote.benefits) || quote.benefits.length !== dogs.length) throw new Error('La cotización recibida es inconsistente. Reintenta.');
+        let surcharge = 0;
+        quote.benefits.forEach((benefit, index) => {
+          const charge = cents(benefit.surcharge);
+          if (benefit.dogIndex !== index + 1 || typeof benefit.free !== 'boolean' || benefit.engravingRequested !== dogs[index].engraving_requested || ((benefit.free || !benefit.engravingRequested) && charge !== 0)) throw new Error('Los beneficios recibidos son inconsistentes. Reintenta.');
+          surcharge += charge;
+        });
+        if (surcharge !== engraving) throw new Error('El desglose recibido es inconsistente. Reintenta.');
+        return finalAmountCents;
+      }
+      function acceptIncrease(quote) {
+        return new Promise(resolve => {
+          const dialog = document.createElement('dialog');
+          dialog.className = 'perrun-price-dialog';
+          dialog.setAttribute('aria-labelledby', 'perrunPriceTitle');
+          const rows = [['Inscripción + 1 perro', cents(quote.baseAmount)]];
+          if (quote.secondDogFee) rows.push(['Segundo perro', cents(quote.secondDogFee)]);
+          quote.benefits.forEach(d => rows.push(['Grabado perro '+d.dogIndex, cents(d.surcharge)]));
+          dialog.innerHTML = '<h2 id="perrunPriceTitle">Revisa el total final</h2><p>El total cambió porque uno o más grabados ya no tienen beneficio gratuito.</p><dl>'+rows.map(([label, value]) => '<div><dt>'+label+'</dt><dd>'+money(value)+'</dd></div>').join('')+'</dl><p class="perrun-price-total">Total final <strong>'+money(cents(quote.total))+'</strong></p><div class="perrun-price-actions"><button type="button" data-price-accept>Aceptar y pagar '+money(cents(quote.total))+'</button><button type="button" data-price-back>Volver</button></div>';
+          const finish = accepted => { dialog.close(); dialog.remove(); resolve(accepted); };
+          dialog.querySelector('[data-price-accept]').onclick = () => finish(true);
+          dialog.querySelector('[data-price-back]').onclick = () => finish(false);
+          dialog.addEventListener('cancel', e => { e.preventDefault(); finish(false); });
+          document.body.appendChild(dialog);
+          dialog.showModal();
+          dialog.querySelector('[data-price-back]').focus();
+        });
+      }
       let currentAttemptStorageKey = null;
       // One identity per unchanged form, also shared by tabs/reloads. No personal data is stored.
       async function attemptFor(key) {
@@ -65,10 +103,11 @@
         document.getElementById('perrunSecondPriceRow').hidden = !toggle.checked;
         document.getElementById('perrunSecondPrice').textContent = '+$'+fee+' MXN';
         document.getElementById('perrunEngravingPriceRow').hidden = false;
-        document.getElementById('perrunEngravingPrice').textContent = quote ? '$'+(quote.engravingAmount || 0)+' MXN' : 'Por confirmar';
+        document.getElementById('perrunEngravingPrice').textContent = quote ? (quote.pricingModelVersion === 2 && !quote.engravingAmount && quote.benefits?.some(d => d.free && d.engravingRequested) ? 'Beneficio gratuito reservado' : '$'+(quote.engravingAmount || 0)+' MXN') : 'Por confirmar';
         document.getElementById('summaryTotalLabel').textContent = quote ? 'Total confirmado' : 'Subtotal · Grabado por confirmar';
         if (quote) document.getElementById('stagePrice').textContent = '$'+quote.baseAmount+' MXN';
         document.getElementById('totalPrice').textContent = '$'+(quote ? quote.total : baseAmount + fee)+' MXN';
+        displayedAmountCents = cents(quote ? quote.total : baseAmount + fee);
       }
       function dog(index) {
         return { dog_name: document.getElementById('perrunDogName' + index).value.trim(),
@@ -127,6 +166,7 @@
         secondDogFee: () => toggle.checked ? event.dogRules.secondDogFee : 0,
         refresh,
         async submit(payload) {
+          const provisionalAmountCents = displayedAmountCents;
           const dogs = toggle.checked ? [dog(1), dog(2)] : [dog(1)];
           if (dogs.some(item => !item.dog_name)) throw new Error('Captura el nombre de cada perro.');
           event.validateDistance(payload.distance);
@@ -135,16 +175,27 @@
           const key = JSON.stringify(body);
           if (!cachedQuote || cachedQuote.key !== key) {
             const quote = await request({ ...body, action: 'quote', attemptId: await attemptFor(key) });
+            if (quote.pricingModelVersion === 2) validateQuote(quote, dogs);
             cachedQuote = { key, token: quote.quoteToken, reservationId: quote.reservationId, quote };
             updateSummary(quote.baseAmount, quote);
           }
           const quote = cachedQuote.quote;
-          const benefits = (quote.benefits || []).map(d => 'Perro '+d.dogIndex+': '+(d.free ? 'beneficio gratuito reservado' : d.engravingRequested ? 'grabado $35 MXN' : 'grabado no solicitado')).join('\n');
-          if (quote.pricingModelVersion === 2 && !root.confirm('Inscripción: $'+quote.baseAmount+' MXN\nSegundo perro: $'+quote.secondDogFee+' MXN\n'+benefits+'\nGrabado solicitado: $'+quote.engravingAmount+' MXN\nTotal de este único pago: $'+quote.total+' MXN\n\n¿Continuar al pago?')) return { cancelled: true };
+          if (quote.pricingModelVersion === 2) {
+            const finalAmountCents = validateQuote(quote, dogs);
+            if (!Number.isSafeInteger(provisionalAmountCents)) throw new Error('No se pudo verificar el subtotal. Reintenta.');
+            // A cancelled increase stays unaccepted even when the updated summary shows the final price.
+            if ((finalAmountCents > provisionalAmountCents || cachedQuote.needsAcceptance) && !cachedQuote.accepted) {
+              cachedQuote.needsAcceptance = true;
+              if (!await acceptIncrease(quote)) return { cancelled: true };
+              cachedQuote.accepted = true;
+            }
+          }
           document.getElementById('perrunEngravingCopy').textContent = quote.pricingModelVersion === 2
             ? 'El beneficio reservado y el grabado solicitado están incluidos en el total confirmado. No habrá un segundo pago de grabado.'
             : 'El grabado gratuito se confirma al pagar. Si no aplica, el grabado opcional de $35 MXN se paga posteriormente.';
-          return request({ ...body, action: 'create', reservationId: cachedQuote.reservationId, quoteToken: cachedQuote.token });
+          const result = await request({ ...body, action: 'create', reservationId: cachedQuote.reservationId, quoteToken: cachedQuote.token });
+          if (quote.pricingModelVersion === 2 && !result.refresh && (cents(result.total) !== cents(quote.total) || !/^https:\/\/checkout\.stripe\.com\//.test(result.url || ''))) throw new Error('La respuesta de pago es inconsistente. Reintenta la misma operación.');
+          return result;
         },
       };
     },
