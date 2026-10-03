@@ -1092,7 +1092,7 @@ src="https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1"
         '<p>' + escapeHtml(dog.engraving_status) + '</p><p>Secuencia: ' + escapeHtml(dog.engraving_sequence) + '</p>' +
         '<p>Solicitado: ' + (dog.engraving_requested ? 'Sí' : 'No') + ' · Gratis: ' + (dog.engraving_free ? 'Sí' : 'No') + ' · Pago requerido: ' + (dog.engraving_payment_required ? 'Sí' : 'No') + '</p>' +
         '<p>Importe grabado: $' + (Number(dog.engraving_payment_amount) / 100).toFixed(2) + ' MXN · ' + escapeHtml(dog.engraving_payment_status) + '</p>' +
-        '<p>Placa: ' + escapeHtml(dog.plate_status) + '</p></details>').join('') + '<span class="cell-muted">Edición/anulación legacy no habilitada para Perrun.</span>';
+        '<p>Placa: ' + escapeHtml(dog.plate_status) + '</p></details>').join('');
     }
 
     function renderPaidInscriptions(rows) {
