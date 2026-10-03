@@ -783,6 +783,11 @@ src="https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1"
       </div>
     </section>
 
+    <section class="admin-card" aria-labelledby="perrunProductionTitle">
+      <div class="admin-card-header"><h2 id="perrunProductionTitle">Producción Perrun</h2></div>
+      <div id="perrunProductionPanel"></div>
+    </section>
+
     <section id="resendEmailsSection" class="admin-card is-collapsed">
       <div class="admin-card-header">
         <div>
@@ -864,6 +869,7 @@ src="https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1"
   <script src="perrun-stage-config.js?v=__ASSET_VERSION__"></script>
   <script src="perrun-event-data.js?v=__ASSET_VERSION__"></script>
   <script src="admin-perrun-edit-ui.js?v=__ASSET_VERSION__"></script>
+  <script src="admin-perrun-production-ui.js?v=__ASSET_VERSION__"></script>
   <script src="admin-perrun-manual-ui.js?v=__ASSET_VERSION__"></script>
   <script src="supabase-client.js?v=__ASSET_VERSION__"></script>
 
@@ -2548,6 +2554,8 @@ src="https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1"
         setupParticipantModal(client);
         window.createPerrunEditUI({document, getToken:async()=>{const {data:{session}}=await client.auth.getSession();return session?.access_token;},
           refresh:()=>loadPaidInscriptions(client,statusFilter?.value||'all')});
+        window.createPerrunProductionUI({document,root:document.getElementById('perrunProductionPanel'),
+          getToken:async()=>{const {data:{session}}=await client.auth.getSession();return session?.access_token;}});
         setupDeleteActions(client);
         console.log('[Admin] setup functions done, loading inscriptions...');
         await loadPaidInscriptions(client, statusFilter?.value || "all");

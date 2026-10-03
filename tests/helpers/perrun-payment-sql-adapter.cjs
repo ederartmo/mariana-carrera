@@ -13,7 +13,7 @@ function sqlAdapter(db, calls=[]) {
       catch(error){return {data:null,error:{code:error.code,message:error.message}};}
     },
     from(table){
-      assert.ok(['perrun_checkout_orders','registration_dogs','inscripciones','perrun_engraving_payments','perrun_checkout_reservations'].includes(table));
+      assert.ok(['perrun_checkout_orders','registration_dogs','inscripciones','perrun_engraving_payments','perrun_checkout_reservations','perrun_production_items'].includes(table));
       let fields='*',payload=null,pendingEmail=false;const filters=[];
       const q={
         select(s){fields=s;return q;},update(p){payload=p;return q;},
