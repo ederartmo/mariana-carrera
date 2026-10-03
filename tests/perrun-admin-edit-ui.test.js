@@ -1,14 +1,32 @@
 'use strict';
 const test=require('node:test'),assert=require('node:assert/strict');const create=require('../admin-perrun-edit-ui');
+
+test('Editable data, reason and buttons precede default-collapsed historical information',()=>{
+ const x=fixture(),html=x.dialog.innerHTML,history=html.indexOf('<details');
+ for(const name of ['distance','fullName','email','shirtSize','birthDate','whatsapp','state','borough','dogName0','dogWeight0','reason'])assert.ok(html.indexOf('name="'+name+'"')<history);
+ assert.ok(html.indexOf('</footer>')<history);
+ assert.match(html,/<details class="perrun-edit-history"><summary>Ver información del registro/);
+ assert.doesNotMatch(html,/<details[^>]*\bopen\b/);
+ const body=html.slice(history);assert.doesNotMatch(body,/<input|<select|<textarea/);
+ for(const label of ['BIB','Monto pagado','Origen de pago','Cantidad de perros','Teléfono original de compra','Estado de producción','Lote','Número de producción','Posición de grabado','Estado de grabado','Estado de placa','Nombre impreso','Teléfono impreso','Inicio de placa'])assert.ok(body.includes('aria-label="'+label+'"'));
+ assert.doesNotMatch(html,/name="bib_number"/);
+});
+test('Automatic category responds to weight without adding anything to the payload',async()=>{
+ const x=fixture();for(const [weight,category] of [[8,'S'],[20,'M'],[35,'L'],[60,'XL'],[81,'—']]){x.elements.dogWeight0.value=String(weight);x.elements.dogWeight0.listeners.input();assert.equal(x.category.textContent,category);}
+ x.elements.dogWeight0.value='20';x.elements.reason.value='Corrección ficticia';await x.form.onsubmit({preventDefault(){}});assert.deepEqual(x.sent.dogs,[{id:'dog-fixture',name:'Luna',weightKg:20}]);assert.equal(x.sent.expectedRevision,2);
+});
+test('Mobile layout is one column with wrapping history and comfortable action buttons',()=>{
+ const x=fixture();assert.match(x.style.textContent,/@media\(max-width:480px\)/);assert.match(x.style.textContent,/grid-template-columns:1fr/);assert.match(x.style.textContent,/overflow-wrap:anywhere/);assert.match(x.style.textContent,/footer button\{flex:1 1 140px/);assert.match(x.style.textContent,/button\{min-height:44px/);
+});
 function fixture({source='stripe',plate='preparing',started='2026-10-02T12:00:00Z',payment='pending'}={}){
- const field=()=>({value:'',addEventListener(){}});const elements=Object.fromEntries(['distance','state','borough','dogWeight0','dogCategory0','fullName','email','shirtSize','birthDate','whatsapp','reason','dogName0'].map(k=>[k,field()]));elements.distance.value='3K';elements.state.value='Jalisco';elements.borough.disabled=true;
- const submit={disabled:false},cancel={},feedback={};const form={elements,reportValidity:()=>true,querySelector:()=>submit};
- const dialog={setAttribute(){},addEventListener(){},close(){},querySelector:s=>s==='form'?form:s==='[data-cancel]'?cancel:feedback};const style={};const doc={body:{appendChild(){}},head:{appendChild(){}},createElement:t=>t==='dialog'?dialog:style,addEventListener(){}};let sent;
- const ui=create({document:doc,getToken:async()=> 'synthetic',refresh:async()=>{},fetch:async(url,options)=>{sent=JSON.parse(options.body);return {ok:true,json:async()=>({ok:true})};},catalog:{STATES:['Jalisco'],CDMX_BOROUGHS:[],isCdmxState:()=>false},event:{categoryForWeight:()=> 'S'}});
+ const field=()=>({value:'',listeners:{},addEventListener(t,fn){this.listeners[t]=fn;}});const elements=Object.fromEntries(['distance','state','borough','dogWeight0','dogCategory0','fullName','email','shirtSize','birthDate','whatsapp','reason','dogName0'].map(k=>[k,field()]));elements.distance.value='3K';elements.state.value='Jalisco';elements.borough.disabled=true;
+ const submit={disabled:false},cancel={},feedback={},category={textContent:"S"};const form={elements,reportValidity:()=>true,querySelector:()=>submit};
+ const dialog={setAttribute(){},addEventListener(){},close(){},querySelector:s=>s==='form'?form:s==='[data-cancel]'?cancel:s.startsWith('[data-dog-category=')?category:feedback};const style={};const doc={body:{appendChild(){}},head:{appendChild(){}},createElement:t=>t==='dialog'?dialog:style,addEventListener(){}};let sent;
+ const ui=create({document:doc,getToken:async()=> 'synthetic',refresh:async()=>{},fetch:async(url,options)=>{sent=JSON.parse(options.body);return {ok:true,json:async()=>({ok:true})};},catalog:{STATES:['Jalisco'],CDMX_BOROUGHS:[],isCdmxState:()=>false},event:{categoryForWeight:w=>{if(w<3||w>80)throw Error('Invalid');return w<=10?'S':w<=25?'M':w<=50?'L':'XL';}}});
  const data={expectedRevision:2,order:{order_session_id:'cs_test_ui',payment_source:source,owner_phone:'+525512345678'},registration:{bib_number:'004',distance:'3K',amount_paid:450,full_name:'Test Owner',email:'test@example.invalid',shirt_size:'M',birth_date:'1995-02-28',whatsapp:'+525512345678',state:'Jalisco',borough:null,dogs:[{id:'dog-fixture',dog_name:'Luna',weight_kg:8,category:'S',plate_status:plate,plate_started_at:started,engraving_sequence:301,engraving_requested:true,engraving_free:false,engraving_payment_required:true,engraving_payment_status:payment,engraving_status:'Grabado solicitado · Pago pendiente $35 MXN',dog_name_for_plate:'Luna',owner_phone_for_plate:'+525512345678'}]}};
- ui.render(data);return {dialog,style,form,elements,data,ui,get sent(){return sent;}};
+ ui.render(data);return {dialog,style,form,elements,data,ui,category,get sent(){return sent;}};
 }
-test('Readonly data render as wrapping outputs with explicit label; category remains readonly',()=>{const x=fixture();assert.match(x.dialog.innerHTML,/Solo lectura/);assert.match(x.dialog.innerHTML,/<output class="readonly" aria-label="Estado de grabado">Grabado solicitado · Pago pendiente \$35 MXN<\/output>/);assert.match(x.dialog.innerHTML,/name="dogCategory0"[^>]*readonly/);assert.match(x.style.textContent,/white-space:normal/);assert.match(x.style.textContent,/overflow-wrap:anywhere/);assert.match(x.style.textContent,/cursor:not-allowed/);});
+test('Historical data render as wrapping outputs; category is compact automatic text',()=>{const x=fixture();assert.match(x.dialog.innerHTML,/Solo lectura/);assert.match(x.dialog.innerHTML,/<output class="readonly" aria-label="Estado de grabado">Grabado solicitado · Pago pendiente \$35 MXN<\/output>/);assert.match(x.dialog.innerHTML,/Categoría automática: <output data-dog-category="0" aria-live="polite">S<\/output>/);assert.doesNotMatch(x.dialog.innerHTML,/name="dogCategory/);assert.match(x.style.textContent,/white-space:normal/);assert.match(x.style.textContent,/overflow-wrap:anywhere/);assert.match(x.style.textContent,/cursor:not-allowed/);});
 for(const [source,label] of [['stripe','Stripe'],['manual_transfer','Transferencia']])test('Payment source presentation '+source,()=>{const x=fixture({source});assert.ok(x.dialog.innerHTML.includes('aria-label="Origen de pago">'+label+'</output>'));assert.equal(x.data.order.payment_source,source);});
 for(const [plate,label] of [['preparing','En preparación'],['engraved','Grabada'],['not_started','No iniciada'],['skipped','Omitida']])test('Plate presentation '+plate,()=>{const x=fixture({plate});assert.ok(x.dialog.innerHTML.includes('aria-label="Estado de placa">'+label+'</output>'));assert.equal(x.data.registration.dogs[0].plate_status,plate);});
 for(const [payment,label] of [['free','Gratis'],['pending','Pendiente'],['paid','Pagado'],['refunded','Reembolsado']])test('Engraving payment presentation '+payment,()=>{const x=fixture({payment});assert.ok(x.dialog.innerHTML.includes('aria-label="Pago de grabado">'+label+'</output>'));assert.equal(x.data.registration.dogs[0].engraving_payment_status,payment);});
