@@ -868,6 +868,7 @@ src="https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1"
   <script src="location-catalog.js?v=__ASSET_VERSION__"></script>
   <script src="perrun-stage-config.js?v=__ASSET_VERSION__"></script>
   <script src="perrun-event-data.js?v=__ASSET_VERSION__"></script>
+  <script src="admin-perrun-annul-ui.js?v=__ASSET_VERSION__"></script>
   <script src="admin-perrun-edit-ui.js?v=__ASSET_VERSION__"></script>
   <script src="admin-perrun-production-ui.js?v=__ASSET_VERSION__"></script>
   <script src="admin-perrun-manual-ui.js?v=__ASSET_VERSION__"></script>
@@ -991,7 +992,7 @@ src="https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1"
     }
 
     function buildCancelRegistrationButton(row) {
-      if (row.event_slug === 'perrun-2027') return '';
+      if (row.event_slug === 'perrun-2027') return row.registration_status === 'active' && ['paid','paid_no_email'].includes(row.payment_status) ? '<button type="button" class="btn-cancel-registration" data-perrun-annul-order="'+escapeHtml(row.order_session_id)+'">Anular participación</button>' : '';
       if (row.registration_status === 'cancelled') return '';
       const paymentStatus = String(row.payment_status || '').trim();
       if (!['paid', 'paid_no_email'].includes(paymentStatus)) return '';
@@ -1159,7 +1160,7 @@ src="https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1"
             <td>${renderPerrunDogs(row)}</td>
             <td><span class="truncate" title="${escapeHtml(row.buyer_email || row.email || '')}">${row.buyer_email || row.email || '-'}</span></td>
             <td>${row.registration_status === 'cancelled'
-              ? '<strong style="color:#ffb454;">Anulada</strong><span class="cell-muted">' + escapeHtml(cancellationTypeLabel(row.cancellation_type) || 'Sin clasificar') + ' · Pago: ' + escapeHtml(paymentStatusLabel(row.payment_status)) + '</span>'
+              ? '<strong style="color:#ffb454;">Anulada</strong><span class="cell-muted">' + escapeHtml(row.event_slug === 'perrun-2027' ? 'Participación anulada' : cancellationTypeLabel(row.cancellation_type) || 'Sin clasificar') + (row.event_slug === 'perrun-2027' ? ' · ' + escapeHtml(row.cancelled_at ? new Intl.DateTimeFormat('es-MX',{dateStyle:'medium',timeStyle:'short'}).format(new Date(row.cancelled_at)) : '') + ' · ' + escapeHtml(row.cancellation_reason || '') : '') + ' · Pago: ' + escapeHtml(paymentStatusLabel(row.payment_status)) + '</span>'
               : row.registration_status === 'archived'
                 ? '<strong style="color:#9fb1c5;">Archivada</strong><span class="cell-muted">Pago: ' + escapeHtml(paymentStatusLabel(row.payment_status)) + (row.archive_reason ? ' · ' + escapeHtml(row.archive_reason) : '') + '</span>'
                 : escapeHtml(paymentStatusLabel(row.payment_status))}</td>
@@ -2552,6 +2553,7 @@ src="https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1"
         setupDashboardControls(client);
         setupManualTransferForm(client);
         setupParticipantModal(client);
+        window.createPerrunAnnulUI({document,getToken:async()=>{const {data:{session}}=await client.auth.getSession();return session?.access_token;},refresh:()=>loadPaidInscriptions(client,statusFilter?.value||'all')});
         window.createPerrunEditUI({document, getToken:async()=>{const {data:{session}}=await client.auth.getSession();return session?.access_token;},
           refresh:()=>loadPaidInscriptions(client,statusFilter?.value||'all')});
         window.createPerrunProductionUI({document,root:document.getElementById('perrunProductionPanel'),

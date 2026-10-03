@@ -7,6 +7,7 @@
 
 const ACTIONS = {
   'admin-perrun-production': require('../lib/admin-perrun-production'),
+  'admin-perrun-annul': require('../lib/admin-perrun-annul'),
   'admin-perrun-registration': require('../lib/admin-perrun-registration'),
   'admin-export-perrun': require('../lib/admin-export-perrun'),
   'me-registrations': require('../lib/me-registrations'),
