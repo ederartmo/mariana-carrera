@@ -20,7 +20,7 @@ Public wrapper SECURITY INVOKER delegates to a private SECURITY DEFINER implemen
 
 The RPC locks order -> human -> dogs (dog_index) -> engraving payments (id), validates the complete correction, atomically updates current participant identity and dog name/weight/category, increments revision and appends old/new audit JSON. Stale expectedRevision produces HTTP 409 and requires reopening/reloading. Any validation, constraint or audit failure rolls back everything.
 
-Dog identities/count, distance, BIB, payment/source, price, engraving request/sequence/free/payment amounts and plate state/snapshots are not writable inputs. Two dogs must both remain <=25kg. A name changes only while plate_status=not_started and plate_started_at is null. Weight/category may still be corrected afterwards without changing the historical plate.
+Dog identities/count, BIB, payment/source, price, engraving request/sequence/free/payment amounts and plate state/snapshots are not writable inputs. V1 keeps distance readonly; the separate local operational-distance patch permits editing only inscripciones.distance while preserving perrun_checkout_orders.distance (see perrun-admin-operational-distance.md). Two dogs must both remain <=25kg. A name changes only while plate_status=not_started and plate_started_at is null. Weight/category may still be corrected afterwards without changing the historical plate.
 
 Plate preparation already holds a dog row lock when its trigger runs. Parent lock uses NOWAIT to avoid a cycle against the admin hierarchy; competing direct plate preparation gets PostgreSQL 55P03 and must retry. A future plate RPC should acquire order -> human -> dog before its UPDATE. Tests cover both acquisition orders.
 

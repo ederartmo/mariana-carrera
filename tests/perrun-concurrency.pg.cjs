@@ -173,6 +173,7 @@ async function legacyModernTests(){
   if(process.argv.includes('--admin-edit'))await require('./perrun-admin-edit-native.cjs')({admin,a,b,check,blockedBy,evidence});
   if(process.argv.includes('--payment-v2'))await require('./perrun-payment-v2-native.cjs')({admin,a,b,check,blockedBy,evidence});
   if(process.argv.includes('--production'))await require('./perrun-production-native.cjs')({admin,a,b,check,blockedBy,evidence});
+  if(process.argv.includes('--admin-distance'))await require('./perrun-admin-distance-native.cjs')({admin,a,b,check,blockedBy,evidence});
   evidence.migrationSHA256=crypto.createHash('sha256').update(migration).digest('hex');
   evidence.result='PASS';console.log('NATIVE_POSTGRES_PASS='+evidence.checks.length);console.log('CONCURRENT_SCENARIO_RUNS='+evidence.concurrency.length);
 })().catch(error=>{evidence.result='FAIL';evidence.error=error.message;console.error('FAIL '+error.message);process.exitCode=1;}).finally(async()=>{

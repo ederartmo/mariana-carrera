@@ -19,7 +19,7 @@
  function render(data){
   current=data;const h=data.registration,o=data.order;
   dialog.innerHTML='<form><h2 id="perrunEditTitle">Editar inscripción Perrun</h2><p>No cambia la compra original, pagos, dorsal ni posiciones. No envía correo al guardar.</p><div class="perrun-edit-grid">'
-   +ro('BIB',String(h.bib_number||'').padStart(3,'0'))+ro('Distancia',h.distance)+ro('Monto pagado',Number(h.amount_paid).toFixed(2)+' MXN')+ro('Origen de pago',o.payment_source||'stripe')+ro('Cantidad de perros',h.dogs.length)+ro('Teléfono original de compra',o.owner_phone)
+   +ro('BIB',String(h.bib_number||'').padStart(3,'0'))+'<label><span>Distancia</span><select name="distance">'+opts(['1K','3K','5K'],h.distance)+'</select></label>'+ro('Monto pagado',Number(h.amount_paid).toFixed(2)+' MXN')+ro('Origen de pago',o.payment_source||'stripe')+ro('Cantidad de perros',h.dogs.length)+ro('Teléfono original de compra',o.owner_phone)
    +'</div><fieldset><legend>Producción</legend><div class="perrun-edit-grid">'
    +ro('Estado de producción',h.production_status==='closed'?'Producción cerrada':h.production_status==='not_produced'?'Pendiente de producción':'No disponible')
    +ro('Lote',h.production_status==='closed'?h.production_batch_id:null)
@@ -42,7 +42,7 @@
   h.dogs.forEach((d,i)=>f['dogWeight'+i].addEventListener('input',()=>{try{f['dogCategory'+i].value=event.categoryForWeight(Number(f['dogWeight'+i].value));}catch{f['dogCategory'+i].value='—';}}));
   dialog.querySelector('[data-cancel]').onclick=()=>{if(!busy){generation++;dialog.close();}};
   form.onsubmit=async e=>{e.preventDefault();if(busy||!form.reportValidity())return;busy=true;form.querySelector('button[type="submit"]').disabled=true;
-   const payload={orderSessionId:o.order_session_id,expectedRevision:current.expectedRevision,reason:f.reason.value,
+   const payload={orderSessionId:o.order_session_id,expectedRevision:current.expectedRevision,distance:f.distance.value,reason:f.reason.value,
     participant:Object.fromEntries(['fullName','email','shirtSize','birthDate','whatsapp','state'].map(k=>[k,f[k].value])),dogs:h.dogs.map((d,i)=>({id:d.id,name:locked(d)?d.dog_name:f['dogName'+i].value,weightKg:Number(f['dogWeight'+i].value)}))};payload.participant.borough=f.borough.disabled?null:f.borough.value;
    try{await call('POST',payload);dialog.close();await refresh();}catch(error){dialog.querySelector('.feedback').textContent=error.message;}finally{busy=false;form.querySelector('button[type="submit"]').disabled=false;}
   };
