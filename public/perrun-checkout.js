@@ -1,6 +1,7 @@
 (function (root) {
   'use strict';
   function birthISO(day, month, year, now = new Date()) {
+    if (root.KineticHubBirthDate?.birthISO) return root.KineticHubBirthDate.birthISO(day, month, year, now);
     if (!/^\d{4}$/.test(String(year)) || !/^\d{1,2}$/.test(String(day)) || !/^\d{1,2}$/.test(String(month))) return '';
     const y = Number(year), m = Number(month), d = Number(day);
     const date = new Date(Date.UTC(y, m - 1, d));

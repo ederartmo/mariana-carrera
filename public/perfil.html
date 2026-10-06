@@ -184,7 +184,14 @@ src="https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1"
                   </div>
                   <div class="profile-field">
                     <label for="pfNacimiento">Fecha de nacimiento</label>
-                    <input id="pfNacimiento" name="nacimiento" type="date" />
+                    <div class="kh-birth-date" data-birth-group>
+                      <div class="kh-birth-date-parts">
+                        <label>Día<input aria-label="Día de nacimiento" type="number" min="1" max="31" placeholder="DD" autocomplete="bday-day" data-birth-part="day" /></label>
+                        <label>Mes<select aria-label="Mes de nacimiento" autocomplete="bday-month" data-birth-part="month"><option value="">Mes</option><option value="1">Enero</option><option value="2">Febrero</option><option value="3">Marzo</option><option value="4">Abril</option><option value="5">Mayo</option><option value="6">Junio</option><option value="7">Julio</option><option value="8">Agosto</option><option value="9">Septiembre</option><option value="10">Octubre</option><option value="11">Noviembre</option><option value="12">Diciembre</option></select></label>
+                        <label>Año<input aria-label="Año de nacimiento" type="text" inputmode="numeric" maxlength="4" pattern="[0-9]{4}" placeholder="AAAA" autocomplete="bday-year" data-birth-part="year" /></label>
+                      </div>
+                      <input id="pfNacimiento" name="nacimiento" type="hidden" data-birth-value />
+                    </div>
                   </div>
                 </div>
 
@@ -438,6 +445,7 @@ src="https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1"
     <script src="storage-upload.js?v=PERRUN_RC"></script>
     <script src="supabase-client.js?v=PERRUN_RC"></script>
     <script src="perrun-engraving-ui.js?v=PERRUN_RC"></script>
+    <script src="birth-date.js?v=PERRUN_RC"></script>
     <script src="script.min.js?v=PERRUN_RC"></script>
   </body>
 </html>

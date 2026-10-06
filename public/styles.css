@@ -4919,6 +4919,24 @@ body[data-page="series"] .page-hero .container {
   font-family: "Inter", "Manrope", sans-serif;
 }
 
+.kh-birth-date { min-width: 0; }
+.kh-birth-date-parts { display: grid; grid-template-columns: minmax(64px, 0.75fr) minmax(118px, 1.5fr) minmax(78px, 0.9fr); gap: 8px; }
+.kh-birth-date-parts label { display: grid; gap: 5px; min-width: 0; }
+.kh-birth-date-parts input,
+.kh-birth-date-parts select { box-sizing: border-box; min-width: 0; width: 100%; }
+.kh-birth-date [data-birth-value] { display: none; }
+.profile-field .kh-birth-date-parts label { font-size: 0.75rem; }
+.checkout-birth-fieldset { grid-column: 1 / -1; min-width: 0; border: 0; padding: 0; margin: 0; }
+.checkout-birth-fieldset legend { padding: 0; margin-bottom: 6px; font-weight: 700; }
+.kh-birth-date-parts input:focus,
+.kh-birth-date-parts select:focus { outline: none; border-color: var(--brand-green-mid); box-shadow: 0 0 0 3px rgba(13, 199, 133, 0.15); }
+
+@media (max-width: 420px) {
+  .kh-birth-date-parts { grid-template-columns: minmax(52px, 0.7fr) minmax(100px, 1.4fr) minmax(68px, 0.9fr); gap: 6px; }
+  .kh-birth-date-parts input,
+  .kh-birth-date-parts select { padding-left: 8px; padding-right: 8px; }
+}
+
 .auth-grid-2 {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));

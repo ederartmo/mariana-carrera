@@ -2097,7 +2097,6 @@ function setupSupabase() {
   const AXOLOTE_PAYMENT_URL = "checkout.html";
   const AXOLOTE_EVENT_URL = "axolote-night-run.html";
   const AXOLOTE_PAYMENT_STATE_KEY = "kinetic_axolote_payment_state";
-  const AXOLOTE_POST_VERIFY_PROMPT_KEY = "kinetic_axolote_post_verify_prompt";
 
   const initSupabase = () => {
     if (typeof window.supabase === "undefined") return;
@@ -2368,7 +2367,6 @@ function setupSupabase() {
 
         if (hasSignupCallback || statusParam === "confirmed") {
           // Redirigir directamente después de confirmación
-          localStorage.removeItem(AXOLOTE_POST_VERIFY_PROMPT_KEY);
           window.location.replace(consumeReturnTarget());
           return;
         }
@@ -2458,7 +2456,6 @@ function setupSupabase() {
         }
 
         if (searchParams.get("status") === "confirmed") {
-          localStorage.setItem(AXOLOTE_POST_VERIFY_PROMPT_KEY, "1");
           window.setTimeout(() => {
             window.location.replace(consumeReturnTarget());
           }, 1400);
@@ -2614,9 +2611,15 @@ function setupSupabase() {
         });
       }
       const registerForm = document.querySelector('[data-auth-panel="register"] form');
+      const registerBirthGroup = registerForm?.querySelector("[data-birth-group]");
+      const birthDateHelper = window.KineticHubBirthDate;
       const registerStatus = document.getElementById("registerStatus");
 
       if (registerForm) {
+        registerBirthGroup?.querySelectorAll("[data-birth-part]").forEach((part) => {
+          part.addEventListener("input", () => birthDateHelper?.update(registerBirthGroup));
+          part.addEventListener("change", () => birthDateHelper?.update(registerBirthGroup));
+        });
         const phoneInput = document.getElementById("registerPhone");
         const phoneError = document.getElementById("phoneError");
 
@@ -2675,7 +2678,16 @@ function setupSupabase() {
           const nombre = document.getElementById("registerName")?.value.trim();
           const apellido = document.getElementById("registerLastName")?.value.trim();
           const telefono = document.getElementById("registerPhone")?.value.trim();
-          const nacimiento = document.getElementById("registerBirthDate")?.value;
+          const nacimiento = birthDateHelper?.update(registerBirthGroup) || "";
+
+          if (!nacimiento) {
+            if (registerStatus) {
+              registerStatus.textContent = "Ingresa una fecha de nacimiento real, anterior a hoy y desde 1900.";
+              registerStatus.classList.add("is-error");
+            }
+            registerBirthGroup?.querySelector("[data-birth-part]")?.focus();
+            return;
+          }
 
           // === VALIDACIÓN DE TELÉFONO ===
           if (!telefono || !isValidPhone(telefono)) {
@@ -2879,6 +2891,12 @@ function setupSupabase() {
         const pfApPat = document.getElementById("pfApPat");
         const pfApMat = document.getElementById("pfApMat");
         const pfNacimiento = document.getElementById("pfNacimiento");
+        const profileBirthGroup = pfNacimiento?.closest("[data-birth-group]");
+        const birthDateHelper = window.KineticHubBirthDate;
+        profileBirthGroup?.querySelectorAll("[data-birth-part]").forEach((part) => {
+          part.addEventListener("input", () => birthDateHelper?.update(profileBirthGroup));
+          part.addEventListener("change", () => birthDateHelper?.update(profileBirthGroup));
+        });
         const pfGenero = document.getElementById("pfGenero");
         const pfTelefono = document.getElementById("pfTelefono");
         const pfPeso = document.getElementById("pfPeso");
@@ -3264,6 +3282,10 @@ function setupSupabase() {
             node.value = "";
             node.placeholder = value || node.dataset.defaultPlaceholder || "";
             node.disabled = true;
+            if (key === "birth_date" && profileBirthGroup) {
+              birthDateHelper?.setValue(profileBirthGroup, value);
+              profileBirthGroup.querySelectorAll("[data-birth-part]").forEach((part) => { part.disabled = true; });
+            }
           });
 
           if (saveBtn) {
@@ -3276,6 +3298,10 @@ function setupSupabase() {
           fields.forEach(({ key, node }) => {
             if (!node) return;
             node.disabled = false;
+            if (key === "birth_date" && profileBirthGroup) {
+              birthDateHelper?.setValue(profileBirthGroup, profile[key] || "");
+              profileBirthGroup.querySelectorAll("[data-birth-part]").forEach((part) => { part.disabled = false; });
+            }
             if (node.tagName === "SELECT") {
               node.value = profile[key] || (key === "country" ? "mx" : "");
               return;
@@ -3751,56 +3777,11 @@ function setupSupabase() {
         // Limpiar params legacy axolote (mantener compat, no hardcodear lógica de negocio)
         if (raceParam === "axolote" && (paidParam === "1" || paidParam === "0")) {
           writePaymentState(paidParam === "1" ? "paid" : "pending");
-          localStorage.removeItem(AXOLOTE_POST_VERIFY_PROMPT_KEY);
           profileUrl.searchParams.delete("race");
           profileUrl.searchParams.delete("paid");
           profileUrl.searchParams.delete("checkoutEmail");
           window.history.replaceState({}, "", profileUrl.pathname + profileUrl.search + profileUrl.hash);
         }
-
-        // Modal de "Registro confirmado" (post-verificación) - mantiene hardcode Axolote como es página genérica post-verify, no perfil multi-carrera
-        const openRegisterModal = () => {
-          if (document.getElementById("profileRaceRegisterOverlay")) return;
-
-          const overlay = document.createElement("div");
-          overlay.className = "profile-race-register-overlay";
-          overlay.id = "profileRaceRegisterOverlay";
-          overlay.innerHTML = `
-            <div class="profile-race-register-modal" role="dialog" aria-modal="true" aria-labelledby="profileRaceRegisterTitle">
-              <button class="profile-race-register-close" type="button" aria-label="Cerrar">×</button>
-              <h3 id="profileRaceRegisterTitle">Registro confirmado para Axolote Night Run 2026</h3>
-              <ul class="profile-race-register-copy">
-                <li>Tu cuenta ya fue verificada.</li>
-                <li>Tu lugar quedó apartado para la primera edición oficial de Kinetic Hub.</li>
-                <li>Completa tu pago para asegurar tu inscripción en la categoría única 5K del 31 OCT 2026 en Pista de Canotaje, CDMX.</li>
-              </ul>
-              <div class="profile-race-register-highlights">
-                <span>Incluye playera técnica oficial Axolote Night Run 2026.</span>
-                <span>Incluye medalla de finisher exclusiva.</span>
-              </div>
-              <div class="profile-race-register-actions">
-                <a class="profile-race-detail-btn" href="${AXOLOTE_EVENT_URL}">Ver detalle</a>
-                <a class="profile-race-register-pay" href="${AXOLOTE_PAYMENT_URL}">Pagar para asegurar mi lugar</a>
-              </div>
-            </div>
-          `;
-
-          const closeModal = () => overlay.remove();
-
-          overlay.addEventListener("click", (event) => {
-            if (event.target === overlay) closeModal();
-          });
-
-          overlay.querySelector(".profile-race-register-close")?.addEventListener("click", closeModal);
-
-          document.addEventListener("keydown", (event) => {
-            if (event.key === "Escape" && document.getElementById("profileRaceRegisterOverlay")) {
-              closeModal();
-            }
-          }, { once: true });
-
-          document.body.appendChild(overlay);
-        };
 
         // Renderizado multi-carrera: una tarjeta por inscripción
         const renderEmptyState = () => {
@@ -3997,13 +3978,6 @@ function setupSupabase() {
 
         // Inicialización - DB gana; localStorage solo fallback visual breve hasta que cargue Supabase
         let paymentState = readPaymentState();
-        const shouldPromptAfterVerify = localStorage.getItem(AXOLOTE_POST_VERIFY_PROMPT_KEY) === "1";
-
-        if (shouldPromptAfterVerify) {
-          localStorage.removeItem(AXOLOTE_POST_VERIFY_PROMPT_KEY);
-          setTimeout(openRegisterModal, 800);
-        }
-
         // Render inicial en carga (loadUserInscriptions reemplaza al llegar DB)
         if (racesContainer) {
           racesContainer.innerHTML = `
@@ -4034,6 +4008,14 @@ function setupSupabase() {
               isEditing = true;
               showStatus("");
               setEditMode(currentProfile);
+              return;
+            }
+
+            const profileBirthParts = Array.from(profileBirthGroup?.querySelectorAll("[data-birth-part]") || []);
+            const profileBirthISO = birthDateHelper?.update(profileBirthGroup) || "";
+            if (profileBirthParts.some((part) => part.value) && !profileBirthISO) {
+              showStatus("Ingresa una fecha de nacimiento real, anterior a hoy y desde 1900.", true);
+              profileBirthParts[0]?.focus();
               return;
             }
 
@@ -4617,18 +4599,7 @@ function setupCheckoutForm() {
                 <option value="XXL" ${ticket.shirtSize === "XXL" ? "selected" : ""}>XXL</option>
                 <option value="XXXL" ${ticket.shirtSize === "XXXL" ? "selected" : ""}>XXXL</option>
               </select>
-              ${isPerrun ? window.KineticHubPerrunCheckout.birthMarkup(ticketNumber, index, ticket.birthDate) : `              <label for="ticketBirth${ticketNumber}">
-                Fecha de nacimiento <span class="required-mark">*</span>
-              </label>
-              <input
-                id="ticketBirth${ticketNumber}"
-                type="date"
-                data-ticket-field="birthDate"
-                data-ticket-index="${index}"
-                value="${escapeAttr(ticket.birthDate || "")}"
-                required
-              />
-`}
+              ${isPerrun ? window.KineticHubPerrunCheckout.birthMarkup(ticketNumber, index, ticket.birthDate) : `<fieldset class="checkout-birth-fieldset"><legend>Fecha de nacimiento <span class="required-mark">*</span></legend>${window.KineticHubBirthDate.markup({ id: `ticketBirth${ticketNumber}`, iso: ticket.birthDate, required: true, index })}</fieldset>`}
               <label for="ticketWa${ticketNumber}">
                 WhatsApp (10 dígitos) <span class="required-mark">*</span>
               </label>
@@ -4809,8 +4780,9 @@ function setupCheckoutForm() {
 
     const index = Number(target.getAttribute("data-ticket-index"));
     const field = target.getAttribute("data-ticket-field");
-    if (isPerrun && target.hasAttribute("data-birth-part") && tickets[index]) {
-      window.KineticHubPerrunCheckout.updateBirth(target, tickets[index]);
+    if (target.hasAttribute("data-birth-part") && tickets[index]) {
+      if (isPerrun) window.KineticHubPerrunCheckout.updateBirth(target, tickets[index]);
+      else tickets[index].birthDate = window.KineticHubBirthDate.update(target.closest("[data-birth-group]"));
       return;
     }
     if (!Number.isInteger(index) || !field || !tickets[index]) return;
@@ -4834,8 +4806,9 @@ function setupCheckoutForm() {
     if (!(target instanceof HTMLElement)) return;
     const index = Number(target.getAttribute("data-ticket-index"));
     const field = target.getAttribute("data-ticket-field");
-    if (isPerrun && target.hasAttribute("data-birth-part") && tickets[index]) {
-      window.KineticHubPerrunCheckout.updateBirth(target, tickets[index]);
+    if (target.hasAttribute("data-birth-part") && tickets[index]) {
+      if (isPerrun) window.KineticHubPerrunCheckout.updateBirth(target, tickets[index]);
+      else tickets[index].birthDate = window.KineticHubBirthDate.update(target.closest("[data-birth-group]"));
       return;
     }
     if (!Number.isInteger(index) || !field || !tickets[index]) return;
