@@ -4943,6 +4943,20 @@ body[data-page="series"] .page-hero .container {
   gap: 10px;
 }
 
+.auth-grid-2:has([data-birth-group]) > .auth-field-group {
+  align-self: end;
+  position: relative;
+}
+
+.auth-grid-2:has([data-birth-group]) > .auth-field-group #phoneError {
+  position: absolute;
+  inset: 100% 0 auto;
+}
+
+.auth-grid-2:has(#phoneError.show) {
+  padding-bottom: 2.4em;
+}
+
 .auth-terms {
   margin: 6px 0 0;
   font-size: 0.84rem;
@@ -5544,6 +5558,19 @@ body[data-page="series"] .page-hero .container {
   .auth-grid-2 {
     grid-template-columns: 1fr;
     gap: 8px;
+  }
+
+  .auth-grid-2:has([data-birth-group]) > .auth-field-group {
+    align-self: auto;
+    position: static;
+  }
+
+  .auth-grid-2:has([data-birth-group]) > .auth-field-group #phoneError {
+    position: static;
+  }
+
+  .auth-grid-2:has(#phoneError.show) {
+    padding-bottom: 0;
   }
 
   .auth-login-row {
