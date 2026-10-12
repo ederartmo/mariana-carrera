@@ -38,7 +38,7 @@ function getCookieValue(req, name) {
   return '';
 }
 
-const { resolveEventSelection } = require('../event-catalog');
+const { resolveEventSelection, getStatementDescriptorSuffix } = require('../event-catalog');
 
 function getCurrentStage(event) {
   const stage = event.getStage(new Date());
@@ -235,6 +235,7 @@ module.exports = async function handler(req, res) {
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ['card', 'oxxo'],
       mode: 'payment',
+      payment_intent_data: { statement_descriptor_suffix: getStatementDescriptorSuffix(event.slug) },
       // allow_promotion_codes y discounts son mutuamente exclusivos en Stripe:
       // si ya hay un descuento aplicado, no se puede activar la caja de promociones.
       ...(stripeDiscount

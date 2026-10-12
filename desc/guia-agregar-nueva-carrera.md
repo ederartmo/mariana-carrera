@@ -93,7 +93,7 @@ Consideraciones:
 
 ## 5. Registrar el evento en el codigo
 
-Actualmente no existe un catalogo central; la carrera debe agregarse en todos los puntos siguientes.
+El catálogo central de checkout es `event-catalog.js`; la carrera también debe agregarse en los demás puntos siguientes.
 
 ### Checkout y precio
 
@@ -103,8 +103,7 @@ Actualmente no existe un catalogo central; la carrera debe agregarse en todos lo
   - Configurar nombre, imagen, fecha, lugar, pagina de regreso y proveedor de etapas.
   - Definir `window.KineticHubCheckoutSelection` antes de cargar `script.min.js`.
 - `api/create-checkout-session.js`
-  - Importar el proveedor de etapas.
-  - Agregar slug, nombre, distancias, distancia predeterminada y `getStage` a `EVENT_CATALOG`.
+  - Registrar en `event-catalog.js` el slug, nombre, distancias, distancia predeterminada, `getStage` y `statementDescriptorSuffix`.
   - Mantener el calculo del precio en backend.
 - `api/validate-promo-code.js`
   - Aceptar el nuevo slug y devolver su proveedor de etapas.
@@ -179,6 +178,23 @@ Notas importantes:
 
 ## 7. Configurar Stripe
 
+### Descriptor Stripe por carrera (obligatorio)
+
+1. Definir explícitamente `statementDescriptorSuffix` en cada evento de `event-catalog.js`. Usar una palabra reconocible y no reutilizar el suffix de otra carrera.
+2. Configurar una vez en Stripe Dashboard, en cada entorno correspondiente: descriptor global `KINETIC HUB` y descripción abreviada/prefijo `KINETICHUB`. Respetar la validación del Dashboard. Si cambia el prefijo acordado, revisar `STRIPE_DESCRIPTOR_PREFIX` y el presupuesto de longitud antes de publicar.
+3. Stripe concatena prefijo + `* ` + suffix para tarjeta. El descriptor completo admite 5–22 caracteres y el prefijo 2–10. Con `KINETICHUB` quedan como máximo 10 caracteres para el suffix. Ambos componentes deben contener una letra y representar el nombre comercial.
+4. La validación central acepta mayúsculas ASCII, números, espacios internos y guiones. Rechaza valores vacíos, sin letras, espacios exteriores y caracteres como `<`, `>`, `\`, `'`, `"` y `*`. No trunca ni aplica un fallback silencioso: una configuración ausente o inválida falla al cargar el catálogo, antes de crear Checkout.
+5. Los cuatro creadores de Checkout leen el catálogo y envían `payment_intent_data.statement_descriptor_suffix`, conservando la metadata previa. Este parámetro aplica a tarjeta; no cambia el voucher OXXO, productos, precios ni el nombre comercial del recibo.
+6. Verificar en Stripe Test cómo se verá el descriptor y comprobar que no herede otra carrera. Agregar regresión del catálogo y del payload real de Checkout, manteniendo importes, metadata, métodos de pago y URLs.
+
+| Carrera | `statementDescriptorSuffix` | Descriptor de tarjeta esperado |
+| --- | --- | --- |
+| `axolote-night-run` | `AXOLOTE` | `KINETICHUB* AXOLOTE` (19 caracteres) |
+| `cascanueces-run` | `CASCANUEZ` | `KINETICHUB* CASCANUEZ` (21 caracteres) |
+| `perrun-2027` | `PERRUN` | `KINETICHUB* PERRUN` (18 caracteres) |
+
+`CASCANUEZ` es la abreviatura deliberada de Cascanueces: `CASCANUECES` completo excedería el límite con este prefijo. El banco emisor puede variar la presentación final. Referencia: https://docs.stripe.com/get-started/account/statement-descriptors.
+
 Cascanueces usa un producto persistente y un Price por etapa en cada entorno de Stripe. Axolote y eventos sin Price IDs configurados conservan el fallback dinamico con `price_data`.
 
 Para vincular una carrera al catalogo:
@@ -186,7 +202,7 @@ Para vincular una carrera al catalogo:
 1. Crear un producto en Stripe Test y otro en Stripe Live.
 2. Crear un precio de pago unico en MXN por cada etapa.
 3. Guardar los Price IDs Test en variables Preview y los Price IDs Live en variables Production.
-4. Mapear cada `stage.key` al nombre de su variable dentro de `EVENT_CATALOG` en `api/create-checkout-session.js`.
+4. Mapear cada `stage.key` al nombre de su variable en `priceEnvironmentVariables` dentro de `event-catalog.js`.
 5. Validar en backend que el Price este activo y coincida en moneda y monto antes de crear Checkout.
 
 Los nombres actuales para Cascanueces son:

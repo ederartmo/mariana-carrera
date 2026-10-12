@@ -5,6 +5,17 @@ const engraving=require('../../lib/_perrun-engraving'),{api}=require('./perrun-e
 const {enrichRegistrations,perrunCsv}=require('../../lib/_perrun-operations');
 const {getPerrunSummary}=require('../../lib/_perrun-checkout');
 const cases=[];const add=(name,run)=>cases.push({name,run});
+add('Engraving uses central PERRUN descriptor preserving metadata, price, methods and return URLs',async db=>{
+ const x=await fixture(db),r=await x.create();assert.equal(r.statusCode,200);
+ const {params}=x.creates[0];
+ assert.deepEqual(params.payment_intent_data,{metadata:params.metadata,statement_descriptor_suffix:'PERRUN'});
+ assert.deepEqual(Object.keys(params.metadata).sort(),['event_slug','flow','order_session_id','payment_ref']);
+ assert.equal(params.metadata.event_slug,'perrun-2027');assert.equal(params.metadata.order_session_id,x.f.order);
+ assert.equal(params.line_items[0].price_data.unit_amount,3500);assert.equal(params.line_items[0].price_data.currency,'mxn');
+ assert.deepEqual(params.allowed_payment_method_types,['card','oxxo']);assert.equal(params.payment_method_types,undefined);
+ const base='http://localhost:3000/succes.html?event=perrun-2027&session_id='+encodeURIComponent(x.f.order);
+ assert.equal(params.success_url,base+'&engraving=returned');assert.equal(params.cancel_url,base+'&engraving=cancelled');
+});
 const response=()=>({statusCode:200,headers:{},setHeader(k,v){this.headers[k]=v},status(v){this.statusCode=v;return this},json(v){this.body=v;return this},send(v){this.body=v;return this}});
 function stripeMock(){const sessions=new Map(),keys=new Map(),creates=[],delivered=new Map();let next=0;
  const stripe={checkout:{sessions:{async create(params,options){creates.push({params,options});if(keys.has(options.idempotencyKey))return structuredClone(sessions.get(keys.get(options.idempotencyKey)));const live=process.env.VERCEL_ENV==='production',id=(live?'cs_live_addon_':'cs_test_addon_')+(++next),s={id,livemode:live,mode:'payment',status:'open',payment_status:'unpaid',amount_total:params.line_items[0].price_data.unit_amount,currency:params.line_items[0].price_data.currency,metadata:params.metadata,url:'https://checkout.stripe.com/c/pay/'+id,payment_intent:'pi_addon_'+next};keys.set(options.idempotencyKey,id);sessions.set(id,s);return structuredClone(s)},async retrieve(id){if(!sessions.has(id))throw Error('not found');return structuredClone(sessions.get(id))},async list({payment_intent}){return{data:[...sessions.values()].filter(s=>s.payment_intent===payment_intent).map(s=>structuredClone(s))}}}},charges:{retrieve:async()=>stripe.charge}};

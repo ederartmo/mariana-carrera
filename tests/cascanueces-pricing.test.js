@@ -239,6 +239,7 @@ test('create-checkout-session enables card and OXXO payment methods', async () =
 
   assert.equal(res.statusCode, 200);
   assert.deepEqual(createdSessions[0].payment_method_types, ['card', 'oxxo']);
+  assert.deepEqual(createdSessions[0].payment_intent_data, { statement_descriptor_suffix: 'CASCANUEZ' });
 });
 
 test('create-checkout-session supports Cascanueces 5K metadata and current price', async () => {
@@ -253,6 +254,9 @@ test('create-checkout-session supports Cascanueces 5K metadata and current price
   assert.equal(res.statusCode, 200);
   assert.equal(sessionPayload.mode, 'payment');
   assert.equal(sessionPayload.customer_email, 'runner@example.com');
+  assert.deepEqual(sessionPayload.payment_intent_data, { statement_descriptor_suffix: 'CASCANUEZ' });
+  assert.equal(sessionPayload.success_url, 'http://localhost:3000/succes.html?session_id={CHECKOUT_SESSION_ID}');
+  assert.equal(sessionPayload.cancel_url, 'http://localhost:3000/checkout.html?event=cascanueces-run&distance=5K');
   assert.equal(sessionPayload.line_items[0].price_data.currency, 'mxn');
   assert.equal(sessionPayload.line_items[0].price_data.unit_amount, 45000);
   assert.equal(sessionPayload.metadata.event_slug, 'cascanueces-run');
@@ -353,6 +357,10 @@ test('create-checkout-session keeps Axolote checkout compatible with OXXO', asyn
   assert.equal(res.statusCode, 200);
   assert.deepEqual(sessionPayload.payment_method_types, ['card', 'oxxo']);
   assert.equal(sessionPayload.mode, 'payment');
+  assert.deepEqual(sessionPayload.payment_intent_data, { statement_descriptor_suffix: 'AXOLOTE' });
+  assert.equal(sessionPayload.success_url, 'http://localhost:3000/succes.html?session_id={CHECKOUT_SESSION_ID}');
+  assert.equal(sessionPayload.cancel_url, 'http://localhost:3000/checkout.html?event=axolote-night-run&distance=5K');
+  assert.equal(sessionPayload.line_items[0].price_data.unit_amount, upserts[0].amount_paid * 100);
   assert.equal(sessionPayload.line_items[0].price_data.currency, 'mxn');
   assert.equal(sessionPayload.metadata.event_slug, 'axolote-night-run');
   assert.equal(sessionPayload.metadata.distance, '5K');

@@ -21,6 +21,9 @@ test('V2 quote fixes 700 pesos before Stripe; one Session with dynamic price_dat
  await f.seed(db,300);const x=fixture(),q=await x.prepare(body([8,20]));assert.equal(q.quoted.body.total,700);assert.equal(x.creates.length,1);
  const p=x.creates[0].p;assert.deepEqual(p.payment_method_types,['card','oxxo']);assert.equal(p.allowed_payment_method_types,undefined);assert.match(p.integration_identifier,/^perrun_v2_[a-z]{8}$/);assert.equal(p.payment_method_options.oxxo.expires_after_days,1);assert.equal(p.line_items.length,3);assert.equal(q.s.amount_total,70000);assert.ok(p.expires_at>Math.floor(Date.now()/1000)+1800);
  assert.deepEqual(Object.keys(p.metadata).sort(),['event_slug','flow_version','reservation_ref','ticket_count']);assert.equal(JSON.stringify(p.metadata).includes('qa@example'),false);
+ assert.deepEqual(p.payment_intent_data,{metadata:p.metadata,statement_descriptor_suffix:'PERRUN'});
+ assert.equal(p.success_url,'http://localhost:3000/succes.html?event=perrun-2027&session_id={CHECKOUT_SESSION_ID}');
+ assert.equal(p.cancel_url,'http://localhost:3000/checkout.html?event=perrun-2027&distance=3K');
  assert.equal((await db.query('select count(*)::int n from public.inscripciones')).rows[0].n,0);
 });
 test('Real routing uses V2 finalizer exactly; paid duplicate and delayed events never allocate twice',async()=>{

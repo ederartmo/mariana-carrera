@@ -70,6 +70,12 @@ for (const [at, amount] of [['2026-10-31T23:59:59-06:00',450], ['2026-11-01T00:0
     assert.equal(items.length,weights.length); assert.equal(items[0].price_data.unit_amount,amount*100);
     assert.equal(items.some(item=>item.price_data.unit_amount===3500),false);
     assert.deepEqual(f.state.creates[0].params.payment_method_types,['card','oxxo']);
+    const params=f.state.creates[0].params;
+    assert.deepEqual(params.payment_intent_data,{statement_descriptor_suffix:'PERRUN'});
+    assert.equal(params.success_url,'http://localhost:3000/succes.html?event=perrun-2027&session_id={CHECKOUT_SESSION_ID}');
+    assert.equal(params.cancel_url,'http://localhost:3000/checkout.html?event=perrun-2027&distance=3K');
+    assert.deepEqual(Object.keys(params.metadata).sort(),['event_slug','flow_version','order_ref','ticket_count']);
+    assert.equal(params.metadata.event_slug,'perrun-2027');
     assert.equal(f.state.rpc.length,1); assert.equal(f.state.rpc[0].args.p_quoted_at,time.toISOString());
   });
 }
