@@ -367,6 +367,16 @@ test('create-checkout-session keeps Axolote checkout compatible with OXXO', asyn
   assert.equal(upserts[0].payment_status, 'pending');
 });
 
+for (const [now, open] of [['2026-10-15T12:00:00-06:00', true], ['2026-10-16T00:00:00-06:00', true], ['2026-10-16T12:00:00-06:00', true], ['2026-10-16T23:59:59-06:00', true], ['2026-10-17T00:00:00-06:00', false], ['2026-10-17T12:00:00-06:00', false]]) {
+  test('Axolote backend Checkout closing boundary ' + now, async () => {
+    const { res, createdSessions } = await createCheckoutSessionPayload({ buyerEmail: 'runner@example.com', eventSlug: 'axolote-night-run', distance: '5K', tickets: [{ fullName: 'Runner Test', shirtSize: 'M', birthDate: '1990-05-14', whatsapp: '5512345678', state: 'Jalisco' }] }, { now });
+    assert.equal(res.statusCode, open ? 200 : 400);
+    assert.equal(createdSessions.length, open ? 1 : 0);
+    if (open) assert.equal(createdSessions[0].line_items[0].price_data.unit_amount, 55000);
+    else assert.match(res.body.error, /inscripciones están cerradas/i);
+  });
+}
+
 test('create-checkout-session with Cascanueces coupon preserves event, distance, amount, and OXXO compatibility', async () => {
   const { res, createdSessions, upserts, promoCalls } = await createCheckoutSessionPayload({
     buyerEmail: 'runner@example.com',

@@ -1779,10 +1779,15 @@ function getAxoloteStageByDate(date = new Date()) {
   }
 
   // Fallback defensivo por si el archivo de configuración no carga.
-  const fallbackDate = new Date(date);
-  const year = fallbackDate.getFullYear();
-  const month = fallbackDate.getMonth() + 1;
-  const day = fallbackDate.getDate();
+  // Match the provider's inclusive race-calendar dates, even on a UTC server.
+  const parts = typeof date === "string" && /^\d{4}-\d{2}-\d{2}$/.test(date)
+    ? { year: date.slice(0, 4), month: date.slice(5, 7), day: date.slice(8, 10) }
+    : Object.fromEntries(new Intl.DateTimeFormat("en-US", {
+      timeZone: "America/Mexico_City", year: "numeric", month: "2-digit", day: "2-digit",
+    }).formatToParts(new Date(date)).map(part => [part.type, part.value]));
+  const year = Number(parts.year);
+  const month = Number(parts.month);
+  const day = Number(parts.day);
 
   if (year < 2026 || (year === 2026 && month < 6) || (year === 2026 && month === 5 && day <= 31)) {
     return { key: "early", label: "Etapa Preventa", displayName: "Preventa", price: 480, amount: 480, period: "Del 1 de abril al 31 de mayo de 2026", isOpen: true };
@@ -1792,8 +1797,8 @@ function getAxoloteStageByDate(date = new Date()) {
     return { key: "regular", label: "Etapa Acceso General", displayName: "Acceso General", price: 550, amount: 550, period: "1 de junio al 31 de agosto de 2026", isOpen: true };
   }
 
-  if (year === 2026 && (month === 9 || (month === 10 && day <= 15))) {
-    return { key: "extemporanea", label: "Etapa Último minuto", displayName: "Último minuto", price: 550, amount: 550, period: "1 de septiembre al 15 de octubre de 2026", isOpen: true };
+  if (year === 2026 && (month === 9 || (month === 10 && day <= 16))) {
+    return { key: "extemporanea", label: "Etapa Último minuto", displayName: "Último minuto", price: 550, amount: 550, period: "1 de septiembre al 16 de octubre de 2026", isOpen: true };
   }
 
   return { key: "closed", label: "Inscripciones cerradas", displayName: "Inscripciones cerradas", price: null, amount: null, period: "Convocatoria cerrada", isOpen: false };
