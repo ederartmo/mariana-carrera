@@ -168,7 +168,7 @@ function createReqRes(event) {
   return { req, res };
 }
 
-async function withWebhookMocks({ event, rpcResults = [], resendResults = [], updateError = null, selectResults = [], updateResultRows = [], sessionsByPaymentIntent = {}, chargesById = {}, chargeRetrieveError = null }, run) {
+async function withWebhookMocks({ event, rpcResults = [], resendResults = [], updateError = null, selectResults = [], updateResultRows = [], sessionsByPaymentIntent = {}, chargesById = {}, chargeRetrieveError = null, voucherPaymentIntent = null }, run) {
   const originalConsole = {
     log: console.log,
     warn: console.warn,
@@ -201,6 +201,8 @@ async function withWebhookMocks({ event, rpcResults = [], resendResults = [], up
     },
     checkout: {
       sessions: {
+        retrieve: async () => structuredClone(state.event.data.object),
+        update: async (id, patch) => { Object.assign(state.event.data.object.metadata, patch.metadata); },
         list: async (params) => {
           state.sessionListCalls.push(params);
           const found = (state.sessionsByPaymentIntent || {})[params?.payment_intent];
@@ -215,6 +217,7 @@ async function withWebhookMocks({ event, rpcResults = [], resendResults = [], up
         return (state.chargesById || {})[id] || {};
       },
     },
+    paymentIntents: { retrieve: async () => voucherPaymentIntent },
   }));
   const restoreSupabase = mockModule('@supabase/supabase-js', {
     createClient: () => createSupabaseMock(state),
@@ -263,6 +266,21 @@ async function invoke(webhook, event) {
   await webhook(req, res);
   return res;
 }
+
+for (const failure of [false, true]) test(`OXXO voucher webhook: ${failure ? 'email failure preserves pending flow' : 'sends once before pending fulfillment'}`, async () => {
+  const session = checkoutSession({ status: 'complete', currency: 'mxn', payment_status: 'unpaid' });
+  const event = { ...stripeEvent('checkout.session.completed', session), created: Math.floor(Date.now() / 1000) };
+  await withWebhookMocks({ event, voucherPaymentIntent: { id: session.payment_intent, status: 'requires_action', payment_method: { type: 'oxxo' }, next_action: { type: 'oxxo_display_details', oxxo_display_details: { number: '123', hosted_voucher_url: 'https://payments.stripe.com/mock' } } }, resendResults: failure ? [{ error: { message: 'Down' } }] : [] }, async ({ webhook, state }) => {
+    const response = await invoke(webhook, event);
+    assert.equal(response.statusCode, 200);
+    assert.equal(state.emailSends.length, 1);
+    assert.equal(state.emailSends[0].subject, 'Tu referencia de pago OXXO está lista');
+    assert.equal(state.rpcCalls.length, 0);
+    assert.equal(state.updateCalls.length, 0);
+    assert.equal(session.payment_status, 'unpaid');
+    if (!failure) { await invoke(webhook, event); assert.equal(state.emailSends.length, 1); }
+  });
+});
 
 function emailPayload(overrides = {}) {
   return {
