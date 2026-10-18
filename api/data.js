@@ -10,6 +10,7 @@ const ACTIONS = {
   'admin-perrun-annul': require('../lib/admin-perrun-annul'),
   'admin-perrun-registration': require('../lib/admin-perrun-registration'),
   'admin-export-perrun': require('../lib/admin-export-perrun'),
+  'admin-export-shirts': require('../lib/admin-export-shirts'),
   'me-registrations': require('../lib/me-registrations'),
   'admin-list-inscriptions': require('../lib/admin-list-inscriptions'),
   'admin-list-available-bibs': require('../lib/admin-list-available-bibs'),

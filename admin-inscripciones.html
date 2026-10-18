@@ -704,6 +704,7 @@ src="https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1"
           <option value="archived">Archivadas</option>
         </select>
         <button id="exportPerrunCsv" type="button" class="admin-select">Exportar perros Perrun CSV</button>
+        <button id="exportShirtsCsv" type="button" class="admin-select" title="Exporta playeras pagadas y activas de la carrera seleccionada o de todas las carreras, sin aplicar búsqueda, estado ni filas visibles.">Exportar playeras CSV</button>
         <select id="rowsPerPage" class="admin-select" aria-label="Filas visibles" title="Filas visibles">
           <option value="all" selected>Todos</option>
           <option value="50">50</option>
@@ -2476,6 +2477,38 @@ src="https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1"
     }
 
     function setupDashboardControls(client) {
+      document.getElementById('exportShirtsCsv')?.addEventListener('click', async function() {
+        const originalText = this.textContent;
+        this.disabled = true;
+        this.textContent = 'Exportando...';
+        try {
+          const event = document.getElementById('eventFilter').value || 'all';
+          const { data: { session } } = await client.auth.getSession();
+          if (!session?.access_token) throw new Error('Sesión no válida.');
+          const params = new URLSearchParams({ action: 'admin-export-shirts', event });
+          const response = await fetch('/api/data?' + params, {
+            headers: { Authorization: 'Bearer ' + session.access_token },
+          });
+          if (!response.ok) {
+            let message = 'No se pudieron exportar las playeras.';
+            try { message = (await response.json()).error || message; } catch (_) {}
+            throw new Error(message);
+          }
+          const url = URL.createObjectURL(await response.blob());
+          const link = document.createElement('a');
+          link.href = url;
+          link.download = (event === 'all' ? 'todas-las-carreras' : event) + '-playeras.csv';
+          document.body.appendChild(link);
+          link.click();
+          link.remove();
+          setTimeout(() => URL.revokeObjectURL(url), 1000);
+        } catch (error) {
+          alert(error.message || 'No se pudieron exportar las playeras.');
+        } finally {
+          this.disabled = false;
+          this.textContent = originalText;
+        }
+      });
       document.getElementById('exportPerrunCsv')?.addEventListener('click', async function() {
         this.disabled = true;
         try {
