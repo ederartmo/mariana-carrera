@@ -137,7 +137,7 @@ module.exports = async function handler(req, res) {
       return require('../lib/_perrun-engraving').handleCheckout({ req, res, stripe, supabase, origin: getRequestOrigin(req) });
     }
 
-    const { email, buyerEmail, shirtSize, tickets, metaEventId, promoCode, eventSlug, distance } = req.body;
+    const { email, buyerEmail, shirtSize, tickets, metaEventId, promoCode, eventSlug, distance, expectedUnitAmount } = req.body;
     const rawEmail = buyerEmail || email;
     const event = resolveEventSelection(eventSlug, distance);
 
@@ -184,6 +184,21 @@ module.exports = async function handler(req, res) {
       return res.status(400).json({ 
         error: 'Las inscripciones están cerradas.' 
       });
+    }
+
+    if (event.slug === 'cascanueces-run') {
+      if (!Number.isInteger(expectedUnitAmount) || expectedUnitAmount <= 0) {
+        return res.status(400).json({ code: 'PRICE_CONFIRMATION_REQUIRED', error: 'Confirma el precio vigente antes de continuar.' });
+      }
+      if (expectedUnitAmount !== stage.amount) {
+        return res.status(409).json({
+          code: 'PRICE_CHANGED',
+          error: 'El precio cambió. Confirma el nuevo importe antes de continuar.',
+          unitAmount: stage.amount,
+          stageLabel: stage.label,
+          currency: 'MXN',
+        });
+      }
     }
 
     console.log(`🧾 Etapa seleccionada: ${stage.label} | ${stage.amount} MXN | tickets=${ticketCount}`);

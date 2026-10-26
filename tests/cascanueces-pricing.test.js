@@ -153,7 +153,9 @@ async function createCheckoutSessionPayload(body, {
       await handler({
         method: 'POST',
         headers: { host: 'localhost:3000', cookie: '' },
-        body,
+        body: body.eventSlug === 'cascanueces-run' && body.expectedUnitAmount === undefined
+          ? { ...body, expectedUnitAmount: getCascanuecesStageByDate(now).amount }
+          : body,
       }, res);
 
       return { res, createdSessions, upserts, promoCalls };
@@ -287,6 +289,40 @@ test('create-checkout-session supports Cascanueces 10K metadata and current pric
   assert.equal(upserts[0].payment_status, 'pending');
 });
 
+for (const distance of ['5K', '10K']) {
+  test(`Cascanueces ${distance} requires explicit acceptance when checkout crosses midnight`, async () => {
+    const body = {
+      buyerEmail: 'runner@example.com', eventSlug: 'cascanueces-run', distance,
+      expectedUnitAmount: 450,
+      tickets: [{ fullName: 'Runner Test', shirtSize: 'M', birthDate: '1990-05-14', whatsapp: '5512345678', state: 'Jalisco' }],
+    };
+    const before = await createCheckoutSessionPayload(body, { now: '2026-10-31T23:59:59-06:00' });
+    assert.equal(before.res.statusCode, 200);
+    assert.equal(before.createdSessions[0].line_items[0].price_data.unit_amount, 45000);
+    const changed = await createCheckoutSessionPayload(body, { now: '2026-11-01T00:00:00-06:00' });
+    assert.equal(changed.res.statusCode, 409);
+    assert.equal(changed.res.body.code, 'PRICE_CHANGED');
+    assert.equal(changed.res.body.unitAmount, 500);
+    assert.equal(changed.res.body.stageLabel, 'Extemporánea');
+    assert.equal(changed.createdSessions.length, 0);
+    assert.equal(changed.upserts.length, 0);
+    const accepted = await createCheckoutSessionPayload({ ...body, expectedUnitAmount: 500 }, { now: '2026-11-01T12:00:00-06:00' });
+    assert.equal(accepted.res.statusCode, 200);
+    assert.equal(accepted.createdSessions[0].line_items[0].price_data.unit_amount, 50000);
+    assert.equal(accepted.createdSessions[0].metadata.stage_key, 'ultimo_minuto');
+  });
+}
+test('Cascanueces rejects a checkout without a displayed unit amount before Stripe or persistence', async () => {
+  const result = await createCheckoutSessionPayload({
+    buyerEmail: 'runner@example.com', eventSlug: 'cascanueces-run', distance: '5K', expectedUnitAmount: null,
+    tickets: [{ fullName: 'Runner Test', shirtSize: 'M', birthDate: '1990-05-14', whatsapp: '5512345678', state: 'Jalisco' }],
+  });
+  assert.equal(result.res.statusCode, 400);
+  assert.equal(result.res.body.code, 'PRICE_CONFIRMATION_REQUIRED');
+  assert.equal(result.createdSessions.length, 0);
+  assert.equal(result.upserts.length, 0);
+});
+
 test('create-checkout-session calculates Cascanueces $450 on September 1 Mexico time', async () => {
   await withMockedNow('2026-09-01T00:00:00-06:00', async () => {
     const createdSessions = [];
@@ -327,6 +363,7 @@ test('create-checkout-session calculates Cascanueces $450 on September 1 Mexico 
           buyerEmail: 'runner@example.com',
           eventSlug: 'cascanueces-run',
           distance: '10K',
+          expectedUnitAmount: 450,
           tickets: [{ fullName: 'Runner Test', shirtSize: 'M', birthDate: '1990-05-14', whatsapp: '5512345678', state: 'Jalisco' }],
         },
       }, res);

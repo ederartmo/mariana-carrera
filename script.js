@@ -1829,10 +1829,28 @@ function setupHomeStagePricing() {
 }
 
 function setupEventCountdown() {
-  const countdown = document.querySelector("[data-countdown-target]");
+  const countdown = document.querySelector("[data-countdown-target], [data-countdown-date]");
   if (!countdown) return;
 
   const daysNode = countdown.querySelector("[data-countdown-days]");
+  if (countdown.dataset.countdownMode === "calendar-day") {
+    const date = countdown.dataset.countdownDate || "";
+    if (!daysNode || !/^\d{4}-\d{2}-\d{2}$/.test(date)) return;
+    const dateParts = new Intl.DateTimeFormat("en-US", {
+      timeZone: "America/Mexico_City", year: "numeric", month: "2-digit", day: "2-digit",
+    });
+    const targetDay = Date.parse(`${date}T00:00:00Z`);
+    const updateCalendarCountdown = () => {
+      const parts = Object.fromEntries(dateParts.formatToParts(new Date()).map(({ type, value }) => [type, value]));
+      const today = Date.UTC(Number(parts.year), Number(parts.month) - 1, Number(parts.day));
+      const days = Math.round((targetDay - today) / 86400000);
+      daysNode.textContent = days > 0 ? `${days} ${days === 1 ? "día" : "días"}`
+        : days === 0 ? "¡Hoy es la carrera!" : "La carrera ya se celebró.";
+    };
+    updateCalendarCountdown();
+    window.setInterval(updateCalendarCountdown, 60000);
+    return;
+  }
   const timeNode = countdown.querySelector("[data-countdown-time]");
   const target = new Date(countdown.dataset.countdownTarget || "");
 
@@ -4493,6 +4511,7 @@ function setupCheckoutForm() {
   const PR4_CDMX_BOROUGHS = ["Álvaro Obregón", "Azcapotzalco", "Benito Juárez", "Coyoacán", "Cuajimalpa de Morelos", "Cuauhtémoc", "Gustavo A. Madero", "Iztacalco", "Iztapalapa", "La Magdalena Contreras", "Miguel Hidalgo", "Milpa Alta", "Tláhuac", "Tlalpan", "Venustiano Carranza", "Xochimilco"];
   let tickets = [{ fullName: "", shirtSize: "", birthDate: "", whatsapp: "", state: "", borough: "" }];
   let promoState = null;
+  let pendingCascanuecesUnitAmount = null;
 
   if (!ticketsList || !addTicketBtn || !stagePriceEl || !totalPriceEl || !ticketCountLabel) return;
 
@@ -4942,28 +4961,58 @@ function setupCheckoutForm() {
     }
 
     try {
-      const response = await fetch("/api/create-checkout-session", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
+      const selectedEventSlug = window.KineticHubCheckoutSelection?.eventSlug || "axolote-night-run";
+      const requestCheckout = async (expectedUnitAmount) => {
+        const response = await fetch("/api/create-checkout-session", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
           email,
           buyerEmail: normalizedEmail,
           tickets: normalizedTickets,
           promoCode,
           metaEventId: initiateCheckoutEventId,
-          eventSlug: window.KineticHubCheckoutSelection?.eventSlug || "axolote-night-run",
+          eventSlug: selectedEventSlug,
           distance: window.KineticHubCheckoutSelection?.distance || "5K",
-        }),
-      });
-
-      // Leer la respuesta como texto primero para depurar
-      const text = await response.text();
-      let data;
-      try {
-        data = JSON.parse(text);
-      } catch (parseErr) {
-        console.error("Respuesta no es JSON:", text.substring(0, 300));
-        throw new Error("El servidor devolvió un error inesperado.");
+          ...(selectedEventSlug === "cascanueces-run" ? { expectedUnitAmount } : {}),
+          }),
+        });
+        const text = await response.text();
+        try { return { response, data: JSON.parse(text) }; }
+        catch (parseErr) {
+          console.error("Respuesta no es JSON:", text.substring(0, 300));
+          throw new Error("El servidor devolvió un error inesperado.");
+        }
+      };
+      if (selectedEventSlug === "cascanueces-run" && pendingCascanuecesUnitAmount === getUnitAmount()) {
+        const subtotal = pendingCascanuecesUnitAmount * normalizedTickets.length;
+        if (!window.confirm(`El precio cambió a ${formatMXN(pendingCascanuecesUnitAmount)} por inscripción (${formatMXN(subtotal)} por ${normalizedTickets.length} ticket(s), antes de descuentos). ¿Aceptas el nuevo importe y deseas continuar a Stripe?`)) {
+          submitBtn.disabled = false;
+          submitBtn.textContent = originalText;
+          return;
+        }
+        pendingCascanuecesUnitAmount = null;
+      }
+      let { response, data } = await requestCheckout(getUnitAmount());
+      if (selectedEventSlug === "cascanueces-run" && response.status === 409 && data.code === "PRICE_CHANGED") {
+        if (!Number.isInteger(data.unitAmount) || data.unitAmount <= 0 || data.currency !== "MXN") {
+          throw new Error("El servidor devolvió un precio inválido.");
+        }
+        stagePriceEl.textContent = formatMXN(data.unitAmount);
+        const stageLabelEl = document.getElementById("stageLabel");
+        if (stageLabelEl) stageLabelEl.textContent = data.stageLabel;
+        clearPromoState();
+        updateSummary();
+        const newSubtotal = data.unitAmount * normalizedTickets.length;
+        pendingCascanuecesUnitAmount = data.unitAmount;
+        const accepted = window.confirm(`El precio cambió a ${formatMXN(data.unitAmount)} por inscripción (${formatMXN(newSubtotal)} por ${normalizedTickets.length} ticket(s), antes de descuentos). ¿Aceptas el nuevo importe y deseas continuar a Stripe?`);
+        if (!accepted) {
+          submitBtn.disabled = false;
+          submitBtn.textContent = originalText;
+          return;
+        }
+        pendingCascanuecesUnitAmount = null;
+        ({ response, data } = await requestCheckout(data.unitAmount));
       }
 
       if (!response.ok) {

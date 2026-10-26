@@ -188,7 +188,7 @@ async function postCheckoutPR4(tickets) {
   try {
     const handler = require('../api/create-checkout-session');
     const res = createJsonRes();
-    await handler({ method: 'POST', headers: { host: 'localhost:3000', cookie: '' }, body: { buyerEmail: 'pr4@example.com', tickets, eventSlug: 'cascanueces-run', distance: '5K' } }, res);
+    await handler({ method: 'POST', headers: { host: 'localhost:3000', cookie: '' }, body: { buyerEmail: 'pr4@example.com', tickets, eventSlug: 'cascanueces-run', distance: '5K', expectedUnitAmount: require('../cascanueces-stage-config').getCascanuecesStageByDate(new Date()).amount } }, res);
     return { res, createdSessions, upserts };
   } finally {
     restoreLogs();

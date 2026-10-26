@@ -328,6 +328,9 @@
   }
   function renderCountdown(event) {
     if (!event.countdown) return "";
+    if (event.countdown.mode === "calendar-day") {
+      return `<aside class="event-landing-countdown" aria-label="${escapeHtml(event.countdown.label)}" data-countdown-mode="calendar-day" data-countdown-date="${escapeHtml(event.countdown.targetDate)}"><p>${escapeHtml(event.countdown.deadlineLabel)}</p><strong data-countdown-days>-- días</strong></aside>`;
+    }
     return `<aside class="event-landing-countdown" aria-label="${escapeHtml(event.countdown.label)}" data-countdown-target="${escapeHtml(event.pricing.salesClose)}"><p>${escapeHtml(event.countdown.deadlineLabel)}</p><strong><span data-countdown-days>0</span> días · <span data-countdown-time>00:00:00</span></strong></aside>`;
   }
 

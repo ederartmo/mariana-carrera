@@ -40,9 +40,12 @@ test('Cascanueces remains open in Acceso General until the last second of Octobe
   });
 });
 
-test('Cascanueces switches to Último minuto at midnight on November 1', () => {
+test('Cascanueces switches to Extemporánea at midnight on November 1', () => {
   assertStage('2026-11-01T00:00:00-06:00', {
-    label: 'Último minuto',
+    label: 'Extemporánea',
     amount: 500,
   });
+  assert.equal(getCascanuecesStageByDate('2026-11-01T00:00:00-06:00').key, 'ultimo_minuto');
+  assert.equal(getCascanuecesStageByDate('2026-11-15T11:59:59-06:00').isOpen, true);
+  assert.equal(getCascanuecesStageByDate('2026-11-15T12:00:00-06:00').isOpen, false);
 });

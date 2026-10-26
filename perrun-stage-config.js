@@ -6,7 +6,7 @@
   const SALES_CLOSE="2027-01-25T16:00:00-06:00";
   const stages=Object.freeze([
     Object.freeze({key:"presale",label:"Preventa",displayName:"Preventa",amount:450,start:null,end:"2026-11-01T00:00:00-06:00",period:"Hasta el 31 de octubre de 2026"}),
-    Object.freeze({key:"general",label:"General",displayName:"General",amount:500,start:"2026-11-01T00:00:00-06:00",end:"2027-01-01T00:00:00-06:00",period:"1 de noviembre al 31 de diciembre de 2026"}),
+    Object.freeze({key:"general",label:"Acceso General",displayName:"Acceso General",amount:500,start:"2026-11-01T00:00:00-06:00",end:"2027-01-01T00:00:00-06:00",period:"1 de noviembre al 31 de diciembre de 2026"}),
     Object.freeze({key:"late",label:"Extemporánea",displayName:"Extemporánea",amount:550,start:"2027-01-01T00:00:00-06:00",end:SALES_CLOSE,period:"1 al 25 de enero de 2027, antes de las 16:00"})
   ]);
   function getPerrunStageByDate(value=new Date()){

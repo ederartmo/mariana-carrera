@@ -13,6 +13,12 @@
       full: "Domingo 6 de diciembre de 2026",
       iso: "2026-12-06",
     },
+    countdown: {
+      mode: "calendar-day",
+      targetDate: "2026-12-06",
+      label: "Días restantes para Cascanueces Run 2026",
+      deadlineLabel: "Rumbo a la carrera · 6 DIC 2026",
+    },
     time: {
       label: "08:00 h",
       start: "08:00",
