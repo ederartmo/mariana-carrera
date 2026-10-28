@@ -23,5 +23,5 @@
     pricing:Object.freeze({currency:'MXN',stages:stageConfig.PERRUN_STAGE_CATALOG,salesClose:stageConfig.SALES_CLOSE,getCurrentStage:stageConfig.getPerrunStageByDate}),
     dogRules,categoryForWeight,validateDogWeights,validateDistance,
     dogKit:Object.freeze(['Bandana','Servicio veterinario','Placa conmemorativa']),humanKit:Object.freeze(['Número','Playera']),
-    pickup:Object.freeze({date:'2027-02-12',start:'10:00',end:'16:00',location:location.name,timeZone:stageConfig.TIME_ZONE})});
+    pickup:Object.freeze({date:'2027-02-13',start:'11:00',end:'17:00',get dateLabel(){return new Intl.DateTimeFormat('es-MX',{weekday:'long',day:'numeric',month:'long',year:'numeric',timeZone:this.timeZone}).format(new Date(this.date+'T12:00:00Z')).replace(',','');},location:location.name,timeZone:stageConfig.TIME_ZONE})});
 });
