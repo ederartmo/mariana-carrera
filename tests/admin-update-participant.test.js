@@ -71,8 +71,8 @@ const PARTICIPANT = {
   borough: null,
 };
 
-async function runUpdate({ body, row = BASE_ROW, adminEmail = 'admin@example.com' }) {
-  const state = { updateCalls: 0, updatePayload: null, eqFilters: [] };
+async function runUpdate({ body, row = BASE_ROW, adminEmail = 'admin@example.com', method = 'POST', query = {}, history = [] }) {
+  const state = { updateCalls: 0, updatePayload: null, eqFilters: [], rpcCalls: [], historyFilters: [] };
   const updatedRow = { ...row };
   const restoreSupabase = mockModule('@supabase/supabase-js', {
     createClient: () => ({
@@ -81,8 +81,19 @@ async function runUpdate({ body, row = BASE_ROW, adminEmail = 'admin@example.com
           ? { data: { user: { email: adminEmail } }, error: null }
           : { data: { user: null }, error: { message: 'bad token' } }),
       },
-      from: () => ({
-        select: () => ({
+      from: (table) => ({
+        select: () => (table === 'admin_participant_change_audit' ? ({
+          eq: (column, value) => ({
+            eq: (column2, value2) => ({
+              eq: (column3, value3) => ({
+                order: () => ({ limit: async () => {
+                  state.historyFilters.push([[column, value], [column2, value2], [column3, value3]]);
+                  return { data: history, error: null };
+                } }),
+              }),
+            }),
+          }),
+        }) : ({
           eq: (column, value) => ({
             eq: (column2, value2) => ({
               single: async () => {
@@ -92,7 +103,7 @@ async function runUpdate({ body, row = BASE_ROW, adminEmail = 'admin@example.com
               },
             }),
           }),
-        }),
+        })),
         update: (payload) => {
           state.updateCalls += 1;
           state.updatePayload = payload;
@@ -109,6 +120,15 @@ async function runUpdate({ body, row = BASE_ROW, adminEmail = 'admin@example.com
           };
         },
       }),
+      rpc: async (name, args) => {
+        state.rpcCalls.push({ name, args });
+        state.updateCalls += 1;
+        state.updatePayload = args.p_changes;
+        const columnMap = { full_name: 'full_name', shirt_size: 'shirt_size', birth_date: 'birth_date', whatsapp: 'whatsapp', state: 'state', borough: 'borough', distance: 'distance' };
+        for (const [key, value] of Object.entries(args.p_changes)) updatedRow[columnMap[key]] = value;
+        const changed = Object.keys(args.p_changes).filter((key) => args.p_changes[key] !== row[key]);
+        return { data: { inscription: { ...updatedRow }, audit: changed.length ? { changed_fields: changed } : null }, error: null };
+      },
     }),
   });
   delete require.cache[require.resolve('../api/admin-update-participant')];
@@ -120,9 +140,10 @@ async function runUpdate({ body, row = BASE_ROW, adminEmail = 'admin@example.com
     const handler = require('../api/admin-update-participant');
     const res = createResponse();
     await handler({
-      method: 'POST',
+      method,
       headers: adminEmail === 'NO_TOKEN' ? {} : { authorization: 'Bearer admin-token' },
       body,
+      query,
     }, res);
     return { res, state, updatedRow };
   } finally {
@@ -355,4 +376,34 @@ test('PR5-23/24/25/26: BIB, orden, pago y monto intactos tras edición', async (
   }
   assert.equal(res.body.inscription.bib_number, '520');
   assert.equal(res.body.inscription.order_session_id, 'cs_test_order');
+});
+
+test('admin distance edit uses the event catalog and transactional RPC', async () => {
+  const { res, state } = await runUpdate({
+    body: validBody({}, { distance: '10K' }),
+    row: { ...BASE_ROW, event_slug: 'cascanueces-run' },
+  });
+  assert.equal(res.statusCode, 200);
+  assert.equal(state.updatePayload.distance, '10K');
+  assert.equal(state.rpcCalls[0].name, 'admin_update_participant_change');
+  assert.equal(state.rpcCalls[0].args.p_expected.distance, '5K');
+});
+
+test('admin distance invalid for the selected event is rejected before the RPC', async () => {
+  const { res, state } = await runUpdate({ body: validBody({}, { distance: '10K' }) });
+  assert.equal(res.statusCode, 400);
+  assert.equal(state.updateCalls, 0);
+});
+
+test('admin GET returns the target snapshot and scoped history', async () => {
+  const history = [{ admin_email: 'admin@example.com', changed_fields: ['shirt_size'], before: { shirtSize: 'M' }, after: { shirtSize: 'L' }, created_at: '2026-11-10T12:00:00Z' }];
+  const { res, state } = await runUpdate({
+    method: 'GET', query: { id: BASE_ROW.id, email: BASE_ROW.email }, history,
+  });
+  assert.equal(res.statusCode, 200);
+  assert.equal(res.body.inscription.distance, '5K');
+  assert.deepEqual(res.body.history, history);
+  assert.ok(state.historyFilters[0].some(([column, value]) => column === 'inscription_id' && value === BASE_ROW.id));
+  assert.ok(state.historyFilters[0].some(([column, value]) => column === 'inscription_email' && value === BASE_ROW.email));
+  assert.ok(state.historyFilters[0].some(([column, value]) => column === 'event_slug' && value === BASE_ROW.event_slug));
 });
