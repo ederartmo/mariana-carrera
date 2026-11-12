@@ -357,6 +357,9 @@ test('sendConfirmationEmail renders Cascanueces 5K when distance is explicit 5K'
     await webhook.sendConfirmationEmail(emailPayload({ distance: '5K' }));
 
     assert.match(state.emailSends[0].html, />5K<\/td>/);
+    assert.match(state.emailSends[0].html, /sábado 5 de diciembre de 2026 de 10:00 a 16:00 hrs en el Huerto Educativo del Bosque de San Juan de Aragón, CDMX/);
+    assert.ok(state.emailSends[0].html.includes('Cascanueces%20Run1.pdf'));
+    assert.doesNotMatch(state.emailSends[0].html, /viernes 4 de diciembre|11:00 a 17:30/);
   });
 });
 
@@ -394,6 +397,7 @@ test('sendConfirmationEmail keeps Axolote default 5K when distance is absent', a
     }));
 
     assert.match(state.emailSends[0].html, />5K<\/td>/);
+    assert.match(state.emailSends[0].html, /viernes 30 de octubre de 11:00 a 17:30/);
   });
 });
 
