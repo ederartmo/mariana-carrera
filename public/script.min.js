@@ -926,7 +926,7 @@ function setupEventFilters() {
       const matchType = !selectedType || cardType === selectedType;
       const shouldShow = matchSport && matchCity && matchType;
 
-      card.style.display = shouldShow ? "block" : "none";
+      card.style.display = shouldShow ? "" : "none";
       if (shouldShow) visible += 1;
     });
 
@@ -1829,56 +1829,67 @@ function setupHomeStagePricing() {
 }
 
 function setupEventCountdown() {
-  const countdown = document.querySelector("[data-countdown-target], [data-countdown-date]");
-  if (!countdown) return;
+  const selector = "[data-countdown-target], [data-countdown-date]";
+  const countdowns = document.querySelectorAll ? document.querySelectorAll(selector) : [document.querySelector(selector)];
+  countdowns.forEach((countdown) => {
+    if (!countdown) return;
 
-  const daysNode = countdown.querySelector("[data-countdown-days]");
-  if (countdown.dataset.countdownMode === "calendar-day") {
-    const date = countdown.dataset.countdownDate || "";
-    if (!daysNode || !/^\d{4}-\d{2}-\d{2}$/.test(date)) return;
-    const dateParts = new Intl.DateTimeFormat("en-US", {
-      timeZone: "America/Mexico_City", year: "numeric", month: "2-digit", day: "2-digit",
-    });
-    const targetDay = Date.parse(`${date}T00:00:00Z`);
-    const updateCalendarCountdown = () => {
-      const parts = Object.fromEntries(dateParts.formatToParts(new Date()).map(({ type, value }) => [type, value]));
-      const today = Date.UTC(Number(parts.year), Number(parts.month) - 1, Number(parts.day));
-      const days = Math.round((targetDay - today) / 86400000);
-      daysNode.textContent = days > 0 ? `${days} ${days === 1 ? "día" : "días"}`
-        : days === 0 ? "¡Hoy es la carrera!" : "La carrera ya se celebró.";
-    };
-    updateCalendarCountdown();
-    window.setInterval(updateCalendarCountdown, 60000);
-    return;
-  }
-  const timeNode = countdown.querySelector("[data-countdown-time]");
-  const target = new Date(countdown.dataset.countdownTarget || "");
-
-  if (!daysNode || !timeNode || Number.isNaN(target.getTime())) return;
-
-  const formatNumber = (value) => String(value).padStart(2, "0");
-
-  const updateCountdown = () => {
-    const remaining = target.getTime() - Date.now();
-
-    if (remaining <= 0) {
-      daysNode.textContent = "0";
-      timeNode.textContent = "00:00:00";
+    const daysNode = countdown.querySelector("[data-countdown-days]");
+    if (countdown.dataset.countdownMode === "calendar-day") {
+      const date = countdown.dataset.countdownDate || "";
+      if (!daysNode || !/^\d{4}-\d{2}-\d{2}$/.test(date)) return;
+      const dateParts = new Intl.DateTimeFormat("en-US", {
+        timeZone: "America/Mexico_City", year: "numeric", month: "2-digit", day: "2-digit",
+      });
+      const targetDay = Date.parse(`${date}T00:00:00Z`);
+      const updateCalendarCountdown = () => {
+        const parts = Object.fromEntries(dateParts.formatToParts(new Date()).map(({ type, value }) => [type, value]));
+        const today = Date.UTC(Number(parts.year), Number(parts.month) - 1, Number(parts.day));
+        const days = Math.round((targetDay - today) / 86400000);
+        daysNode.textContent = days > 0 ? `${days} ${days === 1 ? "día" : "días"}`
+          : days === 0 ? "¡Hoy es la carrera!" : "La carrera ya se celebró.";
+      };
+      updateCalendarCountdown();
+      window.setInterval(updateCalendarCountdown, 60000);
       return;
     }
+    const timeNode = countdown.querySelector("[data-countdown-time]");
+    const target = new Date(countdown.dataset.countdownTarget || "");
 
-    const totalSeconds = Math.floor(remaining / 1000);
-    const days = Math.floor(totalSeconds / 86400);
-    const hours = Math.floor((totalSeconds % 86400) / 3600);
-    const minutes = Math.floor((totalSeconds % 3600) / 60);
-    const seconds = totalSeconds % 60;
+    if (!daysNode || !timeNode || Number.isNaN(target.getTime())) return;
 
-    daysNode.textContent = String(days);
-    timeNode.textContent = `${formatNumber(hours)}:${formatNumber(minutes)}:${formatNumber(seconds)}`;
-  };
+    const formatNumber = (value) => String(value).padStart(2, "0");
 
-  updateCountdown();
-  window.setInterval(updateCountdown, 1000);
+    const updateCountdown = () => {
+      const remaining = target.getTime() - Date.now();
+
+      if (remaining <= 0) {
+        daysNode.textContent = "0";
+        timeNode.textContent = "00:00:00";
+        if (countdown.dataset.countdownMode === "race-start") {
+          const status = countdown.querySelector("[data-countdown-status]");
+          if (status) status.textContent = "¡La carrera ya comenzó!";
+        }
+        if (countdown.dataset.countdownMode === "sales-close") {
+          const status = countdown.querySelector("[data-countdown-status]");
+          if (status) status.textContent = "Inscripciones cerradas";
+        }
+        return;
+      }
+
+      const totalSeconds = Math.floor(remaining / 1000);
+      const days = Math.floor(totalSeconds / 86400);
+      const hours = Math.floor((totalSeconds % 86400) / 3600);
+      const minutes = Math.floor((totalSeconds % 3600) / 60);
+      const seconds = totalSeconds % 60;
+
+      daysNode.textContent = String(days);
+      timeNode.textContent = `${formatNumber(hours)}:${formatNumber(minutes)}:${formatNumber(seconds)}`;
+    };
+
+    updateCountdown();
+    window.setInterval(updateCountdown, 1000);
+  });
 }
 
 function setupHomeRewardsScroller() {

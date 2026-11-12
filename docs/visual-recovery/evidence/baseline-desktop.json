@@ -1,0 +1,158 @@
+{
+  "root": "isolated-baseline-public",
+  "label": "baseline",
+  "viewport": {
+    "width": 1600,
+    "height": 900
+  },
+  "blocked": [
+    "https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Sora:wght@500;600;700;800&display=swap",
+    "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap",
+    "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2",
+    "https://unpkg.com/lucide@0.468.0/dist/umd/lucide.js",
+    "https://connect.facebook.net/en_US/fbevents.js",
+    "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"
+  ],
+  "errors": [],
+  "checks": {
+    "home": {
+      "found": true,
+      "width": 1600,
+      "scrollWidth": 1600,
+      "cards": [
+        {
+          "class": "corporate-event-card corporate-event-card--axolote reveal is-visible",
+          "text": "\n        \n          \n        \n        \n          Inscripciones cerradas\n          Axolote Night Run\n          \n         ",
+          "width": 564
+        },
+        {
+          "class": "corporate-event-card corporate-event-card--cascanueces reveal is-visible",
+          "text": "\n        \n          \n        \n        \n          Inscripciones abiertas\n          Cascanueces Run 2026\n          \n      ",
+          "width": 564
+        },
+        {
+          "class": "corporate-event-card corporate-event-card--perrun reveal",
+          "text": "\n        \n          \n        \n        \n          Inscripciones abiertas\n          Perrun 2027\n          \n            14 ",
+          "width": 564
+        }
+      ],
+      "links": []
+    },
+    "cascanueces": {
+      "text": "Inscripciones abiertas\nCascanueces Run 2026\n6 DIC 2026\nBosque de San Juan de Aragon, CDMX\n5K y 10K\n\nDesde\n$500\n\nVer carrera",
+      "rect": {
+        "x": 811,
+        "y": 169.1875,
+        "width": 564,
+        "height": 560.984375,
+        "top": 169.1875,
+        "right": 1375,
+        "bottom": 730.171875,
+        "left": 811
+      }
+    },
+    "perrun": {
+      "text": "Inscripciones abiertas\nPerrun 2027\n14 FEB 2027\nBosque de San Juan de Aragón, CDMX\n1K / 3K / 5K\n\nDesde\n$500\n\nVer carrera",
+      "rect": {
+        "x": 225,
+        "y": 175.171875,
+        "width": 564,
+        "height": 548.984375,
+        "top": 175.171875,
+        "right": 789,
+        "bottom": 724.15625,
+        "left": 225
+      }
+    },
+    "discovery": {
+      "ids": [
+        "menuToggle",
+        "siteNav",
+        "homeRoot",
+        "corporateHeroTitle",
+        "carreras",
+        "featuredEventsTitle",
+        "kinetic-experience",
+        "benefitsTitle",
+        "stepsTitle",
+        "communityTitle",
+        "clinica-foto-01",
+        "clinica-foto-02",
+        "clinica-foto-03",
+        "clinica-foto-04",
+        "clinica-foto-05",
+        "clinica-foto-06",
+        "clinica-foto-07",
+        "clinica-foto-08",
+        "clinica-foto-09",
+        "clinica-foto-10",
+        "clinica-foto-11",
+        "clinica-foto-12",
+        "clinica-foto-13",
+        "clinica-foto-14",
+        "contentTitle",
+        "preguntas",
+        "generalFaqTitle",
+        "openEventsWidget",
+        "openEventsNotice",
+        "SVGRepo_bgCarrier",
+        "SVGRepo_tracerCarrier",
+        "SVGRepo_iconCarrier",
+        "SVGRepo_bgCarrier",
+        "SVGRepo_tracerCarrier",
+        "SVGRepo_iconCarrier",
+        "SVGRepo_bgCarrier",
+        "SVGRepo_tracerCarrier",
+        "SVGRepo_iconCarrier",
+        "SVGRepo_bgCarrier",
+        "SVGRepo_tracerCarrier",
+        "SVGRepo_iconCarrier",
+        "footerMail",
+        "yearNow"
+      ],
+      "buttons": [
+        {
+          "text": "Menú",
+          "aria": null
+        },
+        {
+          "text": "¿Cómo me inscribo?",
+          "aria": null
+        },
+        {
+          "text": "¿Dónde recibo mi confirmación?",
+          "aria": null
+        },
+        {
+          "text": "¿Puedo registrarme en varias carreras?",
+          "aria": null
+        },
+        {
+          "text": "¿Dónde se publican los resultados?",
+          "aria": null
+        },
+        {
+          "text": "¿Cómo contacto al equipo?",
+          "aria": null
+        },
+        {
+          "text": "",
+          "aria": "Minimizar carreras activas"
+        },
+        {
+          "text": "\n          2\n        ",
+          "aria": "Ver carreras con inscripciones abiertas"
+        },
+        {
+          "text": "Quiero avisos",
+          "aria": null
+        }
+      ]
+    }
+  },
+  "screenshots": [
+    "docs/visual-recovery/evidence/baseline-desktop-cards.png",
+    "docs/visual-recovery/evidence/baseline-desktop-cascanueces.png",
+    "docs/visual-recovery/evidence/baseline-desktop-perrun.png"
+  ]
+}

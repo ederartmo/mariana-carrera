@@ -17,6 +17,7 @@
       id: "axolote-night-run",
       name: "Axolote Night Run",
       href: "axolote-night-run.html",
+      galleryHref: "axolote-galeria.html",
       date: new Date("2026-10-31T18:00:00-06:00"),
       location: "Ciudad de Mexico",
       distance: "5K",
@@ -37,6 +38,7 @@
       image: "assets/events/cascanueces-run/gallery/cascanueces_run_banner3.jpeg",
       alt: "Cascanueces Run 2026",
       theme: "cascanueces",
+      countdown: {target:'2026-12-06T08:00:00-06:00',tone:'gold',mode:'race-start',label:'Salida · 6 DIC · 08:00 h CDMX'},
       getStage() {
         return root.KineticHubCascanuecesStageConfig?.getCascanuecesStageByDate?.() || getClosedStage();
       },
@@ -52,8 +54,14 @@
     distance: perrun.distances.join(' / '),
     image: 'assets/events/perrun-2027/visuals/perrun-hero.webp',
     alt: perrun.name + ' · corredor y perro', theme: 'perrun',
+    countdown: {target:perrun.pricing.salesClose,tone:'blue',mode:'sales-close',label:'Cierre de inscripciones · ' + formatDate(new Date(perrun.pricing.salesClose))},
     getStage() { return perrun.pricing.getCurrentStage(); },
   });
+  const now = new Date();
+  events.forEach((event) => { event.isPast = event.date < now; });
+  events.sort((a, b) => Number(a.isPast) - Number(b.isPast) || a.date - b.date);
+  const nextEvent = events.find((event) => !event.isPast);
+  if (nextEvent) nextEvent.isNext = true;
   root.KineticHubFeaturedEvents = events;
   root.KineticHubEventHelpers = { formatDate, getClosedStage };
 })(typeof globalThis !== "undefined" ? globalThis : window);
