@@ -328,6 +328,14 @@
   }
   function renderCountdown(event) {
     if (!event.countdown) return "";
+    if (root.KineticHubCountdownCTA && (event.slug === 'cascanueces-run' || event.slug === 'perrun-2027')) {
+      const race = event.slug === 'cascanueces-run';
+      const target = race ? `${event.date.iso}T${event.time.start}:00-06:00` : event.pricing.salesClose;
+      return `<div class="event-landing-clock-action">${root.KineticHubCountdownCTA.render({
+        target, href: '#modalidades', tone: race ? 'gold' : 'blue', mode: race ? 'race-start' : 'sales-close',
+        label: race ? 'Salida · 6 DIC · 08:00 h CDMX' : 'Cierre de inscripciones',
+      })}</div>`;
+    }
     if (event.countdown.mode === "calendar-day") {
       return `<aside class="event-landing-countdown" aria-label="${escapeHtml(event.countdown.label)}" data-countdown-mode="calendar-day" data-countdown-date="${escapeHtml(event.countdown.targetDate)}"><p>${escapeHtml(event.countdown.deadlineLabel)}</p><strong data-countdown-days>-- días</strong></aside>`;
     }

@@ -1,0 +1,291 @@
+{
+  "base": "5aeca1404c151415ba13fe777de324c1769af35e",
+  "build": {
+    "exit": 0
+  },
+  "test": {
+    "exit": 1
+  },
+  "counts": {
+    "tests": 1313,
+    "suites": 0,
+    "pass": 1289,
+    "fail": 24,
+    "cancelled": 0,
+    "skipped": 0,
+    "todo": 0
+  },
+  "failures": [
+    "data.js despacha me-registrations",
+    "data.js despacha admin-list-inscriptions",
+    "data.js despacha resend-emails-list",
+    "data.js action desconocida o ausente → 404 sin invocar handlers",
+    "Actual checkout page preserves all Perrun distances and explicitly asks when missing",
+    "6 actual webhook transport routes addon before registration/Resend",
+    "Perrun API rejects an incomplete participant before creating a Stripe session",
+    "V2 boundary 297: total 45000, slots 298",
+    "V2 boundary 298: total 63000, slots 299,300",
+    "V2 boundary 299: total 66500, slots 300,",
+    "V2 boundary 300: total 48500, slots ",
+    "V2 boundary 300: total 70000, slots ,",
+    "Unrequested dogs consume benefits; sequence beyond 300 may still be free by slot",
+    "Pending OXXO holds slot, late paid consumes same quote; consumed can never release",
+    "V1 drafts retain capacity and original finalizer; no reprice or duplicate allocation",
+    "Manual uses real manual identity, exact total and one atomic finalization",
+    "Sales cutoff rejected at exact close; reserved tariff is immutable",
+    "Unrequested engraving after all slots consumed costs zero",
+    "V2 quote fixes 700 pesos before Stripe; one Session with dynamic price_data and safe metadata",
+    "OXXO pending holds benefit despite Checkout expiry; late succeeded consumes at original amount",
+    "Signed quote rejects payload modifications or arbitrary reservation ID; browser price not authoritative",
+    "Manual quote requires exact received amount; retry never repeats human; no Stripe call",
+    "V2 summary, admin/profile/CSV and mock email show included paid surcharge; no addon CTA",
+    "Rollout manual V1 retry stays V1 with flag enabled"
+  ],
+  "newFailures": [],
+  "resolvedFailures": [],
+  "targeted": {
+    "exit": 0
+  },
+  "protected": {
+    "count": 148,
+    "mismatches": [],
+    "details": [],
+    "comparison": "Exact archived baseline bytes; public compared after identical build version"
+  },
+  "checkoutSectionUnchanged": true,
+  "images": {
+    "count": 96,
+    "mismatches": []
+  },
+  "outputs": [
+    "script.min.js",
+    "public/script.min.js",
+    "public/axolote-night-run.html",
+    "public/cascanueces-run.html",
+    "public/event-landing.js",
+    "public/eventos.html",
+    "public/featured-events.js",
+    "public/home-corporate.js",
+    "public/index.html",
+    "public/perrun-2027.html",
+    "public/script.js",
+    "public/assets/events/axolote-night-run/photos/axolote-01-thumb.webp",
+    "public/assets/events/axolote-night-run/photos/axolote-01.webp",
+    "public/assets/events/axolote-night-run/photos/axolote-02-thumb.webp",
+    "public/assets/events/axolote-night-run/photos/axolote-02.webp",
+    "public/assets/events/axolote-night-run/photos/axolote-03-thumb.webp",
+    "public/assets/events/axolote-night-run/photos/axolote-03.webp",
+    "public/assets/events/axolote-night-run/photos/axolote-04-thumb.webp",
+    "public/assets/events/axolote-night-run/photos/axolote-04.webp",
+    "public/assets/events/axolote-night-run/photos/axolote-05-thumb.webp",
+    "public/assets/events/axolote-night-run/photos/axolote-05.webp",
+    "public/assets/events/axolote-night-run/photos/axolote-06-thumb.webp",
+    "public/assets/events/axolote-night-run/photos/axolote-06.webp",
+    "public/assets/events/axolote-night-run/photos/axolote-07-thumb.webp",
+    "public/assets/events/axolote-night-run/photos/axolote-07.webp",
+    "public/assets/events/axolote-night-run/photos/axolote-08-thumb.webp",
+    "public/assets/events/axolote-night-run/photos/axolote-08.webp",
+    "public/assets/events/axolote-night-run/photos/axolote-09-thumb.webp",
+    "public/assets/events/axolote-night-run/photos/axolote-09.webp",
+    "public/assets/events/axolote-night-run/photos/axolote-10-thumb.webp",
+    "public/assets/events/axolote-night-run/photos/axolote-10.webp",
+    "public/assets/events/axolote-night-run/photos/axolote-11-thumb.webp",
+    "public/assets/events/axolote-night-run/photos/axolote-11.webp",
+    "public/assets/events/axolote-night-run/photos/axolote-12-thumb.webp",
+    "public/assets/events/axolote-night-run/photos/axolote-12.webp",
+    "public/assets/events/axolote-night-run/photos/axolote-13-thumb.webp",
+    "public/assets/events/axolote-night-run/photos/axolote-13.webp",
+    "public/assets/events/axolote-night-run/photos/axolote-14-thumb.webp",
+    "public/assets/events/axolote-night-run/photos/axolote-14.webp",
+    "public/assets/events/axolote-night-run/photos/axolote-15-thumb.webp",
+    "public/assets/events/axolote-night-run/photos/axolote-15.webp",
+    "public/assets/events/axolote-night-run/photos/axolote-16-thumb.webp",
+    "public/assets/events/axolote-night-run/photos/axolote-16.webp",
+    "public/assets/events/axolote-night-run/photos/axolote-17-thumb.webp",
+    "public/assets/events/axolote-night-run/photos/axolote-17.webp",
+    "public/assets/events/axolote-night-run/photos/axolote-18-thumb.webp",
+    "public/assets/events/axolote-night-run/photos/axolote-18.webp",
+    "public/assets/events/axolote-night-run/photos/axolote-19-thumb.webp",
+    "public/assets/events/axolote-night-run/photos/axolote-19.webp",
+    "public/assets/events/axolote-night-run/photos/axolote-20-thumb.webp",
+    "public/assets/events/axolote-night-run/photos/axolote-20.webp",
+    "public/assets/events/axolote-night-run/photos/axolote-21-thumb.webp",
+    "public/assets/events/axolote-night-run/photos/axolote-21.webp",
+    "public/assets/events/axolote-night-run/photos/axolote-22-thumb.webp",
+    "public/assets/events/axolote-night-run/photos/axolote-22.webp",
+    "public/assets/events/axolote-night-run/photos/axolote-23-thumb.webp",
+    "public/assets/events/axolote-night-run/photos/axolote-23.webp",
+    "public/assets/events/axolote-night-run/photos/axolote-24-thumb.webp",
+    "public/assets/events/axolote-night-run/photos/axolote-24.webp",
+    "public/assets/events/axolote-night-run/photos/axolote-25-thumb.webp",
+    "public/assets/events/axolote-night-run/photos/axolote-25.webp",
+    "public/assets/events/axolote-night-run/photos/axolote-26-thumb.webp",
+    "public/assets/events/axolote-night-run/photos/axolote-26.webp",
+    "public/assets/events/axolote-night-run/photos/axolote-27-thumb.webp",
+    "public/assets/events/axolote-night-run/photos/axolote-27.webp",
+    "public/assets/events/axolote-night-run/photos/axolote-28-thumb.webp",
+    "public/assets/events/axolote-night-run/photos/axolote-28.webp",
+    "public/assets/events/axolote-night-run/photos/axolote-29-thumb.webp",
+    "public/assets/events/axolote-night-run/photos/axolote-29.webp",
+    "public/assets/events/axolote-night-run/photos/axolote-30-thumb.webp",
+    "public/assets/events/axolote-night-run/photos/axolote-30.webp",
+    "public/assets/events/axolote-night-run/photos/axolote-31-thumb.webp",
+    "public/assets/events/axolote-night-run/photos/axolote-31.webp",
+    "public/assets/events/axolote-night-run/photos/axolote-32-thumb.webp",
+    "public/assets/events/axolote-night-run/photos/axolote-32.webp",
+    "public/assets/events/axolote-night-run/photos/axolote-33-thumb.webp",
+    "public/assets/events/axolote-night-run/photos/axolote-33.webp",
+    "public/assets/events/axolote-night-run/photos/axolote-34-thumb.webp",
+    "public/assets/events/axolote-night-run/photos/axolote-34.webp",
+    "public/assets/events/axolote-night-run/photos/axolote-35-thumb.webp",
+    "public/assets/events/axolote-night-run/photos/axolote-35.webp",
+    "public/assets/events/axolote-night-run/photos/axolote-36-thumb.webp",
+    "public/assets/events/axolote-night-run/photos/axolote-36.webp",
+    "public/assets/events/axolote-night-run/photos/axolote-37-thumb.webp",
+    "public/assets/events/axolote-night-run/photos/axolote-37.webp",
+    "public/assets/events/axolote-night-run/photos/axolote-38-thumb.webp",
+    "public/assets/events/axolote-night-run/photos/axolote-38.webp",
+    "public/assets/events/axolote-night-run/photos/axolote-39-thumb.webp",
+    "public/assets/events/axolote-night-run/photos/axolote-39.webp",
+    "public/assets/events/axolote-night-run/photos/axolote-40-thumb.webp",
+    "public/assets/events/axolote-night-run/photos/axolote-40.webp",
+    "public/assets/events/axolote-night-run/photos/axolote-41-thumb.webp",
+    "public/assets/events/axolote-night-run/photos/axolote-41.webp",
+    "public/assets/events/axolote-night-run/photos/axolote-42-thumb.webp",
+    "public/assets/events/axolote-night-run/photos/axolote-42.webp",
+    "public/assets/events/axolote-night-run/photos/axolote-43-thumb.webp",
+    "public/assets/events/axolote-night-run/photos/axolote-43.webp",
+    "public/assets/events/axolote-night-run/photos/axolote-44-thumb.webp",
+    "public/assets/events/axolote-night-run/photos/axolote-44.webp",
+    "public/assets/events/axolote-night-run/photos/axolote-45-thumb.webp",
+    "public/assets/events/axolote-night-run/photos/axolote-45.webp",
+    "public/assets/events/axolote-night-run/photos/axolote-46-thumb.webp",
+    "public/assets/events/axolote-night-run/photos/axolote-46.webp",
+    "public/assets/events/axolote-night-run/photos/axolote-47-thumb.webp",
+    "public/assets/events/axolote-night-run/photos/axolote-47.webp",
+    "public/assets/events/axolote-night-run/photos/axolote-48-thumb.webp",
+    "public/assets/events/axolote-night-run/photos/axolote-48.webp",
+    "public/axolote-galeria.html",
+    "public/event-countdown-cta.js",
+    "public/event-memories.css",
+    "public/gallery-viewer.js"
+  ],
+  "outputParityFailures": [],
+  "pdfHashes": [
+    {
+      "path": "Archivo 2/Convocatoria Axolote Night Run1.pdf",
+      "sha256": "8aac35eed37b616988b62f0e2802ee8924f2d22d8a19acfcf2d3c57db03c955d"
+    },
+    {
+      "path": "Archivo 2/Expediente Axolote Night Run_f.pdf",
+      "sha256": "00f5403d7089976ba90dc148ef7d380bc75d52281caf9add887547b51bbc2e99"
+    },
+    {
+      "path": "Expediente Axolote Night Run .pdf",
+      "sha256": "aa7db0a9d6a3d7d6860a0642125e11a692fd0433421cd59bac261561a37d51f1"
+    },
+    {
+      "path": "assets/events/axolote-night-run/legal/convocatoria.pdf",
+      "sha256": "8aac35eed37b616988b62f0e2802ee8924f2d22d8a19acfcf2d3c57db03c955d"
+    },
+    {
+      "path": "assets/events/cascanueces-run/legal/Cascanueces Run1.pdf",
+      "sha256": "d8225180f917d2b7c1b29dd08dc95bcc4997694533a64ac0f3c8a3285f9dc224"
+    },
+    {
+      "path": "assets/events/cascanueces-run/legal/Cascanueces Run_convocatoria.pdf",
+      "sha256": "9790f7149c5b835d611759f4a8838cc40af985c9d8645fcba20912b6e0b5424e"
+    },
+    {
+      "path": "assets/events/perrun-2027/docs/convocatoria-perrun-2027.pdf",
+      "sha256": "efab6382745e5c1850c6ab62a46851ebdb60de1286e1c6b5facbb99a193f8a39"
+    },
+    {
+      "path": "assets/events/perrun-2027/docs/exoneracion-perrun-2027.pdf",
+      "sha256": "b5f732a05e49bc85db51f92d2db69a7d2cbe19ef1310e540b5b4d747ad3f0d26"
+    },
+    {
+      "path": "exoneracion.pdf",
+      "sha256": "9db81fcd4aec1be821f59e58873684fd2a65271a7ade331b24bbd25d5738a886"
+    },
+    {
+      "path": "exoneracion_.pdf",
+      "sha256": "9db81fcd4aec1be821f59e58873684fd2a65271a7ade331b24bbd25d5738a886"
+    },
+    {
+      "path": "public/Expediente Axolote Night Run .pdf",
+      "sha256": "aa7db0a9d6a3d7d6860a0642125e11a692fd0433421cd59bac261561a37d51f1"
+    },
+    {
+      "path": "public/assets/events/axolote-night-run/legal/convocatoria.pdf",
+      "sha256": "8aac35eed37b616988b62f0e2802ee8924f2d22d8a19acfcf2d3c57db03c955d"
+    },
+    {
+      "path": "public/assets/events/cascanueces-run/legal/Cascanueces Run1.pdf",
+      "sha256": "d8225180f917d2b7c1b29dd08dc95bcc4997694533a64ac0f3c8a3285f9dc224"
+    },
+    {
+      "path": "public/assets/events/cascanueces-run/legal/Cascanueces Run_convocatoria.pdf",
+      "sha256": "9790f7149c5b835d611759f4a8838cc40af985c9d8645fcba20912b6e0b5424e"
+    },
+    {
+      "path": "public/assets/events/perrun-2027/docs/convocatoria-perrun-2027.pdf",
+      "sha256": "efab6382745e5c1850c6ab62a46851ebdb60de1286e1c6b5facbb99a193f8a39"
+    },
+    {
+      "path": "public/assets/events/perrun-2027/docs/exoneracion-perrun-2027.pdf",
+      "sha256": "b5f732a05e49bc85db51f92d2db69a7d2cbe19ef1310e540b5b4d747ad3f0d26"
+    },
+    {
+      "path": "public/exoneracion.pdf",
+      "sha256": "9db81fcd4aec1be821f59e58873684fd2a65271a7ade331b24bbd25d5738a886"
+    },
+    {
+      "path": "public/exoneracion_.pdf",
+      "sha256": "9db81fcd4aec1be821f59e58873684fd2a65271a7ade331b24bbd25d5738a886"
+    }
+  ],
+  "targetedCounts": {
+    "tests": 28,
+    "pass": 28,
+    "fail": 0,
+    "skipped": 0
+  },
+  "axoloteBackendCases": [
+    "✔ Axolote backend Checkout closing boundary 2026-10-15T12:00:00-06:00 (3.4683ms)",
+    "✔ Axolote backend Checkout closing boundary 2026-10-16T00:00:00-06:00 (4.2306ms)",
+    "✔ Axolote backend Checkout closing boundary 2026-10-16T12:00:00-06:00 (4.4177ms)",
+    "✔ Axolote backend Checkout closing boundary 2026-10-16T23:59:59-06:00 (3.1863ms)",
+    "✔ Axolote backend Checkout closing boundary 2026-10-17T00:00:00-06:00 (3.4969ms)",
+    "✔ Axolote backend Checkout closing boundary 2026-10-17T12:00:00-06:00 (4.4507ms)"
+  ],
+  "corrected-build": {
+    "exit": 0
+  },
+  "corrected-targeted": {
+    "exit": 0
+  },
+  "correctedCssResources": [
+    {
+      "path": "assets/events/perrun-2027/visuals/perrun-hero.webp",
+      "source": true,
+      "built": true
+    },
+    {
+      "path": "assets/events/cascanueces-run/gallery/cascanueces_run_banner3.jpeg",
+      "source": true,
+      "built": true
+    }
+  ],
+  "previewAssetVersion": "recovery-ee6279b3-preview",
+  "finalFocus": {
+    "tests": 22,
+    "pass": 22,
+    "fail": 0
+  },
+  "finalCorrectionFocus": {
+    "tests": 28,
+    "pass": 28,
+    "fail": 0
+  }
+}

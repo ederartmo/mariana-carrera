@@ -14,7 +14,7 @@
       href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Sora:wght@500;600;700;800&display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="styles.min.css?v=PERRUN_RC" />
+    <link rel="stylesheet" href="styles.min.css?v=recovery-ee6279b3-preview" />
       <link rel="icon" type="image/png" href="assets/brand/icon.png" />
   <!-- Meta Pixel Code -->
 <script>
@@ -29,6 +29,7 @@ s.parentNode.insertBefore(t,s)}(window, document,'script',
 fbq('init', '917340277990899');
 fbq('track', 'PageView');
 </script>
+  <link rel="stylesheet" href="event-memories.css?v=recovery-ee6279b3-preview" />
 </head>
   <body>
 <noscript><img height="1" width="1" style="display:none"
@@ -118,20 +119,21 @@ src="https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1"
         <div class="container events-list">
           <div class="card-grid card-grid-3">
             <article id="perrunCatalogCard" class="event-card reveal" data-event-card data-sport="running" data-city="cdmx" data-type="familiar">
+              <div class="event-media media-perrun" role="img" aria-label="Perrun 2027, carrera con tu perro"></div>
               <div class="event-body">
                 <h3 data-perrun-name></h3>
                 <p data-perrun-date-location></p>
                 <p class="meta" data-perrun-distances></p>
-                <a class="btn btn-small" href="perrun-2027.html">Ver detalle</a>
+                <div class="event-card-actions"><a class="detail-cta" href="perrun-2027.html">Ver detalle</a><span data-catalog-clock="perrun-2027"></span></div>
               </div>
             </article>
-            <article class="event-card reveal" data-event-card data-sport="running" data-city="cdmx" data-type="recreativa">
-              <div class="event-media media-axolote"></div>
+            <article class="event-card reveal is-past" data-event-card data-sport="running" data-city="cdmx" data-type="recreativa">
+              <div class="event-media media-axolote"><span class="event-thanks-badge">Gracias por participar</span></div>
               <div class="event-body">
                 <h3>Axolote Night Run</h3>
                 <p>CDMX · 31 octubre 2026</p>
-                <p class="meta">Running nocturno · 5K</p>
-                <a class="btn btn-small" href="axolote-night-run.html">Ver detalle</a>
+                <p class="meta">Evento celebrado · Gracias por acompañarnos</p>
+                <div class="event-card-actions"><a class="detail-cta" href="axolote-night-run.html">Ver detalle</a><a class="photo-cta" href="axolote-galeria.html">Ver fotos</a></div>
               </div>
             </article>
 
@@ -141,7 +143,7 @@ src="https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1"
                 <h3>Cascanueces Run</h3>
                 <p>CDMX · 6 diciembre 2026</p>
                 <p class="meta">Carrera recreativa · 5K / 10K</p>
-                <a class="btn btn-small" href="cascanueces-run.html">Ver información</a>
+                <div class="event-card-actions"><a class="detail-cta" href="cascanueces-run.html">Ver información</a><span data-catalog-clock="cascanueces-run"></span></div>
               </div>
             </article>
 
@@ -257,8 +259,10 @@ src="https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1"
       </div>
     </footer>
 
-    <script src="perrun-stage-config.js?v=PERRUN_RC"></script>
-    <script src="perrun-event-data.js?v=PERRUN_RC"></script>
+    <script src="event-countdown-cta.js?v=recovery-ee6279b3-preview"></script>
+    <script src="perrun-stage-config.js?v=recovery-ee6279b3-preview"></script>
+    <script src="perrun-event-data.js?v=recovery-ee6279b3-preview"></script>
+    <script src="featured-events.js?v=recovery-ee6279b3-preview"></script>
     <script>
       const perrunCatalogEvent = window.KineticHubPerrunEvent;
       const perrunCatalogCard = document.getElementById('perrunCatalogCard');
@@ -267,7 +271,13 @@ src="https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1"
       perrunCatalogCard.querySelector('[data-perrun-date-location]').textContent = perrunCatalogEvent.date.label + ' · ' + perrunCatalogEvent.location.name;
       perrunCatalogCard.querySelector('[data-perrun-distances]').textContent = 'Recreativa · Sin premiación · ' + perrunCatalogEvent.distances.join(' / ');
     </script>
-    <script src="supabase-client.js?v=PERRUN_RC"></script>
-    <script src="script.min.js?v=PERRUN_RC"></script>
+    <script>
+      document.querySelectorAll('[data-catalog-clock]').forEach((node) => {
+        const event = window.KineticHubFeaturedEvents.find((item) => item.id === node.dataset.catalogClock);
+        if (event?.countdown && !event.isPast) node.innerHTML = KineticHubCountdownCTA.render({ ...event.countdown, href: event.href });
+      });
+    </script>
+    <script src="supabase-client.js?v=recovery-ee6279b3-preview"></script>
+    <script src="script.min.js?v=recovery-ee6279b3-preview"></script>
   </body>
 </html>

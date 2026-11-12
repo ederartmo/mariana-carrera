@@ -40,11 +40,14 @@
 
   function renderFeaturedEventCard(event) {
     const stage = eventStage(event);
-    const status = stage.isOpen ? "Inscripciones abiertas" : "Inscripciones cerradas";
+    const status = event.isPast ? "Evento celebrado" : event.isNext ? "Siguiente carrera" : stage.isOpen ? "Inscripciones abiertas" : "Inscripciones cerradas";
+    const href = event.isPast && event.galleryHref ? event.galleryHref : event.href;
+    const countdown = !event.isPast && event.countdown ? root.KineticHubCountdownCTA?.render({...event.countdown,href:event.href}) || '' : '';
     return `
-      <article class="corporate-event-card corporate-event-card--${escapeHtml(event.theme)} reveal">
-        <a class="corporate-event-media" href="${escapeHtml(event.href)}" aria-label="Ver ${escapeHtml(event.name)}">
+      <article class="corporate-event-card corporate-event-card--${escapeHtml(event.theme)} ${event.isPast ? "is-past" : ""} ${event.isNext ? "is-next" : ""} reveal">
+        <a class="corporate-event-media" href="${escapeHtml(href)}" aria-label="Ver ${escapeHtml(event.name)}">
           <img src="${escapeHtml(event.image)}" alt="${escapeHtml(event.alt)}" loading="lazy" />
+          ${event.isPast ? '<span class="event-thanks-badge">Gracias por participar</span>' : ''}
         </a>
         <div class="corporate-event-content">
           <span class="corporate-event-status ${stage.isOpen ? "is-open" : ""}">${status}</span>
@@ -55,8 +58,8 @@
             <div><dt><i data-lucide="footprints"></i></dt><dd>${escapeHtml(event.distance)}</dd></div>
           </dl>
           <div class="corporate-event-footer">
-            <p>Desde <strong>${eventPrice(event)}</strong></p>
-            <a href="${escapeHtml(event.href)}" class="corporate-event-cta">Ver carrera <i data-lucide="arrow-right"></i></a>
+            <p>${event.isPast ? 'Gracias por acompañarnos' : `Desde <strong>${eventPrice(event)}</strong>`}</p>
+            <div class="event-card-actions"><a href="${escapeHtml(event.href)}" class="detail-cta">Ver detalle</a>${event.isPast && event.galleryHref ? `<a class="photo-cta" href="${escapeHtml(event.galleryHref)}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8" cy="8" r="1"/><path d="m3 17 5-5 4 4 4-6 5 7"/></svg>Ver fotos</a>` : countdown}</div>
           </div>
         </div>
       </article>
@@ -74,8 +77,8 @@
             ${openEvents.map((event) => `
               <article class="open-event-row">
                 <img src="${escapeHtml(event.image)}" alt="" />
-                <div><strong>${escapeHtml(event.name)}</strong><small>${eventDate(event)} · ${escapeHtml(event.distance)} · ${eventPrice(event)}</small></div>
-                <a href="${escapeHtml(event.href)}">Ver carrera</a>
+                <div><strong>${escapeHtml(event.name)}</strong><small>${eventDate(event)} · ${escapeHtml(event.distance)} · ${eventPrice(event)}</small>${event.countdown ? root.KineticHubCountdownCTA?.render({...event.countdown,href:event.href}) || '' : ''}</div>
+                <a href="${escapeHtml(event.href)}">Ver detalle</a>
               </article>
             `).join("")}
           </div>
@@ -91,7 +94,7 @@
     const main = document.getElementById("homeRoot");
     if (!main || !events.length) return;
 
-    const openEvents = events.filter((event) => eventStage(event).isOpen);
+    const openEvents = events.filter((event) => !event.isPast && eventStage(event).isOpen);
     main.className = "corporate-home";
     main.innerHTML = `
       <section class="corporate-hero" aria-labelledby="corporateHeroTitle">

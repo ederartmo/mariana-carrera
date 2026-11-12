@@ -1,0 +1,2020 @@
+{
+  "generatedAt": "2026-11-12T02:34:07.429Z",
+  "source": "https://mariana-carrera-71pg8t6dl-ederartmos-projects.vercel.app",
+  "comparisonBase": "5aeca1404c151415ba13fe777de324c1769af35e",
+  "resourceCount": 109,
+  "imageCount": 96,
+  "validImageCount": 96,
+  "failedResourceReport": [],
+  "resources": [
+    {
+      "url": "https://mariana-carrera-71pg8t6dl-ederartmos-projects.vercel.app/event-countdown-cta.js",
+      "path": "event-countdown-cta.js",
+      "status": 200,
+      "contentType": "application/javascript; charset=utf-8",
+      "size": 900,
+      "sha256": "cdab589ad6b136f552f2781fc2f5f7947beff2d040b9abcbe1b63af72c162c4c",
+      "imageDimensions": null,
+      "integrity": "non-empty text response; UTF-8 decoded",
+      "dependencies": [],
+      "differenceFromCommittedBase": {
+        "status": "absent_in_base",
+        "basePath": "event-countdown-cta.js"
+      }
+    },
+    {
+      "url": "https://mariana-carrera-71pg8t6dl-ederartmos-projects.vercel.app/event-memories.css",
+      "path": "event-memories.css",
+      "status": 200,
+      "contentType": "text/css; charset=utf-8",
+      "size": 7904,
+      "sha256": "d522c62268ebfbd251f8b33e3070de88663f28e1927e027eb5ac0bd2e29d5a08",
+      "imageDimensions": null,
+      "integrity": "non-empty text response; UTF-8 decoded",
+      "dependencies": [],
+      "differenceFromCommittedBase": {
+        "status": "absent_in_base",
+        "basePath": "event-memories.css"
+      }
+    },
+    {
+      "url": "https://mariana-carrera-71pg8t6dl-ederartmos-projects.vercel.app/gallery-viewer.js",
+      "path": "gallery-viewer.js",
+      "status": 200,
+      "contentType": "application/javascript; charset=utf-8",
+      "size": 1696,
+      "sha256": "fea97fd09720c753ba4bf91bcc9da8181dab316f223a6b724f3f2049b93facca",
+      "imageDimensions": null,
+      "integrity": "non-empty text response; UTF-8 decoded",
+      "dependencies": [],
+      "differenceFromCommittedBase": {
+        "status": "absent_in_base",
+        "basePath": "gallery-viewer.js"
+      }
+    },
+    {
+      "url": "https://mariana-carrera-71pg8t6dl-ederartmos-projects.vercel.app/axolote-galeria.html",
+      "path": "axolote-galeria.html",
+      "status": 200,
+      "contentType": "text/html; charset=utf-8",
+      "size": 25033,
+      "sha256": "991f3dffad94ce82adb57846cc434b3d467204dd87721fee26e5b849c42c4270",
+      "imageDimensions": null,
+      "integrity": "non-empty text response; UTF-8 decoded",
+      "dependencies": [
+        "event-countdown-cta.js",
+        "event-memories.css",
+        "gallery-viewer.js",
+        "script.min.js",
+        "styles.min.css"
+      ],
+      "differenceFromCommittedBase": {
+        "status": "absent_in_base",
+        "basePath": "axolote-galeria.html"
+      }
+    },
+    {
+      "url": "https://mariana-carrera-71pg8t6dl-ederartmos-projects.vercel.app/featured-events.js",
+      "path": "featured-events.js",
+      "status": 200,
+      "contentType": "application/javascript; charset=utf-8",
+      "size": 2763,
+      "sha256": "0c347e8df161a1ac5bd19aafe4751be37226518173ae6c0841a537de769f55ac",
+      "imageDimensions": null,
+      "integrity": "non-empty text response; UTF-8 decoded",
+      "dependencies": [
+        "event-countdown-cta.js"
+      ],
+      "differenceFromCommittedBase": {
+        "status": "different",
+        "basePath": "featured-events.js",
+        "added": 9,
+        "deleted": 1,
+        "changedFunctionScopes": [
+          "+      galleryHref: \"axolote-galeria.html\",",
+          "+      countdown: {target:'2026-12-06T08:00:00-06:00',tone:'gold',mode:'race-start',label:'Salida · 6 DIC · 08:00 h CDMX'},",
+          "+    countdown: {target:perrun.pricing.salesClose,tone:'blue',mode:'sales-close',label:'Cierre de inscripciones · 25 ENE'},",
+          "+  const now = new Date();",
+          "-})(typeof globalThis !== \"undefined\" ? globalThis : window);"
+        ]
+      }
+    },
+    {
+      "url": "https://mariana-carrera-71pg8t6dl-ederartmos-projects.vercel.app/index.html",
+      "path": "index.html",
+      "status": 200,
+      "contentType": "text/html; charset=utf-8",
+      "size": 4916,
+      "sha256": "d045386860c68e6a4dc80f068c1e4d38f13537ea22b8a289d5ace90cb967383e",
+      "imageDimensions": null,
+      "integrity": "non-empty text response; UTF-8 decoded",
+      "dependencies": [],
+      "differenceFromCommittedBase": {
+        "status": "different",
+        "basePath": "index.html",
+        "added": 11,
+        "deleted": 9,
+        "changedFunctionScopes": [
+          "-    <link rel=\"stylesheet\" href=\"styles.min.css?v=__ASSET_VERSION__\" />",
+          "+    <link rel=\"stylesheet\" href=\"event-memories.css?v=ee6279b3e238199f59df674a6d4092b7a767a459\" />",
+          "-    <script src=\"axolote-stage-config.js?v=__ASSET_VERSION__\"></script>"
+        ]
+      }
+    },
+    {
+      "url": "https://mariana-carrera-71pg8t6dl-ederartmos-projects.vercel.app/eventos.html",
+      "path": "eventos.html",
+      "status": 200,
+      "contentType": "text/html; charset=utf-8",
+      "size": 10968,
+      "sha256": "4b174558906e1414ce2151fa0aa4589b1864cf58ee4ca2628984f237657ffa03",
+      "imageDimensions": null,
+      "integrity": "non-empty text response; UTF-8 decoded",
+      "dependencies": [],
+      "differenceFromCommittedBase": {
+        "status": "different",
+        "basePath": "eventos.html",
+        "added": 19,
+        "deleted": 72,
+        "changedFunctionScopes": [
+          "-    <link rel=\"stylesheet\" href=\"styles.min.css?v=__ASSET_VERSION__\" />",
+          "fbq('track', 'PageView');",
+          "src=\"https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1\""
+        ]
+      }
+    },
+    {
+      "url": "https://mariana-carrera-71pg8t6dl-ederartmos-projects.vercel.app/home-corporate.js",
+      "path": "home-corporate.js",
+      "status": 200,
+      "contentType": "application/javascript; charset=utf-8",
+      "size": 16943,
+      "sha256": "5971199d50c0aa55f7d1bda15b110d9842b720ca401d931fb2b8ef0978310778",
+      "imageDimensions": null,
+      "integrity": "non-empty text response; UTF-8 decoded",
+      "dependencies": [
+        "featured-events.js",
+        "event-countdown-cta.js"
+      ],
+      "differenceFromCommittedBase": {
+        "status": "different",
+        "basePath": "home-corporate.js",
+        "added": 12,
+        "deleted": 9,
+        "changedFunctionScopes": [
+          "-    const status = stage.isOpen ? \"Inscripciones abiertas\" : \"Inscripciones cerradas\";",
+          "-      <article class=\"corporate-event-card corporate-event-card--${escapeHtml(event.theme)} reveal\">",
+          "+          ${event.isPast ? '<span class=\"event-thanks-badge\">Gracias por participar</span>' : ''}",
+          "-            <p>Desde <strong>${eventPrice(event)}</strong></p>",
+          "-                <div><strong>${escapeHtml(event.name)}</strong><small>${eventDate(event)} · ${escapeHtml(event.distance)} · ${eventPrice(event)}</small></div>",
+          "-    const openEvents = events.filter((event) => eventStage(event).isOpen);",
+          "-})(typeof window !== \"undefined\" ? window : globalThis);"
+        ]
+      }
+    },
+    {
+      "url": "https://mariana-carrera-71pg8t6dl-ederartmos-projects.vercel.app/event-landing.js",
+      "path": "event-landing.js",
+      "status": 200,
+      "contentType": "application/javascript; charset=utf-8",
+      "size": 23439,
+      "sha256": "4455596286c752a5a883ee11c8dc1caf59d7fd3c640bd539c2c2709dc1dbb416",
+      "imageDimensions": null,
+      "integrity": "non-empty text response; UTF-8 decoded",
+      "dependencies": [
+        "event-countdown-cta.js"
+      ],
+      "differenceFromCommittedBase": {
+        "status": "different",
+        "basePath": "event-landing.js",
+        "added": 7,
+        "deleted": 0,
+        "changedFunctionScopes": [
+          "+    if (root.KineticHubCountdownCTA && (event.slug === 'cascanueces-run' || event.slug === 'perrun-2027')) {"
+        ]
+      }
+    },
+    {
+      "url": "https://mariana-carrera-71pg8t6dl-ederartmos-projects.vercel.app/script.js",
+      "path": "script.js",
+      "status": 200,
+      "contentType": "application/javascript; charset=utf-8",
+      "size": 211607,
+      "sha256": "f4709777a5a906251ab46dde9c8d117434468c5927c5aa90e8b7d1f6afcbc35c",
+      "imageDimensions": null,
+      "integrity": "non-empty text response; UTF-8 decoded",
+      "dependencies": [],
+      "differenceFromCommittedBase": {
+        "status": "different",
+        "basePath": "script.js",
+        "added": 13,
+        "deleted": 2,
+        "changedFunctionScopes": [
+          "function setupEventFilters() {",
+          "function setupEventCountdown() {"
+        ]
+      }
+    },
+    {
+      "url": "https://mariana-carrera-71pg8t6dl-ederartmos-projects.vercel.app/script.min.js",
+      "path": "script.min.js",
+      "status": 200,
+      "contentType": "application/javascript; charset=utf-8",
+      "size": 211607,
+      "sha256": "f4709777a5a906251ab46dde9c8d117434468c5927c5aa90e8b7d1f6afcbc35c",
+      "imageDimensions": null,
+      "integrity": "non-empty text response; UTF-8 decoded",
+      "dependencies": [],
+      "differenceFromCommittedBase": {
+        "status": "different",
+        "basePath": "script.min.js",
+        "added": 13,
+        "deleted": 2,
+        "changedFunctionScopes": [
+          "function setupEventFilters() {",
+          "function setupEventCountdown() {"
+        ]
+      }
+    },
+    {
+      "url": "https://mariana-carrera-71pg8t6dl-ederartmos-projects.vercel.app/axolote-night-run.html",
+      "path": "axolote-night-run.html",
+      "status": 200,
+      "contentType": "text/html; charset=utf-8",
+      "size": 70101,
+      "sha256": "eb09f5b644668c385e65e07a6f3437b80516c531e25a24967604e78d35046b76",
+      "imageDimensions": null,
+      "integrity": "non-empty text response; UTF-8 decoded",
+      "dependencies": [],
+      "differenceFromCommittedBase": {
+        "status": "different",
+        "basePath": "axolote-night-run.html",
+        "added": 9,
+        "deleted": 7,
+        "changedFunctionScopes": [
+          "-    <link rel=\"stylesheet\" href=\"styles.min.css?v=__ASSET_VERSION__\" />",
+          "fbq('track', 'PageView');",
+          "src=\"https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1\""
+        ]
+      }
+    },
+    {
+      "url": "https://mariana-carrera-71pg8t6dl-ederartmos-projects.vercel.app/styles.min.css",
+      "path": "styles.min.css",
+      "status": 200,
+      "contentType": "text/css; charset=utf-8",
+      "size": 203911,
+      "sha256": "075bd9d82920bae0beb3669a405c85eafd87e4d40f138b95cc2976578f5e6172",
+      "imageDimensions": null,
+      "integrity": "non-empty text response; UTF-8 decoded",
+      "dependencies": [],
+      "differenceFromCommittedBase": {
+        "status": "different",
+        "basePath": "styles.min.css",
+        "added": 0,
+        "deleted": null,
+        "changedFunctionScopes": []
+      }
+    },
+    {
+      "url": "https://mariana-carrera-71pg8t6dl-ederartmos-projects.vercel.app/assets/events/axolote-night-run/photos/axolote-01.webp",
+      "relativePath": "assets/events/axolote-night-run/photos/axolote-01.webp",
+      "status": "valid",
+      "contentType": "image/webp",
+      "size": 204294,
+      "sha256": "0688d5ae767c19bba1d916cb897b56a3d83780b43c412c121dc7c6b5c6116907",
+      "dimensions": "WEBP:1200x1600",
+      "integrity": "Pillow verify() and full decode/load passed",
+      "dependencies": [
+        "axolote-galeria.html"
+      ],
+      "differenceFromCommittedBase": {
+        "status": "asset_absent_in_committed_base",
+        "basePath": "assets/events/axolote-night-run/photos/axolote-01.webp"
+      },
+      "httpStatus": 200
+    },
+    {
+      "url": "https://mariana-carrera-71pg8t6dl-ederartmos-projects.vercel.app/assets/events/axolote-night-run/photos/axolote-01-thumb.webp",
+      "relativePath": "assets/events/axolote-night-run/photos/axolote-01-thumb.webp",
+      "status": "valid",
+      "contentType": "image/webp",
+      "size": 48262,
+      "sha256": "bb64a7cd26e23e03c654d74fbf41b9cd1f061e6bde8c0dd7d746941e7247184a",
+      "dimensions": "WEBP:480x640",
+      "integrity": "Pillow verify() and full decode/load passed",
+      "dependencies": [
+        "axolote-galeria.html"
+      ],
+      "differenceFromCommittedBase": {
+        "status": "asset_absent_in_committed_base",
+        "basePath": "assets/events/axolote-night-run/photos/axolote-01-thumb.webp"
+      },
+      "httpStatus": 200
+    },
+    {
+      "url": "https://mariana-carrera-71pg8t6dl-ederartmos-projects.vercel.app/assets/events/axolote-night-run/photos/axolote-02.webp",
+      "relativePath": "assets/events/axolote-night-run/photos/axolote-02.webp",
+      "status": "valid",
+      "contentType": "image/webp",
+      "size": 137774,
+      "sha256": "43c5fce28e35bee2268a51e07a01231c7c4e47361c162f2aaf6d8636db109781",
+      "dimensions": "WEBP:1280x819",
+      "integrity": "Pillow verify() and full decode/load passed",
+      "dependencies": [
+        "axolote-galeria.html"
+      ],
+      "differenceFromCommittedBase": {
+        "status": "asset_absent_in_committed_base",
+        "basePath": "assets/events/axolote-night-run/photos/axolote-02.webp"
+      },
+      "httpStatus": 200
+    },
+    {
+      "url": "https://mariana-carrera-71pg8t6dl-ederartmos-projects.vercel.app/assets/events/axolote-night-run/photos/axolote-02-thumb.webp",
+      "relativePath": "assets/events/axolote-night-run/photos/axolote-02-thumb.webp",
+      "status": "valid",
+      "contentType": "image/webp",
+      "size": 49260,
+      "sha256": "b615863e1c961bb253695f73ac037ec02cf6386ca2754d7d3ceec2c0c7aa7263",
+      "dimensions": "WEBP:640x410",
+      "integrity": "Pillow verify() and full decode/load passed",
+      "dependencies": [
+        "axolote-galeria.html"
+      ],
+      "differenceFromCommittedBase": {
+        "status": "asset_absent_in_committed_base",
+        "basePath": "assets/events/axolote-night-run/photos/axolote-02-thumb.webp"
+      },
+      "httpStatus": 200
+    },
+    {
+      "url": "https://mariana-carrera-71pg8t6dl-ederartmos-projects.vercel.app/assets/events/axolote-night-run/photos/axolote-03.webp",
+      "relativePath": "assets/events/axolote-night-run/photos/axolote-03.webp",
+      "status": "valid",
+      "contentType": "image/webp",
+      "size": 50776,
+      "sha256": "098e5a915f9b87410c1c2f1550ab2e8169cf0be565c4261c672c9a99cd02b74c",
+      "dimensions": "WEBP:960x1280",
+      "integrity": "Pillow verify() and full decode/load passed",
+      "dependencies": [
+        "axolote-galeria.html"
+      ],
+      "differenceFromCommittedBase": {
+        "status": "asset_absent_in_committed_base",
+        "basePath": "assets/events/axolote-night-run/photos/axolote-03.webp"
+      },
+      "httpStatus": 200
+    },
+    {
+      "url": "https://mariana-carrera-71pg8t6dl-ederartmos-projects.vercel.app/assets/events/axolote-night-run/photos/axolote-03-thumb.webp",
+      "relativePath": "assets/events/axolote-night-run/photos/axolote-03-thumb.webp",
+      "status": "valid",
+      "contentType": "image/webp",
+      "size": 18230,
+      "sha256": "01b404f1588e08722937eb0754c4083d0343bffb6455c025a45f385c28052e1a",
+      "dimensions": "WEBP:480x640",
+      "integrity": "Pillow verify() and full decode/load passed",
+      "dependencies": [
+        "axolote-galeria.html"
+      ],
+      "differenceFromCommittedBase": {
+        "status": "asset_absent_in_committed_base",
+        "basePath": "assets/events/axolote-night-run/photos/axolote-03-thumb.webp"
+      },
+      "httpStatus": 200
+    },
+    {
+      "url": "https://mariana-carrera-71pg8t6dl-ederartmos-projects.vercel.app/assets/events/axolote-night-run/photos/axolote-04.webp",
+      "relativePath": "assets/events/axolote-night-run/photos/axolote-04.webp",
+      "status": "valid",
+      "contentType": "image/webp",
+      "size": 110418,
+      "sha256": "bc5b7866b786bf5caa8923fc2f0d3e5a791fe225189c78f48d58f57df8920f5e",
+      "dimensions": "WEBP:1280x960",
+      "integrity": "Pillow verify() and full decode/load passed",
+      "dependencies": [
+        "axolote-galeria.html"
+      ],
+      "differenceFromCommittedBase": {
+        "status": "asset_absent_in_committed_base",
+        "basePath": "assets/events/axolote-night-run/photos/axolote-04.webp"
+      },
+      "httpStatus": 200
+    },
+    {
+      "url": "https://mariana-carrera-71pg8t6dl-ederartmos-projects.vercel.app/assets/events/axolote-night-run/photos/axolote-04-thumb.webp",
+      "relativePath": "assets/events/axolote-night-run/photos/axolote-04-thumb.webp",
+      "status": "valid",
+      "contentType": "image/webp",
+      "size": 31580,
+      "sha256": "887c77d61df50916aaa7623185946ea8b580769fde6f6ddd26dcc40499214004",
+      "dimensions": "WEBP:640x480",
+      "integrity": "Pillow verify() and full decode/load passed",
+      "dependencies": [
+        "axolote-galeria.html"
+      ],
+      "differenceFromCommittedBase": {
+        "status": "asset_absent_in_committed_base",
+        "basePath": "assets/events/axolote-night-run/photos/axolote-04-thumb.webp"
+      },
+      "httpStatus": 200
+    },
+    {
+      "url": "https://mariana-carrera-71pg8t6dl-ederartmos-projects.vercel.app/assets/events/axolote-night-run/photos/axolote-05.webp",
+      "relativePath": "assets/events/axolote-night-run/photos/axolote-05.webp",
+      "status": "valid",
+      "contentType": "image/webp",
+      "size": 304024,
+      "sha256": "f15da4cd1f0c9e8c7bef8a000f8e8c90b6973bca85c563b617a1b7777c09c00d",
+      "dimensions": "WEBP:1920x1440",
+      "integrity": "Pillow verify() and full decode/load passed",
+      "dependencies": [
+        "axolote-galeria.html"
+      ],
+      "differenceFromCommittedBase": {
+        "status": "asset_absent_in_committed_base",
+        "basePath": "assets/events/axolote-night-run/photos/axolote-05.webp"
+      },
+      "httpStatus": 200
+    },
+    {
+      "url": "https://mariana-carrera-71pg8t6dl-ederartmos-projects.vercel.app/assets/events/axolote-night-run/photos/axolote-05-thumb.webp",
+      "relativePath": "assets/events/axolote-night-run/photos/axolote-05-thumb.webp",
+      "status": "valid",
+      "contentType": "image/webp",
+      "size": 34386,
+      "sha256": "87d86368984a1bb20cd30e1a58c97dc7aa8ff7caa5ca982b78d0c10a2885d967",
+      "dimensions": "WEBP:640x480",
+      "integrity": "Pillow verify() and full decode/load passed",
+      "dependencies": [
+        "axolote-galeria.html"
+      ],
+      "differenceFromCommittedBase": {
+        "status": "asset_absent_in_committed_base",
+        "basePath": "assets/events/axolote-night-run/photos/axolote-05-thumb.webp"
+      },
+      "httpStatus": 200
+    },
+    {
+      "url": "https://mariana-carrera-71pg8t6dl-ederartmos-projects.vercel.app/assets/events/axolote-night-run/photos/axolote-06.webp",
+      "relativePath": "assets/events/axolote-night-run/photos/axolote-06.webp",
+      "status": "valid",
+      "contentType": "image/webp",
+      "size": 218754,
+      "sha256": "6f41ef9773469318267f89bacc649c97a8f86d04dcc4e2fcbaa1c9aa925e42a0",
+      "dimensions": "WEBP:1440x1920",
+      "integrity": "Pillow verify() and full decode/load passed",
+      "dependencies": [
+        "axolote-galeria.html"
+      ],
+      "differenceFromCommittedBase": {
+        "status": "asset_absent_in_committed_base",
+        "basePath": "assets/events/axolote-night-run/photos/axolote-06.webp"
+      },
+      "httpStatus": 200
+    },
+    {
+      "url": "https://mariana-carrera-71pg8t6dl-ederartmos-projects.vercel.app/assets/events/axolote-night-run/photos/axolote-06-thumb.webp",
+      "relativePath": "assets/events/axolote-night-run/photos/axolote-06-thumb.webp",
+      "status": "valid",
+      "contentType": "image/webp",
+      "size": 30114,
+      "sha256": "105c131626884a40d64f480cde7536bdc8f4650dc07e4b8e941ef76669a779c0",
+      "dimensions": "WEBP:480x640",
+      "integrity": "Pillow verify() and full decode/load passed",
+      "dependencies": [
+        "axolote-galeria.html"
+      ],
+      "differenceFromCommittedBase": {
+        "status": "asset_absent_in_committed_base",
+        "basePath": "assets/events/axolote-night-run/photos/axolote-06-thumb.webp"
+      },
+      "httpStatus": 200
+    },
+    {
+      "url": "https://mariana-carrera-71pg8t6dl-ederartmos-projects.vercel.app/assets/events/axolote-night-run/photos/axolote-07.webp",
+      "relativePath": "assets/events/axolote-night-run/photos/axolote-07.webp",
+      "status": "valid",
+      "contentType": "image/webp",
+      "size": 295494,
+      "sha256": "51f06b8f263f54513ba4cdde7b825031e8af926c8a8c6bcd8cb88da274a9c560",
+      "dimensions": "WEBP:1440x1920",
+      "integrity": "Pillow verify() and full decode/load passed",
+      "dependencies": [
+        "axolote-galeria.html"
+      ],
+      "differenceFromCommittedBase": {
+        "status": "asset_absent_in_committed_base",
+        "basePath": "assets/events/axolote-night-run/photos/axolote-07.webp"
+      },
+      "httpStatus": 200
+    },
+    {
+      "url": "https://mariana-carrera-71pg8t6dl-ederartmos-projects.vercel.app/assets/events/axolote-night-run/photos/axolote-07-thumb.webp",
+      "relativePath": "assets/events/axolote-night-run/photos/axolote-07-thumb.webp",
+      "status": "valid",
+      "contentType": "image/webp",
+      "size": 45740,
+      "sha256": "6f075a9cccaec3f8fb4940beb5f6b8cc5685b4bdbd01d638bd9fec0d02d4afbc",
+      "dimensions": "WEBP:480x640",
+      "integrity": "Pillow verify() and full decode/load passed",
+      "dependencies": [
+        "axolote-galeria.html"
+      ],
+      "differenceFromCommittedBase": {
+        "status": "asset_absent_in_committed_base",
+        "basePath": "assets/events/axolote-night-run/photos/axolote-07-thumb.webp"
+      },
+      "httpStatus": 200
+    },
+    {
+      "url": "https://mariana-carrera-71pg8t6dl-ederartmos-projects.vercel.app/assets/events/axolote-night-run/photos/axolote-08.webp",
+      "relativePath": "assets/events/axolote-night-run/photos/axolote-08.webp",
+      "status": "valid",
+      "contentType": "image/webp",
+      "size": 164914,
+      "sha256": "9b22edca9583c7269369cb2d2a7153d8d19ed2318c838b71554338bf83703d5f",
+      "dimensions": "WEBP:716x1598",
+      "integrity": "Pillow verify() and full decode/load passed",
+      "dependencies": [
+        "axolote-galeria.html"
+      ],
+      "differenceFromCommittedBase": {
+        "status": "asset_absent_in_committed_base",
+        "basePath": "assets/events/axolote-night-run/photos/axolote-08.webp"
+      },
+      "httpStatus": 200
+    },
+    {
+      "url": "https://mariana-carrera-71pg8t6dl-ederartmos-projects.vercel.app/assets/events/axolote-night-run/photos/axolote-08-thumb.webp",
+      "relativePath": "assets/events/axolote-night-run/photos/axolote-08-thumb.webp",
+      "status": "valid",
+      "contentType": "image/webp",
+      "size": 23178,
+      "sha256": "6d0d81662f336accf3487bbd72c52271d455e301e03d87408270fd3e40e3116a",
+      "dimensions": "WEBP:287x640",
+      "integrity": "Pillow verify() and full decode/load passed",
+      "dependencies": [
+        "axolote-galeria.html"
+      ],
+      "differenceFromCommittedBase": {
+        "status": "asset_absent_in_committed_base",
+        "basePath": "assets/events/axolote-night-run/photos/axolote-08-thumb.webp"
+      },
+      "httpStatus": 200
+    },
+    {
+      "url": "https://mariana-carrera-71pg8t6dl-ederartmos-projects.vercel.app/assets/events/axolote-night-run/photos/axolote-09.webp",
+      "relativePath": "assets/events/axolote-night-run/photos/axolote-09.webp",
+      "status": "valid",
+      "contentType": "image/webp",
+      "size": 268450,
+      "sha256": "2ee56c748e3515e67eb57d4932cd38f2c61b5a53652e87f4dcb71ac6da4064d8",
+      "dimensions": "WEBP:1440x1920",
+      "integrity": "Pillow verify() and full decode/load passed",
+      "dependencies": [
+        "axolote-galeria.html"
+      ],
+      "differenceFromCommittedBase": {
+        "status": "asset_absent_in_committed_base",
+        "basePath": "assets/events/axolote-night-run/photos/axolote-09.webp"
+      },
+      "httpStatus": 200
+    },
+    {
+      "url": "https://mariana-carrera-71pg8t6dl-ederartmos-projects.vercel.app/assets/events/axolote-night-run/photos/axolote-09-thumb.webp",
+      "relativePath": "assets/events/axolote-night-run/photos/axolote-09-thumb.webp",
+      "status": "valid",
+      "contentType": "image/webp",
+      "size": 36434,
+      "sha256": "020f72e2973f68cfe573b0b171c580a8ccfa81edeadfbaa62cee73faa6c33a4d",
+      "dimensions": "WEBP:480x640",
+      "integrity": "Pillow verify() and full decode/load passed",
+      "dependencies": [
+        "axolote-galeria.html"
+      ],
+      "differenceFromCommittedBase": {
+        "status": "asset_absent_in_committed_base",
+        "basePath": "assets/events/axolote-night-run/photos/axolote-09-thumb.webp"
+      },
+      "httpStatus": 200
+    },
+    {
+      "url": "https://mariana-carrera-71pg8t6dl-ederartmos-projects.vercel.app/assets/events/axolote-night-run/photos/axolote-10.webp",
+      "relativePath": "assets/events/axolote-night-run/photos/axolote-10.webp",
+      "status": "valid",
+      "contentType": "image/webp",
+      "size": 187940,
+      "sha256": "cc4cafb836dcd41ce7799174e4ff49f4bd8e0a1b3115d30e5c42841761189617",
+      "dimensions": "WEBP:1280x961",
+      "integrity": "Pillow verify() and full decode/load passed",
+      "dependencies": [
+        "axolote-galeria.html"
+      ],
+      "differenceFromCommittedBase": {
+        "status": "asset_absent_in_committed_base",
+        "basePath": "assets/events/axolote-night-run/photos/axolote-10.webp"
+      },
+      "httpStatus": 200
+    },
+    {
+      "url": "https://mariana-carrera-71pg8t6dl-ederartmos-projects.vercel.app/assets/events/axolote-night-run/photos/axolote-10-thumb.webp",
+      "relativePath": "assets/events/axolote-night-run/photos/axolote-10-thumb.webp",
+      "status": "valid",
+      "contentType": "image/webp",
+      "size": 61870,
+      "sha256": "0ac0f378b08c2d76fa51b9fb8489c216ddf7558012b954a1e5001b0bc3aa8089",
+      "dimensions": "WEBP:640x481",
+      "integrity": "Pillow verify() and full decode/load passed",
+      "dependencies": [
+        "axolote-galeria.html"
+      ],
+      "differenceFromCommittedBase": {
+        "status": "asset_absent_in_committed_base",
+        "basePath": "assets/events/axolote-night-run/photos/axolote-10-thumb.webp"
+      },
+      "httpStatus": 200
+    },
+    {
+      "url": "https://mariana-carrera-71pg8t6dl-ederartmos-projects.vercel.app/assets/events/axolote-night-run/photos/axolote-11.webp",
+      "relativePath": "assets/events/axolote-night-run/photos/axolote-11.webp",
+      "status": "valid",
+      "contentType": "image/webp",
+      "size": 112642,
+      "sha256": "0bbd679e8e542f3bf572caae4bc572d32e26f2918c8b34bdb1260c037c90474b",
+      "dimensions": "WEBP:716x1598",
+      "integrity": "Pillow verify() and full decode/load passed",
+      "dependencies": [
+        "axolote-galeria.html"
+      ],
+      "differenceFromCommittedBase": {
+        "status": "asset_absent_in_committed_base",
+        "basePath": "assets/events/axolote-night-run/photos/axolote-11.webp"
+      },
+      "httpStatus": 200
+    },
+    {
+      "url": "https://mariana-carrera-71pg8t6dl-ederartmos-projects.vercel.app/assets/events/axolote-night-run/photos/axolote-11-thumb.webp",
+      "relativePath": "assets/events/axolote-night-run/photos/axolote-11-thumb.webp",
+      "status": "valid",
+      "contentType": "image/webp",
+      "size": 22550,
+      "sha256": "b04ae5e9c105eca2a3ea3e792f3b6de629faabaeb2fea38a86dba46a6ff949cf",
+      "dimensions": "WEBP:287x640",
+      "integrity": "Pillow verify() and full decode/load passed",
+      "dependencies": [
+        "axolote-galeria.html"
+      ],
+      "differenceFromCommittedBase": {
+        "status": "asset_absent_in_committed_base",
+        "basePath": "assets/events/axolote-night-run/photos/axolote-11-thumb.webp"
+      },
+      "httpStatus": 200
+    },
+    {
+      "url": "https://mariana-carrera-71pg8t6dl-ederartmos-projects.vercel.app/assets/events/axolote-night-run/photos/axolote-12.webp",
+      "relativePath": "assets/events/axolote-night-run/photos/axolote-12.webp",
+      "status": "valid",
+      "contentType": "image/webp",
+      "size": 126572,
+      "sha256": "1fe1d2a273afb8865b5dcddf47c0c65edfbbfb4c8d33094f410324f485f0ce78",
+      "dimensions": "WEBP:1280x961",
+      "integrity": "Pillow verify() and full decode/load passed",
+      "dependencies": [
+        "axolote-galeria.html"
+      ],
+      "differenceFromCommittedBase": {
+        "status": "asset_absent_in_committed_base",
+        "basePath": "assets/events/axolote-night-run/photos/axolote-12.webp"
+      },
+      "httpStatus": 200
+    },
+    {
+      "url": "https://mariana-carrera-71pg8t6dl-ederartmos-projects.vercel.app/assets/events/axolote-night-run/photos/axolote-12-thumb.webp",
+      "relativePath": "assets/events/axolote-night-run/photos/axolote-12-thumb.webp",
+      "status": "valid",
+      "contentType": "image/webp",
+      "size": 47246,
+      "sha256": "95cceec850ee64909f61630a00392202912693be520c480f1df0ed9914113200",
+      "dimensions": "WEBP:640x481",
+      "integrity": "Pillow verify() and full decode/load passed",
+      "dependencies": [
+        "axolote-galeria.html"
+      ],
+      "differenceFromCommittedBase": {
+        "status": "asset_absent_in_committed_base",
+        "basePath": "assets/events/axolote-night-run/photos/axolote-12-thumb.webp"
+      },
+      "httpStatus": 200
+    },
+    {
+      "url": "https://mariana-carrera-71pg8t6dl-ederartmos-projects.vercel.app/assets/events/axolote-night-run/photos/axolote-13.webp",
+      "relativePath": "assets/events/axolote-night-run/photos/axolote-13.webp",
+      "status": "valid",
+      "contentType": "image/webp",
+      "size": 135236,
+      "sha256": "d2ab858a1c1579b73e06c472cdca7debcf79f40f7e1cfb88bbc37921647c053c",
+      "dimensions": "WEBP:1280x1920",
+      "integrity": "Pillow verify() and full decode/load passed",
+      "dependencies": [
+        "axolote-galeria.html"
+      ],
+      "differenceFromCommittedBase": {
+        "status": "asset_absent_in_committed_base",
+        "basePath": "assets/events/axolote-night-run/photos/axolote-13.webp"
+      },
+      "httpStatus": 200
+    },
+    {
+      "url": "https://mariana-carrera-71pg8t6dl-ederartmos-projects.vercel.app/assets/events/axolote-night-run/photos/axolote-13-thumb.webp",
+      "relativePath": "assets/events/axolote-night-run/photos/axolote-13-thumb.webp",
+      "status": "valid",
+      "contentType": "image/webp",
+      "size": 29616,
+      "sha256": "d51e9658f935498f6290bbcc2ea95951c90c84564854f015cb93c074346975bc",
+      "dimensions": "WEBP:427x640",
+      "integrity": "Pillow verify() and full decode/load passed",
+      "dependencies": [
+        "axolote-galeria.html"
+      ],
+      "differenceFromCommittedBase": {
+        "status": "asset_absent_in_committed_base",
+        "basePath": "assets/events/axolote-night-run/photos/axolote-13-thumb.webp"
+      },
+      "httpStatus": 200
+    },
+    {
+      "url": "https://mariana-carrera-71pg8t6dl-ederartmos-projects.vercel.app/assets/events/axolote-night-run/photos/axolote-14.webp",
+      "relativePath": "assets/events/axolote-night-run/photos/axolote-14.webp",
+      "status": "valid",
+      "contentType": "image/webp",
+      "size": 144868,
+      "sha256": "b4cccbbfcff0cf198820608712a487b46fff8ffd7919cb47203c3cf5e12c1142",
+      "dimensions": "WEBP:1920x1281",
+      "integrity": "Pillow verify() and full decode/load passed",
+      "dependencies": [
+        "axolote-galeria.html"
+      ],
+      "differenceFromCommittedBase": {
+        "status": "asset_absent_in_committed_base",
+        "basePath": "assets/events/axolote-night-run/photos/axolote-14.webp"
+      },
+      "httpStatus": 200
+    },
+    {
+      "url": "https://mariana-carrera-71pg8t6dl-ederartmos-projects.vercel.app/assets/events/axolote-night-run/photos/axolote-14-thumb.webp",
+      "relativePath": "assets/events/axolote-night-run/photos/axolote-14-thumb.webp",
+      "status": "valid",
+      "contentType": "image/webp",
+      "size": 27358,
+      "sha256": "6e9196a2daaf65b89238dc1ac55e0df1d6a326fabf5fbdce0886a64acd469a9e",
+      "dimensions": "WEBP:640x427",
+      "integrity": "Pillow verify() and full decode/load passed",
+      "dependencies": [
+        "axolote-galeria.html"
+      ],
+      "differenceFromCommittedBase": {
+        "status": "asset_absent_in_committed_base",
+        "basePath": "assets/events/axolote-night-run/photos/axolote-14-thumb.webp"
+      },
+      "httpStatus": 200
+    },
+    {
+      "url": "https://mariana-carrera-71pg8t6dl-ederartmos-projects.vercel.app/assets/events/axolote-night-run/photos/axolote-15.webp",
+      "relativePath": "assets/events/axolote-night-run/photos/axolote-15.webp",
+      "status": "valid",
+      "contentType": "image/webp",
+      "size": 136490,
+      "sha256": "0cbc59640376f1e66e28b1623961548ba7b6b2041dfc08dc992fc109f705cae1",
+      "dimensions": "WEBP:1280x1920",
+      "integrity": "Pillow verify() and full decode/load passed",
+      "dependencies": [
+        "axolote-galeria.html"
+      ],
+      "differenceFromCommittedBase": {
+        "status": "asset_absent_in_committed_base",
+        "basePath": "assets/events/axolote-night-run/photos/axolote-15.webp"
+      },
+      "httpStatus": 200
+    },
+    {
+      "url": "https://mariana-carrera-71pg8t6dl-ederartmos-projects.vercel.app/assets/events/axolote-night-run/photos/axolote-15-thumb.webp",
+      "relativePath": "assets/events/axolote-night-run/photos/axolote-15-thumb.webp",
+      "status": "valid",
+      "contentType": "image/webp",
+      "size": 27546,
+      "sha256": "baafad56bc9ca6105a094d6c58e2fd8296882d7400f3825a2a7719a74c43c448",
+      "dimensions": "WEBP:427x640",
+      "integrity": "Pillow verify() and full decode/load passed",
+      "dependencies": [
+        "axolote-galeria.html"
+      ],
+      "differenceFromCommittedBase": {
+        "status": "asset_absent_in_committed_base",
+        "basePath": "assets/events/axolote-night-run/photos/axolote-15-thumb.webp"
+      },
+      "httpStatus": 200
+    },
+    {
+      "url": "https://mariana-carrera-71pg8t6dl-ederartmos-projects.vercel.app/assets/events/axolote-night-run/photos/axolote-16.webp",
+      "relativePath": "assets/events/axolote-night-run/photos/axolote-16.webp",
+      "status": "valid",
+      "contentType": "image/webp",
+      "size": 137270,
+      "sha256": "9aba98b3f6d1cff340112fa5ba54fbbee97f68abbc732f4f6a92beb987512308",
+      "dimensions": "WEBP:1920x1281",
+      "integrity": "Pillow verify() and full decode/load passed",
+      "dependencies": [
+        "axolote-galeria.html"
+      ],
+      "differenceFromCommittedBase": {
+        "status": "asset_absent_in_committed_base",
+        "basePath": "assets/events/axolote-night-run/photos/axolote-16.webp"
+      },
+      "httpStatus": 200
+    },
+    {
+      "url": "https://mariana-carrera-71pg8t6dl-ederartmos-projects.vercel.app/assets/events/axolote-night-run/photos/axolote-16-thumb.webp",
+      "relativePath": "assets/events/axolote-night-run/photos/axolote-16-thumb.webp",
+      "status": "valid",
+      "contentType": "image/webp",
+      "size": 32894,
+      "sha256": "36c498784e01a5189d10b2b41d059b4a7d36c14538f69f131986a493d24e82bd",
+      "dimensions": "WEBP:640x427",
+      "integrity": "Pillow verify() and full decode/load passed",
+      "dependencies": [
+        "axolote-galeria.html"
+      ],
+      "differenceFromCommittedBase": {
+        "status": "asset_absent_in_committed_base",
+        "basePath": "assets/events/axolote-night-run/photos/axolote-16-thumb.webp"
+      },
+      "httpStatus": 200
+    },
+    {
+      "url": "https://mariana-carrera-71pg8t6dl-ederartmos-projects.vercel.app/assets/events/axolote-night-run/photos/axolote-17.webp",
+      "relativePath": "assets/events/axolote-night-run/photos/axolote-17.webp",
+      "status": "valid",
+      "contentType": "image/webp",
+      "size": 201430,
+      "sha256": "2cb31518c7f2b9815b1220f5583b193cc997e868a9e73321bc9d07eee49759e1",
+      "dimensions": "WEBP:1280x1920",
+      "integrity": "Pillow verify() and full decode/load passed",
+      "dependencies": [
+        "axolote-galeria.html"
+      ],
+      "differenceFromCommittedBase": {
+        "status": "asset_absent_in_committed_base",
+        "basePath": "assets/events/axolote-night-run/photos/axolote-17.webp"
+      },
+      "httpStatus": 200
+    },
+    {
+      "url": "https://mariana-carrera-71pg8t6dl-ederartmos-projects.vercel.app/assets/events/axolote-night-run/photos/axolote-17-thumb.webp",
+      "relativePath": "assets/events/axolote-night-run/photos/axolote-17-thumb.webp",
+      "status": "valid",
+      "contentType": "image/webp",
+      "size": 33772,
+      "sha256": "d21430496ca8fc0334f3c28b53c7981a25552fc826dd7e7f2c7006e498ca0ee5",
+      "dimensions": "WEBP:427x640",
+      "integrity": "Pillow verify() and full decode/load passed",
+      "dependencies": [
+        "axolote-galeria.html"
+      ],
+      "differenceFromCommittedBase": {
+        "status": "asset_absent_in_committed_base",
+        "basePath": "assets/events/axolote-night-run/photos/axolote-17-thumb.webp"
+      },
+      "httpStatus": 200
+    },
+    {
+      "url": "https://mariana-carrera-71pg8t6dl-ederartmos-projects.vercel.app/assets/events/axolote-night-run/photos/axolote-18.webp",
+      "relativePath": "assets/events/axolote-night-run/photos/axolote-18.webp",
+      "status": "valid",
+      "contentType": "image/webp",
+      "size": 197972,
+      "sha256": "5857a62da7dc6868a36682d00a1b2ea6b3c0afb93f999ff5f5ed574c1d08d1b4",
+      "dimensions": "WEBP:1920x1281",
+      "integrity": "Pillow verify() and full decode/load passed",
+      "dependencies": [
+        "axolote-galeria.html"
+      ],
+      "differenceFromCommittedBase": {
+        "status": "asset_absent_in_committed_base",
+        "basePath": "assets/events/axolote-night-run/photos/axolote-18.webp"
+      },
+      "httpStatus": 200
+    },
+    {
+      "url": "https://mariana-carrera-71pg8t6dl-ederartmos-projects.vercel.app/assets/events/axolote-night-run/photos/axolote-18-thumb.webp",
+      "relativePath": "assets/events/axolote-night-run/photos/axolote-18-thumb.webp",
+      "status": "valid",
+      "contentType": "image/webp",
+      "size": 33050,
+      "sha256": "13c669f39bd90ec7ba117ef11e235b080d509a624d48a584c4b93e60e8e72e71",
+      "dimensions": "WEBP:640x427",
+      "integrity": "Pillow verify() and full decode/load passed",
+      "dependencies": [
+        "axolote-galeria.html"
+      ],
+      "differenceFromCommittedBase": {
+        "status": "asset_absent_in_committed_base",
+        "basePath": "assets/events/axolote-night-run/photos/axolote-18-thumb.webp"
+      },
+      "httpStatus": 200
+    },
+    {
+      "url": "https://mariana-carrera-71pg8t6dl-ederartmos-projects.vercel.app/assets/events/axolote-night-run/photos/axolote-19.webp",
+      "relativePath": "assets/events/axolote-night-run/photos/axolote-19.webp",
+      "status": "valid",
+      "contentType": "image/webp",
+      "size": 294060,
+      "sha256": "917f7f0216793dcad7c3c6496fa589eb7a89ce4766eb2873d3ad3a821a21ce4e",
+      "dimensions": "WEBP:1920x1281",
+      "integrity": "Pillow verify() and full decode/load passed",
+      "dependencies": [
+        "axolote-galeria.html"
+      ],
+      "differenceFromCommittedBase": {
+        "status": "asset_absent_in_committed_base",
+        "basePath": "assets/events/axolote-night-run/photos/axolote-19.webp"
+      },
+      "httpStatus": 200
+    },
+    {
+      "url": "https://mariana-carrera-71pg8t6dl-ederartmos-projects.vercel.app/assets/events/axolote-night-run/photos/axolote-19-thumb.webp",
+      "relativePath": "assets/events/axolote-night-run/photos/axolote-19-thumb.webp",
+      "status": "valid",
+      "contentType": "image/webp",
+      "size": 53038,
+      "sha256": "0e660d78954c9b5c05afd564fcaa5b7a24b35fa3724eddaa8e2aaa769c490456",
+      "dimensions": "WEBP:640x427",
+      "integrity": "Pillow verify() and full decode/load passed",
+      "dependencies": [
+        "axolote-galeria.html"
+      ],
+      "differenceFromCommittedBase": {
+        "status": "asset_absent_in_committed_base",
+        "basePath": "assets/events/axolote-night-run/photos/axolote-19-thumb.webp"
+      },
+      "httpStatus": 200
+    },
+    {
+      "url": "https://mariana-carrera-71pg8t6dl-ederartmos-projects.vercel.app/assets/events/axolote-night-run/photos/axolote-20.webp",
+      "relativePath": "assets/events/axolote-night-run/photos/axolote-20.webp",
+      "status": "valid",
+      "contentType": "image/webp",
+      "size": 184412,
+      "sha256": "452b0a9434f7798d95dd4ca2d3d0ee86f27610fa2a6a8ee41449c0da69bd8616",
+      "dimensions": "WEBP:1920x1281",
+      "integrity": "Pillow verify() and full decode/load passed",
+      "dependencies": [
+        "axolote-galeria.html"
+      ],
+      "differenceFromCommittedBase": {
+        "status": "asset_absent_in_committed_base",
+        "basePath": "assets/events/axolote-night-run/photos/axolote-20.webp"
+      },
+      "httpStatus": 200
+    },
+    {
+      "url": "https://mariana-carrera-71pg8t6dl-ederartmos-projects.vercel.app/assets/events/axolote-night-run/photos/axolote-20-thumb.webp",
+      "relativePath": "assets/events/axolote-night-run/photos/axolote-20-thumb.webp",
+      "status": "valid",
+      "contentType": "image/webp",
+      "size": 27430,
+      "sha256": "3c771abcb74cad202a60a084b7a8959165424468c1f7cd9f9c76bd6aa9694f6c",
+      "dimensions": "WEBP:640x427",
+      "integrity": "Pillow verify() and full decode/load passed",
+      "dependencies": [
+        "axolote-galeria.html"
+      ],
+      "differenceFromCommittedBase": {
+        "status": "asset_absent_in_committed_base",
+        "basePath": "assets/events/axolote-night-run/photos/axolote-20-thumb.webp"
+      },
+      "httpStatus": 200
+    },
+    {
+      "url": "https://mariana-carrera-71pg8t6dl-ederartmos-projects.vercel.app/assets/events/axolote-night-run/photos/axolote-21.webp",
+      "relativePath": "assets/events/axolote-night-run/photos/axolote-21.webp",
+      "status": "valid",
+      "contentType": "image/webp",
+      "size": 312182,
+      "sha256": "78315c3b66cedbfb470d7238d6e0a754c5a6b2e2c84288519c3df66f219872a2",
+      "dimensions": "WEBP:1280x1920",
+      "integrity": "Pillow verify() and full decode/load passed",
+      "dependencies": [
+        "axolote-galeria.html"
+      ],
+      "differenceFromCommittedBase": {
+        "status": "asset_absent_in_committed_base",
+        "basePath": "assets/events/axolote-night-run/photos/axolote-21.webp"
+      },
+      "httpStatus": 200
+    },
+    {
+      "url": "https://mariana-carrera-71pg8t6dl-ederartmos-projects.vercel.app/assets/events/axolote-night-run/photos/axolote-21-thumb.webp",
+      "relativePath": "assets/events/axolote-night-run/photos/axolote-21-thumb.webp",
+      "status": "valid",
+      "contentType": "image/webp",
+      "size": 34882,
+      "sha256": "9e3cb90b2591e94773e5f08d2be1aeea73d66f9c5941472e1005d324007af5bc",
+      "dimensions": "WEBP:427x640",
+      "integrity": "Pillow verify() and full decode/load passed",
+      "dependencies": [
+        "axolote-galeria.html"
+      ],
+      "differenceFromCommittedBase": {
+        "status": "asset_absent_in_committed_base",
+        "basePath": "assets/events/axolote-night-run/photos/axolote-21-thumb.webp"
+      },
+      "httpStatus": 200
+    },
+    {
+      "url": "https://mariana-carrera-71pg8t6dl-ederartmos-projects.vercel.app/assets/events/axolote-night-run/photos/axolote-22.webp",
+      "relativePath": "assets/events/axolote-night-run/photos/axolote-22.webp",
+      "status": "valid",
+      "contentType": "image/webp",
+      "size": 283088,
+      "sha256": "0d073bd3dee70701bdb7f193a8fe2343f1dc770dabff16eee24ce028bfea318a",
+      "dimensions": "WEBP:1280x1920",
+      "integrity": "Pillow verify() and full decode/load passed",
+      "dependencies": [
+        "axolote-galeria.html"
+      ],
+      "differenceFromCommittedBase": {
+        "status": "asset_absent_in_committed_base",
+        "basePath": "assets/events/axolote-night-run/photos/axolote-22.webp"
+      },
+      "httpStatus": 200
+    },
+    {
+      "url": "https://mariana-carrera-71pg8t6dl-ederartmos-projects.vercel.app/assets/events/axolote-night-run/photos/axolote-22-thumb.webp",
+      "relativePath": "assets/events/axolote-night-run/photos/axolote-22-thumb.webp",
+      "status": "valid",
+      "contentType": "image/webp",
+      "size": 30554,
+      "sha256": "f34c0a7297eb6339a625c13cc4f86ff967e1be6fc9ebaa0082c0995dce6bc680",
+      "dimensions": "WEBP:427x640",
+      "integrity": "Pillow verify() and full decode/load passed",
+      "dependencies": [
+        "axolote-galeria.html"
+      ],
+      "differenceFromCommittedBase": {
+        "status": "asset_absent_in_committed_base",
+        "basePath": "assets/events/axolote-night-run/photos/axolote-22-thumb.webp"
+      },
+      "httpStatus": 200
+    },
+    {
+      "url": "https://mariana-carrera-71pg8t6dl-ederartmos-projects.vercel.app/assets/events/axolote-night-run/photos/axolote-23.webp",
+      "relativePath": "assets/events/axolote-night-run/photos/axolote-23.webp",
+      "status": "valid",
+      "contentType": "image/webp",
+      "size": 301396,
+      "sha256": "a83620694d6c2000d32735994c984a90b4faaffa3597b7182b3719e9b042cb0a",
+      "dimensions": "WEBP:1280x1920",
+      "integrity": "Pillow verify() and full decode/load passed",
+      "dependencies": [
+        "axolote-galeria.html"
+      ],
+      "differenceFromCommittedBase": {
+        "status": "asset_absent_in_committed_base",
+        "basePath": "assets/events/axolote-night-run/photos/axolote-23.webp"
+      },
+      "httpStatus": 200
+    },
+    {
+      "url": "https://mariana-carrera-71pg8t6dl-ederartmos-projects.vercel.app/assets/events/axolote-night-run/photos/axolote-23-thumb.webp",
+      "relativePath": "assets/events/axolote-night-run/photos/axolote-23-thumb.webp",
+      "status": "valid",
+      "contentType": "image/webp",
+      "size": 29148,
+      "sha256": "6cf39169f59924cb9030356aea6bccefba1f8cf9100cb5c4930568efe4c8bec3",
+      "dimensions": "WEBP:427x640",
+      "integrity": "Pillow verify() and full decode/load passed",
+      "dependencies": [
+        "axolote-galeria.html"
+      ],
+      "differenceFromCommittedBase": {
+        "status": "asset_absent_in_committed_base",
+        "basePath": "assets/events/axolote-night-run/photos/axolote-23-thumb.webp"
+      },
+      "httpStatus": 200
+    },
+    {
+      "url": "https://mariana-carrera-71pg8t6dl-ederartmos-projects.vercel.app/assets/events/axolote-night-run/photos/axolote-24.webp",
+      "relativePath": "assets/events/axolote-night-run/photos/axolote-24.webp",
+      "status": "valid",
+      "contentType": "image/webp",
+      "size": 254848,
+      "sha256": "c6b090af9948f1fa26214d68b887cb4995606c77715b04164252a1157c5968ae",
+      "dimensions": "WEBP:1280x1920",
+      "integrity": "Pillow verify() and full decode/load passed",
+      "dependencies": [
+        "axolote-galeria.html"
+      ],
+      "differenceFromCommittedBase": {
+        "status": "asset_absent_in_committed_base",
+        "basePath": "assets/events/axolote-night-run/photos/axolote-24.webp"
+      },
+      "httpStatus": 200
+    },
+    {
+      "url": "https://mariana-carrera-71pg8t6dl-ederartmos-projects.vercel.app/assets/events/axolote-night-run/photos/axolote-24-thumb.webp",
+      "relativePath": "assets/events/axolote-night-run/photos/axolote-24-thumb.webp",
+      "status": "valid",
+      "contentType": "image/webp",
+      "size": 33236,
+      "sha256": "2c9612c769453a7bcf60d0c1ba94d2c970c918a05e0c2a51479d0aa3e3a8916d",
+      "dimensions": "WEBP:427x640",
+      "integrity": "Pillow verify() and full decode/load passed",
+      "dependencies": [
+        "axolote-galeria.html"
+      ],
+      "differenceFromCommittedBase": {
+        "status": "asset_absent_in_committed_base",
+        "basePath": "assets/events/axolote-night-run/photos/axolote-24-thumb.webp"
+      },
+      "httpStatus": 200
+    },
+    {
+      "url": "https://mariana-carrera-71pg8t6dl-ederartmos-projects.vercel.app/assets/events/axolote-night-run/photos/axolote-25.webp",
+      "relativePath": "assets/events/axolote-night-run/photos/axolote-25.webp",
+      "status": "valid",
+      "contentType": "image/webp",
+      "size": 378290,
+      "sha256": "b56af6fe7967dc9c3eef1520f8ccbb1bc1d62f664ef00d6bcb406b08a31017d1",
+      "dimensions": "WEBP:1280x1920",
+      "integrity": "Pillow verify() and full decode/load passed",
+      "dependencies": [
+        "axolote-galeria.html"
+      ],
+      "differenceFromCommittedBase": {
+        "status": "asset_absent_in_committed_base",
+        "basePath": "assets/events/axolote-night-run/photos/axolote-25.webp"
+      },
+      "httpStatus": 200
+    },
+    {
+      "url": "https://mariana-carrera-71pg8t6dl-ederartmos-projects.vercel.app/assets/events/axolote-night-run/photos/axolote-25-thumb.webp",
+      "relativePath": "assets/events/axolote-night-run/photos/axolote-25-thumb.webp",
+      "status": "valid",
+      "contentType": "image/webp",
+      "size": 40884,
+      "sha256": "c40f7e1aff4f15af39d12af4f5d700b6dfd6959ce62693df5b21c122d849b261",
+      "dimensions": "WEBP:427x640",
+      "integrity": "Pillow verify() and full decode/load passed",
+      "dependencies": [
+        "axolote-galeria.html"
+      ],
+      "differenceFromCommittedBase": {
+        "status": "asset_absent_in_committed_base",
+        "basePath": "assets/events/axolote-night-run/photos/axolote-25-thumb.webp"
+      },
+      "httpStatus": 200
+    },
+    {
+      "url": "https://mariana-carrera-71pg8t6dl-ederartmos-projects.vercel.app/assets/events/axolote-night-run/photos/axolote-26.webp",
+      "relativePath": "assets/events/axolote-night-run/photos/axolote-26.webp",
+      "status": "valid",
+      "contentType": "image/webp",
+      "size": 378114,
+      "sha256": "cf65566fe8023a9165ac56aad69d21df3aaddaa3ba6a3f3a4f9bdda4118bd2f2",
+      "dimensions": "WEBP:1280x1920",
+      "integrity": "Pillow verify() and full decode/load passed",
+      "dependencies": [
+        "axolote-galeria.html"
+      ],
+      "differenceFromCommittedBase": {
+        "status": "asset_absent_in_committed_base",
+        "basePath": "assets/events/axolote-night-run/photos/axolote-26.webp"
+      },
+      "httpStatus": 200
+    },
+    {
+      "url": "https://mariana-carrera-71pg8t6dl-ederartmos-projects.vercel.app/assets/events/axolote-night-run/photos/axolote-26-thumb.webp",
+      "relativePath": "assets/events/axolote-night-run/photos/axolote-26-thumb.webp",
+      "status": "valid",
+      "contentType": "image/webp",
+      "size": 38810,
+      "sha256": "b50c26d5fed3f1fe51b383c4469b7711c23f6bc67178e52f0ddc8dfb779ebe7f",
+      "dimensions": "WEBP:427x640",
+      "integrity": "Pillow verify() and full decode/load passed",
+      "dependencies": [
+        "axolote-galeria.html"
+      ],
+      "differenceFromCommittedBase": {
+        "status": "asset_absent_in_committed_base",
+        "basePath": "assets/events/axolote-night-run/photos/axolote-26-thumb.webp"
+      },
+      "httpStatus": 200
+    },
+    {
+      "url": "https://mariana-carrera-71pg8t6dl-ederartmos-projects.vercel.app/assets/events/axolote-night-run/photos/axolote-27.webp",
+      "relativePath": "assets/events/axolote-night-run/photos/axolote-27.webp",
+      "status": "valid",
+      "contentType": "image/webp",
+      "size": 366736,
+      "sha256": "a088dda12e90276c1c32e7d3354e592206ee4f408fa8c44532d2d58182090055",
+      "dimensions": "WEBP:1280x1920",
+      "integrity": "Pillow verify() and full decode/load passed",
+      "dependencies": [
+        "axolote-galeria.html"
+      ],
+      "differenceFromCommittedBase": {
+        "status": "asset_absent_in_committed_base",
+        "basePath": "assets/events/axolote-night-run/photos/axolote-27.webp"
+      },
+      "httpStatus": 200
+    },
+    {
+      "url": "https://mariana-carrera-71pg8t6dl-ederartmos-projects.vercel.app/assets/events/axolote-night-run/photos/axolote-27-thumb.webp",
+      "relativePath": "assets/events/axolote-night-run/photos/axolote-27-thumb.webp",
+      "status": "valid",
+      "contentType": "image/webp",
+      "size": 39654,
+      "sha256": "745b519923312ca052004b8c45f0e0e02729e872a114d20b24bfe7a209453614",
+      "dimensions": "WEBP:427x640",
+      "integrity": "Pillow verify() and full decode/load passed",
+      "dependencies": [
+        "axolote-galeria.html"
+      ],
+      "differenceFromCommittedBase": {
+        "status": "asset_absent_in_committed_base",
+        "basePath": "assets/events/axolote-night-run/photos/axolote-27-thumb.webp"
+      },
+      "httpStatus": 200
+    },
+    {
+      "url": "https://mariana-carrera-71pg8t6dl-ederartmos-projects.vercel.app/assets/events/axolote-night-run/photos/axolote-28.webp",
+      "relativePath": "assets/events/axolote-night-run/photos/axolote-28.webp",
+      "status": "valid",
+      "contentType": "image/webp",
+      "size": 290096,
+      "sha256": "bc0f397c4fa0444ca938c37224e289d94483208d457b29c11b2a6c01d85a440c",
+      "dimensions": "WEBP:1280x1920",
+      "integrity": "Pillow verify() and full decode/load passed",
+      "dependencies": [
+        "axolote-galeria.html"
+      ],
+      "differenceFromCommittedBase": {
+        "status": "asset_absent_in_committed_base",
+        "basePath": "assets/events/axolote-night-run/photos/axolote-28.webp"
+      },
+      "httpStatus": 200
+    },
+    {
+      "url": "https://mariana-carrera-71pg8t6dl-ederartmos-projects.vercel.app/assets/events/axolote-night-run/photos/axolote-28-thumb.webp",
+      "relativePath": "assets/events/axolote-night-run/photos/axolote-28-thumb.webp",
+      "status": "valid",
+      "contentType": "image/webp",
+      "size": 35888,
+      "sha256": "cf71457fe9e199634e4c0e8b6a7b6509be9a2511bc111d8819d6f257e3dcfbac",
+      "dimensions": "WEBP:427x640",
+      "integrity": "Pillow verify() and full decode/load passed",
+      "dependencies": [
+        "axolote-galeria.html"
+      ],
+      "differenceFromCommittedBase": {
+        "status": "asset_absent_in_committed_base",
+        "basePath": "assets/events/axolote-night-run/photos/axolote-28-thumb.webp"
+      },
+      "httpStatus": 200
+    },
+    {
+      "url": "https://mariana-carrera-71pg8t6dl-ederartmos-projects.vercel.app/assets/events/axolote-night-run/photos/axolote-29.webp",
+      "relativePath": "assets/events/axolote-night-run/photos/axolote-29.webp",
+      "status": "valid",
+      "contentType": "image/webp",
+      "size": 144656,
+      "sha256": "e436a2e07a26baf8876b535472ae21152ad07ebacaf235b6b67a59950a954ce5",
+      "dimensions": "WEBP:1280x1920",
+      "integrity": "Pillow verify() and full decode/load passed",
+      "dependencies": [
+        "axolote-galeria.html"
+      ],
+      "differenceFromCommittedBase": {
+        "status": "asset_absent_in_committed_base",
+        "basePath": "assets/events/axolote-night-run/photos/axolote-29.webp"
+      },
+      "httpStatus": 200
+    },
+    {
+      "url": "https://mariana-carrera-71pg8t6dl-ederartmos-projects.vercel.app/assets/events/axolote-night-run/photos/axolote-29-thumb.webp",
+      "relativePath": "assets/events/axolote-night-run/photos/axolote-29-thumb.webp",
+      "status": "valid",
+      "contentType": "image/webp",
+      "size": 25746,
+      "sha256": "74cb4db7caa88fca3b6a3d5b0cb2aa752ff87ac7c96a183c5220f9f1ecb4000c",
+      "dimensions": "WEBP:427x640",
+      "integrity": "Pillow verify() and full decode/load passed",
+      "dependencies": [
+        "axolote-galeria.html"
+      ],
+      "differenceFromCommittedBase": {
+        "status": "asset_absent_in_committed_base",
+        "basePath": "assets/events/axolote-night-run/photos/axolote-29-thumb.webp"
+      },
+      "httpStatus": 200
+    },
+    {
+      "url": "https://mariana-carrera-71pg8t6dl-ederartmos-projects.vercel.app/assets/events/axolote-night-run/photos/axolote-30.webp",
+      "relativePath": "assets/events/axolote-night-run/photos/axolote-30.webp",
+      "status": "valid",
+      "contentType": "image/webp",
+      "size": 253356,
+      "sha256": "b6ad48e5977ed5569d860e04d80d8824e43395ace4037ef932b80e4abab80ee9",
+      "dimensions": "WEBP:1280x1920",
+      "integrity": "Pillow verify() and full decode/load passed",
+      "dependencies": [
+        "axolote-galeria.html"
+      ],
+      "differenceFromCommittedBase": {
+        "status": "asset_absent_in_committed_base",
+        "basePath": "assets/events/axolote-night-run/photos/axolote-30.webp"
+      },
+      "httpStatus": 200
+    },
+    {
+      "url": "https://mariana-carrera-71pg8t6dl-ederartmos-projects.vercel.app/assets/events/axolote-night-run/photos/axolote-30-thumb.webp",
+      "relativePath": "assets/events/axolote-night-run/photos/axolote-30-thumb.webp",
+      "status": "valid",
+      "contentType": "image/webp",
+      "size": 30250,
+      "sha256": "3b3294bc2707b8e8c326baef15779a3b4ee76164d76c9f372ccd970f83c650d8",
+      "dimensions": "WEBP:427x640",
+      "integrity": "Pillow verify() and full decode/load passed",
+      "dependencies": [
+        "axolote-galeria.html"
+      ],
+      "differenceFromCommittedBase": {
+        "status": "asset_absent_in_committed_base",
+        "basePath": "assets/events/axolote-night-run/photos/axolote-30-thumb.webp"
+      },
+      "httpStatus": 200
+    },
+    {
+      "url": "https://mariana-carrera-71pg8t6dl-ederartmos-projects.vercel.app/assets/events/axolote-night-run/photos/axolote-31.webp",
+      "relativePath": "assets/events/axolote-night-run/photos/axolote-31.webp",
+      "status": "valid",
+      "contentType": "image/webp",
+      "size": 230726,
+      "sha256": "12e4ad80ea77c09073242529f522183535b4add378dc7c8a45464629287344f4",
+      "dimensions": "WEBP:1280x1920",
+      "integrity": "Pillow verify() and full decode/load passed",
+      "dependencies": [
+        "axolote-galeria.html"
+      ],
+      "differenceFromCommittedBase": {
+        "status": "asset_absent_in_committed_base",
+        "basePath": "assets/events/axolote-night-run/photos/axolote-31.webp"
+      },
+      "httpStatus": 200
+    },
+    {
+      "url": "https://mariana-carrera-71pg8t6dl-ederartmos-projects.vercel.app/assets/events/axolote-night-run/photos/axolote-31-thumb.webp",
+      "relativePath": "assets/events/axolote-night-run/photos/axolote-31-thumb.webp",
+      "status": "valid",
+      "contentType": "image/webp",
+      "size": 21200,
+      "sha256": "cc1c5b06effdef2a25cfa10ed6e956bb8c219c9d6d59cd5f104ab1fc633f5210",
+      "dimensions": "WEBP:427x640",
+      "integrity": "Pillow verify() and full decode/load passed",
+      "dependencies": [
+        "axolote-galeria.html"
+      ],
+      "differenceFromCommittedBase": {
+        "status": "asset_absent_in_committed_base",
+        "basePath": "assets/events/axolote-night-run/photos/axolote-31-thumb.webp"
+      },
+      "httpStatus": 200
+    },
+    {
+      "url": "https://mariana-carrera-71pg8t6dl-ederartmos-projects.vercel.app/assets/events/axolote-night-run/photos/axolote-32.webp",
+      "relativePath": "assets/events/axolote-night-run/photos/axolote-32.webp",
+      "status": "valid",
+      "contentType": "image/webp",
+      "size": 202026,
+      "sha256": "389cb022196555464d57b0a5b7656adfa84f22ff0e3c3c5b3d52bc6750740e89",
+      "dimensions": "WEBP:1280x1920",
+      "integrity": "Pillow verify() and full decode/load passed",
+      "dependencies": [
+        "axolote-galeria.html"
+      ],
+      "differenceFromCommittedBase": {
+        "status": "asset_absent_in_committed_base",
+        "basePath": "assets/events/axolote-night-run/photos/axolote-32.webp"
+      },
+      "httpStatus": 200
+    },
+    {
+      "url": "https://mariana-carrera-71pg8t6dl-ederartmos-projects.vercel.app/assets/events/axolote-night-run/photos/axolote-32-thumb.webp",
+      "relativePath": "assets/events/axolote-night-run/photos/axolote-32-thumb.webp",
+      "status": "valid",
+      "contentType": "image/webp",
+      "size": 15574,
+      "sha256": "bb51d70440951e9784f4f578c4158e9937036ceea8e373ecfaf869ae6e811d22",
+      "dimensions": "WEBP:427x640",
+      "integrity": "Pillow verify() and full decode/load passed",
+      "dependencies": [
+        "axolote-galeria.html"
+      ],
+      "differenceFromCommittedBase": {
+        "status": "asset_absent_in_committed_base",
+        "basePath": "assets/events/axolote-night-run/photos/axolote-32-thumb.webp"
+      },
+      "httpStatus": 200
+    },
+    {
+      "url": "https://mariana-carrera-71pg8t6dl-ederartmos-projects.vercel.app/assets/events/axolote-night-run/photos/axolote-33.webp",
+      "relativePath": "assets/events/axolote-night-run/photos/axolote-33.webp",
+      "status": "valid",
+      "contentType": "image/webp",
+      "size": 104710,
+      "sha256": "8b1cc5b6013193613ae04e150a5dfa6289b4b0b5ed5cd794bcececdce2e0f923",
+      "dimensions": "WEBP:1280x1920",
+      "integrity": "Pillow verify() and full decode/load passed",
+      "dependencies": [
+        "axolote-galeria.html"
+      ],
+      "differenceFromCommittedBase": {
+        "status": "asset_absent_in_committed_base",
+        "basePath": "assets/events/axolote-night-run/photos/axolote-33.webp"
+      },
+      "httpStatus": 200
+    },
+    {
+      "url": "https://mariana-carrera-71pg8t6dl-ederartmos-projects.vercel.app/assets/events/axolote-night-run/photos/axolote-33-thumb.webp",
+      "relativePath": "assets/events/axolote-night-run/photos/axolote-33-thumb.webp",
+      "status": "valid",
+      "contentType": "image/webp",
+      "size": 9984,
+      "sha256": "172b098fc3dad83347d5d016fa5f07821cb56882443b914be09c87fba48ab13d",
+      "dimensions": "WEBP:427x640",
+      "integrity": "Pillow verify() and full decode/load passed",
+      "dependencies": [
+        "axolote-galeria.html"
+      ],
+      "differenceFromCommittedBase": {
+        "status": "asset_absent_in_committed_base",
+        "basePath": "assets/events/axolote-night-run/photos/axolote-33-thumb.webp"
+      },
+      "httpStatus": 200
+    },
+    {
+      "url": "https://mariana-carrera-71pg8t6dl-ederartmos-projects.vercel.app/assets/events/axolote-night-run/photos/axolote-34.webp",
+      "relativePath": "assets/events/axolote-night-run/photos/axolote-34.webp",
+      "status": "valid",
+      "contentType": "image/webp",
+      "size": 169166,
+      "sha256": "9520b9ae23cb6efacae4b2f5139da6e787e8abb3698abaa0f0ec890ff25c3331",
+      "dimensions": "WEBP:1280x1920",
+      "integrity": "Pillow verify() and full decode/load passed",
+      "dependencies": [
+        "axolote-galeria.html"
+      ],
+      "differenceFromCommittedBase": {
+        "status": "asset_absent_in_committed_base",
+        "basePath": "assets/events/axolote-night-run/photos/axolote-34.webp"
+      },
+      "httpStatus": 200
+    },
+    {
+      "url": "https://mariana-carrera-71pg8t6dl-ederartmos-projects.vercel.app/assets/events/axolote-night-run/photos/axolote-34-thumb.webp",
+      "relativePath": "assets/events/axolote-night-run/photos/axolote-34-thumb.webp",
+      "status": "valid",
+      "contentType": "image/webp",
+      "size": 16358,
+      "sha256": "ec2721d7b8872f4f92b671f375b226c85bd7aa32cae323d967308d1b3da7e0dd",
+      "dimensions": "WEBP:427x640",
+      "integrity": "Pillow verify() and full decode/load passed",
+      "dependencies": [
+        "axolote-galeria.html"
+      ],
+      "differenceFromCommittedBase": {
+        "status": "asset_absent_in_committed_base",
+        "basePath": "assets/events/axolote-night-run/photos/axolote-34-thumb.webp"
+      },
+      "httpStatus": 200
+    },
+    {
+      "url": "https://mariana-carrera-71pg8t6dl-ederartmos-projects.vercel.app/assets/events/axolote-night-run/photos/axolote-35.webp",
+      "relativePath": "assets/events/axolote-night-run/photos/axolote-35.webp",
+      "status": "valid",
+      "contentType": "image/webp",
+      "size": 194622,
+      "sha256": "731fb827ca2d8b17f532accc424edfc0faad9a14d57b071eeba0208533006483",
+      "dimensions": "WEBP:1280x1920",
+      "integrity": "Pillow verify() and full decode/load passed",
+      "dependencies": [
+        "axolote-galeria.html"
+      ],
+      "differenceFromCommittedBase": {
+        "status": "asset_absent_in_committed_base",
+        "basePath": "assets/events/axolote-night-run/photos/axolote-35.webp"
+      },
+      "httpStatus": 200
+    },
+    {
+      "url": "https://mariana-carrera-71pg8t6dl-ederartmos-projects.vercel.app/assets/events/axolote-night-run/photos/axolote-35-thumb.webp",
+      "relativePath": "assets/events/axolote-night-run/photos/axolote-35-thumb.webp",
+      "status": "valid",
+      "contentType": "image/webp",
+      "size": 20416,
+      "sha256": "cf88e0574f4015bdf87308cc03d5bb2d7ce690ddf9e5e16968e5386a7a2b8e9a",
+      "dimensions": "WEBP:427x640",
+      "integrity": "Pillow verify() and full decode/load passed",
+      "dependencies": [
+        "axolote-galeria.html"
+      ],
+      "differenceFromCommittedBase": {
+        "status": "asset_absent_in_committed_base",
+        "basePath": "assets/events/axolote-night-run/photos/axolote-35-thumb.webp"
+      },
+      "httpStatus": 200
+    },
+    {
+      "url": "https://mariana-carrera-71pg8t6dl-ederartmos-projects.vercel.app/assets/events/axolote-night-run/photos/axolote-36.webp",
+      "relativePath": "assets/events/axolote-night-run/photos/axolote-36.webp",
+      "status": "valid",
+      "contentType": "image/webp",
+      "size": 213088,
+      "sha256": "f47f7cced4795bafd4ccba6686a8037bfbff0573f5dfa58bcb644c8f9efe763f",
+      "dimensions": "WEBP:1280x1920",
+      "integrity": "Pillow verify() and full decode/load passed",
+      "dependencies": [
+        "axolote-galeria.html"
+      ],
+      "differenceFromCommittedBase": {
+        "status": "asset_absent_in_committed_base",
+        "basePath": "assets/events/axolote-night-run/photos/axolote-36.webp"
+      },
+      "httpStatus": 200
+    },
+    {
+      "url": "https://mariana-carrera-71pg8t6dl-ederartmos-projects.vercel.app/assets/events/axolote-night-run/photos/axolote-36-thumb.webp",
+      "relativePath": "assets/events/axolote-night-run/photos/axolote-36-thumb.webp",
+      "status": "valid",
+      "contentType": "image/webp",
+      "size": 22052,
+      "sha256": "e77d5f0d1589410a231cf02572dd0753d57fc1227a14d482a480323a68489fe7",
+      "dimensions": "WEBP:427x640",
+      "integrity": "Pillow verify() and full decode/load passed",
+      "dependencies": [
+        "axolote-galeria.html"
+      ],
+      "differenceFromCommittedBase": {
+        "status": "asset_absent_in_committed_base",
+        "basePath": "assets/events/axolote-night-run/photos/axolote-36-thumb.webp"
+      },
+      "httpStatus": 200
+    },
+    {
+      "url": "https://mariana-carrera-71pg8t6dl-ederartmos-projects.vercel.app/assets/events/axolote-night-run/photos/axolote-37.webp",
+      "relativePath": "assets/events/axolote-night-run/photos/axolote-37.webp",
+      "status": "valid",
+      "contentType": "image/webp",
+      "size": 158890,
+      "sha256": "d0bbf3f0a9dc7c82fb212c3fdafd52875bc05772a983b8c01a8928fdd9aff81b",
+      "dimensions": "WEBP:1280x1920",
+      "integrity": "Pillow verify() and full decode/load passed",
+      "dependencies": [
+        "axolote-galeria.html"
+      ],
+      "differenceFromCommittedBase": {
+        "status": "asset_absent_in_committed_base",
+        "basePath": "assets/events/axolote-night-run/photos/axolote-37.webp"
+      },
+      "httpStatus": 200
+    },
+    {
+      "url": "https://mariana-carrera-71pg8t6dl-ederartmos-projects.vercel.app/assets/events/axolote-night-run/photos/axolote-37-thumb.webp",
+      "relativePath": "assets/events/axolote-night-run/photos/axolote-37-thumb.webp",
+      "status": "valid",
+      "contentType": "image/webp",
+      "size": 19810,
+      "sha256": "15bb08e1b793f6a13af65c10ba1f3c1246ed23d18dff70b11a0a129898903326",
+      "dimensions": "WEBP:427x640",
+      "integrity": "Pillow verify() and full decode/load passed",
+      "dependencies": [
+        "axolote-galeria.html"
+      ],
+      "differenceFromCommittedBase": {
+        "status": "asset_absent_in_committed_base",
+        "basePath": "assets/events/axolote-night-run/photos/axolote-37-thumb.webp"
+      },
+      "httpStatus": 200
+    },
+    {
+      "url": "https://mariana-carrera-71pg8t6dl-ederartmos-projects.vercel.app/assets/events/axolote-night-run/photos/axolote-38.webp",
+      "relativePath": "assets/events/axolote-night-run/photos/axolote-38.webp",
+      "status": "valid",
+      "contentType": "image/webp",
+      "size": 119230,
+      "sha256": "0bcc9826b46fcc0e0c6eeebf41e46b2a0bcc81dddcc4e81db532ba940a5a578b",
+      "dimensions": "WEBP:1280x1920",
+      "integrity": "Pillow verify() and full decode/load passed",
+      "dependencies": [
+        "axolote-galeria.html"
+      ],
+      "differenceFromCommittedBase": {
+        "status": "asset_absent_in_committed_base",
+        "basePath": "assets/events/axolote-night-run/photos/axolote-38.webp"
+      },
+      "httpStatus": 200
+    },
+    {
+      "url": "https://mariana-carrera-71pg8t6dl-ederartmos-projects.vercel.app/assets/events/axolote-night-run/photos/axolote-38-thumb.webp",
+      "relativePath": "assets/events/axolote-night-run/photos/axolote-38-thumb.webp",
+      "status": "valid",
+      "contentType": "image/webp",
+      "size": 19474,
+      "sha256": "4c992d4043fe0f4ce17382930cd6c74403fefabb429064157505cb1f9be7a568",
+      "dimensions": "WEBP:427x640",
+      "integrity": "Pillow verify() and full decode/load passed",
+      "dependencies": [
+        "axolote-galeria.html"
+      ],
+      "differenceFromCommittedBase": {
+        "status": "asset_absent_in_committed_base",
+        "basePath": "assets/events/axolote-night-run/photos/axolote-38-thumb.webp"
+      },
+      "httpStatus": 200
+    },
+    {
+      "url": "https://mariana-carrera-71pg8t6dl-ederartmos-projects.vercel.app/assets/events/axolote-night-run/photos/axolote-39.webp",
+      "relativePath": "assets/events/axolote-night-run/photos/axolote-39.webp",
+      "status": "valid",
+      "contentType": "image/webp",
+      "size": 225462,
+      "sha256": "c4e95bb450d1fe544e462df0e472de345891953128599e893bc0f5e36c06cb44",
+      "dimensions": "WEBP:1280x1920",
+      "integrity": "Pillow verify() and full decode/load passed",
+      "dependencies": [
+        "axolote-galeria.html"
+      ],
+      "differenceFromCommittedBase": {
+        "status": "asset_absent_in_committed_base",
+        "basePath": "assets/events/axolote-night-run/photos/axolote-39.webp"
+      },
+      "httpStatus": 200
+    },
+    {
+      "url": "https://mariana-carrera-71pg8t6dl-ederartmos-projects.vercel.app/assets/events/axolote-night-run/photos/axolote-39-thumb.webp",
+      "relativePath": "assets/events/axolote-night-run/photos/axolote-39-thumb.webp",
+      "status": "valid",
+      "contentType": "image/webp",
+      "size": 23840,
+      "sha256": "6c1f8a2ed2de21010b26faa21873bc638841f7b0232bb185af485c93b9b53205",
+      "dimensions": "WEBP:427x640",
+      "integrity": "Pillow verify() and full decode/load passed",
+      "dependencies": [
+        "axolote-galeria.html"
+      ],
+      "differenceFromCommittedBase": {
+        "status": "asset_absent_in_committed_base",
+        "basePath": "assets/events/axolote-night-run/photos/axolote-39-thumb.webp"
+      },
+      "httpStatus": 200
+    },
+    {
+      "url": "https://mariana-carrera-71pg8t6dl-ederartmos-projects.vercel.app/assets/events/axolote-night-run/photos/axolote-40.webp",
+      "relativePath": "assets/events/axolote-night-run/photos/axolote-40.webp",
+      "status": "valid",
+      "contentType": "image/webp",
+      "size": 187236,
+      "sha256": "27c32d7275f28349350c18045b844d375b3fa61430b9e7f9ec4c046aad632df4",
+      "dimensions": "WEBP:1280x1920",
+      "integrity": "Pillow verify() and full decode/load passed",
+      "dependencies": [
+        "axolote-galeria.html"
+      ],
+      "differenceFromCommittedBase": {
+        "status": "asset_absent_in_committed_base",
+        "basePath": "assets/events/axolote-night-run/photos/axolote-40.webp"
+      },
+      "httpStatus": 200
+    },
+    {
+      "url": "https://mariana-carrera-71pg8t6dl-ederartmos-projects.vercel.app/assets/events/axolote-night-run/photos/axolote-40-thumb.webp",
+      "relativePath": "assets/events/axolote-night-run/photos/axolote-40-thumb.webp",
+      "status": "valid",
+      "contentType": "image/webp",
+      "size": 20680,
+      "sha256": "dbaad9321204c615c856cbcb00c176973a7bfe1bbc2dd64bc60eb40fd059144b",
+      "dimensions": "WEBP:427x640",
+      "integrity": "Pillow verify() and full decode/load passed",
+      "dependencies": [
+        "axolote-galeria.html"
+      ],
+      "differenceFromCommittedBase": {
+        "status": "asset_absent_in_committed_base",
+        "basePath": "assets/events/axolote-night-run/photos/axolote-40-thumb.webp"
+      },
+      "httpStatus": 200
+    },
+    {
+      "url": "https://mariana-carrera-71pg8t6dl-ederartmos-projects.vercel.app/assets/events/axolote-night-run/photos/axolote-41.webp",
+      "relativePath": "assets/events/axolote-night-run/photos/axolote-41.webp",
+      "status": "valid",
+      "contentType": "image/webp",
+      "size": 163016,
+      "sha256": "1621f442cd91ac926930cdf6624bc40f4a8df8206e548df4afa3eccb3c671b6f",
+      "dimensions": "WEBP:1280x1920",
+      "integrity": "Pillow verify() and full decode/load passed",
+      "dependencies": [
+        "axolote-galeria.html"
+      ],
+      "differenceFromCommittedBase": {
+        "status": "asset_absent_in_committed_base",
+        "basePath": "assets/events/axolote-night-run/photos/axolote-41.webp"
+      },
+      "httpStatus": 200
+    },
+    {
+      "url": "https://mariana-carrera-71pg8t6dl-ederartmos-projects.vercel.app/assets/events/axolote-night-run/photos/axolote-41-thumb.webp",
+      "relativePath": "assets/events/axolote-night-run/photos/axolote-41-thumb.webp",
+      "status": "valid",
+      "contentType": "image/webp",
+      "size": 19960,
+      "sha256": "3a7f5b732fd7cb401dba9354faf03d520b9db8095b20173246e5849c105697fe",
+      "dimensions": "WEBP:427x640",
+      "integrity": "Pillow verify() and full decode/load passed",
+      "dependencies": [
+        "axolote-galeria.html"
+      ],
+      "differenceFromCommittedBase": {
+        "status": "asset_absent_in_committed_base",
+        "basePath": "assets/events/axolote-night-run/photos/axolote-41-thumb.webp"
+      },
+      "httpStatus": 200
+    },
+    {
+      "url": "https://mariana-carrera-71pg8t6dl-ederartmos-projects.vercel.app/assets/events/axolote-night-run/photos/axolote-42.webp",
+      "relativePath": "assets/events/axolote-night-run/photos/axolote-42.webp",
+      "status": "valid",
+      "contentType": "image/webp",
+      "size": 149182,
+      "sha256": "8d92c269a430e59c4b3ca17a981578e5f4aa57e4e05034de2a43cb3bd2d14792",
+      "dimensions": "WEBP:1280x1920",
+      "integrity": "Pillow verify() and full decode/load passed",
+      "dependencies": [
+        "axolote-galeria.html"
+      ],
+      "differenceFromCommittedBase": {
+        "status": "asset_absent_in_committed_base",
+        "basePath": "assets/events/axolote-night-run/photos/axolote-42.webp"
+      },
+      "httpStatus": 200
+    },
+    {
+      "url": "https://mariana-carrera-71pg8t6dl-ederartmos-projects.vercel.app/assets/events/axolote-night-run/photos/axolote-42-thumb.webp",
+      "relativePath": "assets/events/axolote-night-run/photos/axolote-42-thumb.webp",
+      "status": "valid",
+      "contentType": "image/webp",
+      "size": 18500,
+      "sha256": "10fb64246c1ef2fb146d1448c04eaed7bac74d6400b76072e2453a129f99eba4",
+      "dimensions": "WEBP:427x640",
+      "integrity": "Pillow verify() and full decode/load passed",
+      "dependencies": [
+        "axolote-galeria.html"
+      ],
+      "differenceFromCommittedBase": {
+        "status": "asset_absent_in_committed_base",
+        "basePath": "assets/events/axolote-night-run/photos/axolote-42-thumb.webp"
+      },
+      "httpStatus": 200
+    },
+    {
+      "url": "https://mariana-carrera-71pg8t6dl-ederartmos-projects.vercel.app/assets/events/axolote-night-run/photos/axolote-43.webp",
+      "relativePath": "assets/events/axolote-night-run/photos/axolote-43.webp",
+      "status": "valid",
+      "contentType": "image/webp",
+      "size": 125096,
+      "sha256": "ed1f6c4e58c68431a59849fe2c186d21e243f5c7811b6edc3b11c7a386977a60",
+      "dimensions": "WEBP:1280x1920",
+      "integrity": "Pillow verify() and full decode/load passed",
+      "dependencies": [
+        "axolote-galeria.html"
+      ],
+      "differenceFromCommittedBase": {
+        "status": "asset_absent_in_committed_base",
+        "basePath": "assets/events/axolote-night-run/photos/axolote-43.webp"
+      },
+      "httpStatus": 200
+    },
+    {
+      "url": "https://mariana-carrera-71pg8t6dl-ederartmos-projects.vercel.app/assets/events/axolote-night-run/photos/axolote-43-thumb.webp",
+      "relativePath": "assets/events/axolote-night-run/photos/axolote-43-thumb.webp",
+      "status": "valid",
+      "contentType": "image/webp",
+      "size": 18878,
+      "sha256": "e9c9801a3f073104f298ba5fd373db82d557bde3a3744e4a8eda39265f85d0c6",
+      "dimensions": "WEBP:427x640",
+      "integrity": "Pillow verify() and full decode/load passed",
+      "dependencies": [
+        "axolote-galeria.html"
+      ],
+      "differenceFromCommittedBase": {
+        "status": "asset_absent_in_committed_base",
+        "basePath": "assets/events/axolote-night-run/photos/axolote-43-thumb.webp"
+      },
+      "httpStatus": 200
+    },
+    {
+      "url": "https://mariana-carrera-71pg8t6dl-ederartmos-projects.vercel.app/assets/events/axolote-night-run/photos/axolote-44.webp",
+      "relativePath": "assets/events/axolote-night-run/photos/axolote-44.webp",
+      "status": "valid",
+      "contentType": "image/webp",
+      "size": 134480,
+      "sha256": "a7b8070a3e4e2aa5bfd25af9c426a7d756c8963bc7f199408a12a6c5e1c3c258",
+      "dimensions": "WEBP:1280x1920",
+      "integrity": "Pillow verify() and full decode/load passed",
+      "dependencies": [
+        "axolote-galeria.html"
+      ],
+      "differenceFromCommittedBase": {
+        "status": "asset_absent_in_committed_base",
+        "basePath": "assets/events/axolote-night-run/photos/axolote-44.webp"
+      },
+      "httpStatus": 200
+    },
+    {
+      "url": "https://mariana-carrera-71pg8t6dl-ederartmos-projects.vercel.app/assets/events/axolote-night-run/photos/axolote-44-thumb.webp",
+      "relativePath": "assets/events/axolote-night-run/photos/axolote-44-thumb.webp",
+      "status": "valid",
+      "contentType": "image/webp",
+      "size": 15766,
+      "sha256": "86b78f0b436f8c6748d29edc7ad5aba410322b73f0f3b8971cf12f46abd1010f",
+      "dimensions": "WEBP:427x640",
+      "integrity": "Pillow verify() and full decode/load passed",
+      "dependencies": [
+        "axolote-galeria.html"
+      ],
+      "differenceFromCommittedBase": {
+        "status": "asset_absent_in_committed_base",
+        "basePath": "assets/events/axolote-night-run/photos/axolote-44-thumb.webp"
+      },
+      "httpStatus": 200
+    },
+    {
+      "url": "https://mariana-carrera-71pg8t6dl-ederartmos-projects.vercel.app/assets/events/axolote-night-run/photos/axolote-45.webp",
+      "relativePath": "assets/events/axolote-night-run/photos/axolote-45.webp",
+      "status": "valid",
+      "contentType": "image/webp",
+      "size": 176132,
+      "sha256": "fba29cd495cb9debdf0cfdd74966da936cf1187b6d381d1a5ae58fcbdce6b104",
+      "dimensions": "WEBP:1280x1920",
+      "integrity": "Pillow verify() and full decode/load passed",
+      "dependencies": [
+        "axolote-galeria.html"
+      ],
+      "differenceFromCommittedBase": {
+        "status": "asset_absent_in_committed_base",
+        "basePath": "assets/events/axolote-night-run/photos/axolote-45.webp"
+      },
+      "httpStatus": 200
+    },
+    {
+      "url": "https://mariana-carrera-71pg8t6dl-ederartmos-projects.vercel.app/assets/events/axolote-night-run/photos/axolote-45-thumb.webp",
+      "relativePath": "assets/events/axolote-night-run/photos/axolote-45-thumb.webp",
+      "status": "valid",
+      "contentType": "image/webp",
+      "size": 19316,
+      "sha256": "6bf0140288e8cc5c82307d3b16e8bbfeafd5c61a809e501f168c2fc5ef3f6181",
+      "dimensions": "WEBP:427x640",
+      "integrity": "Pillow verify() and full decode/load passed",
+      "dependencies": [
+        "axolote-galeria.html"
+      ],
+      "differenceFromCommittedBase": {
+        "status": "asset_absent_in_committed_base",
+        "basePath": "assets/events/axolote-night-run/photos/axolote-45-thumb.webp"
+      },
+      "httpStatus": 200
+    },
+    {
+      "url": "https://mariana-carrera-71pg8t6dl-ederartmos-projects.vercel.app/assets/events/axolote-night-run/photos/axolote-46.webp",
+      "relativePath": "assets/events/axolote-night-run/photos/axolote-46.webp",
+      "status": "valid",
+      "contentType": "image/webp",
+      "size": 136012,
+      "sha256": "7e3f16608e61c467e75c3863a942958f3ec875db8f03df807b589df078b4858e",
+      "dimensions": "WEBP:1920x1281",
+      "integrity": "Pillow verify() and full decode/load passed",
+      "dependencies": [
+        "axolote-galeria.html"
+      ],
+      "differenceFromCommittedBase": {
+        "status": "asset_absent_in_committed_base",
+        "basePath": "assets/events/axolote-night-run/photos/axolote-46.webp"
+      },
+      "httpStatus": 200
+    },
+    {
+      "url": "https://mariana-carrera-71pg8t6dl-ederartmos-projects.vercel.app/assets/events/axolote-night-run/photos/axolote-46-thumb.webp",
+      "relativePath": "assets/events/axolote-night-run/photos/axolote-46-thumb.webp",
+      "status": "valid",
+      "contentType": "image/webp",
+      "size": 23608,
+      "sha256": "21604ccf07666f96f74bfd7be5efb01916d4eedfa4b42bdbafae1bffc7906dfe",
+      "dimensions": "WEBP:640x427",
+      "integrity": "Pillow verify() and full decode/load passed",
+      "dependencies": [
+        "axolote-galeria.html"
+      ],
+      "differenceFromCommittedBase": {
+        "status": "asset_absent_in_committed_base",
+        "basePath": "assets/events/axolote-night-run/photos/axolote-46-thumb.webp"
+      },
+      "httpStatus": 200
+    },
+    {
+      "url": "https://mariana-carrera-71pg8t6dl-ederartmos-projects.vercel.app/assets/events/axolote-night-run/photos/axolote-47.webp",
+      "relativePath": "assets/events/axolote-night-run/photos/axolote-47.webp",
+      "status": "valid",
+      "contentType": "image/webp",
+      "size": 126920,
+      "sha256": "93cfd19226baab1373ac79d41e6712254f70f0aaa163600616baa4a252c9f7b3",
+      "dimensions": "WEBP:1920x1281",
+      "integrity": "Pillow verify() and full decode/load passed",
+      "dependencies": [
+        "axolote-galeria.html"
+      ],
+      "differenceFromCommittedBase": {
+        "status": "asset_absent_in_committed_base",
+        "basePath": "assets/events/axolote-night-run/photos/axolote-47.webp"
+      },
+      "httpStatus": 200
+    },
+    {
+      "url": "https://mariana-carrera-71pg8t6dl-ederartmos-projects.vercel.app/assets/events/axolote-night-run/photos/axolote-47-thumb.webp",
+      "relativePath": "assets/events/axolote-night-run/photos/axolote-47-thumb.webp",
+      "status": "valid",
+      "contentType": "image/webp",
+      "size": 23278,
+      "sha256": "58c8611c938485e89248ab2ebf42a23a33cdba22af662c979176929da0742cbe",
+      "dimensions": "WEBP:640x427",
+      "integrity": "Pillow verify() and full decode/load passed",
+      "dependencies": [
+        "axolote-galeria.html"
+      ],
+      "differenceFromCommittedBase": {
+        "status": "asset_absent_in_committed_base",
+        "basePath": "assets/events/axolote-night-run/photos/axolote-47-thumb.webp"
+      },
+      "httpStatus": 200
+    },
+    {
+      "url": "https://mariana-carrera-71pg8t6dl-ederartmos-projects.vercel.app/assets/events/axolote-night-run/photos/axolote-48.webp",
+      "relativePath": "assets/events/axolote-night-run/photos/axolote-48.webp",
+      "status": "valid",
+      "contentType": "image/webp",
+      "size": 125200,
+      "sha256": "504f969407228aa80d26d99b2f7ea78610b4e444a3b5117192f6ec62cb68d484",
+      "dimensions": "WEBP:1920x1281",
+      "integrity": "Pillow verify() and full decode/load passed",
+      "dependencies": [
+        "axolote-galeria.html"
+      ],
+      "differenceFromCommittedBase": {
+        "status": "asset_absent_in_committed_base",
+        "basePath": "assets/events/axolote-night-run/photos/axolote-48.webp"
+      },
+      "httpStatus": 200
+    },
+    {
+      "url": "https://mariana-carrera-71pg8t6dl-ederartmos-projects.vercel.app/assets/events/axolote-night-run/photos/axolote-48-thumb.webp",
+      "relativePath": "assets/events/axolote-night-run/photos/axolote-48-thumb.webp",
+      "status": "valid",
+      "contentType": "image/webp",
+      "size": 22994,
+      "sha256": "ab0bf972b70ad87f777ec1199680c57276b18d919c82027a555ce3b2b0a01e49",
+      "dimensions": "WEBP:640x427",
+      "integrity": "Pillow verify() and full decode/load passed",
+      "dependencies": [
+        "axolote-galeria.html"
+      ],
+      "differenceFromCommittedBase": {
+        "status": "asset_absent_in_committed_base",
+        "basePath": "assets/events/axolote-night-run/photos/axolote-48-thumb.webp"
+      },
+      "httpStatus": 200
+    }
+  ],
+  "notes": [
+    "Only specifically listed public files and 96 gallery WebPs were fetched; no crawl or backend/environment fetch was performed.",
+    "All 96 images were HTTP 200, image/webp, non-empty, SHA-256 recorded, and passed Pillow verify() plus full decode/load.",
+    "script.js and script.min.js downloaded files have matching size; compare hashes before choosing an integration source.",
+    "Parent verified UTF-8 text has correct Spanish accents; misleading mojibake was PowerShell display decoding, not source corruption."
+  ],
+  "integrationAdaptations": [
+    "HTML asset versions use __ASSET_VERSION__ instead of historical SHA.",
+    "Recovered CSS missing Cascanueces gallery banner is mapped to main existing cascanueces_run_banner3.jpeg.",
+    "Perrun countdown deadline and label derive from main pricing configuration.",
+    "Existing event catalog cards and current backend/configuration are preserved."
+  ]
+}

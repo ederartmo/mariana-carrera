@@ -1,0 +1,196 @@
+{
+  "root": "isolated-recovery-public",
+  "label": "candidate",
+  "viewport": {
+    "width": 390,
+    "height": 844
+  },
+  "blocked": [
+    "https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Sora:wght@500;600;700;800&display=swap",
+    "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap",
+    "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2",
+    "https://unpkg.com/lucide@0.468.0/dist/umd/lucide.js",
+    "https://connect.facebook.net/en_US/fbevents.js",
+    "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2",
+    "https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Sora:wght@600;700;800&display=swap",
+    "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2",
+    "https://unpkg.com/lucide@0.468.0/dist/umd/lucide.js",
+    "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap",
+    "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"
+  ],
+  "errors": [],
+  "checks": {
+    "home": {
+      "found": true,
+      "width": 390,
+      "scrollWidth": 390,
+      "cards": [
+        {
+          "class": "corporate-event-card corporate-event-card--cascanueces is-next reveal is-visible",
+          "text": "\n        \n          \n          \n        \n        \n          Siguiente carrera\n          Cascanueces Run 2026\n          \n",
+          "width": 358.796875
+        },
+        {
+          "class": "event-card-actions",
+          "text": "Ver detalleSalida · 6 DIC · 08:00 h CDMX24d 11:11:28",
+          "width": 320.796875
+        },
+        {
+          "class": "corporate-event-card corporate-event-card--perrun   reveal",
+          "text": "\n        \n          \n          \n        \n        \n          Inscripciones abiertas\n          Perrun 2027\n          \n    ",
+          "width": 358.796875
+        },
+        {
+          "class": "event-card-actions",
+          "text": "Ver detalleCierre de inscripciones · 25 ENE 202774d 19:11:28",
+          "width": 320.796875
+        },
+        {
+          "class": "corporate-event-card corporate-event-card--axolote is-past  reveal",
+          "text": "\n        \n          \n          Gracias por participar\n        \n        \n          Evento celebrado\n          Axolote Nig",
+          "width": 358.796875
+        },
+        {
+          "class": "event-card-actions",
+          "text": "Ver detalleVer fotos",
+          "width": 320.796875
+        }
+      ],
+      "links": []
+    },
+    "cascanueces": {
+      "text": "Siguiente carrera\nCascanueces Run 2026\n6 DIC 2026\nBosque de San Juan de Aragon, CDMX\n5K y 10K\n\nDesde\n$500\n\nVer detalle\nSalida · 6 DIC · 08:00 h CDMX\n24d 11:11:27",
+      "rect": {
+        "x": 15.59375,
+        "y": 52.296875,
+        "width": 358.796875,
+        "height": 740.328125,
+        "top": 52.296875,
+        "right": 374.390625,
+        "bottom": 792.625,
+        "left": 15.59375
+      }
+    },
+    "perrun": {
+      "text": "Inscripciones abiertas\nPerrun 2027\n14 FEB 2027\nBosque de San Juan de Aragón, CDMX\n1K / 3K / 5K\n\nDesde\n$500\n\nVer detalle\nCierre de inscripciones · 25 ENE 2027\n74d 19:11:26",
+      "rect": {
+        "x": 15.59375,
+        "y": 61.625,
+        "width": 358.796875,
+        "height": 693.21875,
+        "top": 61.625,
+        "right": 374.390625,
+        "bottom": 754.84375,
+        "left": 15.59375
+      }
+    },
+    "gallery": {
+      "count": 48,
+      "loaded": 48,
+      "width": 390,
+      "scrollWidth": 390
+    },
+    "modalOpen": {
+      "open": true,
+      "position": "Foto 1 de 48",
+      "loaded": true,
+      "focus": "<button type=\"button\" data-gallery-close=\"\" autofocus=\"\">Cerrar ×</button>",
+      "dialogWidth": 352,
+      "scrollWidth": 390
+    },
+    "next": {
+      "open": true,
+      "position": "Foto 2 de 48",
+      "loaded": true,
+      "focus": "<button type=\"button\" data-gallery-close=\"\" autofocus=\"\">Cerrar ×</button>",
+      "dialogWidth": 352,
+      "scrollWidth": 390
+    },
+    "prev": {
+      "open": true,
+      "position": "Foto 1 de 48",
+      "loaded": true,
+      "focus": "<button type=\"button\" data-gallery-close=\"\" autofocus=\"\">Cerrar ×</button>",
+      "dialogWidth": 352,
+      "scrollWidth": 390
+    },
+    "wrap": {
+      "open": true,
+      "position": "Foto 48 de 48",
+      "loaded": true,
+      "focus": "<button type=\"button\" data-gallery-close=\"\" autofocus=\"\">Cerrar ×</button>",
+      "dialogWidth": 352,
+      "scrollWidth": 390
+    },
+    "tab": {
+      "open": true,
+      "position": "Foto 48 de 48",
+      "loaded": true,
+      "focus": "<button type=\"button\" data-gallery-prev=\"\" aria-label=\"Foto anterior\">← Anterior</button>",
+      "dialogWidth": 352,
+      "scrollWidth": 390
+    },
+    "escape": {
+      "open": false,
+      "position": "Foto 48 de 48",
+      "loaded": false,
+      "focus": "<a class=\"memories-photo\" data-gallery-photo=\"\" href=\"assets/events/axolote-night-run/photos/axolote-01.webp\" aria-label=\"Abrir foto 1 de Axolote Night Run\"><img src=\"assets/events/axolote-night-run/photos/axolote-01-thumb.webp\" width=\"480\" height=\"6",
+      "dialogWidth": 0,
+      "scrollWidth": 390
+    },
+    "focusRestored": true,
+    "discovery": {
+      "ids": [
+        "menuToggle",
+        "siteNav",
+        "fotos",
+        "nextRaceTitle",
+        "galleryNextRaceClock",
+        "SVGRepo_bgCarrier",
+        "SVGRepo_tracerCarrier",
+        "SVGRepo_iconCarrier",
+        "SVGRepo_bgCarrier",
+        "SVGRepo_tracerCarrier",
+        "SVGRepo_iconCarrier",
+        "SVGRepo_bgCarrier",
+        "SVGRepo_tracerCarrier",
+        "SVGRepo_iconCarrier",
+        "SVGRepo_bgCarrier",
+        "SVGRepo_tracerCarrier",
+        "SVGRepo_iconCarrier",
+        "footerMail",
+        "yearNow"
+      ],
+      "buttons": [
+        {
+          "text": "Menú",
+          "aria": null
+        },
+        {
+          "text": "Quiero avisos",
+          "aria": null
+        },
+        {
+          "text": "Cerrar ×",
+          "aria": null
+        },
+        {
+          "text": "← Anterior",
+          "aria": "Foto anterior"
+        },
+        {
+          "text": "Siguiente →",
+          "aria": "Foto siguiente"
+        }
+      ]
+    }
+  },
+  "screenshots": [
+    "docs/visual-recovery/evidence/candidate-mobile-cards.png",
+    "docs/visual-recovery/evidence/candidate-mobile-cascanueces.png",
+    "docs/visual-recovery/evidence/candidate-mobile-perrun.png",
+    "docs/visual-recovery/evidence/candidate-mobile-gallery-grid.png",
+    "docs/visual-recovery/evidence/candidate-mobile-gallery-modal.png",
+    "docs/visual-recovery/evidence/candidate-mobile-gallery-closed.png"
+  ]
+}
