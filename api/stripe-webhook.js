@@ -32,7 +32,7 @@ const EVENT_CATALOG = {
     name: 'Cascanueces Run 2026',
     defaultDistance: '5K',
     distances: ['5K', '10K'],
-    kitDelivery: 'viernes 4 de diciembre de 11:00 a 17:30 hrs en el Huerto Educativo del Bosque de San Juan de Aragón, CDMX',
+    kitDelivery: 'sábado 5 de diciembre de 2026 de 10:00 a 16:00 hrs en el Huerto Educativo del Bosque de San Juan de Aragón, CDMX',
     waiverUrl: 'https://www.kinetichub.com.mx/assets/events/cascanueces-run/legal/Cascanueces%20Run1.pdf',
   },
 };

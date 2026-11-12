@@ -124,9 +124,9 @@
       {
         step: "1",
         title: "Entrega de paquetes",
-        date: "Viernes 4 de diciembre",
-        time: "11:00 a 17:30 h",
-        description: "Huerto Educativo del Bosque de San Juan de Aragón.",
+        date: "Sábado 5 de diciembre de 2026",
+        time: "10:00 a 16:00 h",
+        description: "Huerto Educativo del Bosque de San Juan de Aragón, CDMX.",
       },
       {
         step: "2",
@@ -177,9 +177,9 @@
     },
     packetPickup: {
       title: "Entrega de paquetes",
-      date: "Viernes 4 de diciembre",
-      time: "11:00 a 17:30 h",
-      location: "Huerto Educativo del Bosque de San Juan de Aragón",
+      date: "Sábado 5 de diciembre de 2026",
+      time: "10:00 a 16:00 h",
+      location: "Huerto Educativo del Bosque de San Juan de Aragón, CDMX",
       note: "La entrega es personal. Lleva identificación oficial y exoneración firmada.",
     },
     faqs: [
@@ -189,7 +189,7 @@
       },
       {
         question: "¿Dónde recojo mi paquete?",
-        answer: "En el Huerto Educativo del Bosque de San Juan de Aragón, el viernes 4 de diciembre de 11:00 a 17:30 h.",
+        answer: "En el Huerto Educativo del Bosque de San Juan de Aragón, CDMX, el sábado 5 de diciembre de 2026 de 10:00 a 16:00 h.",
       },
       {
         question: "¿Qué necesito para recogerlo?",
