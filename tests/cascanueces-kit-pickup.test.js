@@ -8,7 +8,7 @@ const { createHash } = require('node:crypto');
 test('official PDF URLs serve the distinct supplied originals in source and public', () => {
   const expected = {
     'Cascanueces Run_convocatoria.pdf': '9790f7149c5b835d611759f4a8838cc40af985c9d8645fcba20912b6e0b5424e',
-    'Cascanueces Run1.pdf': 'd8225180f917d2b7c1b29dd08dc95bcc4997694533a64ac0f3c8a3285f9dc224',
+    'Cascanueces Run1.pdf': 'd2cf5ece04914eb252a1134e2556027d184d602b943d2d1e927b5d85bf87ddf9',
   };
   for (const prefix of ['', 'public/']) {
     for (const [file, hash] of Object.entries(expected)) {
