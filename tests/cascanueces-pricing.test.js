@@ -109,12 +109,23 @@ function withMockedNow(isoDate, run) {
 async function createCheckoutSessionPayload(body, {
   now = '2026-09-01T00:00:00-06:00',
   promoResult = { cleanCode: '', preview: null },
+  existingPriceId,
 } = {}) {
   return withMockedNow(now, async () => {
     const createdSessions = [];
     const upserts = [];
     const promoCalls = [];
+    const retrievedPrices = [];
+    const priceVariable = 'STRIPE_CASCANUECES_LAST_MINUTE_PRICE_ID';
+    const previousPriceId = process.env[priceVariable];
+    if (existingPriceId !== undefined) process.env[priceVariable] = existingPriceId;
     const restoreStripe = mockModule('stripe', () => ({
+      prices: {
+        retrieve: async (id) => {
+          retrievedPrices.push(id);
+          return { id, active: true, currency: 'mxn', unit_amount: 50000, product: { active: true } };
+        },
+      },
       checkout: {
         sessions: {
           create: async (payload) => {
@@ -158,8 +169,12 @@ async function createCheckoutSessionPayload(body, {
           : body,
       }, res);
 
-      return { res, createdSessions, upserts, promoCalls };
+      return { res, createdSessions, upserts, promoCalls, retrievedPrices };
     } finally {
+      if (existingPriceId !== undefined) {
+        if (previousPriceId === undefined) delete process.env[priceVariable];
+        else process.env[priceVariable] = previousPriceId;
+      }
       delete require.cache[require.resolve('../api/create-checkout-session')];
       restoreMeta();
       restorePromo();
@@ -312,6 +327,56 @@ for (const distance of ['5K', '10K']) {
     assert.equal(accepted.createdSessions[0].metadata.stage_key, 'ultimo_minuto');
   });
 }
+for (const now of ['2026-11-15T17:00:00-06:00', '2026-11-18T23:59:59-06:00', '2026-11-19T00:00:00-06:00']) {
+  const isOpen = now !== '2026-11-19T00:00:00-06:00';
+  test(`Cascanueces landing registration buttons follow reopening at ${now}`, () => {
+    for (const prefix of ['', 'public/']) {
+      const context = loadBrowserScriptsWithDate(now, [
+        `${prefix}cascanueces-stage-config.js`, `${prefix}cascanueces-event-data.js`, `${prefix}event-landing.js`,
+      ]);
+      const root = { style: { setProperty() {} }, classList: { add() {} }, dataset: {}, innerHTML: '' };
+      context.EventLanding({ root, event: context.KineticHubCascanuecesEvent });
+      assert.match(root.innerHTML, /18 de noviembre, 23:59 h/);
+      for (const distance of ['5K', '10K']) {
+        const link = `href="checkout.html?event=cascanueces-run&amp;distance=${distance}"`;
+        assert.equal(root.innerHTML.includes(link), isOpen);
+        assert.equal(root.innerHTML.includes(`Elegir ${distance}`), isOpen);
+      }
+      if (isOpen) {
+        assert.match(root.innerHTML, /Extemporánea/);
+        assert.match(root.innerHTML, /\$500/);
+      }
+    }
+  });
+
+  for (const distance of ['5K', '10K']) {
+    test(`Cascanueces ${distance} mock checkout retains the existing stage Price ID at ${now}`, async () => {
+      const existingPriceId = 'price_mock_existing_last_minute';
+      const { res, createdSessions, upserts, retrievedPrices } = await createCheckoutSessionPayload({
+        buyerEmail: 'runner@example.com', eventSlug: 'cascanueces-run', distance, expectedUnitAmount: 500,
+        tickets: [{ fullName: 'Runner Test', shirtSize: 'M', birthDate: '1990-05-14', whatsapp: '5512345678', state: 'Jalisco' }],
+      }, { now, existingPriceId });
+      if (isOpen) {
+        assert.equal(res.statusCode, 200);
+        assert.deepEqual(retrievedPrices, [existingPriceId]);
+        assert.equal(createdSessions.length, 1);
+        assert.deepEqual(createdSessions[0].line_items, [{ quantity: 1, price: existingPriceId }]);
+        assert.equal(createdSessions[0].metadata.stage_key, 'ultimo_minuto');
+        assert.equal(createdSessions[0].metadata.stage_amount, '500');
+        assert.equal(createdSessions[0].metadata.distance, distance);
+        assert.equal(upserts.length, 1);
+        assert.equal(upserts[0].amount_paid, 500);
+        assert.equal(upserts[0].payment_status, 'pending');
+      } else {
+        assert.equal(res.statusCode, 400);
+        assert.deepEqual(retrievedPrices, []);
+        assert.deepEqual(createdSessions, []);
+        assert.deepEqual(upserts, []);
+      }
+    });
+  }
+}
+
 test('Cascanueces rejects a checkout without a displayed unit amount before Stripe or persistence', async () => {
   const result = await createCheckoutSessionPayload({
     buyerEmail: 'runner@example.com', eventSlug: 'cascanueces-run', distance: '5K', expectedUnitAmount: null,
