@@ -270,7 +270,7 @@ async function invoke(webhook, event) {
 for (const failure of [false, true]) test(`OXXO voucher webhook: ${failure ? 'email failure preserves pending flow' : 'sends once before pending fulfillment'}`, async () => {
   const session = checkoutSession({ status: 'complete', currency: 'mxn', payment_status: 'unpaid' });
   const event = { ...stripeEvent('checkout.session.completed', session), created: Math.floor(Date.now() / 1000) };
-  await withWebhookMocks({ event, voucherPaymentIntent: { id: session.payment_intent, status: 'requires_action', payment_method: { type: 'oxxo' }, next_action: { type: 'oxxo_display_details', oxxo_display_details: { number: '123', hosted_voucher_url: 'https://payments.stripe.com/mock' } } }, resendResults: failure ? [{ error: { message: 'Down' } }] : [] }, async ({ webhook, state }) => {
+  await withWebhookMocks({ event, voucherPaymentIntent: { id: session.payment_intent, status: 'requires_action', payment_method: { type: 'oxxo' }, next_action: { type: 'oxxo_display_details', oxxo_display_details: { number: '123', hosted_voucher_url: 'https://payments.stripe.com/mock', expires_after: event.created + 86400 } } }, resendResults: failure ? [{ error: { message: 'Down' } }] : [] }, async ({ webhook, state }) => {
     const response = await invoke(webhook, event);
     assert.equal(response.statusCode, 200);
     assert.equal(state.emailSends.length, 1);
