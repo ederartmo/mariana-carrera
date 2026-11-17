@@ -71,7 +71,7 @@ const PARTICIPANT = {
   borough: null,
 };
 
-async function runUpdate({ body, row = BASE_ROW, adminEmail = 'admin@example.com', method = 'POST', query = {}, history = [] }) {
+async function runUpdate({ body, row = BASE_ROW, adminEmail = 'admin@example.com', method = 'POST', query = {}, history = [], rpcError = null }) {
   const state = { updateCalls: 0, updatePayload: null, eqFilters: [], rpcCalls: [], historyFilters: [] };
   const updatedRow = { ...row };
   const restoreSupabase = mockModule('@supabase/supabase-js', {
@@ -122,6 +122,7 @@ async function runUpdate({ body, row = BASE_ROW, adminEmail = 'admin@example.com
       }),
       rpc: async (name, args) => {
         state.rpcCalls.push({ name, args });
+        if (rpcError) return { data: null, error: rpcError };
         state.updateCalls += 1;
         state.updatePayload = args.p_changes;
         const columnMap = { full_name: 'full_name', shirt_size: 'shirt_size', birth_date: 'birth_date', whatsapp: 'whatsapp', state: 'state', borough: 'borough', distance: 'distance' };
@@ -406,4 +407,34 @@ test('admin GET returns the target snapshot and scoped history', async () => {
   assert.ok(state.historyFilters[0].some(([column, value]) => column === 'inscription_id' && value === BASE_ROW.id));
   assert.ok(state.historyFilters[0].some(([column, value]) => column === 'inscription_email' && value === BASE_ROW.email));
   assert.ok(state.historyFilters[0].some(([column, value]) => column === 'event_slug' && value === BASE_ROW.event_slug));
+});
+
+test('cancelled paid registration refuses edits but retains administrative history access', async () => {
+  const row = { ...BASE_ROW, registration_status: 'cancelled' };
+  const result = await runUpdate({ body: validBody(), row });
+  assert.equal(result.res.statusCode, 409);
+  assert.match(result.res.body.error, /cancelada/i);
+  assert.equal(result.state.rpcCalls.length, 0);
+  assert.deepEqual(result.updatedRow, row);
+  const read = await runUpdate({ method: 'GET', query: { id: row.id, email: row.email }, row });
+  assert.equal(read.res.statusCode, 200);
+});
+
+test('cancellation under the SQL lock and stale snapshots return actionable conflicts', async () => {
+  for (const rpcError of [{ message: 'cancelled registrations may not be edited', code: '22023' }, { message: 'registration changed; reload before editing', code: '40001' }]) {
+    const result = await runUpdate({ body: validBody(), rpcError });
+    assert.equal(result.res.statusCode, 409);
+    assert.match(result.res.body.error, /cancelada|Recárgala/);
+    assert.equal(result.state.updateCalls, 0);
+    assert.deepEqual(result.updatedRow, BASE_ROW);
+  }
+});
+
+test('both administrative methods enforce token and admin allowlist before any RPC', async () => {
+  for (const method of ['GET', 'POST']) for (const adminEmail of ['NO_TOKEN', 'person@example.com']) {
+    const result = await runUpdate({ method, adminEmail, body: validBody(), query: { id: BASE_ROW.id, email: BASE_ROW.email } });
+    assert.equal(result.res.statusCode, adminEmail === 'NO_TOKEN' ? 401 : 403);
+    assert.equal(result.state.rpcCalls.length, 0); assert.equal(result.state.eqFilters.length, 0);
+    assert.deepEqual(result.updatedRow, BASE_ROW);
+  }
 });

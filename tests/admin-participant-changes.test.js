@@ -20,7 +20,7 @@ async function fixture() {
       payment_status text NOT NULL, full_name text NOT NULL, shirt_size text NOT NULL,
       distance text, birth_date date, whatsapp text, state text, borough text,
       bib_number text, buyer_email text, order_session_id text, amount_paid integer,
-      payment_intent_id text, stripe_event_id text,
+      payment_intent_id text, stripe_event_id text, registration_status text DEFAULT 'active',
       PRIMARY KEY (id, email)
     );
     INSERT INTO inscripciones VALUES (
@@ -30,6 +30,8 @@ async function fixture() {
   `);
   if (!migrationPath) throw new Error('admin participant changes migration is missing');
   await db.exec(fs.readFileSync(migrationPath, 'utf8'));
+  const guard = path.join(__dirname, '../supabase/migrations/20261115020000_admin_participant_cancellation_guard.sql');
+  if (fs.existsSync(guard)) await db.exec(fs.readFileSync(guard, 'utf8'));
   return db;
 }
 
@@ -38,6 +40,32 @@ const args = (overrides = {}) => ({
   p_expected: { fullName: 'Runner Original', shirtSize: 'M', birthDate: '1990-04-11', whatsapp: '+525512345678', state: 'Jalisco', borough: null, distance: '5K' },
   p_changes: { full_name: 'Runner Updated', shirt_size: 'L', distance: '10K' },
   p_admin_email: 'admin@example.com', ...overrides,
+});
+
+test('locked RPC refuses paid cancelled rows with no participant or audit mutation', async () => {
+  const db = await fixture();
+  try {
+    await db.exec("UPDATE inscripciones SET registration_status = 'cancelled'");
+    const before = (await db.query('SELECT * FROM inscripciones')).rows;
+    await assert.rejects(db.query('SELECT admin_update_participant_change($1,$2,$3,$4,$5,$6)', Object.values(args())), /cancelled/i);
+    assert.deepEqual((await db.query('SELECT * FROM inscripciones')).rows, before);
+    assert.equal((await db.query('SELECT count(*)::int AS n FROM admin_participant_change_audit')).rows[0].n, 0);
+  } finally { await db.close(); }
+});
+
+test('SQL rejects protected fields, unpaid rows and Perrun without any mutation', async () => {
+  for (const scenario of ['financial', 'pending', 'perrun']) {
+    const db = await fixture();
+    try {
+      if (scenario === 'pending') await db.exec("UPDATE inscripciones SET payment_status = 'pending'");
+      if (scenario === 'perrun') await db.exec("UPDATE inscripciones SET event_slug = 'perrun-2027'");
+      const before = (await db.query('SELECT * FROM inscripciones')).rows;
+      const input = args(scenario === 'financial' ? { p_changes: { amount_paid: 0, bib_number: '1' } } : scenario === 'perrun' ? { p_event_slug: 'perrun-2027' } : {});
+      await assert.rejects(db.query('SELECT admin_update_participant_change($1,$2,$3,$4,$5,$6)', Object.values(input)), /unsupported|paid|Perrun/);
+      assert.deepEqual((await db.query('SELECT * FROM inscripciones')).rows, before);
+      assert.equal((await db.query('SELECT count(*)::int AS n FROM admin_participant_change_audit')).rows[0].n, 0);
+    } finally { await db.close(); }
+  }
 });
 
 test('atomic admin participant changes validate, audit, and preserve protected payment fields', async () => {

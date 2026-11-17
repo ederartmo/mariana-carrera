@@ -45,7 +45,7 @@ test('participant editor loads durable history and submits the loaded snapshot a
   assert.match(html, /expectedSnapshot/);
   assert.match(html, /shirt_size/);
   assert.match(html, /distance/);
-  assert.match(html, /expectedSnapshot:\s*editingParticipant\.snapshot/);
+  assert.match(html, /expectedSnapshot:\s*(?:editingParticipant|edit)\.snapshot/);
   assert.match(html, /setParticipantModalError\(err\.message \|\| 'Error al guardar\.'\)/);
 });
 
@@ -79,4 +79,103 @@ test('second-delivery request remains documentation-only with approvals, deadlin
   assert.ok(/approval/i.test(doc));
   assert.ok(/deadlines/i.test(doc));
   assert.ok(/notifications/i.test(doc));
+});
+
+function deferred() { let resolve; const promise = new Promise(r => { resolve = r; }); return { promise, resolve }; }
+function editorHarness() {
+  const base = { email: 'runner@example.test', event_slug: 'cascanueces-run', payment_status: 'paid', registration_status: 'active', full_name: 'Runner Original', shirt_size: 'M', birth_date: '1990-04-11', whatsapp: '+525512345678', state: 'Jalisco', borough: null, distance: '5K' };
+  const rows = [{ ...base, id: 'a' }, { ...base, id: 'b', full_name: 'Runner B' }];
+  const nodes = {}, errors = [], requests = [];
+  const node = id => nodes[id] ||= { value: '', innerHTML: '', textContent: '', disabled: false, hidden: true, addEventListener(type, fn) { this[type] = fn; } };
+  const response = row => ({ ok: true, json: async () => ({ inscription: row, history: [] }) });
+  const client = { auth: { getSession: async () => ({ data: { session: { access_token: 'synthetic' } } }) } };
+  const h = { nodes, rows, errors, requests, client, response, get: async id => response(rows.find(r => r.id === id)), post: async body => response({ ...rows.find(r => r.id === body.id), full_name: body.participant.fullName }) };
+  const context = { cachedRows: rows, document: { getElementById: node }, window: { confirm: () => true, KineticHubEventCatalog: { resolveEvent: () => ({ distances: ['5K', '10K'] }) } }, URLSearchParams,
+    fetch: async (url, options) => { if (options.method === 'POST') { const body = JSON.parse(options.body); requests.push(body); return h.post(body); } return h.get(new URLSearchParams(url.split('?')[1]).get('id')); },
+    escapeHtml: String, setParticipantModalError: value => { if (value) errors.push(value); }, manualTodayISO: () => '2026-11-15', manualStateOptions: () => 'Jalisco', refreshEditBorough: () => {}, refreshEditAge: () => {}, renderParticipantHistory: () => {}, isManualCdmxTicket: () => false, manualTicketError: () => '', renderPaidInscriptions: () => {}, client };
+  const code = html.slice(html.indexOf('    async function openParticipantModal(id)'), html.indexOf('    function setupDeleteActions(client)'));
+  vm.runInNewContext(`let editingParticipant=null; let participantModalLoadId=0; ${code}; setupParticipantModal(client); globalThis.openEditor=openParticipantModal; globalThis.closeEditor=closeParticipantModal;`, context);
+  h.open = context.openEditor; h.close = context.closeEditor;
+  node('participantSaveBtn');
+  h.submit = () => node('participantEditForm').submit({ preventDefault() {} });
+  return h;
+}
+
+test('opening another participant invalidates the old form while its GET is pending', async () => {
+  const h = editorHarness(); await h.open('a');
+  const gate = deferred(); h.get = () => gate.promise;
+  const loading = h.open('b');
+  assert.equal(h.nodes.participantSaveBtn.disabled, true);
+  await h.submit(); assert.equal(h.requests.length, 0);
+  gate.resolve(h.response(h.rows[1])); await loading;
+  assert.equal(h.nodes.participantSaveBtn.disabled, false);
+});
+
+test('submission remains bound to A while authentication awaits and B opens', async () => {
+  const h = editorHarness(); await h.open('a');
+  h.nodes.editFullName.value = 'Updated A';
+  const gate = deferred(); h.client.auth.getSession = () => gate.promise;
+  const saving = h.submit();
+  h.client.auth.getSession = async () => ({ data: { session: { access_token: 'synthetic' } } });
+  await h.open('b');
+  gate.resolve({ data: { session: { access_token: 'synthetic' } } }); await saving;
+  assert.equal(h.requests[0].id, 'a');
+  assert.equal(h.requests[0].expectedSnapshot.fullName, 'Runner Original');
+  assert.equal(h.rows[0].full_name, 'Updated A'); assert.equal(h.rows[1].full_name, 'Runner B');
+  assert.equal(h.nodes.participantModal.hidden, false);
+  assert.equal(h.nodes.editFullName.value, 'Runner B');
+  assert.deepEqual(h.errors, []);
+});
+
+test('closing during POST does not report a false failure after a successful save', async () => {
+  const h = editorHarness(); await h.open('a'); h.nodes.editFullName.value = 'Updated A';
+  const gate = deferred(), started = deferred(); h.post = () => { started.resolve(); return gate.promise; };
+  const saving = h.submit(); await started.promise; h.close();
+  gate.resolve(h.response({ ...h.rows[0], full_name: 'Updated A' })); await saving;
+  assert.equal(h.rows[0].full_name, 'Updated A'); assert.deepEqual(h.errors, []);
+  assert.equal(h.nodes.participantModal.hidden, true);
+});
+
+test('stale POST completion cannot enable or close a newer loading modal', async () => {
+  const h = editorHarness(); await h.open('a');
+  const post = deferred(), started = deferred(); h.post = () => { started.resolve(); return post.promise; };
+  const saving = h.submit(); await started.promise;
+  const get = deferred(); h.get = () => get.promise; const loading = h.open('b');
+  post.resolve(h.response(h.rows[0])); await saving;
+  assert.equal(h.nodes.participantSaveBtn.disabled, true);
+  assert.equal(h.nodes.participantModal.hidden, false);
+  get.resolve(h.response(h.rows[1])); await loading;
+});
+
+test('a server conflict remains visible and leaves local registration data unchanged', async () => {
+  const h = editorHarness(); await h.open('a'); const before = JSON.stringify(h.rows);
+  h.post = async () => ({ ok: false, status: 409, json: async () => ({ error: 'La inscripción cambió. Recárgala antes de guardar.' }) });
+  await h.submit(); assert.equal(JSON.stringify(h.rows), before);
+  assert.match(h.errors[0], /Recárgala/); assert.equal(h.nodes.participantModal.hidden, false);
+  assert.equal(h.nodes.participantSaveBtn.disabled, false);
+});
+
+test('a freshly loaded cancellation prevents editing even when the cached list was active', async () => {
+  const h = editorHarness(); h.get = async id => h.response({ ...h.rows.find(r => r.id === id), registration_status: 'cancelled' });
+  await h.open('a'); await h.submit();
+  assert.equal(h.requests.length, 0); assert.equal(h.nodes.participantSaveBtn.disabled, true);
+  assert.equal(h.errors[0], 'No se puede modificar una inscripción cancelada.');
+});
+
+test('repeated submit while one save is pending does not create another request', async () => {
+  const h = editorHarness(); await h.open('a'); const gate = deferred(), started = deferred();
+  h.post = () => { started.resolve(); return gate.promise; };
+  const saving = h.submit(); await started.promise; await h.submit();
+  assert.equal(h.requests.length, 1); gate.resolve(h.response(h.rows[0])); await saving;
+});
+
+test('registration search combines participant fields with the selected event', () => {
+  const start = html.indexOf('    function filterRows(rows) {');
+  const end = html.indexOf('    function renderPerrunDogs', start);
+  const context = { adminUiState: { searchTerm: '  520 ', eventSlug: 'cascanueces-run' } };
+  vm.runInNewContext(`${html.slice(start, end)};globalThis.filter=filterRows;`, context);
+  const rows = [{ id: 'a', event_slug: 'cascanueces-run', full_name: 'Ana Ruiz', bib_number: '520' }, { id: 'b', event_slug: 'axolote-night-run', full_name: 'Ana Ruiz', bib_number: '520' }];
+  assert.deepEqual(context.filter(rows).map(r => r.id), ['a']);
+  context.adminUiState.searchTerm = 'ANA'; context.adminUiState.eventSlug = 'all';
+  assert.equal(context.filter(rows).length, 2);
 });
