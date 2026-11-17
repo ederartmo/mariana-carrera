@@ -16,7 +16,7 @@ function snapshotHasAll(value) { return exactKeys(value, SNAPSHOT_KEYS) && SNAPS
 
 async function loadTarget(id, email) {
   const { data, error } = await supabase.from('inscripciones')
-    .select('id,email,event_slug,payment_status,full_name,shirt_size,birth_date,whatsapp,state,borough,distance')
+    .select('id,email,event_slug,payment_status,registration_status,full_name,shirt_size,birth_date,whatsapp,state,borough,distance')
     .eq('id', id).eq('email', email).single();
   if (error || !data) return { error: { status: 404, message: 'No se encontró la inscripción.' } };
   if (data.event_slug === 'perrun-2027') return { error: { status: 409, message: 'La edición legacy no es compatible con el ledger Perrun.' } };
@@ -59,6 +59,7 @@ async function handlePost(req, res, auth) {
   const target = await loadTarget(id, email);
   if (target.error) return res.status(target.error.status).json({ error: target.error.message });
   let normalized;
+  if (target.data.registration_status === 'cancelled') return res.status(409).json({ error: 'No se puede modificar una inscripción cancelada.' });
   try {
     normalized = validateParticipant({
       fullName: participant.fullName, shirtSize: participant.shirtSize, birthDate: participant.birthDate,
@@ -82,6 +83,7 @@ async function handlePost(req, res, auth) {
   });
   if (error) {
     const message = String(error.message || '');
+    if (/cancelled/i.test(message)) return res.status(409).json({ error: 'No se puede modificar una inscripción cancelada.' });
     if (/stale|changed; reload/i.test(message) || error.code === '40001') return res.status(409).json({ error: 'La inscripción cambió desde que se abrió. Recárgala antes de guardar.' });
     if (/not found/i.test(message) || error.code === 'P0002') return res.status(404).json({ error: 'No se encontró la inscripción.' });
     if (/paid|Perrun/i.test(message)) return res.status(409).json({ error: message });

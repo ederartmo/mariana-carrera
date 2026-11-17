@@ -2054,7 +2054,12 @@ src="https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1"
       const row = cachedRows.find((r) => String(r.id) === String(id));
       if (!row) return;
       if (String(row.payment_status || '').trim() !== 'paid') return;
+      if (row.registration_status === 'cancelled') return;
       const loadId = ++participantModalLoadId;
+      editingParticipant = null;
+      const saveBtn = document.getElementById('participantSaveBtn');
+      saveBtn.disabled = true;
+      saveBtn.textContent = 'Guardar';
       const modal = document.getElementById('participantModal');
       modal.hidden = false;
       document.getElementById('participantHistory').textContent = 'Cargando historial…';
@@ -2069,10 +2074,12 @@ src="https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1"
         if (!response.ok || !data.inscription) throw new Error(data?.error || 'No se pudo cargar el historial administrativo.');
         if (loadId !== participantModalLoadId) return;
         const current = data.inscription;
+        if (current.registration_status === 'cancelled') throw new Error('No se puede modificar una inscripción cancelada.');
         const catalogEvent = window.KineticHubEventCatalog?.resolveEvent?.(current.event_slug || row.event_slug);
         const distances = Array.isArray(catalogEvent?.distances) ? catalogEvent.distances : [];
         if (!distances.length) throw new Error('No se encontró el catálogo de distancias para esta carrera.');
         editingParticipant = {
+          loadId, saving: false,
           id: row.id,
           email: row.email,
           allowedDistances: distances,
@@ -2121,6 +2128,7 @@ src="https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1"
       refreshEditBorough(current.borough || null);
       refreshEditAge();
       renderParticipantHistory(data.history);
+      saveBtn.disabled = false;
       } catch (error) {
         if (loadId !== participantModalLoadId) return;
         editingParticipant = null;
@@ -2167,7 +2175,8 @@ src="https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1"
 
       form.addEventListener('submit', async (event) => {
         event.preventDefault();
-        if (!editingParticipant) return;
+        const edit = editingParticipant;
+        if (!edit || edit.saving) return;
         setParticipantModalError('');
 
         const gathered = {
@@ -2179,8 +2188,8 @@ src="https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1"
           borough: String(document.getElementById('editBorough')?.value || '') || null,
           distance: String(document.getElementById('editDistance')?.value || ''),
         };
-        const preserveMissingDistance = gathered.distance === '' && editingParticipant.snapshot.distance === null;
-        if (!preserveMissingDistance && !editingParticipant.allowedDistances.includes(gathered.distance)) {
+        const preserveMissingDistance = gathered.distance === '' && edit.snapshot.distance === null;
+        if (!preserveMissingDistance && !edit.allowedDistances.includes(gathered.distance)) {
           setParticipantModalError('Selecciona una distancia válida para esta carrera.');
           return;
         }
@@ -2198,6 +2207,7 @@ src="https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1"
         }
 
         const saveBtn = document.getElementById('participantSaveBtn');
+        edit.saving = true;
         saveBtn.disabled = true;
         saveBtn.textContent = 'Guardando...';
 
@@ -2215,10 +2225,10 @@ src="https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1"
               Authorization: `Bearer ${token}`,
             },
             body: JSON.stringify({
-              id: editingParticipant.id,
-              email: editingParticipant.email,
+              id: edit.id,
+              email: edit.email,
               participant: gathered,
-              expectedSnapshot: editingParticipant.snapshot,
+              expectedSnapshot: edit.snapshot,
             }),
           });
 
@@ -2227,18 +2237,21 @@ src="https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1"
             throw new Error(data?.error || 'No se pudo guardar.');
           }
 
-          const index = cachedRows.findIndex((r) => String(r.id) === String(editingParticipant.id));
+          const index = cachedRows.findIndex((r) => String(r.id) === String(edit.id));
           if (index >= 0 && data.inscription) {
             cachedRows[index] = { ...cachedRows[index], ...data.inscription };
           }
-          closeParticipantModal();
+          if (editingParticipant === edit && participantModalLoadId === edit.loadId) closeParticipantModal();
           renderPaidInscriptions(cachedRows);
           setInscriptionsFeedback('Participante actualizado correctamente.', 'ok');
         } catch (err) {
-          setParticipantModalError(err.message || 'Error al guardar.');
+          if (editingParticipant === edit && participantModalLoadId === edit.loadId) setParticipantModalError(err.message || 'Error al guardar.');
         } finally {
-          saveBtn.disabled = false;
-          saveBtn.textContent = 'Guardar';
+          edit.saving = false;
+          if (editingParticipant === edit && participantModalLoadId === edit.loadId) {
+            saveBtn.disabled = false;
+            saveBtn.textContent = 'Guardar';
+          }
         }
       });
     }
