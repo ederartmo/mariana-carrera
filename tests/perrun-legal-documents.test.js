@@ -17,7 +17,7 @@ const documents = [
     label: 'exoneracion',
     sourceName: 'ExoneraciónPerrun.pdf',
     relativePath: 'assets/events/perrun-2027/docs/exoneracion-perrun-2027.pdf',
-    sha256: '1eef1814edbacef10c9c3f30078c8dd06415d8157001791568bdd7873bac1390',
+    sha256: '1024f45ff2ea03bcb751101a966e685802979e6fce83bd9dfead2b1fa92214c2',
   },
 ];
 

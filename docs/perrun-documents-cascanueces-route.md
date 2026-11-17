@@ -40,3 +40,6 @@ All eight PDF pages were rendered and visually inspected. No legal content was a
 The supplied convocatoria (page 5) lists package pickup as **10:00-16:00**. The supplied exoneración and existing landing/email list **11:00-17:00**. The supplied convocatoria also gives distance-specific start times while the existing landing still says the start time is to be confirmed.
 
 These differences are reported for Mariana's review, not silently resolved. Supplied legal bytes and existing race configuration remain unchanged. Do not treat technical acceptance as legal approval or merge/deployment authorization.
+
+## Superseding schedule correction
+The earlier advisory incorrectly attributed11?17 to the waiver. Original waiver only gave kit date and7am start. The supplied approved replacement now contains kit10?16 and starts1K08:00/3K08:15/5K08:30. See perrun-approved-schedule.md for current hashes and checks; earlier byte-preservation assertions describe the initial delivery only.
