@@ -85,7 +85,7 @@ for (const file of ['admin-inscripciones.html', 'public/admin-inscripciones.html
     assert.ok(source.includes('class="dashboard-filters"'));
   });
 
-  test(`${file}: filtros y filas inician en Todos, y filas baja 50, 30, 10`, () => {
+  test(`${file}: filtros conservan Todos y paginas predeterminadas de 50`, () => {
     const source = read(file);
     assert.ok(source.includes('<option value="all" selected>Todas las carreras</option>'));
     assert.ok(source.includes('<option value="all" selected>Todos</option>'));
@@ -93,14 +93,14 @@ for (const file of ['admin-inscripciones.html', 'public/admin-inscripciones.html
     const rowsStart = source.indexOf('id="rowsPerPage"');
     const rowsEnd = source.indexOf('</select>', rowsStart);
     const rowsMarkup = source.slice(rowsStart, rowsEnd);
-    const order = ['value="all" selected', 'value="50"', 'value="30"', 'value="10"'];
+    const order = ['value="25"', 'value="50" selected', 'value="100"', 'value="200"'];
     let cursor = -1;
     for (const token of order) {
       const next = rowsMarkup.indexOf(token);
       assert.ok(next > cursor, `orden incorrecto para ${token}`);
       cursor = next;
     }
-    assert.ok(source.includes("rowLimit: 'all'"));
+    assert.ok(source.includes("rowLimit: 50"));
     assert.ok(!source.includes('<label class="rows-control"'));
     assert.ok(source.includes("visibleRows.forEach"));
   });

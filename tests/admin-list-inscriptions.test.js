@@ -205,7 +205,7 @@ test('admin-list-inscriptions rechaza status y evento inválidos', async () => {
   });
 });
 
-test('admin-list-inscriptions acota limit a 100 y pagina por range', async () => {
+test('admin-list-inscriptions acota limit a 200 y pagina por range', async () => {
   const state = baseState({ rows: [], count: 250 });
   await withMocks(state, async (handler) => {
     const { req, res } = createReqRes({
@@ -214,8 +214,8 @@ test('admin-list-inscriptions acota limit a 100 y pagina por range', async () =>
     });
     await handler(req, res);
     assert.equal(res.statusCode, 200);
-    assert.deepEqual(state.rangeCalls, [{ from: 100, to: 199 }]);
-    assert.equal(res.body.limit, 100);
+    assert.deepEqual(state.rangeCalls, [{ from: 200, to: 399 }]);
+    assert.equal(res.body.limit, 200);
     assert.equal(res.body.page, 2);
     assert.equal(res.body.hasMore, true);
   });
@@ -233,7 +233,9 @@ test('admin-list-inscriptions search usa or() escapado', async () => {
     assert.equal(state.orCalls.length, 1);
     const expr = state.orCalls[0];
     // Sin comas/paréntesis literales sin escapar ni comodines crudos.
-    assert.ok(!expr.includes('maria, (test)'));
+    assert.ok(expr.startsWith('full_name.ilike."%'));
+    assert.ok(expr.includes('maria, (test)'));
+    assert.ok(expr.includes('\\\\%')); // LIKE wildcard remains literal inside quoted value
     assert.ok(expr.includes('full_name.ilike.'));
     assert.ok(expr.includes('buyer_email.ilike.'));
     assert.ok(expr.includes('order_session_id.ilike.'));
@@ -262,4 +264,16 @@ test('admin-list-inscriptions error de DB → 500', async () => {
     await handler(req, res);
     assert.equal(res.statusCode, 500);
   });
+});
+
+test('global search preserves BIB, distance and event criteria and stable ordering', async () => {
+ const state=baseState({rows:[],count:0});
+ await withMocks(state, async handler=>{
+  const {req,res}=createReqRes({headers:{authorization:'Bearer admin-token'},query:{search:'2099',limit:'50',page:'1'}});
+  await handler(req,res);
+  assert.equal(res.statusCode,200);
+  for(const field of ['full_name','email','buyer_email','order_session_id','event_slug','distance','bib_number']) assert.ok(state.orCalls[0].includes(field+'.ilike.'));
+  assert.deepEqual(state.rangeCalls,[{from:0,to:49}]);
+  assert.deepEqual(state.orderCalls.map(x=>x.col),['created_at','id']);
+ });
 });

@@ -169,13 +169,19 @@ test('repeated submit while one save is pending does not create another request'
   assert.equal(h.requests.length, 1); gate.resolve(h.response(h.rows[0])); await saving;
 });
 
-test('registration search combines participant fields with the selected event', () => {
-  const start = html.indexOf('    function filterRows(rows) {');
-  const end = html.indexOf('    function renderPerrunDogs', start);
-  const context = { adminUiState: { searchTerm: '  520 ', eventSlug: 'cascanueces-run' } };
-  vm.runInNewContext(`${html.slice(start, end)};globalThis.filter=filterRows;`, context);
-  const rows = [{ id: 'a', event_slug: 'cascanueces-run', full_name: 'Ana Ruiz', bib_number: '520' }, { id: 'b', event_slug: 'axolote-night-run', full_name: 'Ana Ruiz', bib_number: '520' }];
-  assert.deepEqual(context.filter(rows).map(r => r.id), ['a']);
-  context.adminUiState.searchTerm = 'ANA'; context.adminUiState.eventSlug = 'all';
-  assert.equal(context.filter(rows).length, 2);
+test('registration search sends participant criteria and selected event to the server', async () => {
+  const start = html.indexOf('    async function fetchAdminInscriptionsPage(');
+  const end = html.indexOf('    async function loadPaidInscriptions(', start);
+  const urls = [];
+  const context = { URLSearchParams, fetch: async url => {
+    urls.push(new URL(url, 'https://fixture.invalid'));
+    return {ok:true,status:200,json:async()=>({rows:[],total:0,hasMore:false})};
+  }};
+  vm.runInNewContext(`${html.slice(start, end)};globalThis.load=fetchAdminInscriptionsPage;`, context);
+  await context.load('fixture-token','all',1,'cascanueces-run',50,'520');
+  assert.equal(urls[0].searchParams.get('event'),'cascanueces-run');
+  assert.equal(urls[0].searchParams.get('search'),'520');
+  await context.load('fixture-token','all',1,'all',50,'ANA');
+  assert.equal(urls[1].searchParams.get('event'),'all');
+  assert.equal(urls[1].searchParams.get('search'),'ANA');
 });
