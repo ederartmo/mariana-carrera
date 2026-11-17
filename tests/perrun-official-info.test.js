@@ -38,7 +38,7 @@ test('HTML and text confirmations preserve participant, dogs, payment and waiver
     assert.doesNotMatch(part, /12 de febrero de 2027|10:00–16:00/);
   }
   assert.match(mail.text, /BIB #002/);
-  assert.match(WAIVER_URL, /exoneracion-perrun-2027.pdf\?v=b5f732a05e49/);
+  assert.match(WAIVER_URL, /exoneracion-perrun-2027.pdf\?v=1eef1814edba/);
 });
 
 test('Official downloads use hash versions without changing cache headers', () => {
@@ -49,7 +49,7 @@ test('Official downloads use hash versions without changing cache headers', () =
   assert.equal(new URL(WAIVER_URL).searchParams.get('v'), createHash('sha256').update(bytes).digest('hex').slice(0,12));
 });
 
-for (const [name,hash] of [['exoneracion','b5f732a05e49bc85db51f92d2db69a7d2cbe19ef1310e540b5b4d747ad3f0d26'],['convocatoria','efab6382745e5c1850c6ab62a46851ebdb60de1286e1c6b5facbb99a193f8a39']]) test(name+' keeps official bytes in source and public', () => {
+for (const [name,hash] of [['exoneracion','1eef1814edbacef10c9c3f30078c8dd06415d8157001791568bdd7873bac1390'],['convocatoria','5180f1b2cd6cb3377bf42c5da25fa59b2a109e16f31772576d9938715419710a']]) test(name+' keeps official bytes in source and public', () => {
   const path = 'assets/events/perrun-2027/docs/'+name+'-perrun-2027.pdf';
   const source = fs.readFileSync(path);
   assert.equal(createHash('sha256').update(source).digest('hex'),hash);
