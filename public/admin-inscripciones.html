@@ -664,6 +664,7 @@
       }
     }
   </style>
+  <link rel="stylesheet" href="support.css?v=support-phase-one-local" />
 <!-- Meta Pixel Code -->
 <script>
 !function(f,b,e,v,n,t,s)
@@ -686,6 +687,27 @@ src="https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1"
   <div class="container">
     <h1>Panel Admin - Inscripciones Pagadas</h1>
     <p class="page-intro">Usa este panel para registrar transferencias y administrar inscripciones. Los registros identificados por el sistema como Stripe TEST muestran su propia acción <strong>Eliminar prueba</strong>.</p>
+
+    <section class="admin-card support-admin-panel" data-admin-support aria-labelledby="supportAdminTitle">
+      <div class="admin-card-header"><div><h2 id="supportAdminTitle">Atención y solicitudes</h2><p>Conversaciones de visitantes y respuestas manuales del equipo.</p></div><button type="button" class="btn-secondary" data-ticket-refresh>Actualizar solicitudes</button></div>
+      <p class="support-admin-notice" data-admin-support-notice role="status" aria-live="polite">Cargando solicitudes…</p>
+      <div class="support-admin-grid"><div>
+        <div class="support-admin-controls">
+          <label>Estado<select data-ticket-filter-status><option value="">Todos</option><option value="pending">Pendiente</option><option value="in_progress">Abierto</option><option value="resolved">Resuelto</option></select></label>
+          <label>Categor&#237;a<select data-ticket-filter-category><option value="">Todas</option><option value="general">General</option><option value="events">Eventos</option><option value="registration">Inscripciones</option><option value="other">Otro</option></select></label>
+          <label>Responsable<select data-ticket-filter-assignee><option value="*">Todos</option><option value="">Sin asignar</option></select></label>
+        </div>
+        <div class="support-ticket-list" data-ticket-list aria-label="Solicitudes de atención"></div>
+        <div class="support-toolbar"><button type="button" data-ticket-page-prev disabled>Anterior</button><button type="button" data-ticket-page-next disabled>Siguiente</button></div>
+      </div>
+        <div class="support-ticket-workspace"><div data-ticket-detail aria-live="polite">Selecciona una solicitud para consultar sus mensajes e historial.</div>
+          <div class="support-admin-controls"><label>Estado<select name="ticketStatus"><option value="pending">Pendiente</option><option value="in_progress">En proceso</option><option value="resolved">Resuelto</option></select></label>
+            <label>Categoría<select name="ticketCategory"><option value="general">General</option><option value="events">Eventos</option><option value="registration">Inscripciones</option><option value="other">Otro</option></select></label>
+            <button type="button" class="btn-secondary" data-ticket-save>Guardar cambios</button><button type="button" class="btn-secondary" data-ticket-assign>Asignarme</button><label>Responsable<select name="ticketAssignee"><option value="">Selecciona un responsable</option></select></label><button type="button" class="btn-secondary" data-ticket-assign-other>Asignar responsable</button></div>
+          <form data-ticket-reply><label for="supportAdminReply">Respuesta manual</label><textarea id="supportAdminReply" name="reply" rows="3" maxlength="2000" placeholder="Escribe una respuesta para el visitante."></textarea><button type="submit" class="btn-primary">Enviar respuesta</button></form>
+        </div>
+      </div>
+    </section>
 
     <div class="dashboard-toolbar">
       <div class="dashboard-search">
@@ -884,15 +906,18 @@ src="https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1"
     ];
   </script>
 
-  <script src="location-catalog.js?v=5f00a66-shirts-export"></script>
-  <script src="perrun-stage-config.js?v=5f00a66-shirts-export"></script>
-  <script src="perrun-event-data.js?v=5f00a66-shirts-export"></script>
-  <script src="event-catalog.js?v=5f00a66-shirts-export"></script>
-  <script src="admin-perrun-annul-ui.js?v=5f00a66-shirts-export"></script>
-  <script src="admin-perrun-edit-ui.js?v=5f00a66-shirts-export"></script>
-  <script src="admin-perrun-production-ui.js?v=5f00a66-shirts-export"></script>
-  <script src="admin-perrun-manual-ui.js?v=5f00a66-shirts-export"></script>
-  <script src="supabase-client.js?v=5f00a66-shirts-export"></script>
+  <script src="location-catalog.js?v=support-phase-one-local"></script>
+  <script src="perrun-stage-config.js?v=support-phase-one-local"></script>
+  <script src="perrun-event-data.js?v=support-phase-one-local"></script>
+  <script src="event-catalog.js?v=support-phase-one-local"></script>
+  <script src="admin-perrun-annul-ui.js?v=support-phase-one-local"></script>
+  <script src="admin-perrun-edit-ui.js?v=support-phase-one-local"></script>
+  <script src="admin-perrun-production-ui.js?v=support-phase-one-local"></script>
+  <script src="admin-perrun-manual-ui.js?v=support-phase-one-local"></script>
+  <script src="supabase-client.js?v=support-phase-one-local"></script>
+
+  <script src="support-chat.js?v=support-phase-one-local"></script>
+  <script src="admin-support.js?v=support-phase-one-local"></script>
 
   <script>
     // ====================== CONFIG ======================
@@ -2684,6 +2709,10 @@ src="https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1"
         console.log('[Admin] checkAdminAccess OK');
 
         const statusFilter = document.getElementById("statusFilter");
+        window.connectAdminSupport({ document, authClient: client }).catch(() => {
+          const notice = document.querySelector('[data-admin-support-notice]');
+          if (notice) notice.textContent = 'No se pudo verificar la sesion de soporte.';
+        });
         setupDashboardControls(client);
         setupManualTransferForm(client);
         setupParticipantModal(client);

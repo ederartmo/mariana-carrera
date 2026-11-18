@@ -2,6 +2,8 @@
   "buildCommand": "node build.js",
   "outputDirectory": "public",
   "rewrites": [
+    { "source": "/api/support-chat", "destination": "/api/data?action=support-chat" },
+    { "source": "/api/admin-support", "destination": "/api/data?action=admin-support" },
     { "source": "/api/me/registrations", "destination": "/api/data?action=me-registrations" },
     { "source": "/api/admin-list-inscriptions", "destination": "/api/data?action=admin-list-inscriptions" },
     { "source": "/api/admin-list-available-bibs", "destination": "/api/data?action=admin-list-available-bibs" },

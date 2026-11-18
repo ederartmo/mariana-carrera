@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Atención | Kinetic Hub</title>
+    <meta name="description" content="Escribe al equipo de atención de Kinetic Hub. Conserva tu conversación en este dispositivo." />
+    <meta name="theme-color" content="#000000" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Sora:wght@500;600;700;800&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="styles.min.css?v=support-phase-one-local" />
+    <link rel="stylesheet" href="support.css?v=support-phase-one-local" />
+    <link rel="icon" type="image/png" href="assets/brand/icon.png" />
+  </head>
+  <body class="support-page">
+    <header class="site-header">
+      <div class="container nav-shell">
+        <a href="index.html" class="brand" aria-label="Ir al inicio de Kinetic Hub">
+          <img class="brand-mascot" src="assets/brand/logo-kinect.png" alt="Ajolote Kinetic Hub" />
+          <span class="brand-copy"><strong>Kinetic Hub</strong><small>Run your next challenge</small></span>
+        </a>
+        <button class="menu-toggle" id="menuToggle" aria-expanded="false" aria-controls="siteNav">Menú</button>
+        <nav class="site-nav" id="siteNav" aria-label="Navegación principal">
+          <a href="eventos.html">Explorar eventos</a><a href="blog.html">Blog</a><a href="nosotros.html">Nosotros</a><a href="contacto.html">Contacto</a>
+        </nav>
+        <div class="nav-actions"><a class="ghost-link" href="auth.html?mode=login">Iniciar Sesión</a><a class="btn btn-primary" href="auth.html?mode=register">Registrarse</a></div>
+      </div>
+    </header>
+    <main class="support-main">
+      <section class="support-hero">
+        <div class="container support-hero-inner">
+          <p class="eyebrow">ATENCIÓN KINETIC HUB</p>
+          <h1>Hablemos de tu <em>próximo paso</em>.</h1>
+          <p>Escribe al equipo de atención. Tus mensajes quedan vinculados a una solicitud para que podamos dar seguimiento.</p>
+        </div>
+      </section>
+      <section class="container support-layout" aria-labelledby="supportHeading">
+        <div class="support-chat-card" data-support-chat>
+          <div class="support-card-heading"><div><p class="eyebrow">CONVERSACIÓN</p><h2 id="supportHeading">Atención de una persona</h2></div><span class="support-status-dot" aria-label="Atención humana"></span></div>
+          <p class="support-intro">No es un asistente automático. El equipo leerá tu mensaje y responderá aquí cuando pueda atenderlo.</p>
+          <div class="support-transcript" data-support-messages role="log" aria-live="polite" aria-relevant="additions text" aria-label="Mensajes de atención"></div>
+          <p class="support-notice" data-support-notice role="status" aria-live="polite">Inicia una conversación con un mensaje. El historial se conserva en este navegador.</p>
+          <form data-support-form class="support-form">
+            <label for="supportCategory">¿Sobre qué tema necesitas ayuda?</label>
+            <select id="supportCategory" name="category">
+              <option value="general">Consulta general</option><option value="events">Eventos</option><option value="registration">Inscripciones</option><option value="other">Otro tema</option>
+            </select>
+            <label for="supportMessage">Tu mensaje <span>(máximo 2000 caracteres)</span></label>
+            <textarea id="supportMessage" name="supportMessage" maxlength="2000" rows="4" required placeholder="Cuéntanos cómo podemos ayudarte."></textarea>
+            <div class="support-actions"><button class="btn btn-primary" type="submit">Enviar mensaje</button><button class="support-link-button" type="button" data-support-retry hidden>Reintentar envío</button></div>
+          </form>
+          <div class="support-toolbar"><button class="support-link-button" type="button" data-support-human>Solicitar atenci&#243;n humana</button><button class="support-link-button" type="button" data-support-refresh>Actualizar conversación</button><button class="support-link-button" type="button" data-support-clear>Borrar esta sesión</button></div>
+        </div>
+        <aside class="support-aside">
+          <h2>También puedes contactarnos</h2>
+          <p>WhatsApp y el formulario de contacto siguen disponibles.</p>
+          <a class="btn btn-primary" href="https://wa.me/525530790944" target="_blank" rel="noopener noreferrer">Continuar por WhatsApp</a>
+          <a class="support-secondary-link" href="contacto.html#contactForm">Abrir formulario de contacto</a>
+          <p class="support-privacy-note">La conversación se asocia a una sesión de este navegador. Si borras los datos del navegador, ya no podrás recuperar el historial desde aquí.</p>
+        </aside>
+      </section>
+    </main>
+    <footer class="site-footer"><div class="container footer-bottom-shell"><small>© <span id="yearNow"></span> Kinetic Hub. Todos los derechos reservados.</small><div class="footer-links"><a href="privacidad.html">Privacidad</a><a href="terminos.html">Términos</a><a href="contacto.html">Contacto</a></div></div></footer>
+    <script src="support-chat.js?v=support-phase-one-local"></script>
+    <script src="supabase-client.js?v=support-phase-one-local"></script>
+    <script>
+      document.addEventListener('DOMContentLoaded', async function () {
+        const notice = document.querySelector('[data-support-notice]');
+        try {
+          const client = await window.KineticHubSupabase.ensureClient();
+          if (!client) throw new Error('Supabase Auth unavailable');
+          await window.KineticHubSupport.connectPublicSupportChat({ authClient: client });
+        } catch (_) {
+          notice.textContent = 'No pudimos comprobar la sesion. Recarga la pagina para volver a intentar.';
+        }
+      });
+    </script>
+    <script src="script.min.js?v=support-phase-one-local"></script>
+  </body>
+</html>
