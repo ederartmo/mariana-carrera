@@ -21,8 +21,10 @@
   }
   function presentTicket(ticket) {
     const [status, explanation] = label(statuses, ticket.status, ['Estado desconocido', 'No se pudo determinar el estado.']);
+    const account = ticket.identity?.authenticated === true;
+    const displayName = typeof ticket.identity?.displayName === 'string' ? ticket.identity.displayName : '';
     return {
-      identity: 'Visitante sin identificar', folio: '#' + ticket.id.slice(0, 8).toUpperCase(),
+      identity: (account && displayName) || 'Visitante sin identificar', account, folio: '#' + ticket.id.slice(0, 8).toUpperCase(),
       subject: label(subjects, ticket.category, 'Consulta sin categoría'), status, explanation,
     };
   }
@@ -100,7 +102,7 @@
           const button = doc.createElement('button'); button.type = 'button'; button.className = 'support-ticket-row'; button.dataset.ticketId = ticket.id;
           const view = presentTicket(ticket);
           button.title = ticket.id;
-          button.append(textNode('strong', view.subject), textNode('span', view.identity + ' · ' + view.folio),
+          button.append(textNode('strong', view.subject), textNode('span', view.identity + (view.account ? ' · Cuenta autenticada' : '') + ' · ' + view.folio),
             statusBadge(ticket, view), textNode('small', 'Responsable: ' + (ticket.assigned_to || 'Sin asignar')),
             textNode('small', 'Actividad: ' + formatLocalDate(ticket.updated_at)));
           button.addEventListener('click', () => loadDetail(ticket.id)); fragment.append(button);
@@ -153,7 +155,7 @@
           summary.replaceChildren(header, textNode('p', '', 'support-admin-meta'));
         }
         header.querySelector('h3').textContent = view.subject;
-        header.querySelector('.support-ticket-identity').textContent = view.identity + ' · ' + view.folio;
+        header.querySelector('.support-ticket-identity').textContent = view.identity + (view.account ? ' · Cuenta autenticada' : '') + ' · ' + view.folio;
         const badge = header.querySelector('.support-ticket-status');
         badge.textContent = view.status; badge.dataset.status = Object.hasOwn(statuses, shown.status) ? shown.status : 'unknown';
         summary.querySelector('.support-admin-meta').textContent = view.explanation + ' Responsable: ' + (shown.assigned_to || 'Sin asignar') + ' · Última actividad: ' + formatLocalDate(shown.updated_at);

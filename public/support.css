@@ -122,3 +122,4 @@
   .support-admin-panel .support-admin-messages { padding:8px; }
   .support-admin-panel .support-admin-messages article { max-width:94%; }
 }
+.support-admin-panel .support-ticket-identity { overflow-wrap:anywhere; min-width:0; }
