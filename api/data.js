@@ -6,6 +6,8 @@
 // Mapa estático: un action no puede invocar la autorización de otro.
 
 const ACTIONS = {
+  'support-chat': require('../lib/support-chat'),
+  'admin-support': require('../lib/admin-support'),
   'admin-perrun-production': require('../lib/admin-perrun-production'),
   'admin-perrun-annul': require('../lib/admin-perrun-annul'),
   'admin-perrun-registration': require('../lib/admin-perrun-registration'),
@@ -20,12 +22,19 @@ const ACTIONS = {
 };
 
 module.exports = async function handler(req, res) {
-  const action = String(req.query.action || '').trim();
-  const run = ACTIONS[action];
+  const { action: selector, ...query } = req.query || {};
+  const action = typeof selector === 'string' ? selector.trim() : '';
+  const run = Object.hasOwn(ACTIONS, action) ? ACTIONS[action] : null;
 
   if (typeof run !== 'function') {
     return res.status(404).json({ error: 'Acción no encontrada.' });
   }
 
+  if (action === 'support-chat' || action === 'admin-support') {
+    // The rewrite selector is transport metadata, not a support API filter.
+    const routed = Object.create(req);
+    Object.defineProperty(routed, 'query', { value: query });
+    return run(routed, res);
+  }
   return run(req, res);
 };

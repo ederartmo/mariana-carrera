@@ -25,3 +25,7 @@ The visitor API uses the existing rate-limiter contract: consume_api_rate_limit(
 ## Verification
 
 15/15 focused API, SQL and UI tests; 125 synthetic tickets traversed exactly once (50/50/25); combined filters and admin grant tested. Independent pager review and recheck 7/7 UI tests. Isolated build and scoped public mirrors. PostgreSQL 17 replay of all 20 migrations plus QA bootstrap passed; five RLS tables, service-only list RPC, cross-owner denial, and two concurrent connections persisted one conversation, ticket and message. No production query or mutation.
+
+## Vercel Hobby packaging
+
+The preview log rejected 14 serverless entrypoints against the Hobby limit of 12. The static build validates public assets but does not enforce the serverless entrypoint limit. Both support URLs now rewrite to the existing api/data.js function; no extra support entrypoint remains under api/. The dispatcher removes its internal action selector before calling either support handler. Chat and inbox logic remain in separate lib/ modules with independent methods, authorization, visitor rate limiting and no-store responses. The browser URLs are unchanged.

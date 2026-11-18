@@ -19,7 +19,7 @@ const allow = async () => ({ allowed: true, remaining: 10, retryAfter: 0 });
 test('visitor start validates payload, hashes capability, and is no-store', async () => {
   const calls = [];
   const rpc = async (name, args) => { calls.push({ name, args }); return { data: { ok: true, ticket: { id: 't1', status: 'pending', category: 'general', version: 1, assigned_to: null }, messages: [], hasMore: false } }; };
-  const handler = require('../api/support-chat');
+  const handler = require('../lib/support-chat');
   const res = response();
   await handler(request('POST', { action: 'start', token, requestId: crypto.randomUUID(), body: 'Hola', category: 'general', website: '' }), res, { rpc, rateLimit: allow });
   assert.equal(res.statusCode, 200);
@@ -30,7 +30,7 @@ test('visitor start validates payload, hashes capability, and is no-store', asyn
 });
 
 test('visitor rejects cross-origin, unknown keys, and missing capability', async () => {
-  const handler = require('../api/support-chat');
+  const handler = require('../lib/support-chat');
   for (const req of [
     request('POST', { action: 'start', token, requestId: crypto.randomUUID(), body: 'hi', category: 'general', website: '', extra: true }),
     request('POST', { action: 'start', requestId: crypto.randomUUID(), body: 'hi', category: 'general', website: '' }),
@@ -42,7 +42,7 @@ test('visitor rejects cross-origin, unknown keys, and missing capability', async
 });
 
 test('admin support endpoint authenticates server-side and returns safe errors', async () => {
-  const handler = require('../api/admin-support');
+  const handler = require('../lib/admin-support');
   const res = response();
   await handler(request('GET', null), res, { auth: async () => ({ error: 'denied', status: 401 }) });
   assert.equal(res.statusCode, 401);
@@ -50,7 +50,7 @@ test('admin support endpoint authenticates server-side and returns safe errors',
 });
 
 test('admin mutations bind actor to validated identity and hide database errors', async () => {
-  const handler = require('../api/admin-support');
+  const handler = require('../lib/admin-support');
   let args;
   const id = crypto.randomUUID();
   const req = request('POST', { id, requestId: crypto.randomUUID(), expectedVersion: 2, action: 'reply', body: 'Respuesta' });
@@ -70,7 +70,7 @@ test('admin mutations bind actor to validated identity and hide database errors'
 });
 
 test('verified account history is scoped to server identity across browser keys', async () => {
-  const handler = require('../api/support-chat');
+  const handler = require('../lib/support-chat');
   const calls = [];
   const rpc = async (_, args) => { calls.push(args); return {data:{ok:true,ticket:{},messages:[]}}; };
   const a = crypto.randomUUID(), b = crypto.randomUUID();
@@ -88,7 +88,7 @@ test('verified account history is scoped to server identity across browser keys'
 });
 
 test('admin assignment accepts only another allowlisted responsible account',async()=>{
- const handler=require('../api/admin-support'); const assigned=[];
+ const handler=require('../lib/admin-support'); const assigned=[];
  const deps={auth:async()=>({email:'admin@example.test'}),getAdminEmails:()=>['admin@example.test','other@example.test'],client:{rpc:async(_,v)=>{assigned.push(v);return {data:{ok:true}}}}};
  for(const [assignTo,status] of [['outsider@example.test',400],['other@example.test',200]]) {
    const res=response();
@@ -101,7 +101,7 @@ test('admin assignment accepts only another allowlisted responsible account',asy
 });
 
 test('admin ticket cursor and filters are forwarded only after authorization', async()=>{
- const handler=require('../api/admin-support');
+ const handler=require('../lib/admin-support');
  const query={status:'resolved',category:'events',assignee:'other@example.test',before:'2026-11-17T12:00:00.123456+00:00',beforeId:crypto.randomUUID()};
  const req=request('GET',null,{query});
  let got;
