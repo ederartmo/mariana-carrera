@@ -8,6 +8,7 @@
 const ACTIONS = {
   'support-chat': require('../lib/support-chat'),
   'admin-support': require('../lib/admin-support'),
+  'support-notification-worker': require('../lib/support-notifications-worker'),
   'admin-perrun-production': require('../lib/admin-perrun-production'),
   'admin-perrun-annul': require('../lib/admin-perrun-annul'),
   'admin-perrun-registration': require('../lib/admin-perrun-registration'),
@@ -30,7 +31,7 @@ module.exports = async function handler(req, res) {
     return res.status(404).json({ error: 'Acción no encontrada.' });
   }
 
-  if (action === 'support-chat' || action === 'admin-support') {
+  if (action === 'support-chat' || action === 'admin-support' || action === 'support-notification-worker') {
     // The rewrite selector is transport metadata, not a support API filter.
     const routed = Object.create(req);
     Object.defineProperty(routed, 'query', { value: query });
