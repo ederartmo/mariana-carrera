@@ -66,6 +66,13 @@
         for (const item of (data.messages || []).slice(-100)) {
           const article = doc.createElement('article'); article.append(textNode('strong', item.author === 'admin' ? 'Equipo' : 'Visitante'), textNode('p', item.body), textNode('time', item.created_at || '')); messages.append(article);
         }
+        if (container.getAttribute?.('data-support-history') === 'on') {
+          const history = doc.createElement('div');
+          detail.append(history);
+          root.KineticHubSupport.mountMessageHistory({ doc, host: history,
+            fetchPage: before => client.history(id,before), isActive: () => current === sequence && !container.hidden,
+            setReading: reading => { messages.hidden = reading; } });
+        }
         detail.append(messages);
         if (data.hasMore) detail.append(textNode('p', 'Se muestran los últimos 100 mensajes; existen mensajes anteriores.'));
         const activity = doc.createElement('section'); activity.append(textNode('h4', 'Historial de actividad'));
