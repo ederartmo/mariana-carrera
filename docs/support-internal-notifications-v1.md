@@ -28,9 +28,17 @@ Before enabling, verify the configured job with the feature flag disabled (expec
 
 If this scheduler provider is unsuitable for the account or security requirements, select another POST-capable scheduler and document its credential handling before activation. No scheduler account or job is created by this PR.
 
+## Production migration already recorded — do not reapply
+
+Production was reported to have applied this migration under `20261118192617_support_internal_notifications`. The Git filename is `20261118183000_support_internal_notifications.sql`. Supabase compares migration versions by timestamp, not by matching SQL content. The mismatch is not a request to execute anything: do not run a linked push, migration up, migration repair, or manual SQL for this file on Production.
+
+1. With separately authorized read-only access, compare the recorded migration statements (or archived approved SQL) and effective queue table, indexes, RPC definitions and grants to the Git file. Check both timestamps in the deployment target and other linked environments. If the executed SQL cannot be verified or an environment records a different version, stop; do not guess equivalence.
+2. If equivalence and environment compatibility are confirmed, reconcile in Git only: rename this one file to `20261118192617_support_internal_notifications.sql` without changing its SQL bytes, update references, and rerun the clean QA migration order. Keep no second executable copy. Verify the two timestamps by read-only migration listing; leave all database history rows and schema unchanged. Do this as a separately reviewed change before any future linked migration workflow.
+3. Code-only publication and worker activation are separate. Confirm the effective Production flag is unset or not `true` and that no external scheduler is enabled. Do not change configuration in this review.
+
 ## Activation (not performed)
 
-1. Review and apply `20261118183000_support_internal_notifications.sql` only after explicit authorization. Verify table/RPC grants; no browser role may use them. Deploy code with the worker disabled.
+1. Do not apply the notification SQL again on Production. For a new isolated environment, verify it does not already contain this migration or its objects, and apply only through an explicitly approved migration process. Verify browser roles cannot use the new RPCs. Deploy code with the worker disabled.
 2. Confirm the single administrative destination `SUPPORT_NOTIFICATION_TO` and a verified Resend sender `SUPPORT_NOTIFICATION_FROM`. Use existing `RESEND_API_KEY` only if its scope covers this sender. No fallback to contact recipients or visitor Reply-To. Require the official HTTPS origin in `SITE_URL`.
 3. Configure a dedicated strong `SUPPORT_NOTIFICATION_WORKER_SECRET`, a fixed UTC activation cutover `SUPPORT_NOTIFICATION_START_AT` (do not backfill historical cases by default), and a separately approved server-side scheduler.
 4. Enable `SUPPORT_NOTIFICATIONS_ENABLED=true` only after verifying the above. Scheduler sends `POST /api/data?action=support-notification-worker` with `Authorization: Bearer <worker secret>` and no body or extra query. No scheduler is configured in this change. No new Vercel function.
