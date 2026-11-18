@@ -97,3 +97,28 @@
 .support-admin-panel .support-ticket-workspace textarea { box-sizing:border-box; }
 .support-admin-panel .support-admin-notice { color:#a8b6c7; }
 .support-admin-panel .support-ticket-workspace form label { color:#dce7f3; }
+
+/* Support workspace: stable message scroller, composer, then optional activity. */
+.support-admin-panel [data-ticket-detail][hidden], .support-admin-panel [data-ticket-message-limit][hidden] { display:none !important; }
+.support-admin-panel .support-ticket-edit { margin:0 0 12px; color:#a8b6c7; }
+.support-admin-panel .support-ticket-edit summary { width:fit-content; padding:7px 10px; border:1px solid #344454; border-radius:8px; color:#dce7f3; cursor:pointer; font-weight:600; }
+.support-admin-panel .support-ticket-edit[open] .support-admin-controls { padding:12px; margin:8px 0 0; border:1px solid #344454; border-radius:10px; }
+.support-admin-panel .support-admin-messages { max-height:min(48vh, 380px); padding:12px; border:1px solid #293747; border-radius:12px; background:#0b131c; }
+.support-admin-panel .support-admin-messages article { width:fit-content; max-width:min(82%, 68ch); box-sizing:border-box; border-radius:14px; }
+.support-admin-panel .support-admin-messages .support-admin-message--visitor { justify-self:start; color:#e6eef5; background:#1c2936; border-color:#34465a; }
+.support-admin-panel .support-admin-messages .support-admin-message--team { justify-self:end; color:#ddfff0; background:#173a32; border-color:#2b6050; }
+.support-admin-panel .support-admin-messages article p { margin:6px 0; }
+.support-admin-panel .support-admin-messages time { color:#b2c1cf; font-size:.82rem; }
+.support-admin-panel .support-ticket-message-limit { margin:8px 0; }
+.support-admin-panel .support-ticket-compose { display:grid; gap:7px; }
+.support-admin-panel .support-ticket-activity { margin-top:14px; border:1px solid #344454; border-radius:10px; }
+.support-admin-panel .support-ticket-activity summary { display:flex; flex-wrap:nowrap; align-items:center; gap:8px; padding:10px 12px; font-weight:700; cursor:pointer; }
+.support-admin-panel .support-ticket-activity summary::before { content:'▸'; color:#b2c1cf; }
+.support-admin-panel .support-ticket-activity[open] summary::before { content:'▾'; }
+.support-admin-panel .support-ticket-activity-count { margin-inline-start:auto; color:#b2c1cf; font-size:.82rem; white-space:nowrap; }
+.support-admin-panel .support-ticket-activity-log { max-height:min(30vh, 210px); overflow:auto; overflow-anchor:none; padding:0 12px 10px; overflow-wrap:anywhere; }
+.support-admin-panel .support-ticket-activity-log p { margin:0; padding:8px 0; border-top:1px solid #293747; }
+@media (max-width:760px) {
+  .support-admin-panel .support-admin-messages { padding:8px; }
+  .support-admin-panel .support-admin-messages article { max-width:94%; }
+}

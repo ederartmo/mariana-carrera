@@ -700,11 +700,27 @@ src="https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1"
         <div class="support-ticket-list" data-ticket-list aria-label="Solicitudes de atención"></div>
         <div class="support-toolbar"><button type="button" data-ticket-page-prev disabled>Anterior</button><button type="button" data-ticket-page-next disabled>Siguiente</button></div>
       </div>
-        <div class="support-ticket-workspace"><div data-ticket-detail aria-live="polite">Selecciona una solicitud para consultar sus mensajes e historial.</div>
-          <div class="support-admin-controls"><label>Estado<select name="ticketStatus"><option value="pending">Pendiente</option><option value="in_progress">En proceso</option><option value="resolved">Resuelto</option></select></label>
-            <label>Categoría<select name="ticketCategory"><option value="general">General</option><option value="events">Eventos</option><option value="registration">Inscripciones</option><option value="other">Otro</option></select></label>
-            <label>Responsable<select name="ticketAssignee"><option value="">Sin cambio de responsable</option></select></label><div class="support-ticket-edit-actions"><button type="button" class="btn-primary" data-ticket-save>Guardar cambios</button><button type="button" class="btn-secondary" data-ticket-assign>Asignarme ahora</button></div></div>
-          <form data-ticket-reply><label for="supportAdminReply">Respuesta manual</label><textarea id="supportAdminReply" name="reply" rows="3" maxlength="2000" placeholder="Escribe una respuesta para el visitante."></textarea><button type="submit" class="btn-primary">Enviar respuesta</button></form>
+        <div class="support-ticket-workspace">
+          <p class="support-admin-meta" data-ticket-placeholder role="status">Selecciona una solicitud para consultar sus mensajes e historial.</p>
+          <div data-ticket-detail hidden>
+            <div data-ticket-summary></div>
+            <details class="support-ticket-edit" data-ticket-edit>
+              <summary>Editar detalles</summary>
+              <div class="support-admin-controls">
+                <label>Estado<select name="ticketStatus"><option value="pending">Pendiente</option><option value="in_progress">En proceso</option><option value="resolved">Resuelto</option></select></label>
+                <label>Categoría<select name="ticketCategory"><option value="general">General</option><option value="events">Eventos</option><option value="registration">Inscripciones</option><option value="other">Otro</option></select></label>
+                <label>Responsable<select name="ticketAssignee"><option value="">Sin cambio de responsable</option></select></label>
+                <div class="support-ticket-edit-actions"><button type="button" class="btn-primary" data-ticket-save>Guardar cambios</button></div>
+              </div>
+            </details>
+            <p class="support-admin-meta support-ticket-message-limit" data-ticket-message-limit hidden>Se muestran los últimos 100 mensajes; existen mensajes anteriores.</p>
+            <div class="support-admin-messages" data-ticket-transcript tabindex="0" role="region" aria-label="Conversación"></div>
+            <form class="support-ticket-compose" data-ticket-reply><label for="supportAdminReply">Respuesta manual</label><textarea id="supportAdminReply" name="reply" rows="3" maxlength="2000" placeholder="Escribe una respuesta para el visitante."></textarea><button type="submit" class="btn-primary">Enviar respuesta</button></form>
+            <details class="support-ticket-activity" data-ticket-activity>
+              <summary><span>Historial de actividad</span><span class="support-ticket-activity-count" data-ticket-activity-count></span></summary>
+              <div class="support-ticket-activity-log" data-ticket-activity-log tabindex="0" role="region" aria-label="Eventos de actividad"></div>
+            </details>
+          </div>
         </div>
       </div>
     </section>

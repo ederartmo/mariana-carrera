@@ -37,7 +37,21 @@
     const notice = container.querySelector('[data-admin-support-notice]'); const refresh = container.querySelector('[data-ticket-refresh]');
     const replyForm = container.querySelector('[data-ticket-reply]'); const replyInput = replyForm.querySelector('[name="reply"]');
     const statusInput = container.querySelector('[name="ticketStatus"]'); const categoryInput = container.querySelector('[name="ticketCategory"]');
-    const assign = container.querySelector('[data-ticket-assign]');
+    const summary = container.querySelector('[data-ticket-summary]');
+    const placeholder = container.querySelector('[data-ticket-placeholder]');
+    const messages = container.querySelector('[data-ticket-transcript]');
+    const messageLimit = container.querySelector('[data-ticket-message-limit]');
+    const editDrawer = container.querySelector('[data-ticket-edit]');
+    const activityDrawer = container.querySelector('[data-ticket-activity]');
+    const activityLog = container.querySelector('[data-ticket-activity-log]');
+    const activityCount = container.querySelector('[data-ticket-activity-count]');
+    let viewId = null;
+    const emptyWorkspace = text => {
+      viewId = null; detail.hidden = true; placeholder.hidden = false; placeholder.textContent = text;
+      editDrawer.open = false; activityDrawer.open = false;
+      summary.replaceChildren(); messages.replaceChildren(); activityLog.replaceChildren();
+      messages.scrollTop = 0; activityLog.scrollTop = 0;
+    };
     const assignee = container.querySelector('[name=ticketAssignee]');
     const filterStatus = container.querySelector('[data-ticket-filter-status]');
     const filterCategory = container.querySelector('[data-ticket-filter-category]');
@@ -105,7 +119,10 @@
       const current = quiet ? sequence : ++sequence;
       const epoch = mutation;
       detailReading = true;
-      if (!quiet) { detailPayload = ''; selected = null; detail.textContent = 'Cargando solicitud…'; }
+      if (!quiet) {
+        detailPayload = ''; selected = null;
+        if (viewId !== id) emptyWorkspace('Cargando solicitud…');
+      }
       try {
         const data = await client.detail(id);
         if (!isActive() || current !== sequence || epoch !== mutation || (quiet && selected?.id !== id)) return;
@@ -116,51 +133,49 @@
         detailPayload = payload;
         if (!editing) selected = data.ticket;
         const shown = data.ticket;
-        const priorMessages = quiet && detail.querySelector?.('.support-admin-messages');
-        if (!priorMessages) detail.replaceChildren();
+        const sameView = viewId === id;
         if (assignee && !editing) {
           assignee.replaceChildren(new Option('Sin cambio de responsable', ''));
           for (const email of data.assignees || []) assignee.add(new Option(email, email));
           assignee.value = (data.assignees || []).includes(selected.assigned_to) ? selected.assigned_to : ''; shownAssignee = assignee.value;
         }
         const view = presentTicket(shown);
-        let header = priorMessages && detail.querySelector('.support-ticket-heading');
+        let header = sameView && summary.querySelector('.support-ticket-heading');
         if (!header) {
           header = doc.createElement('div'); header.className = 'support-ticket-heading';
           const copy = textNode('button', 'Copiar UUID', 'btn-secondary'); copy.type = 'button';
           const ticketId = shown.id; copy.title = ticketId;
           copy.addEventListener('click', async () => {
-            try { await doc.defaultView.navigator.clipboard.writeText(ticketId); if (isActive() && current === sequence) say('UUID copiado.'); }
-            catch { if (isActive() && current === sequence) say('UUID: ' + ticketId); }
+            try { await doc.defaultView.navigator.clipboard.writeText(ticketId); if (isActive() && viewId === ticketId) say('UUID copiado.'); }
+            catch { if (isActive() && viewId === ticketId) say('UUID: ' + ticketId); }
           });
           header.append(textNode('h3', ''), textNode('p', '', 'support-ticket-identity'), statusBadge(shown,view), copy);
+          summary.replaceChildren(header, textNode('p', '', 'support-admin-meta'));
         }
         header.querySelector('h3').textContent = view.subject;
         header.querySelector('.support-ticket-identity').textContent = view.identity + ' · ' + view.folio;
         const badge = header.querySelector('.support-ticket-status');
         badge.textContent = view.status; badge.dataset.status = Object.hasOwn(statuses, shown.status) ? shown.status : 'unknown';
-        const meta = textNode('p', view.explanation + ' Responsable: ' + (shown.assigned_to || 'Sin asignar') + ' · Actividad: ' + formatLocalDate(shown.updated_at), 'support-admin-meta');
-        if (priorMessages) detail.querySelector('.support-admin-meta').replaceWith(meta);
-        else detail.append(header,meta);
-        const messages = priorMessages || doc.createElement('div'); messages.className = 'support-admin-messages';
+        summary.querySelector('.support-admin-meta').textContent = view.explanation + ' Responsable: ' + (shown.assigned_to || 'Sin asignar') + ' · Última actividad: ' + formatLocalDate(shown.updated_at);
+        viewId = id; detail.hidden = false; placeholder.hidden = true;
         const entries = doc.createDocumentFragment();
         for (const item of root.KineticHubSupport.uniqueMessages(data.messages || []).slice(-100)) {
-          const article = doc.createElement('article'); if (item.id) article.dataset.messageAnchor = item.id; article.append(textNode('strong', item.author === 'admin' ? 'Equipo' : 'Visitante'), textNode('p', item.body), textNode('time', formatLocalDate(item.created_at))); entries.append(article);
+          const article = doc.createElement('article'); article.className = item.author === 'admin' ? 'support-admin-message--team' : 'support-admin-message--visitor'; if (item.id) article.dataset.messageAnchor = item.id; article.append(textNode('strong', item.author === 'admin' ? 'Equipo' : 'Visitante'), textNode('p', item.body), textNode('time', formatLocalDate(item.created_at))); entries.append(article);
         }
-        if (!priorMessages) detail.append(messages);
         root.KineticHubSupport.preserveReading(messages, () => messages.replaceChildren(entries));
-        const footer = doc.createElement('div'); footer.className = 'support-admin-history-footer';
-        if (data.hasMore) footer.append(textNode('p', 'Se muestran los últimos 100 mensajes; existen mensajes anteriores.'));
-        const activity = doc.createElement('section'); activity.append(textNode('h4', 'Historial de actividad'));
+        messageLimit.hidden = !data.hasMore;
+        const events = doc.createDocumentFragment();
         for (const event of data.activity || []) {
           const actor = event.actor === 'visitor' ? view.identity : (event.actor || 'Sistema');
-          activity.append(textNode('p', [label(actions, event.action, 'Actividad registrada'), actor, formatLocalDate(event.created_at)].join(' · ')));
+          events.append(textNode('p', [label(actions, event.action, 'Actividad registrada'), actor, formatLocalDate(event.created_at)].join(' · ')));
         }
-        footer.append(activity);
-        if (priorMessages) detail.querySelector('.support-admin-history-footer').replaceWith(footer);
-        else detail.append(footer);
+        const count = (data.activity || []).length;
+        activityCount.textContent = count + (count === 1 ? ' evento' : ' eventos');
+        if (!count) events.append(textNode('p', 'Todavía no hay actividad registrada.'));
+        const activityTop = activityLog.scrollTop;
+        activityLog.replaceChildren(events); activityLog.scrollTop = activityTop;
         if (!editing) { statusInput.value = selected.status; categoryInput.value = selected.category; }
-      } catch (error) { if (quiet) throw error; if (isActive() && current === sequence) { detail.textContent = error.status === 404 ? 'La solicitud no está disponible.' : `No se pudo cargar el detalle: ${error.message}`; say(error.message); } }
+      } catch (error) { if (quiet) throw error; if (isActive() && current === sequence) { emptyWorkspace(error.status === 404 ? 'La solicitud no está disponible.' : `No se pudo cargar el detalle: ${error.message}`); say(error.message); } }
       finally { if (current === sequence) detailReading = false; }
     }
     async function change(action, fields) {
@@ -180,7 +195,7 @@
     }
     const clearSelection = () => {
       ++sequence; detailReading = false; selected = null;
-      detail.textContent = 'Selecciona una solicitud.';
+      emptyWorkspace('Selecciona una solicitud.');
       replyInput.value = '';
     };
     const resetList = () => {
@@ -193,7 +208,6 @@
     next?.addEventListener('click', () => { if (!busy && !listing && nextCursor) { clearSelection(); cursors.push(nextCursor); loadList(); } });
     replyForm.addEventListener('submit', event => { event.preventDefault(); const body = replyInput.value.trim(); if (body) change('reply', { body }); });
     container.querySelector('[data-ticket-save]').addEventListener('click', () => change('update', updateFields(selected, statusInput.value, categoryInput.value, assignee?.value)));
-    assign.addEventListener('click', () => change('update', { assignToMe: true }));
     const tick = root.KineticHubSupport.createRefreshGate({
       isVisible: () => isActive() && !container.hidden && container.isConnected !== false &&
         !doc.hidden && !busy && !listing && !detailReading && container.getClientRects?.().length !== 0,
