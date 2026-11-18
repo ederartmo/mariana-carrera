@@ -10,10 +10,10 @@ function response() {
     end() { return this; } };
 }
 function request(method, body, extra = {}) {
-  return { method, body, headers: { origin: 'https://example.test', host: 'example.test', 'content-type': 'application/json', ...extra.headers }, query: extra.query || {}, url: extra.url || '/api/support-chat' };
+  return { method, body, headers: { origin: 'https://kinetichub.com.mx', host: 'kinetichub.com.mx', 'content-type': 'application/json', ...extra.headers }, query: extra.query || {}, url: extra.url || '/api/support-chat' };
 }
 const token = 'a'.repeat(64);
-process.env.SITE_URL = 'https://example.test';
+process.env.SITE_URL = 'https://kinetichub.com.mx';
 const allow = async () => ({ allowed: true, remaining: 10, retryAfter: 0 });
 
 test('visitor start validates payload, hashes capability, and is no-store', async () => {
@@ -172,6 +172,34 @@ test('public chat rejects attacker-controlled hosts and missing or non-exact ori
      rateLimit:async()=>assert.fail('rate limit called'), rpc:async()=>assert.fail('RPC called')
    });
    assert.equal(res.statusCode, 403);
+   assert.equal(res.body.code, 'origin_not_allowed');
+ }
+});
+
+test('public origin policy never inherits admin SITE_URL or Vercel Preview', async (t) => {
+ const {writeOriginAllowed} = require('../lib/_support');
+ const handler = require('../lib/support-chat');
+ const configured = {
+   SITE_URL: 'https://configured.example.test',
+   VERCEL_URL: 'preview.vercel.app'
+ };
+ for (const [name, value] of Object.entries(configured)) {
+   const previous = process.env[name];
+   t.after(() => {
+     if (previous === undefined) delete process.env[name];
+     else process.env[name] = previous;
+   });
+   process.env[name] = value;
+ }
+ for (const origin of [configured.SITE_URL, 'https://' + configured.VERCEL_URL, undefined]) {
+   const req = request('POST', {action:'read', token}, {headers:{
+     origin, host:origin ? new URL(origin).host : 'preview.vercel.app', 'sec-fetch-site':'same-origin'
+   }});
+   assert.equal(writeOriginAllowed(req), true);
+   if (origin) assert.equal(writeOriginAllowed({...req, headers:{...req.headers,host:'other.test'}}), false);
+   const res = response();
+   await handler(req, res, {rateLimit:allow, rpc:async()=>({data:{ok:true,messages:[]}})});
+   assert.equal(res.statusCode, 403, String(origin));
    assert.equal(res.body.code, 'origin_not_allowed');
  }
 });
