@@ -709,14 +709,20 @@ src="https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1"
         </select>
         <button id="exportPerrunCsv" type="button" class="admin-select">Exportar perros Perrun CSV</button>
         <button id="exportShirtsCsv" type="button" class="admin-select" title="Exporta playeras pagadas y activas de la carrera seleccionada o de todas las carreras, sin aplicar búsqueda, estado ni filas visibles.">Exportar playeras CSV</button>
-        <select id="rowsPerPage" class="admin-select" aria-label="Filas visibles" title="Filas visibles">
-          <option value="all" selected>Todos</option>
-          <option value="50">50</option>
-          <option value="30">30</option>
-          <option value="10">10</option>
+        <select id="rowsPerPage" class="admin-select" aria-label="Registros por página" title="Registros por página">
+          <option value="25">25</option>
+          <option value="50" selected>50</option>
+          <option value="100">100</option>
+          <option value="200">200</option>
         </select>
       </div>
     </div>
+
+    <nav aria-label="Paginación de inscripciones" style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin:12px 0">
+      <button id="listPrevious" type="button" class="admin-select" disabled>Anterior</button>
+      <span id="listPageStatus" role="status" aria-live="polite"></span>
+      <button id="listNext" type="button" class="admin-select" disabled>Siguiente</button>
+    </nav>
 
     <section id="manualTransferCard" class="admin-card is-collapsed">
       <div class="admin-card-header">
@@ -898,9 +904,15 @@ src="https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1"
     const adminUiState = {
       searchTerm: "",
       eventSlug: "all",
-      rowLimit: 'all',
+      rowLimit: 50,
+      page: 1,
+      total: 0,
+      hasMore: false,
     };
     let cachedRows = [];
+    let listRequestId = 0;
+    let listLoading = false;
+    let searchTimer;
     let tableScrollFollowerCleanup = null;
 
     // ====================== VERIFICACIÓN DE ACCESO ======================
@@ -1074,31 +1086,6 @@ src="https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1"
       `;
     }
 
-    function filterRows(rows) {
-      const searchTerm = adminUiState.searchTerm.trim().toLowerCase();
-      return rows.filter((row) => {
-        if (adminUiState.eventSlug !== 'all' && row.event_slug !== adminUiState.eventSlug) {
-          return false;
-        }
-
-        if (!searchTerm) return true;
-
-        const haystack = [
-          row.full_name,
-          row.email,
-          row.buyer_email,
-          row.order_session_id,
-          row.event_slug,
-          row.distance,
-          row.bib_number,
-        ]
-          .map((value) => String(value || '').toLowerCase())
-          .join(' ');
-
-        return haystack.includes(searchTerm);
-      });
-    }
-
     function renderPerrunDogs(row) {
       if (row.event_slug !== 'perrun-2027') return '<span class="cell-muted">—</span>';
       return '<span class="cell-strong">' + escapeHtml(row.owner_phone || '—') + '</span>' + (row.dogs || []).map(dog =>
@@ -1115,18 +1102,14 @@ src="https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1"
         tableScrollFollowerCleanup();
         tableScrollFollowerCleanup = null;
       }
-      const filteredRows = filterRows(rows);
-      const visibleRows = adminUiState.rowLimit === 'all'
-        ? filteredRows
-        : filteredRows.slice(0, Number(adminUiState.rowLimit) || 30);
-
-      if (!filteredRows.length) {
-        contentDiv.innerHTML = `<div class="no-data">No hay resultados con los filtros actuales.</div>`;
+      const visibleRows = rows;
+      if (!visibleRows.length) {
+        contentDiv.innerHTML = '<div class="no-data">No hay resultados con los filtros actuales.</div>';
         return;
       }
 
       let html = `
-        <div class="rows-summary">Mostrando ${visibleRows.length} de ${filteredRows.length} inscripciones.</div>
+        <div class="rows-summary">Mostrando ${visibleRows.length} de ${adminUiState.total ?? visibleRows.length} inscripciones. Página ${adminUiState.page}.</div>
         <div class="table-scroll">
           <table>
             <thead>
@@ -1281,67 +1264,65 @@ src="https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1"
       };
     }
 
-    // Batch 1A: lectura vía /api/admin-list-inscriptions (Bearer + allowlist
-    // server-side). El navegador ya NO hace SELECT directo a inscripciones.
-    // Paginamos en servidor (limit 100) y concatenamos para preservar el
-    // comportamiento actual del panel (filtros/búsqueda en cliente intactos).
-    const ADMIN_LIST_PAGE_LIMIT = 100;
-    const ADMIN_LIST_MAX_PAGES = 20;
+    // Request only the current server page, never prefetch the whole listing.
+    function updateListPager() {
+      const previous = document.getElementById('listPrevious');
+      const next = document.getElementById('listNext');
+      const label = document.getElementById('listPageStatus');
+      if (previous) previous.disabled = listLoading || adminUiState.page <= 1;
+      if (next) next.disabled = listLoading || !adminUiState.hasMore;
+      if (label) label.textContent = listLoading ? 'Cargando inscripciones...' :
+        'Página ' + adminUiState.page + ' / ' + Math.max(1, Math.ceil((adminUiState.total || 0) / adminUiState.rowLimit)) + ' - ' + (adminUiState.total ?? '?') + ' resultados';
+    }
 
-    async function fetchAdminInscriptionsPage(token, status, page, eventSlug = 'all') {
-      const params = new URLSearchParams({
-        status: status || 'paid',
-        page: String(page),
-        limit: String(ADMIN_LIST_PAGE_LIMIT),
-        event: eventSlug || 'all',
+    async function fetchAdminInscriptionsPage(token, status, page, eventSlug = 'all', limit = 50, search = '') {
+      const params = new URLSearchParams({status: status || 'all', page: String(page),
+        limit: String(limit), event: eventSlug || 'all', search});
+      const response = await fetch('/api/admin-list-inscriptions?' + params.toString(), {
+        headers: { Authorization: 'Bearer ' + token }, cache: 'no-store',
       });
-      const response = await fetch(`/api/admin-list-inscriptions?${params.toString()}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      if (response.status === 401 || response.status === 403) {
-        throw new Error('Sesión no válida o sin permisos de administrador.');
-      }
+      if (response.status === 401 || response.status === 403) throw new Error('Sesión no válida o sin permisos de administrador.');
       if (!response.ok) {
         let msg = 'No se pudieron cargar las inscripciones.';
-        try {
-          const err = await response.json();
-          msg = err?.error || msg;
-        } catch (_) {}
+        try { msg = (await response.json())?.error || msg; } catch (_) {}
         throw new Error(msg);
       }
       return response.json();
     }
 
-    async function loadPaidInscriptions(client, statusFilter = "paid") {
-      const contentDiv = document.getElementById("content");
-
+    async function loadPaidInscriptions(client, statusFilter = 'all') {
+      clearTimeout(searchTimer);
+      const requestId = ++listRequestId;
+      const snapshot = {...adminUiState};
+      const contentDiv = document.getElementById('content');
+      listLoading = true;
+      if (typeof tableScrollFollowerCleanup === 'function') tableScrollFollowerCleanup();
+      tableScrollFollowerCleanup = null;
+      contentDiv.innerHTML = '<div class="no-data" role="status">Cargando inscripciones...</div>';
+      updateListPager();
       try {
-        const { data: { session } } = await client.auth.getSession();
-        const token = session?.access_token;
-        if (!token) {
-          throw new Error('Sesión no válida, vuelve a iniciar sesión.');
-        }
-
-        const rows = [];
-        for (let page = 1; page <= ADMIN_LIST_MAX_PAGES; page += 1) {
-          const payload = await fetchAdminInscriptionsPage(token, statusFilter, page, adminUiState.eventSlug);
-          if (Array.isArray(payload?.rows)) {
-            rows.push(...payload.rows);
-          }
-          if (!payload?.hasMore) break;
-        }
-
-        cachedRows = rows;
-
-        if (!cachedRows.length) {
-          contentDiv.innerHTML = `<div class="no-data">No hay inscripciones pagadas todavía.</div>`;
-          return;
+        const {data:{session}} = await client.auth.getSession();
+        if (requestId !== listRequestId) return;
+        if (!session?.access_token) throw new Error('Sesión no válida, vuelve a iniciar sesión.');
+        const payload = await fetchAdminInscriptionsPage(session.access_token, statusFilter,
+          snapshot.page, snapshot.eventSlug, snapshot.rowLimit, snapshot.searchTerm.trim());
+        if (requestId !== listRequestId) return;
+        cachedRows = Array.isArray(payload.rows) ? payload.rows : [];
+        adminUiState.total = payload.total;
+        adminUiState.hasMore = Boolean(payload.hasMore);
+        // Keep the current view valid after deleting/annulling its final row.
+        if (!cachedRows.length && snapshot.page > 1 && Number.isFinite(payload.total)) {
+          adminUiState.page = Math.max(1, Math.ceil(payload.total / snapshot.rowLimit));
+          return loadPaidInscriptions(client, statusFilter);
         }
         renderPaidInscriptions(cachedRows);
-
       } catch (err) {
-        console.error(err);
-        contentDiv.innerHTML = `<div class="error">Error al cargar los datos: ${escapeHtml(err.message)}</div>`;
+        if (requestId !== listRequestId) return;
+        cachedRows = [];
+        adminUiState.hasMore = false;
+        contentDiv.innerHTML = '<div class="error">Error al cargar los datos: ' + escapeHtml(err.message) + '</div>';
+      } finally {
+        if (requestId === listRequestId) { listLoading = false; updateListPager(); }
       }
     }
 
@@ -2651,23 +2632,41 @@ src="https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1"
         toggleResendEmailsBtn.textContent = isCollapsed ? 'Mostrar' : 'Minimizar';
       });
 
+      const reloadFirstPage = () => {
+        clearTimeout(searchTimer);
+        adminUiState.page = 1;
+        return loadPaidInscriptions(client, statusFilter.value || 'all');
+      };
       rowsPerPage?.addEventListener('change', () => {
-        adminUiState.rowLimit = rowsPerPage.value === 'all' ? 'all' : Number(rowsPerPage.value || 50);
-        renderPaidInscriptions(cachedRows);
+        adminUiState.rowLimit = [25, 50, 100, 200].includes(Number(rowsPerPage.value)) ? Number(rowsPerPage.value) : 50;
+        reloadFirstPage();
       });
-
       searchFilter?.addEventListener('input', () => {
         adminUiState.searchTerm = String(searchFilter.value || '');
-        renderPaidInscriptions(cachedRows);
+        adminUiState.page = 1;
+        ++listRequestId; // Invalidate immediately, before the debounced request starts.
+        clearTimeout(searchTimer);
+        listLoading = true;
+        if (typeof tableScrollFollowerCleanup === 'function') tableScrollFollowerCleanup();
+        tableScrollFollowerCleanup = null;
+        document.getElementById('content').innerHTML = '<div class="no-data" role="status">Cargando inscripciones...</div>';
+        updateListPager();
+        searchTimer = setTimeout(reloadFirstPage, 250);
       });
-
-      eventFilter?.addEventListener('change', async () => {
+      eventFilter?.addEventListener('change', () => {
         adminUiState.eventSlug = eventFilter.value || 'all';
-        await loadPaidInscriptions(client, statusFilter.value || 'all');
+        reloadFirstPage();
       });
-
-      statusFilter?.addEventListener('change', async () => {
-        await loadPaidInscriptions(client, statusFilter.value || 'all');
+      statusFilter?.addEventListener('change', reloadFirstPage);
+      document.getElementById('listPrevious')?.addEventListener('click', () => {
+        if (listLoading || adminUiState.page <= 1) return;
+        adminUiState.page -= 1;
+        loadPaidInscriptions(client, statusFilter.value || 'all');
+      });
+      document.getElementById('listNext')?.addEventListener('click', () => {
+        if (listLoading || !adminUiState.hasMore) return;
+        adminUiState.page += 1;
+        loadPaidInscriptions(client, statusFilter.value || 'all');
       });
 
       const refreshEmailsBtn = document.getElementById('refreshEmailsBtn');
