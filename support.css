@@ -81,3 +81,12 @@
   .support-page .support-send { width:100%; }
   .support-page .support-toolbar { justify-content:flex-start; }
 }
+
+.support-message-history { margin:8px 0 12px; }
+.support-message-history-page { max-height: min(48vh, 26rem); overflow:auto; overflow-anchor:none; border:1px solid #84959b; border-radius:10px; padding:10px; overflow-wrap:anywhere; }
+.support-message-history-page article + article { border-top:1px solid #84959b; margin-top:10px; padding-top:10px; }
+.support-message-history-page article p { margin:4px 0; white-space:pre-wrap; }
+.support-message-history-page time { font-size:.85rem; }
+.support-admin-panel .support-message-history button { color:#a6f1cd; }
+.support-message-history [hidden], .support-transcript[hidden], .support-admin-messages[hidden] { display:none !important; }
+.support-message-history button + button { margin-inline-start:10px; }

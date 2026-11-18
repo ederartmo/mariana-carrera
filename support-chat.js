@@ -22,6 +22,124 @@
     if (!cryptoApi || typeof cryptoApi.getRandomValues !== 'function') throw new Error('Este navegador no puede iniciar una sesión segura.');
     return Array.from(cryptoApi.getRandomValues(new Uint8Array(32)), n => n.toString(16).padStart(2, '0')).join('');
   }
+  function retryAfterSeconds(response) {
+    const value = Number(response.headers?.get?.('Retry-After'));
+    return value > 0 && Number.isFinite(value) ? Math.min(3600, Math.ceil(value)) : 60;
+  }
+
+  function createHistoryPager({ fetchPage, render, onError, onState = () => {}, isActive = () => true, now = Date.now }) {
+    let messages = [], cursor = null, started = false, busy = false, until = 0, generation = 0;
+    const notify = () => onState({ started, busy, done: started && !cursor, until });
+    return {
+      async load() {
+        if (!isActive() || busy || (started && !cursor) || now() < until) return;
+        const current = generation;
+        busy = true; notify();
+        try {
+          const page = await fetchPage(cursor);
+          if (current !== generation || !isActive()) return;
+          if (!Array.isArray(page.messages) || (page.nextCursor && page.nextCursor === cursor)) throw new Error('Invalid history page');
+          messages = [...new Map([...page.messages, ...messages].map(item => [item.id,item])).values()];
+          cursor = page.nextCursor || null;
+          started = true;
+          render(messages);
+        } catch (error) {
+          if (current !== generation || !isActive()) return;
+          if (error.status === 429) until = now() + (error.retryAfter || 60) * 1000;
+          onError(error, until);
+        } finally {
+          if (current === generation) { busy = false; if (isActive()) notify(); }
+        }
+      },
+      reset() { generation++; messages = []; cursor = null; started = false; busy = false; until = 0; notify(); },
+    };
+  }
+
+  function withScrollAnchor(scroller, write) {
+    const nodes = () => Array.from(scroller.querySelectorAll('[data-message-id]'));
+    const top = scroller.getBoundingClientRect().top;
+    const anchor = nodes().find(node => node.getBoundingClientRect().bottom > top);
+    const id = anchor?.dataset.messageId;
+    const oldTop = anchor?.getBoundingClientRect().top;
+    const scroll = scroller.scrollTop;
+    write();
+    const next = id && nodes().find(node => node.dataset.messageId === id);
+    scroller.scrollTop = next ? scroll + next.getBoundingClientRect().top - oldTop : scroll;
+  }
+
+  function mountMessageHistory({ doc, host, fetchPage, isActive, setReading = () => {} }) {
+    const section = doc.createElement('section');
+    section.className = 'support-message-history';
+    section.setAttribute('aria-label','Historial paginado');
+    const button = doc.createElement('button');
+    button.type = 'button'; button.className = 'support-link-button';
+    const close = doc.createElement('button');
+    close.type = 'button'; close.className = 'support-link-button';
+    close.textContent = 'Volver a la conversación'; close.hidden = true;
+    const notice = doc.createElement('p');
+    notice.setAttribute('role','status');
+    const scroller = doc.createElement('div'); scroller.className = 'support-message-history-page';
+    scroller.tabIndex = 0;
+    scroller.setAttribute('role','region');
+    scroller.setAttribute('aria-label','Mensajes del historial');
+    scroller.hidden = true;
+    section.append(button, close, notice, scroller);
+    host.prepend(section);
+    let timer, visible = true;
+    const active = () => visible && section.isConnected && isActive();
+    const format = new Intl.DateTimeFormat('es-MX',{dateStyle:'short',timeStyle:'short'});
+    const pager = createHistoryPager({
+      fetchPage, isActive: active,
+      render(messages) {
+        scroller.hidden = false; close.hidden = false; setReading(true);
+        notice.textContent = messages.length ? 'Historial. Los mensajes nuevos aparecen en la conversación.' : 'No hay mensajes.';
+        withScrollAnchor(scroller, () => {
+          const fragment = doc.createDocumentFragment();
+          for (const item of messages) {
+            const article = doc.createElement('article');
+            article.dataset.messageId = item.id;
+            const author = doc.createElement('strong');
+            author.textContent = item.author === 'admin' ? 'Equipo Kinetic Hub' : 'Visitante';
+            const body = doc.createElement('p'); body.textContent = item.body;
+            const time = doc.createElement('time');
+            const date = new Date(item.created_at);
+            if (item.created_at && Number.isFinite(date.getTime())) { time.dateTime = item.created_at; time.textContent = format.format(date); }
+            article.append(author, body, time);
+            fragment.append(article);
+          }
+          scroller.replaceChildren(fragment);
+        });
+        if (scroller.dataset.opened !== 'yes') { scroller.scrollTop = scroller.scrollHeight; scroller.dataset.opened = 'yes'; }
+      },
+      onError(error) {
+        if (error.status === 401 || error.status === 403) {
+          section.hidden = true; visible = false;
+          scroller.replaceChildren(); setReading(false);
+        } else {
+          notice.textContent = error.status === 429 ? 'Espera antes de cargar otra página. Puedes seguir enviando mensajes.' : 'No se pudo cargar el historial. Inténtalo nuevamente.';
+        }
+      },
+      onState({started,busy,done,until}) {
+        clearTimeout(timer);
+        button.textContent = busy ? 'Cargando historial…' : done ? 'No hay mensajes anteriores' : started ? 'Cargar mensajes anteriores' : 'Abrir historial de mensajes';
+        button.disabled = busy || done || Date.now() < until;
+        if (Date.now() < until) timer = setTimeout(() => { if (active()) button.disabled = done; }, until - Date.now());
+      },
+    });
+    pager.reset();
+    function resetReader() {
+      scroller.hidden = true; close.hidden = true; setReading(false);
+      scroller.replaceChildren(); delete scroller.dataset.opened;
+      notice.textContent = ''; pager.reset();
+    }
+    button.addEventListener('click', () => pager.load());
+    close.addEventListener('click', () => { resetReader(); button.focus(); });
+    return {
+      show() { section.hidden = false; },
+      reset() { section.hidden = true; resetReader(); },
+    };
+  }
+
   function createPublicClient({ storage, fetch: fetcher, crypto: cryptoApi, makeRequestId, endpoint = '/api/support-chat' }) {
     const requestId = makeRequestId || (() => uuid(cryptoApi || globalThis.crypto));
     let token = storage.getItem(TOKEN_KEY);
@@ -32,7 +150,7 @@
     async function request(action, operation) {
       const response = await fetcher(endpoint, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action, token: ensureToken(), ...operation }) });
       const data = await json(response);
-      if (!response.ok || data.ok !== true) { const error = new Error(data.error || 'No fue posible completar la solicitud.'); error.status = response.status; throw error; }
+      if (!response.ok || data.ok !== true) { const error = new Error(data.error || 'No fue posible completar la solicitud.'); error.status = response.status; if (response.status === 429) error.retryAfter = retryAfterSeconds(response); throw error; }
       return data;
     }
     async function beginOrSend(action, body, category) {
@@ -59,6 +177,7 @@
       send: body => beginOrSend('send', body),
       retryPending,
       read: () => request('read', {}),
+      history: before => request('history', before ? { before } : {}),
       clear() { token = null; pending = null; storage.removeItem(TOKEN_KEY); storage.removeItem(PENDING_KEY); }
     };
   }
@@ -70,7 +189,7 @@
       if (!token) throw new Error('Tu sesión administrativa expiró. Inicia sesión nuevamente.');
       const response = await fetcher(url, { ...options, headers: { Authorization: `Bearer ${token}`, ...(options.body ? { 'Content-Type': 'application/json' } : {}), ...(options.headers || {}) } });
       const data = await json(response);
-      if (!response.ok || data.ok !== true) { const error = new Error(data.error || 'No fue posible cargar la atención.'); error.status = response.status; throw error; }
+      if (!response.ok || data.ok !== true) { const error = new Error(data.error || 'No fue posible cargar la atención.'); error.status = response.status; if (response.status === 429) error.retryAfter = retryAfterSeconds(response); throw error; }
       return data;
     }
     return {
@@ -79,6 +198,11 @@
         for (const key of ['status', 'category', 'assignee']) if (filters[key] !== undefined) query.set(key, filters[key]);
         if (cursor) { query.set('before', cursor.createdAt); query.set('beforeId', cursor.id); }
         return call(query.size ? endpoint + '?' + query : endpoint);
+      },
+      history: (id, before) => {
+        const query = new URLSearchParams({ id, view: 'messages' });
+        if (before) query.set('before',before);
+        return call(endpoint + '?' + query);
       },
       detail: id => call(`${endpoint}?id=${encodeURIComponent(id)}`),
       update: ({ id, expectedVersion, action, body, status, category, assignToMe, assignTo }) => call(endpoint, { method: 'POST', body: JSON.stringify({ id, requestId: makeId(), expectedVersion, action, ...(body === undefined ? {} : { body }), ...(status ? { status } : {}), ...(category ? { category } : {}), ...(assignToMe === undefined ? {} : { assignToMe }), ...(assignTo === undefined ? {} : { assignTo }) }) })
@@ -144,11 +268,18 @@
     const retry = container.querySelector('[data-support-retry]');
     const empty = container.querySelector('[data-support-empty]');
     const state = container.querySelector('[data-support-state]');
+    const historyHost = container.querySelector('[data-support-history-host="on"]');
+    const reader = historyHost && mountMessageHistory({
+      doc, host: historyHost, fetchPage: client.history, isActive: () => !container.hidden,
+      setReading: reading => { transcript.hidden = reading; },
+    });
+    reader?.reset();
     function syncRetry() {
       if (retry) { retry.hidden = !client.hasPending; retry.disabled = busy; }
       submit.disabled = busy || client.hasPending;
     }
     function resetHistory() {
+      reader?.reset();
       transcript.replaceChildren();
       if (empty) empty.hidden = false;
       if (state) state.hidden = true;
@@ -182,7 +313,8 @@
         }
         else if (!started) data = await client.start({ category: categoryInput.value, body: bodyInput.value });
         else data = await client.send(bodyInput.value);
-        started = true; render(data); if (action !== 'human') bodyInput.value = '';
+        reader?.show();
+        started = true; render(data); if (action === 'send' || action === 'retry') bodyInput.value = '';
         const status = { pending: 'Pendiente', in_progress: 'Abierto', resolved: 'Resuelto' }[data.ticket?.status];
         if (state) {
           state.hidden = !status;
@@ -191,7 +323,7 @@
         message(action === 'read' ? 'Historial actualizado.' :
           action === 'human' ? 'Solicitud de atención recibida.' : 'Mensaje enviado al equipo de soporte.');
       } catch (error) {
-        if (account && action === 'read' && error.status === 404) { started = false; message('Todavia no tienes una conversacion. Escribe un mensaje para empezar.'); return; }
+        if (account && action === 'read' && error.status === 404) { resetHistory(); started = false; message('Todavia no tienes una conversacion. Escribe un mensaje para empezar.'); return; }
         if (error.status === 401) { resetHistory(); started = false; }
         message(error.status === 404 || error.status === 410 ? 'La sesión de conversación venció o no está disponible. Puedes intentar de nuevo o borrar esta sesión para iniciar otra. Tu mensaje no se envió.' : `No pudimos confirmar la recepción: ${error.message} ${client.hasPending ? 'Usa “Reintentar envío” para repetir la misma solicitud de forma segura.' : ''}`);
       } finally { busy = false; syncRetry(); clearButton.disabled = false; readButton.disabled = false; if (humanButton) humanButton.disabled = false; }
@@ -210,5 +342,5 @@
     return client;
   }
 
-  return { TOKEN_KEY, PENDING_KEY, createPublicClient, createAdminClient, createSessionTransport, connectPublicSupportChat, mountPublicSupportChat, capability, uuid };
+  return { createHistoryPager, withScrollAnchor, mountMessageHistory, TOKEN_KEY, PENDING_KEY, createPublicClient, createAdminClient, createSessionTransport, connectPublicSupportChat, mountPublicSupportChat, capability, uuid };
 });

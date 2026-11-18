@@ -146,3 +146,72 @@ test('expired bearer never falls back to guest or reaches the conversation RPC',
  assert.equal(res.statusCode, 401);
  assert.equal(res.body.code, 'invalid_session');
 });
+
+test('public history has its own quota and never falls back from an invalid account', async () => {
+  const handler = require('../lib/support-chat');
+  const owner = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa';
+  const before = crypto.randomUUID();
+  const calls = [];
+  let rejectHistory = false;
+  const deps = {
+    rateLimit: async ({ scope }) => {
+      calls.push(scope);
+      return rejectHistory && scope === 'support_history_capability' ? { allowed: false, retryAfter: 17 } : { allowed: true };
+    },
+    auth: async () => ({ user: { id: owner, email_confirmed_at: 'verified' } }),
+    rpc: async (name, args) => {
+      calls.push(name);
+      if (name === 'support_visitor_message_history') {
+        assert.equal(args.p_owner_user_id, owner);
+        assert.equal(args.p_before, before);
+        assert.notEqual(args.p_capability_hash, token);
+        return { data: { ok: true, messages: [], nextCursor: null, assigned_to: 'never expose' } };
+      }
+      return { data: { ok:true, ticket: { id: before }, messages: [] } };
+    },
+  };
+  const headers = { authorization: 'Bearer synthetic' };
+  const history = request('POST', { action:'history',token,before }, { headers });
+  const result = response();
+  await handler(history,result,deps);
+  assert.deepEqual(result.body,{ok:true,messages:[],nextCursor:null});
+  assert.deepEqual(calls,['support_history','support_history_capability','support_visitor_message_history']);
+  rejectHistory = true;
+  const limited = response();
+  await handler(history,limited,deps);
+  assert.equal(limited.statusCode,429);
+  assert.equal(limited.headers['retry-after'],'17');
+  const send = response();
+  await handler(request('POST',{ action:'send',token,requestId:crypto.randomUUID(),body:'fixture' },{headers}),send,deps);
+  assert.equal(send.statusCode,200);
+  assert.deepEqual(calls.slice(-3),['support_send','support_capability','support_visitor_action']);
+  for (const [req, extra, status] of [
+    [history,{ auth: async () => ({error:true}) },401],
+    [request('POST',{action:'history',token,before:'malformed'}),{},400],
+    [history,{rpc:async()=>({data:{error:'not_found'}}),rateLimit:allow},404],
+  ]) {
+    const res = response();
+    await handler(req,res,{ ...deps,...extra });
+    assert.equal(res.statusCode,status);
+  }
+});
+
+test('admin history validates the filter after auth and returns only its history projection', async () => {
+  const handler = require('../lib/admin-support');
+  const id = crypto.randomUUID(), before = crypto.randomUUID();
+  const deps = {
+    auth: async () => ({email:'admin@example.test'}), rateLimit: allow,
+    client: { rpc:async(name,args)=>{
+      assert.equal(name,'support_admin_message_history');
+      assert.deepEqual(args,{p_ticket_id:id,p_before:before});
+      return {data:{ok:true,messages:[{id:before}],nextCursor:null,assignees:['not needed']}};
+    } },
+  };
+  const req=request('GET',null,{query:{id,view:'messages',before}});
+  const res=response();
+  await handler(req,res,deps);
+  assert.deepEqual(res.body,{ok:true,messages:[{id:before}],nextCursor:null});
+  const denied=response();
+  await handler(req,denied,{...deps,auth:async()=>({error:true,status:403}),client:{rpc:()=>assert.fail('unauthorized query')}});
+  assert.equal(denied.statusCode,403);
+});
