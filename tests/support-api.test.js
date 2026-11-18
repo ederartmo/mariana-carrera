@@ -146,3 +146,32 @@ test('expired bearer never falls back to guest or reaches the conversation RPC',
  assert.equal(res.statusCode, 401);
  assert.equal(res.body.code, 'invalid_session');
 });
+
+test('official public chat origins survive apex/www and proxy host differences', async () => {
+ const handler = require('../lib/support-chat');
+ const previous = process.env.SITE_URL;
+ try {
+   for (const [configured, hostname] of [['www.kinetichub.com.mx','kinetichub.com.mx'], ['kinetichub.com.mx','www.kinetichub.com.mx']]) {
+     process.env.SITE_URL = 'https://' + configured;
+     for (const host of [hostname, 'deployment.vercel.app']) {
+       const res = response();
+       await handler(request('POST', {action:'read', token}, {headers:{origin:'https://' + hostname,host}}), res, {
+         rateLimit:allow, rpc:async()=>({data:{ok:true,messages:[]}})
+       });
+       assert.equal(res.statusCode, 200, JSON.stringify(res.body));
+     }
+   }
+ } finally { process.env.SITE_URL = previous; }
+});
+
+test('public chat rejects attacker-controlled hosts and missing or non-exact origins', async () => {
+ const handler = require('../lib/support-chat');
+ for (const origin of [undefined, 'null', 'http://kinetichub.com.mx', 'https://kinetichub.com.mx:444', 'https://kinetichub.com.mx.evil.test', 'https://www.kinetichub.com.mx@evil.test', 'https://evil.test']) {
+   const res = response();
+   await handler(request('POST', {action:'read', token}, {headers:{origin,host:'kinetichub.com.mx','x-forwarded-host':'www.kinetichub.com.mx','sec-fetch-site':'same-origin'}}), res, {
+     rateLimit:async()=>assert.fail('rate limit called'), rpc:async()=>assert.fail('RPC called')
+   });
+   assert.equal(res.statusCode, 403);
+   assert.equal(res.body.code, 'origin_not_allowed');
+ }
+});
