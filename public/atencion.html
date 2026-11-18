@@ -9,8 +9,8 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Sora:wght@500;600;700;800&display=swap" rel="stylesheet" />
-    <link rel="stylesheet" href="styles.min.css?v=support-phase-one-local" />
-    <link rel="stylesheet" href="support.css?v=support-phase-one-local" />
+    <link rel="stylesheet" href="styles.min.css?v=support-clarity" />
+    <link rel="stylesheet" href="support.css?v=support-clarity" />
     <link rel="icon" type="image/png" href="assets/brand/icon.png" />
   </head>
   <body class="support-page">
@@ -30,40 +30,53 @@
     <main class="support-main">
       <section class="support-hero">
         <div class="container support-hero-inner">
-          <p class="eyebrow">ATENCIÓN KINETIC HUB</p>
-          <h1>Hablemos de tu <em>próximo paso</em>.</h1>
-          <p>Escribe al equipo de atención. Tus mensajes quedan vinculados a una solicitud para que podamos dar seguimiento.</p>
+          <h1>Soporte Kinetic Hub</h1>
+          <p>Escribe al equipo de atenci&#243;n. Una persona responder&#225; aqu&#237;; no es un chat en tiempo real.</p>
         </div>
       </section>
       <section class="container support-layout" aria-labelledby="supportHeading">
         <div class="support-chat-card" data-support-chat>
-          <div class="support-card-heading"><div><p class="eyebrow">CONVERSACIÓN</p><h2 id="supportHeading">Atención de una persona</h2></div><span class="support-status-dot" aria-label="Atención humana"></span></div>
-          <p class="support-intro">No es un asistente automático. El equipo leerá tu mensaje y responderá aquí cuando pueda atenderlo.</p>
-          <div class="support-transcript" data-support-messages role="log" aria-live="polite" aria-relevant="additions text" aria-label="Mensajes de atención"></div>
-          <p class="support-notice" data-support-notice role="status" aria-live="polite">Inicia una conversación con un mensaje. El historial se conserva en este navegador.</p>
-          <form data-support-form class="support-form">
-            <label for="supportCategory">¿Sobre qué tema necesitas ayuda?</label>
+          <div class="support-card-heading">
+            <h2 id="supportHeading">Tu conversaci&#243;n</h2>
+            <span class="support-ticket-state" data-support-state role="status" hidden></span>
+          </div>
+          <div class="support-history">
+            <p class="support-empty" data-support-empty>Todav&#237;a no hay mensajes.</p>
+            <div class="support-transcript" data-support-messages role="log" aria-live="polite" aria-label="Historial de mensajes"></div>
+          </div>
+          <form data-support-form class="support-form" aria-labelledby="composeHeading">
+            <h3 id="composeHeading">Escribe un mensaje</h3>
+            <p class="support-compose-note">Tu primer mensaje crea una solicitud de atenci&#243;n. Las siguientes respuestas quedan en la misma conversaci&#243;n.</p>
+            <label for="supportCategory">Tema</label>
             <select id="supportCategory" name="category">
               <option value="general">Consulta general</option><option value="events">Eventos</option><option value="registration">Inscripciones</option><option value="other">Otro tema</option>
             </select>
-            <label for="supportMessage">Tu mensaje <span>(máximo 2000 caracteres)</span></label>
-            <textarea id="supportMessage" name="supportMessage" maxlength="2000" rows="4" required placeholder="Cuéntanos cómo podemos ayudarte."></textarea>
-            <div class="support-actions"><button class="btn btn-primary" type="submit">Enviar mensaje</button><button class="support-link-button" type="button" data-support-retry hidden>Reintentar envío</button></div>
+            <label for="supportMessage">Mensaje <span>(m&#225;ximo 2000 caracteres)</span></label>
+            <textarea id="supportMessage" name="supportMessage" maxlength="2000" rows="3" required placeholder="Cu&#233;ntanos c&#243;mo podemos ayudarte."></textarea>
+            <div class="support-actions">
+              <button class="btn btn-primary support-send" type="submit" disabled>Enviar mensaje</button>
+              <button class="support-link-button" type="button" data-support-retry hidden>Reintentar env&#237;o</button>
+            </div>
+            <p class="support-notice" data-support-notice role="status" aria-live="polite">Preparando el chat&#8230;</p>
           </form>
-          <div class="support-toolbar"><button class="support-link-button" type="button" data-support-human>Solicitar atenci&#243;n humana</button><button class="support-link-button" type="button" data-support-refresh>Actualizar conversación</button><button class="support-link-button" type="button" data-support-clear>Borrar esta sesión</button></div>
+          <div class="support-toolbar" role="group" aria-label="Acciones de conversaci&#243;n">
+            <button class="support-link-button" type="button" data-support-refresh>Actualizar conversaci&#243;n</button>
+            <button class="support-link-button" type="button" data-support-human>Solicitar atenci&#243;n humana</button>
+            <button class="support-link-button" type="button" data-support-clear>Borrar esta sesi&#243;n</button>
+          </div>
         </div>
-        <aside class="support-aside">
-          <h2>También puedes contactarnos</h2>
-          <p>WhatsApp y el formulario de contacto siguen disponibles.</p>
-          <a class="btn btn-primary" href="https://wa.me/525530790944" target="_blank" rel="noopener noreferrer">Continuar por WhatsApp</a>
-          <a class="support-secondary-link" href="contacto.html#contactForm">Abrir formulario de contacto</a>
-          <p class="support-privacy-note">La conversación se asocia a una sesión de este navegador. Si borras los datos del navegador, ya no podrás recuperar el historial desde aquí.</p>
+        <aside class="support-aside" aria-labelledby="supportOtherChannels">
+          <h2 id="supportOtherChannels">Otros canales</h2>
+          <p>Usa este chat para seguir una solicitud. Si prefieres escribirnos fuera del chat, puedes usar WhatsApp o el formulario de contacto.</p>
+          <a class="support-secondary-link" href="https://wa.me/525530790944" target="_blank" rel="noopener noreferrer">Escribir por WhatsApp</a>
+          <a class="support-secondary-link" href="contacto.html#contactForm">Ir al formulario de contacto</a>
+          <p class="support-privacy-note">Si entras como invitado, el historial queda disponible en esta sesi&#243;n del navegador. Si inicias sesi&#243;n, puedes recuperar las conversaciones de tu cuenta. No env&#237;es contrase&#241;as ni datos de tarjetas.</p>
         </aside>
       </section>
     </main>
     <footer class="site-footer"><div class="container footer-bottom-shell"><small>© <span id="yearNow"></span> Kinetic Hub. Todos los derechos reservados.</small><div class="footer-links"><a href="privacidad.html">Privacidad</a><a href="terminos.html">Términos</a><a href="contacto.html">Contacto</a></div></div></footer>
-    <script src="support-chat.js?v=support-phase-one-local"></script>
-    <script src="supabase-client.js?v=support-phase-one-local"></script>
+    <script src="support-chat.js?v=support-clarity"></script>
+    <script src="supabase-client.js?v=support-clarity"></script>
     <script>
       document.addEventListener('DOMContentLoaded', async function () {
         const notice = document.querySelector('[data-support-notice]');
@@ -71,11 +84,12 @@
           const client = await window.KineticHubSupabase.ensureClient();
           if (!client) throw new Error('Supabase Auth unavailable');
           await window.KineticHubSupport.connectPublicSupportChat({ authClient: client });
+          if (notice.textContent.includes('Preparando')) notice.textContent = '';
         } catch (_) {
           notice.textContent = 'No pudimos comprobar la sesion. Recarga la pagina para volver a intentar.';
         }
       });
     </script>
-    <script src="script.min.js?v=support-phase-one-local"></script>
+    <script src="script.min.js?v=support-clarity"></script>
   </body>
 </html>
