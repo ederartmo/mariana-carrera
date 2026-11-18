@@ -1,6 +1,6 @@
 (function (root) {
   'use strict';
-  function mount({ document: doc = document, fetch: fetcher = fetch, getToken, root: container = doc.querySelector('[data-admin-support]') } = {}) {
+  function mount({ document: doc = document, fetch: fetcher = fetch, getToken, isActive = () => true, root: container = doc.querySelector('[data-admin-support]') } = {}) {
     if (!container || !root.KineticHubSupport) return null;
     const client = root.KineticHubSupport.createAdminClient({ fetch: fetcher, getToken });
     const list = container.querySelector('[data-ticket-list]'); const detail = container.querySelector('[data-ticket-detail]');
@@ -20,21 +20,27 @@
       if (next) next.disabled = busy || listing || !nextCursor;
     }
     let listSequence = 0;
-    let sequence = 0; let selected = null; let busy = false;
+    let sequence = 0; let selected = null; let busy = false; let mutation = 0;
+    let detailReading = false, listPayload = '', detailPayload = '', pollWarning = '', shownAssignee = '';
     const say = value => { notice.textContent = value; };
     function setBusy(value) { busy = value; container.querySelectorAll('button, select, textarea').forEach(control => { control.disabled = value; }); renderPager(); }
     function textNode(tag, value, className) { const node = doc.createElement(tag); node.textContent = value || ''; if (className) node.className = className; return node; }
-    async function loadList() {
-      if (busy) return;
+    async function loadList(quiet = false) {
+      if (busy || !isActive() || (quiet && listing)) return;
       const current = ++listSequence;
-      listing = true; refresh.disabled = true; list.textContent = 'Cargando solicitudes...'; renderPager();
+      const epoch = mutation;
+      listing = true;
+      if (!quiet) { listPayload = ''; refresh.disabled = true; list.textContent = 'Cargando solicitudes...'; renderPager(); }
       const filters = {status:filterStatus?.value || undefined,category:filterCategory?.value || undefined,
         assignee:filterAssignee?.value === '*' ? undefined : filterAssignee?.value};
       const cursor = cursors.at(-1);
       try {
-        const data = await client.list(filters, cursor); if (current !== listSequence) return;
+        const data = await client.list(filters, cursor); if (!isActive() || current !== listSequence || epoch !== mutation) return;
+        const payload = JSON.stringify(data);
+        if (quiet && payload === listPayload) return;
+        listPayload = payload;
         nextCursor = data.nextCursor || null;
-        if (filterAssignee) {
+        if (filterAssignee && doc.activeElement !== filterAssignee) {
           const selectedFilter = filterAssignee.value;
           filterAssignee.replaceChildren(new Option('Todos','*'), new Option('Sin asignar',''));
           for (const email of data.assignees || []) filterAssignee.add(new Option(email,email));
@@ -46,46 +52,79 @@
           button.append(textNode('strong', `Solicitud ${ticket.id.slice(0, 8)}`), textNode('span', `${ticket.status === 'pending' ? 'Pendiente' : ticket.status === 'in_progress' ? 'En proceso' : 'Resuelto'} · ${ticket.category}`), textNode('small', `Actualizada: ${ticket.updated_at || '—'}`));
           button.addEventListener('click', () => loadDetail(ticket.id)); fragment.append(button);
         }
-        list.replaceChildren(fragment); if (!data.tickets?.length) list.append(textNode('p', 'No hay solicitudes de atención.'));
-        say('Lista actualizada.');
-      } catch (error) { if (current === listSequence) { nextCursor = null; list.textContent = 'No se pudo cargar esta pagina.'; say(error.message); } }
-      finally { if (current === listSequence) { listing = false; refresh.disabled = false; renderPager(); } }
+        const listTop = list.scrollTop;
+        const focusedId = list.contains?.(doc.activeElement) && doc.activeElement?.dataset?.ticketId;
+        list.replaceChildren(fragment);
+        list.scrollTop = listTop;
+        if (focusedId) [...list.querySelectorAll('[data-ticket-id]')].find(row => row.dataset.ticketId === focusedId)?.focus({ preventScroll: true }); if (!data.tickets?.length) list.append(textNode('p', 'No hay solicitudes de atención.'));
+        if (!quiet) say('Lista actualizada.');
+      } catch (error) { if (quiet) throw error; if (isActive() && current === listSequence) { nextCursor = null; list.textContent = 'No se pudo cargar esta pagina.'; say(error.message); } }
+      finally { if (current === listSequence) { listing = false; refresh.disabled = busy; renderPager(); } }
     }
-    async function loadDetail(id) {
-      const current = ++sequence; selected = null; detail.textContent = 'Cargando solicitud…';
+    async function loadDetail(id, quiet = false) {
+      if (!isActive() || (quiet && (detailReading || busy))) return;
+      const current = quiet ? sequence : ++sequence;
+      const epoch = mutation;
+      detailReading = true;
+      if (!quiet) { detailPayload = ''; selected = null; detail.textContent = 'Cargando solicitud…'; }
       try {
-        const data = await client.detail(id); if (current !== sequence) return;
-        selected = data.ticket; detail.replaceChildren();
-        if (assignee) {
+        const data = await client.detail(id);
+        if (!isActive() || current !== sequence || epoch !== mutation || (quiet && selected?.id !== id)) return;
+        const payload = JSON.stringify(data);
+        const editing = quiet && (statusInput.value !== selected.status || categoryInput.value !== selected.category ||
+          (assignee && assignee.value !== shownAssignee) || [statusInput, categoryInput, assignee].includes(doc.activeElement));
+        if (quiet && payload === detailPayload && !(selected.version !== data.ticket.version && !editing)) return;
+        detailPayload = payload;
+        if (!editing) selected = data.ticket;
+        const shown = data.ticket;
+        const priorMessages = quiet && detail.querySelector?.('.support-admin-messages');
+        if (!priorMessages) detail.replaceChildren();
+        if (assignee && !editing) {
           assignee.replaceChildren(new Option('Selecciona un responsable', ''));
           for (const email of data.assignees || []) assignee.add(new Option(email, email));
-          assignee.value = (data.assignees || []).includes(selected.assigned_to) ? selected.assigned_to : '';
+          assignee.value = (data.assignees || []).includes(selected.assigned_to) ? selected.assigned_to : ''; shownAssignee = assignee.value;
         }
-        detail.append(textNode('h3', `Solicitud ${selected.id}`), textNode('p', `Estado: ${selected.status} · Categoría: ${selected.category} · Responsable: ${selected.assigned_to || 'Sin asignar'}`, 'support-admin-meta'));
-        const messages = doc.createElement('div'); messages.className = 'support-admin-messages';
-        for (const item of (data.messages || []).slice(-100)) {
-          const article = doc.createElement('article'); article.append(textNode('strong', item.author === 'admin' ? 'Equipo' : 'Visitante'), textNode('p', item.body), textNode('time', item.created_at || '')); messages.append(article);
+        const title = textNode('h3', `Solicitud ${shown.id}`);
+        const meta = textNode('p', `Estado: ${shown.status} · Categoría: ${shown.category} · Responsable: ${shown.assigned_to || 'Sin asignar'}`, 'support-admin-meta');
+        if (priorMessages) {
+          detail.querySelector('h3').replaceWith(title);
+          detail.querySelector('.support-admin-meta').replaceWith(meta);
+        } else detail.append(title, meta);
+        const messages = priorMessages || doc.createElement('div'); messages.className = 'support-admin-messages';
+        const entries = doc.createDocumentFragment();
+        for (const item of root.KineticHubSupport.uniqueMessages(data.messages || []).slice(-100)) {
+          const article = doc.createElement('article'); if (item.id) article.dataset.messageAnchor = item.id; article.append(textNode('strong', item.author === 'admin' ? 'Equipo' : 'Visitante'), textNode('p', item.body), textNode('time', item.created_at || '')); entries.append(article);
         }
-        detail.append(messages);
-        if (data.hasMore) detail.append(textNode('p', 'Se muestran los últimos 100 mensajes; existen mensajes anteriores.'));
+        if (!priorMessages) detail.append(messages);
+        root.KineticHubSupport.preserveReading(messages, () => messages.replaceChildren(entries));
+        const footer = doc.createElement('div'); footer.className = 'support-admin-history-footer';
+        if (data.hasMore) footer.append(textNode('p', 'Se muestran los últimos 100 mensajes; existen mensajes anteriores.'));
         const activity = doc.createElement('section'); activity.append(textNode('h4', 'Historial de actividad'));
         for (const event of data.activity || []) activity.append(textNode('p', `${event.action} · ${event.actor || 'Sistema'} · ${event.created_at || ''}`));
-        detail.append(activity); statusInput.value = selected.status; categoryInput.value = selected.category;
-      } catch (error) { if (current === sequence) { detail.textContent = error.status === 404 ? 'La solicitud no está disponible.' : `No se pudo cargar el detalle: ${error.message}`; say(error.message); } }
+        footer.append(activity);
+        if (priorMessages) detail.querySelector('.support-admin-history-footer').replaceWith(footer);
+        else detail.append(footer);
+        if (!editing) { statusInput.value = selected.status; categoryInput.value = selected.category; }
+      } catch (error) { if (quiet) throw error; if (isActive() && current === sequence) { detail.textContent = error.status === 404 ? 'La solicitud no está disponible.' : `No se pudo cargar el detalle: ${error.message}`; say(error.message); } }
+      finally { if (current === sequence) detailReading = false; }
     }
     async function change(action, fields) {
-      if (busy || !selected) return;
+      if (busy || !selected || !isActive()) return;
+      mutation++;
       setBusy(true);
       try {
         const data = await client.update({ id: selected.id, expectedVersion: selected.version, action, ...fields });
-        selected = data.ticket; replyInput.value = ''; setBusy(false); await loadDetail(selected.id); await loadList(); say('Cambios guardados.');
+        if (!isActive()) return;
+        selected = data.ticket;
+        if (action === 'reply') replyInput.value = '';
+        setBusy(false); await loadDetail(selected.id); await loadList(); say('Cambios guardados.');
       } catch (error) {
         if (error.status === 409) { const ticketId = selected?.id; say('Esta solicitud cambió en otra sesión. Actualizamos el detalle para evitar sobrescribir cambios.'); setBusy(false); if (ticketId) { await loadDetail(ticketId); await loadList(); } }
         else say(`No se guardó el cambio: ${error.message}`);
       } finally { setBusy(false); }
     }
     const clearSelection = () => {
-      ++sequence; selected = null;
+      ++sequence; detailReading = false; selected = null;
       detail.textContent = 'Selecciona una solicitud.';
       replyInput.value = '';
     };
@@ -101,8 +140,26 @@
     container.querySelector('[data-ticket-save]').addEventListener('click', () => change('update', { status: statusInput.value, category: categoryInput.value }));
     assign.addEventListener('click', () => change('update', { assignToMe: true }));
     container.querySelector('[data-ticket-assign-other]')?.addEventListener('click', () => { if (assignee?.value) change('update', { assignTo: assignee.value }); });
+    const tick = root.KineticHubSupport.createRefreshGate({
+      isVisible: () => isActive() && !container.hidden && container.isConnected !== false &&
+        !doc.hidden && !busy && !listing && !detailReading && container.getClientRects?.().length !== 0,
+      minGapMs: 25000,
+      async refresh() {
+        const epoch = mutation, choice = sequence;
+        await loadList(true);
+        if (selected && sequence === choice && epoch === mutation && !busy && !doc.hidden) await loadDetail(selected.id,true);
+        if (pollWarning && notice.textContent === pollWarning) say('');
+        pollWarning = '';
+      },
+      onError(error) {
+        if (!isActive()) return;
+        pollWarning = error.status === 429 ? 'Actualización en pausa por el límite temporal.' : 'No se pudo actualizar automáticamente. Se volverá a intentar.';
+        say(pollWarning);
+      },
+    });
+    const stop = root.KineticHubSupport.scheduleRefresh({ doc, tick, intervalMs: 35000 });
     loadList();
-    return { loadList, loadDetail };
+    return { loadList, loadDetail, tick, stop };
   }
   async function connect({ document: doc = document, authClient, fetch: fetcher = fetch } = {}) {
     const panel = doc.querySelector('[data-admin-support]');
@@ -114,7 +171,9 @@
     };
     const initial = await getSession();
     const ownerId = initial?.user?.id;
+    let controller;
     const invalidate = () => {
+      controller?.stop();
       panel.hidden = true;
       panel.replaceChildren();
     };
@@ -126,7 +185,7 @@
     const scoped = root.KineticHubSupport.createSessionTransport({
       ownerId, fetch: fetcher, getSession: async () => active ? getSession() : null,
     });
-    return mount({ document: doc, root: panel,
+    controller = mount({ document: doc, root: panel, isActive: () => active,
       getToken: async () => active ? (await getSession())?.access_token : null,
       fetch: async (...args) => {
         try {
@@ -139,6 +198,7 @@
         }
       },
     });
+    return controller;
   }
   root.connectAdminSupport = connect;
   if (typeof module === 'object' && module.exports) module.exports = { mount, connect };

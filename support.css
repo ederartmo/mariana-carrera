@@ -81,3 +81,4 @@
   .support-page .support-send { width:100%; }
   .support-page .support-toolbar { justify-content:flex-start; }
 }
+.support-admin-messages { overflow-anchor:none; }

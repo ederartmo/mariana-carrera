@@ -22,6 +22,54 @@
     if (!cryptoApi || typeof cryptoApi.getRandomValues !== 'function') throw new Error('Este navegador no puede iniciar una sesión segura.');
     return Array.from(cryptoApi.getRandomValues(new Uint8Array(32)), n => n.toString(16).padStart(2, '0')).join('');
   }
+  function retryDelayMs(value, now = Date.now()) {
+    const text = typeof value === 'string' ? value.trim() : '';
+    if (!text) return 60000;
+    if (/^\d+$/.test(text)) return Math.max(1000, Number(text) * 1000 || 1000);
+    const date = Date.parse(text);
+    return Number.isFinite(date) ? Math.max(1000, date - now) : 60000;
+  }
+  function createRefreshGate({ isVisible, refresh, minGapMs, onError = () => {}, now = Date.now }) {
+    let pending = false, next = -Infinity;
+    return async () => {
+      if (pending || !isVisible() || now() < next) return;
+      pending = true;
+      next = now() + minGapMs;
+      try { await refresh(); } catch (error) {
+        if (error.status === 429) next = Math.max(next, now() + (error.retryDelayMs || 60000));
+        onError(error);
+      } finally { pending = false; }
+    };
+  }
+  function scheduleRefresh({ doc, tick, intervalMs }) {
+    const win = doc.defaultView;
+    if (!win?.setInterval) return () => {};
+    const wake = () => { if (!doc.hidden) void tick(); };
+    const timer = win.setInterval(wake, intervalMs);
+    doc.addEventListener('visibilitychange', wake);
+    win.addEventListener('focus', wake);
+    return () => {
+      win.clearInterval(timer);
+      doc.removeEventListener('visibilitychange', wake);
+      win.removeEventListener('focus', wake);
+    };
+  }
+  function uniqueMessages(messages) {
+    const seen = new Set();
+    return messages.filter(m => !m.id || (!seen.has(m.id) && seen.add(m.id)));
+  }
+  function preserveReading(scroller, render) {
+    if (!scroller?.querySelectorAll || !scroller.getBoundingClientRect) return render();
+    const read = () => [...scroller.querySelectorAll('[data-message-anchor]')];
+    const top = scroller.getBoundingClientRect().top;
+    const anchor = read().find(node => node.getBoundingClientRect().bottom > top);
+    const offset = anchor?.getBoundingClientRect().top;
+    const scroll = scroller.scrollTop;
+    render();
+    const next = anchor && read().find(node => node.dataset.messageAnchor === anchor.dataset.messageAnchor);
+    scroller.scrollTop = next ? scroller.scrollTop + next.getBoundingClientRect().top - offset : scroll;
+  }
+
   const DRAFT_HANDOFF_KEY = 'kinetichub-support-handoff-v1';
   function createDraftHandoff({ storage, ownerId, now = Date.now }) {
     return {
@@ -60,7 +108,7 @@
     async function request(action, operation) {
       const response = await fetcher(endpoint, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action, token: ensureToken(), ...operation }) });
       const data = await json(response);
-      if (!response.ok || data.ok !== true) { const error = new Error(data.error || 'No fue posible completar la solicitud.'); error.status = response.status; throw error; }
+      if (!response.ok || data.ok !== true) { const error = new Error(data.error || 'No fue posible completar la solicitud.'); error.status = response.status; if (response.status === 429) error.retryDelayMs = retryDelayMs(response.headers?.get?.('Retry-After')); throw error; }
       return data;
     }
     async function beginOrSend(action, body, category) {
@@ -99,7 +147,7 @@
       if (!token) throw new Error('Tu sesión administrativa expiró. Inicia sesión nuevamente.');
       const response = await fetcher(url, { ...options, headers: { Authorization: `Bearer ${token}`, ...(options.body ? { 'Content-Type': 'application/json' } : {}), ...(options.headers || {}) } });
       const data = await json(response);
-      if (!response.ok || data.ok !== true) { const error = new Error(data.error || 'No fue posible cargar la atención.'); error.status = response.status; throw error; }
+      if (!response.ok || data.ok !== true) { const error = new Error(data.error || 'No fue posible cargar la atención.'); error.status = response.status; if (response.status === 429) error.retryDelayMs = retryDelayMs(response.headers?.get?.('Retry-After')); throw error; }
       return data;
     }
     return {
@@ -213,25 +261,29 @@
       if (empty) empty.hidden = false;
       if (state) state.hidden = true;
     }
+    let readEpoch = 0, quietReading = false, readBackoffUntil = 0;
     let rendered = ''; let busy = false; let started = Boolean(client.token);
     const message = text => { notice.textContent = text; };
     function render(data) {
-      const signature = JSON.stringify(data.messages || []);
+      const items = uniqueMessages(data.messages || []).slice(-100);
+      const signature = JSON.stringify(items);
       if (rendered === signature) return;
       rendered = signature;
       if (empty) empty.hidden = Boolean(data.messages?.length);
       const fragment = doc.createDocumentFragment();
-      for (const item of (data.messages || []).slice(-100)) {
+      for (const item of items) {
         const article = doc.createElement('article'); article.className = `support-message support-message--${item.author === 'admin' ? 'admin' : 'visitor'}`;
+        if (item.id) article.dataset.messageAnchor = item.id;
         const author = doc.createElement('strong'); author.textContent = item.author === 'admin' ? 'Equipo Kinetic Hub' : 'Tú';
         const text = doc.createElement('p'); text.textContent = item.body || '';
         const time = doc.createElement('time'); const date = new Date(item.created_at); time.textContent = item.created_at && Number.isFinite(date.getTime()) ? new Intl.DateTimeFormat('es-MX', { dateStyle: 'short', timeStyle: 'short' }).format(date) : ''; if (item.created_at) time.dateTime = item.created_at;
         article.append(author, text, time); fragment.append(article);
       }
-      { transcript.replaceChildren(fragment); if (data.hasMore) message('Mostramos los últimos 100 mensajes. Hay mensajes anteriores disponibles al continuar cargando el historial.'); }
+      { preserveReading(transcript.closest?.('.premium-scroll') || transcript, () => transcript.replaceChildren(fragment)); if (data.hasMore) message('Mostramos los últimos 100 mensajes. Hay mensajes anteriores disponibles al continuar cargando el historial.'); }
     }
-    async function run(action, quiet = false) {
-      if (busy || !isActive()) return;
+    async function run(action) {
+      if (busy || !isActive() || (action === 'read' && (quietReading || Date.now() < readBackoffUntil))) return;
+      readEpoch++;
       if (action === 'human' && client.hasPending) { message('Confirma primero el envio pendiente.'); return; }
       const submitted = action === 'retry' ? client.pendingBody : bodyInput.value.trim();
       busy = true; syncRetry(); clearButton.disabled = true; readButton.disabled = true; if (humanButton) humanButton.disabled = true;
@@ -253,12 +305,14 @@
           state.hidden = !status;
           state.textContent = status ? 'Solicitud: ' + status : '';
         }
-        if (!quiet) message(action === 'read' ? 'Historial actualizado.' :
+        message(action === 'read' ? 'Historial actualizado.' :
           action === 'human' ? 'Solicitud de atención recibida.' : 'Mensaje enviado al equipo de soporte.');
       } catch (error) {
         if (!isActive()) return;
-        if (quiet && ![401,404,410].includes(error.status)) return;
-        if (quiet && error.status === 404 && account) { resetHistory(); started = false; return; }
+        if (action === 'read' && error.status === 429) {
+          readBackoffUntil = Date.now() + (error.retryDelayMs || 60000);
+          message('Actualización en pausa por el límite temporal. Puedes seguir escribiendo.'); return;
+        }
         if (error.status === 410) resetHistory();
         if (account && action === 'read' && error.status === 404) { started = false; message('Todavia no tienes una conversacion. Escribe un mensaje para empezar.'); return; }
         if (error.status === 401) { resetHistory(); started = false; }
@@ -271,14 +325,39 @@
     clearButton.addEventListener('click', () => {
       const pendingCopy = client.hasPending ? ' Hay un mensaje pendiente que no se confirmó; anótalo antes de continuar.' : '';
       if (!doc.defaultView.confirm(`Borrar esta sesión de este navegador? No borra la conversación del equipo y el historial anterior ya no estará disponible desde este dispositivo.${pendingCopy}`)) return;
-      draftHandoff?.clear(); client.clear(); started = false; resetHistory(); syncRetry(); bodyInput.value = ''; message('Sesión borrada. El historial anterior sigue en el sistema, pero no estará disponible desde este dispositivo.');
+      readEpoch++; draftHandoff?.clear(); client.clear(); started = false; resetHistory(); syncRetry(); bodyInput.value = ''; message('Sesión borrada. El historial anterior sigue en el sistema, pero no estará disponible desde este dispositivo.');
     });
     retry?.addEventListener('click', () => run('retry'));
     syncRetry();
-    client.refresh = () => (started || account) && !client.hasPending ? run('read', true) : undefined;
+    let refreshWarning = '';
+    client.refresh = async () => {
+      if (!(started || account) || busy || quietReading || client.hasPending || !isActive() || Date.now() < readBackoffUntil) return;
+      const epoch = readEpoch;
+      quietReading = true;
+      try {
+        const data = await client.read();
+        if (epoch !== readEpoch || !isActive()) return;
+        if (refreshWarning && notice.textContent === refreshWarning) message('');
+        refreshWarning = '';
+        started = true;
+        render(data);
+        onTicket?.(data.ticket || null);
+      } catch (error) {
+        if (epoch !== readEpoch || !isActive()) return;
+        if ([401,404,410].includes(error.status)) {
+          resetHistory(); started = false;
+        }
+        if (error.status === 404 && account) return;
+        if (error.status === 429) readBackoffUntil = Date.now() + (error.retryDelayMs || 60000);
+        refreshWarning = error.status === 429 ? 'La actualización está en pausa por el límite temporal.' :
+          'No se pudo actualizar la conversación. Puedes actualizarla desde Opciones.';
+        message(refreshWarning);
+        throw error;
+      } finally { quietReading = false; }
+    };
     if ((started || account) && !client.hasPending) run('read');
     return client;
   }
 
-  return { createDraftHandoff, TOKEN_KEY, PENDING_KEY, createPublicClient, createAdminClient, createSessionTransport, connectPublicSupportChat, mountPublicSupportChat, capability, uuid };
+  return { createRefreshGate, scheduleRefresh, retryDelayMs, uniqueMessages, preserveReading, createDraftHandoff, TOKEN_KEY, PENDING_KEY, createPublicClient, createAdminClient, createSessionTransport, connectPublicSupportChat, mountPublicSupportChat, capability, uuid };
 });
