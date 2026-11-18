@@ -146,8 +146,11 @@
     host.addEventListener('keydown', event => { if (event.key === 'Escape' && !panel.hidden) { event.stopPropagation(); close(); } });
   }
 
-  const tick = createVisiblePoll(() => connection && !document.hidden && !panel.hidden,
-    async () => { const poll = await connection; await poll?.(); });
-  // Reads share the existing 100/hour capability bucket with messages.
-  window.setInterval(tick, POLL_INTERVAL_MS);
+  const support = window.KineticHubSupport;
+  const tick = support.createRefreshGate({
+    isVisible: () => connection && !document.hidden && !panel.hidden,
+    minGapMs: POLL_INTERVAL_MS,
+    refresh: async () => { const poll = await connection; await poll?.(); },
+  });
+  support.scheduleRefresh({ doc: document, tick, intervalMs: POLL_INTERVAL_MS });
 })();
