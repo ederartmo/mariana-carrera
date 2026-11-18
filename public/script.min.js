@@ -1645,7 +1645,7 @@ function setupNeonEventToggle() {
 }
 
 function setupWhatsAppButton() {
-  if (document.querySelector(".whatsapp-float")) return;
+  if (document.body.hasAttribute("data-premium-support") || document.querySelector(".whatsapp-float")) return;
 
   const phone = "525530790944";
   const isAxolotePage = document.title.includes("Axolote Night Run");
