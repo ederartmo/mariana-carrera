@@ -83,5 +83,3 @@
  .premium-expanded{grid-template-columns:minmax(0,1fr)}
  .premium-page-hero{gap:10px;align-items:flex-start}
 }
-
-.premium-widget:has(.premium-thread[hidden]){bottom:76px}

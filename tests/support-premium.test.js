@@ -55,3 +55,36 @@ test('mounted refresh preserves a draft and cannot repaint after identity change
   await stale;
   assert.equal(ticketCount, 2);
 });
+
+test('premium page declaration prevents legacy launcher creation before deferred scripts run', () => {
+  const fs = require('node:fs');
+  const vm = require('node:vm');
+  const path = require('node:path');
+  const read = p => fs.readFileSync(path.join(__dirname, '..', p), 'utf8');
+  const pages = ['index', 'eventos', 'evento', 'axolote-night-run', 'cascanueces-run', 'perrun-2027', 'contacto', 'atencion'];
+  for (const prefix of ['', 'public/']) {
+    for (const page of pages) {
+      const html = read(prefix + page + '.html');
+      assert.equal([...html.matchAll(/<body\b[^>]*\bdata-premium-support\b/g)].length, 1, prefix + page);
+    }
+    const source = read(prefix + 'script.min.js').match(/function setupWhatsAppButton\(\) \{[\s\S]*?\n\}/)[0];
+    let premium = true, additions = 0;
+    const document = {
+      title: 'Kinetic Hub',
+      querySelector: () => null,
+      createElement: () => ({}),
+      body: { hasAttribute: key => premium && key === 'data-premium-support', appendChild: () => additions++ },
+    };
+    vm.runInNewContext(source + '\nsetupWhatsAppButton();', { document });
+    assert.equal(additions, 0);
+    premium = false;
+    vm.runInNewContext(source + '\nsetupWhatsAppButton();', { document });
+    assert.equal(additions, 1);
+  }
+});
+
+test('visible polling reserves at least 40 requests hourly for user activity', () => {
+  const { POLL_INTERVAL_MS } = require('../support-premium.js');
+  assert.ok(POLL_INTERVAL_MS < 75000);
+  assert.ok(Math.ceil(3600000 / POLL_INTERVAL_MS) <= 60);
+});

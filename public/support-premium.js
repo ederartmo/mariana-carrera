@@ -1,6 +1,9 @@
 (function () {
   'use strict';
 
+  // 60 scheduled reads per visible hour; the shared cap is 100 per hour.
+  const POLL_INTERVAL_MS = 60_000;
+
   function createVisiblePoll(isVisible, refresh) {
     let running = false;
     return async function tick() {
@@ -10,7 +13,7 @@
     };
   }
 
-  if (typeof module !== 'undefined') { module.exports = { createVisiblePoll }; return; }
+  if (typeof module !== 'undefined') { module.exports = { createVisiblePoll, POLL_INTERVAL_MS }; return; }
 
   const icons = {
     chat: '<path d="M20 15a3 3 0 0 1-3 3H9l-5 3V6a3 3 0 0 1 3-3h10a3 3 0 0 1 3 3z"/>',
@@ -85,6 +88,7 @@
   const expandedHost = document.querySelector('[data-premium-expanded]');
   const expanded = Boolean(expandedHost);
   const host = expandedHost || document.createElement('div');
+  if (document.getElementById('premium-conversation')) return;
   host.classList.add('premium-support', expanded ? 'premium-expanded' : 'premium-widget');
   host.innerHTML = (expanded ? '' : '<button type="button" class="premium-launch" aria-expanded="false" aria-controls="premium-conversation">' + icon('chat') + '<span>Soporte</span></button>') +
     '<section class="premium-thread" data-support-chat id="premium-conversation" aria-labelledby="premium-thread-title"' + (expanded ? '' : ' hidden') + '>' + thread(expanded) + '</section>' +
@@ -145,5 +149,5 @@
   const tick = createVisiblePoll(() => connection && !document.hidden && !panel.hidden,
     async () => { const poll = await connection; await poll?.(); });
   // Reads share the existing 100/hour capability bucket with messages.
-  window.setInterval(tick, 75000);
+  window.setInterval(tick, POLL_INTERVAL_MS);
 })();
