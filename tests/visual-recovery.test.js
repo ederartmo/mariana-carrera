@@ -79,7 +79,6 @@ test('gallery has 48 complete pairs, native-dialog controls, no Drive dependency
     assert.match(read(file), /event-memories\.css\?v=__ASSET_VERSION__/);
     assert.match(read(file), /event-countdown-cta\.js\?v=__ASSET_VERSION__/);
   }
-  assert.match(read('eventos.html'), /Santa Run/); // Unrelated main cards must not be dropped.
   for (const match of read('event-memories.css').matchAll(/url\(["']?([^\s)"']+)/g)) {
     assert.ok(fs.existsSync(path.join(base, match[1])), `Missing recovered CSS resource: ${match[1]}`);
   }
@@ -106,4 +105,44 @@ test('gallery viewer opens, navigates, wraps, downloads and restores opener focu
   assert.equal(image.src, 'photo-0.webp');
   listeners.get('close:click')();
   assert.equal(photos[0].focused, true);
+});
+
+test('public catalog contains only approved events and filters count its actual cards', () => {
+  const setup = read('script.js').match(/function setupEventFilters\(\) \{[\s\S]*?\n\}/)[0];
+  for (const file of ['eventos.html', 'public/eventos.html']) {
+    const articles = [...read(file).matchAll(/<article\b([^>]*\bdata-event-card\b[^>]*)>([\s\S]*?)<\/article>/g)];
+    assert.equal(articles.length, 3, file);
+    const hrefs = articles.map(([, , body]) => body.match(/class="detail-cta" href="([^"]+)"/)?.[1]);
+    assert.deepEqual(hrefs, ['perrun-2027.html', 'axolote-night-run.html', 'cascanueces-run.html'], file);
+    assert.match(articles[1][1], /\bis-past\b/);
+    assert.match(articles[1][2], /Evento celebrado/);
+    const cards = articles.map(([, attrs]) => ({
+      dataset: Object.fromEntries([...attrs.matchAll(/data-(sport|city|type)="([^"]+)"/g)].map(([, k, v]) => [k, v])),
+      style: {},
+    }));
+    let filter;
+    const nodes = {
+      eventFilters: { addEventListener: (_, callback) => { filter = callback; } },
+      resultCount: { textContent: '' },
+      filterSport: { value: '' },
+      filterCity: { value: '' },
+      filterType: { value: '' },
+    };
+    vm.runInNewContext(setup + '\nsetupEventFilters();', {
+      document: { getElementById: id => nodes[id], querySelectorAll: () => cards },
+    });
+    const check = (sport, city, type, count, visible) => {
+      nodes.filterSport.value = sport;
+      nodes.filterCity.value = city;
+      nodes.filterType.value = type;
+      filter();
+      assert.match(nodes.resultCount.textContent, new RegExp('^' + count + ' evento'));
+      assert.deepEqual(cards.map(card => card.style.display !== 'none'), visible);
+    };
+    assert.equal(nodes.resultCount.textContent, '3 eventos disponibles');
+    check('running', 'cdmx', 'familiar', 2, [true, false, true]);
+    check('', 'cdmx', 'recreativa', 1, [false, true, false]);
+    check('trail', 'queretaro', '', 0, [false, false, false]);
+    check('', '', '', 3, [true, true, true]);
+  }
 });
