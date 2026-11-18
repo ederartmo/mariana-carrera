@@ -12,6 +12,7 @@ function response() {
 function request(method, body, extra = {}) {
   return { method, body, headers: { origin: 'https://kinetichub.com.mx', host: 'kinetichub.com.mx', 'content-type': 'application/json', ...extra.headers }, query: extra.query || {}, url: extra.url || '/api/support-chat' };
 }
+const adminId = crypto.randomUUID();
 const token = 'a'.repeat(64);
 process.env.SITE_URL = 'https://kinetichub.com.mx';
 const allow = async () => ({ allowed: true, remaining: 10, retryAfter: 0 });
@@ -55,14 +56,14 @@ test('admin mutations bind actor to validated identity and hide database errors'
   const id = crypto.randomUUID();
   const req = request('POST', { id, requestId: crypto.randomUUID(), expectedVersion: 2, action: 'reply', body: 'Respuesta' });
   await handler(req, response(), {
-    auth: async () => ({ user: { email: 'Admin@Example.test' }, email: 'admin@example.test' }),
+    auth: async () => ({ user: { id: adminId, email: 'Admin@Example.test' }, email: 'admin@example.test' }),
     client: { rpc: async (name, value) => { args = value; return { data: { ok: true, ticket: { id }, messages: [], activity: [], hasMore: false } }; } },
   });
-  assert.equal(args.p_actor, 'admin@example.test');
+  assert.equal(args.p_actor, 'admin:'+adminId);
   assert.equal(args.p_expected_version, 2);
   const failed = response();
   await handler(req, failed, {
-    auth: async () => ({ user: { email: 'admin@example.test' }, email: 'admin@example.test' }),
+    auth: async () => ({ user: { id: adminId, email: 'admin@example.test' }, email: 'admin@example.test' }),
     client: { rpc: async () => ({ error: { message: 'private database details' } }) },
   });
   assert.equal(failed.statusCode, 503);
@@ -89,7 +90,7 @@ test('verified account history is scoped to server identity across browser keys'
 
 test('admin assignment accepts only another allowlisted responsible account',async()=>{
  const handler=require('../lib/admin-support'); const assigned=[];
- const deps={auth:async()=>({email:'admin@example.test'}),getAdminEmails:()=>['admin@example.test','other@example.test'],client:{rpc:async(_,v)=>{assigned.push(v);return {data:{ok:true}}}}};
+ const deps={auth:async()=>({user:{id:adminId},email:'admin@example.test'}),getAdminEmails:()=>['admin@example.test','other@example.test'],client:{rpc:async(_,v)=>{assigned.push(v);return {data:{ok:true}}}}};
  for(const [assignTo,status] of [['outsider@example.test',400],['other@example.test',200]]) {
    const res=response();
    await handler(request('POST',{id:crypto.randomUUID(),requestId:crypto.randomUUID(),expectedVersion:1,action:'update',assignTo}),res,deps);
@@ -97,7 +98,7 @@ test('admin assignment accepts only another allowlisted responsible account',asy
  }
  assert.equal(assigned.length,1);
  assert.equal(assigned[0].p_assign_to,'other@example.test');
- assert.equal(assigned[0].p_actor,'admin@example.test');
+ assert.equal(assigned[0].p_actor,'admin:'+adminId);
 });
 
 test('admin ticket cursor and filters are forwarded only after authorization', async()=>{
@@ -202,4 +203,36 @@ test('public origin policy never inherits admin SITE_URL or Vercel Preview', asy
    assert.equal(res.statusCode, 403, String(origin));
    assert.equal(res.body.code, 'origin_not_allowed');
  }
+});
+
+test('admin activity shows a stable display label without exposing account UUIDs', async () => {
+ const handler=require('../lib/admin-support');
+ const ticketId=crypto.randomUUID();
+ const data={ok:true,ticket:{id:ticketId},activity:[{actor:'admin:'+adminId},{actor:'legacy@example.test'},{actor:'visitor'}]};
+ const client={rpc:async()=>({data})};
+ const read=response(), written=response();
+ const auth=async()=>({user:{id:adminId},email:'changed@example.test'});
+ await handler(request('GET',null,{query:{id:ticketId}}),read,{auth,client});
+ await handler(request('POST',{id:ticketId,requestId:crypto.randomUUID(),expectedVersion:1,action:'reply',body:'QA'}),written,{auth,client});
+ for(const res of [read,written]){
+   assert.equal(res.statusCode,200);
+   assert.match(res.body.activity[0].actor,/^Administrador · [0-9A-F]{12}$/u);
+   assert.equal(res.body.activity[1].actor,'legacy@example.test');
+   assert.equal(res.body.activity[2].actor,'visitor');
+   assert.equal(JSON.stringify(res.body).includes(adminId),false);
+ }
+ assert.equal(read.body.activity[0].actor,written.body.activity[0].actor);
+ assert.equal(data.activity[0].actor,'admin:'+adminId);
+});
+
+test('admin reply cannot inject its actor and missing verified ID fails before RPC', async () => {
+ const handler=require('../lib/admin-support');
+ const body={id:crypto.randomUUID(),requestId:crypto.randomUUID(),expectedVersion:1,action:'reply',body:'QA'};
+ const client={rpc:async()=>assert.fail('unexpected RPC')};
+ const invalid=response();
+ await handler(request('POST',body),invalid,{auth:async()=>({email:'admin@example.test'}),client});
+ assert.equal(invalid.statusCode,401);
+ const spoof=response();
+ await handler(request('POST',{...body,actor:'admin:'+adminId}),spoof,{auth:async()=>({user:{id:adminId},email:'admin@example.test'}),client});
+ assert.equal(spoof.statusCode,400);
 });
