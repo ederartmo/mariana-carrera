@@ -690,6 +690,8 @@ src="https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1"
 
     <section class="admin-card support-admin-panel" data-admin-support aria-labelledby="supportAdminTitle">
       <div class="admin-card-header"><div><h2 id="supportAdminTitle">Atención y solicitudes</h2><p>Conversaciones de visitantes y respuestas manuales del equipo.</p></div><button type="button" class="btn-secondary" data-ticket-refresh>Actualizar solicitudes</button></div>
+      <div class="support-admin-controls" style="margin-bottom:12px"><button type="button" class="btn-secondary" data-support-test-email>Enviar aviso de prueba (solo #C1AF3583)</button><span data-support-test-email-status role="status" aria-live="polite">Solo disponible durante la ventana de prueba autorizada.</span></div>
+
       <p class="support-admin-notice" data-admin-support-notice role="status" aria-live="polite">Cargando solicitudes…</p>
       <div class="support-admin-grid"><div>
         <div class="support-admin-controls">
@@ -2728,6 +2730,27 @@ src="https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1"
         window.connectAdminSupport({ document, authClient: client }).catch(() => {
           const notice = document.querySelector('[data-admin-support-notice]');
           if (notice) notice.textContent = 'No se pudo verificar la sesion de soporte.';
+        });
+        const testEmailButton = document.querySelector('[data-support-test-email]');
+        const testEmailStatus = document.querySelector('[data-support-test-email-status]');
+        testEmailButton?.addEventListener('click', async () => {
+          if (testEmailButton.disabled) return;
+          if (!window.confirm('Enviar UN ÚNICO correo interno de prueba para el ticket #C1AF3583 a soporte@kinetichub.com.mx? No es posible reintentarlo si el resultado es incierto.')) return;
+          testEmailButton.disabled = true;
+          testEmailStatus.textContent = 'Procesando un único intento...';
+          try {
+            const { data: { session } } = await client.auth.getSession();
+            if (!session?.access_token) throw new Error('La sesión administrativa no está disponible.');
+            const response = await fetch('/api/data?action=admin-support-notification-one-shot', {
+              method:'POST', headers:{Authorization:'Bearer ' + session.access_token}
+            });
+            const result = await response.json();
+            testEmailStatus.textContent = response.ok && result.outcome === 'provider_accepted'
+              ? 'Resend aceptó el correo. Verifica la recepción en el buzón.'
+              : 'No se confirmó el envío. No reintentes. Código: ' + String(result.outcome || response.status);
+          } catch {
+            testEmailStatus.textContent = 'Resultado incierto. No reintentes; consulta la reserva y Resend.';
+          }
         });
         setupDashboardControls(client);
         setupManualTransferForm(client);
