@@ -77,4 +77,4 @@ if (require.main === module) {
     if (result !== 'provider_accepted') process.exitCode = 1;
   }, () => { console.error('aborted_or_unconfirmed; investigate without retrying'); process.exitCode = 1; });
 }
-module.exports = {sendOnce, settings, TICKET};
+module.exports = {sendOnce, settings, main, TICKET};
