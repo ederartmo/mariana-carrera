@@ -36,25 +36,25 @@
         ${expanded ? icon('ticket') : brand}
         <div><h2 id="premium-thread-title">${expanded ? 'Conversación' : 'Soporte Kinetic Hub'}</h2>
         <p class="premium-indicator">${'Atención y seguimiento'}</p></div>
-        ${expanded ? '' : '<a class="premium-icon" href="/atencion.html" aria-label="Abrir seguimiento">' + icon('expand') + '</a><button type="button" class="premium-icon" data-widget-close aria-label="Cerrar chat">' + icon('close') + '</button>'}
+        ${expanded ? '' : '<a class="premium-icon" href="/atencion.html" data-support-draft-link aria-label="Abrir seguimiento">' + icon('expand') + '</a><button type="button" class="premium-icon" data-widget-close aria-label="Cerrar chat">' + icon('close') + '</button>'}
       </header>
       <div class="premium-scroll">
         ${expanded ? '' : `<div class="premium-welcome"><h3>¡Hola! 👋</h3><strong>¿Cómo podemos ayudarte?</strong><p>Déjanos tu mensaje y el equipo de Kinetic Hub podrá responderte aquí.</p></div>
           <div class="premium-topics">
           ${quick('box','Entrega de kits','events','Tengo una consulta sobre la entrega de kits.')}
           ${quick('shirt','Cambiar talla','registration','Quisiera consultar sobre un cambio de talla.')}
-          <a href="/atencion.html">${icon('ticket')} Mi solicitud</a>
+          <a href="/atencion.html" data-support-draft-link>${icon('ticket')} Mi solicitud</a>
           ${quick('help','Otra consulta','other','')}
           </div>`}
         <div class="premium-divider"><span>Historial</span></div>
         <p class="premium-empty" data-support-empty>Todavía no hay mensajes.</p>
         <div class="support-transcript" data-support-messages role="log" aria-label="Historial de mensajes"></div>
-        ${expanded ? '' : `<a class="premium-ticket premium-ticket-link" href="/atencion.html" data-premium-ticket hidden>${icon('ticket')}<span><strong>Mi solicitud</strong><small data-premium-category></small></span><span class="premium-status" data-premium-state></span><span aria-hidden="true">›</span></a>`}
+        ${expanded ? '' : `<a class="premium-ticket premium-ticket-link" href="/atencion.html" data-support-draft-link data-premium-ticket hidden>${icon('ticket')}<span><strong>Mi solicitud</strong><small data-premium-category></small></span><span class="premium-status" data-premium-state></span><span aria-hidden="true">›</span></a>`}
       </div>
       <form data-support-form class="premium-form">
         <input type="hidden" name="category" value="general">
         <div class="premium-compose">
-          <textarea name="supportMessage" aria-label="Mensaje" maxlength="2000" rows="1" required placeholder="Escribe tu mensaje..."></textarea>
+          <textarea name="supportMessage" aria-label="Mensaje" maxlength="2000" rows="1" required disabled placeholder="Escribe tu mensaje..."></textarea>
           <button class="premium-send" type="submit" aria-label="Enviar mensaje" disabled>${icon('send')}</button>
         </div>
         <p class="premium-notice" data-support-notice role="status">Preparando el chat…</p>
@@ -91,7 +91,7 @@
   if (document.getElementById('premium-conversation')) return;
   host.classList.add('premium-support', expanded ? 'premium-expanded' : 'premium-widget');
   host.innerHTML = (expanded ? '' : '<button type="button" class="premium-launch" aria-expanded="false" aria-controls="premium-conversation">' + icon('chat') + '<span>Soporte</span></button>') +
-    '<section class="premium-thread" data-support-chat id="premium-conversation" aria-labelledby="premium-thread-title"' + (expanded ? '' : ' hidden') + '>' + thread(expanded) + '</section>' +
+    '<section class="premium-thread" data-support-chat data-draft-handoff="' + (expanded ? 'receive' : 'send') + '" id="premium-conversation" aria-labelledby="premium-thread-title"' + (expanded ? '' : ' hidden') + '>' + thread(expanded) + '</section>' +
     (expanded ? details() : '');
   if (!expanded) document.body.append(host);
   const panel = host.querySelector('[data-support-chat]');

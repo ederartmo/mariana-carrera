@@ -22,6 +22,34 @@
     if (!cryptoApi || typeof cryptoApi.getRandomValues !== 'function') throw new Error('Este navegador no puede iniciar una sesión segura.');
     return Array.from(cryptoApi.getRandomValues(new Uint8Array(32)), n => n.toString(16).padStart(2, '0')).join('');
   }
+  const DRAFT_HANDOFF_KEY = 'kinetichub-support-handoff-v1';
+  function createDraftHandoff({ storage, ownerId, now = Date.now }) {
+    return {
+      clear() { try { storage.removeItem(DRAFT_HANDOFF_KEY); } catch {} },
+      save(body, category) {
+        try {
+          storage.removeItem(DRAFT_HANDOFF_KEY);
+          if (!body.trim()) return true;
+          storage.setItem(DRAFT_HANDOFF_KEY, JSON.stringify({
+            ownerId, body: body.slice(0,2000), category: CATEGORIES.includes(category) ? category : 'general',
+            expiresAt: now() + 120000,
+          }));
+          return true;
+        } catch { return false; }
+      },
+      take() {
+        try {
+          const raw = storage.getItem(DRAFT_HANDOFF_KEY);
+          storage.removeItem(DRAFT_HANDOFF_KEY);
+          const draft = raw && JSON.parse(raw);
+          if (!draft || draft.ownerId !== ownerId || !Number.isFinite(draft.expiresAt) || draft.expiresAt <= now() ||
+              typeof draft.body !== 'string' || !draft.body.trim() || draft.body.length > 2000 || !CATEGORIES.includes(draft.category)) return null;
+          return { body: draft.body, category: draft.category };
+        } catch { return null; }
+      },
+    };
+  }
+
   function createPublicClient({ storage, fetch: fetcher, crypto: cryptoApi, makeRequestId, endpoint = '/api/support-chat' }) {
     const requestId = makeRequestId || (() => uuid(cryptoApi || globalThis.crypto));
     let token = storage.getItem(TOKEN_KEY);
@@ -55,6 +83,7 @@
     return {
       get token() { return token; },
       get hasPending() { return Boolean(pending); },
+      get pendingBody() { return pending?.operation?.body; },
       start: ({ category, body }) => beginOrSend('start', body, category),
       send: body => beginOrSend('send', body),
       retryPending,
@@ -117,9 +146,15 @@
     const ownerId = session?.user?.id || null;
     if (ownerId) root.querySelector('[data-support-clear]').hidden = true;
     let active = true;
+    const handoffMode = root.dataset?.draftHandoff;
+    let draftHandoff;
+    if (handoffMode) {
+      try { draftHandoff = createDraftHandoff({ storage: doc.defaultView.sessionStorage, ownerId }); } catch {}
+    }
     authClient?.auth.onAuthStateChange((_event, next) => {
       if ((next?.user?.id || null) !== ownerId) {
         active = false;
+        draftHandoff?.clear();
         onTicket?.(null);
         root.hidden = true;
         root.querySelector('[data-support-messages]').replaceChildren();
@@ -132,11 +167,11 @@
       setItem: (key, value) => memory.set(key, value),
       removeItem: key => memory.delete(key),
     } : doc.defaultView.sessionStorage;
-    return mountPublicSupportChat({ document: doc, root, storage, account: Boolean(ownerId), onTicket, isActive: () => active,
+    return mountPublicSupportChat({ document: doc, root, storage, account: Boolean(ownerId), onTicket, draftHandoff, handoffMode, isActive: () => active,
       fetch: createSessionTransport({ ownerId, getSession, fetch: fetcher }) });
   }
 
-  function mountPublicSupportChat({ document: doc = document, fetch: fetcher = fetch, storage = sessionStorage, crypto: cryptoApi = crypto, account = false, onTicket, isActive = () => true, root: container = doc.querySelector('[data-support-chat]') } = {}) {
+  function mountPublicSupportChat({ document: doc = document, fetch: fetcher = fetch, storage = sessionStorage, crypto: cryptoApi = crypto, account = false, onTicket, draftHandoff, handoffMode, isActive = () => true, root: container = doc.querySelector('[data-support-chat]') } = {}) {
     if (!container) return null;
     const client = createPublicClient({ storage, fetch: fetcher, crypto: cryptoApi });
     const form = container.querySelector('[data-support-form]'); const bodyInput = container.querySelector('[name="supportMessage"]');
@@ -147,6 +182,26 @@
     const retry = container.querySelector('[data-support-retry]');
     const empty = container.querySelector('[data-support-empty]');
     const state = container.querySelector('[data-support-state]');
+    if (handoffMode === 'receive') {
+      const draft = draftHandoff?.take();
+      if (draft && !bodyInput.value.trim()) {
+        bodyInput.value = draft.body;
+        categoryInput.value = draft.category;
+      }
+    }
+    if (handoffMode) bodyInput.disabled = false;
+    if (handoffMode === 'send') container.addEventListener('click', event => {
+      const link = event.target.closest?.('[data-support-draft-link]');
+      if (!link || event.defaultPrevented || event.button !== 0 || event.altKey || event.ctrlKey ||
+          event.metaKey || event.shiftKey || !isActive()) return;
+      if (busy || client.hasPending) {
+        event.preventDefault();
+        message('Espera a que se confirme el envío antes de abrir el seguimiento.');
+      } else if (bodyInput.value.trim() && !draftHandoff?.save(bodyInput.value, categoryInput.value)) {
+        event.preventDefault();
+        message('No pudimos transferir el borrador. Tu texto sigue aquí.');
+      } else if (!bodyInput.value.trim()) draftHandoff?.clear();
+    });
     function syncRetry() {
       if (retry) { retry.hidden = !client.hasPending; retry.disabled = busy; }
       submit.disabled = busy || client.hasPending;
@@ -178,6 +233,7 @@
     async function run(action, quiet = false) {
       if (busy || !isActive()) return;
       if (action === 'human' && client.hasPending) { message('Confirma primero el envio pendiente.'); return; }
+      const submitted = action === 'retry' ? client.pendingBody : bodyInput.value.trim();
       busy = true; syncRetry(); clearButton.disabled = true; readButton.disabled = true; if (humanButton) humanButton.disabled = true;
       try {
         let data;
@@ -191,7 +247,7 @@
         else data = await client.send(bodyInput.value);
         if (!isActive()) return;
         started = true; render(data); onTicket?.(data.ticket || null);
-        if (action === 'send' || action === 'retry') bodyInput.value = '';
+        if ((action === 'send' || action === 'retry') && bodyInput.value.trim() === submitted) bodyInput.value = '';
         const status = { pending: 'Pendiente', in_progress: 'Abierto', resolved: 'Resuelto' }[data.ticket?.status];
         if (state) {
           state.hidden = !status;
@@ -215,7 +271,7 @@
     clearButton.addEventListener('click', () => {
       const pendingCopy = client.hasPending ? ' Hay un mensaje pendiente que no se confirmó; anótalo antes de continuar.' : '';
       if (!doc.defaultView.confirm(`Borrar esta sesión de este navegador? No borra la conversación del equipo y el historial anterior ya no estará disponible desde este dispositivo.${pendingCopy}`)) return;
-      client.clear(); started = false; resetHistory(); syncRetry(); bodyInput.value = ''; message('Sesión borrada. El historial anterior sigue en el sistema, pero no estará disponible desde este dispositivo.');
+      draftHandoff?.clear(); client.clear(); started = false; resetHistory(); syncRetry(); bodyInput.value = ''; message('Sesión borrada. El historial anterior sigue en el sistema, pero no estará disponible desde este dispositivo.');
     });
     retry?.addEventListener('click', () => run('retry'));
     syncRetry();
@@ -224,5 +280,5 @@
     return client;
   }
 
-  return { TOKEN_KEY, PENDING_KEY, createPublicClient, createAdminClient, createSessionTransport, connectPublicSupportChat, mountPublicSupportChat, capability, uuid };
+  return { createDraftHandoff, TOKEN_KEY, PENDING_KEY, createPublicClient, createAdminClient, createSessionTransport, connectPublicSupportChat, mountPublicSupportChat, capability, uuid };
 });
