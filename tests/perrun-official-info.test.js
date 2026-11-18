@@ -22,6 +22,15 @@ test('Landing renders central pickup data and both official downloads', () => {
   const c = {Date, Intl, URLSearchParams, setInterval:()=>1, clearInterval(){}, document:{querySelector:()=>root}};
   vm.createContext(c);
   for (const file of ['perrun-stage-config.js','perrun-event-data.js','perrun-landing-data.js','event-landing.js']) vm.runInContext(fs.readFileSync(file,'utf8'),c);
+  const landing = c.KineticHubPerrunLanding;
+  for (const entry of Object.entries(event.starts)) {
+    const label = entry.join(' ') + ' h';
+    assert.ok(landing.schedule[1].time.includes(label), label);
+    assert.ok(landing.faqs.find(faq => faq.question.includes('salida')).answer.includes(label), label);
+  }
+  for (const path of ['perrun-landing-data.js', 'public/perrun-landing-data.js']) {
+    assert.doesNotMatch(fs.readFileSync(path,'utf8'), /Horario de salida por confirmar|horario de salida por distancia est. por confirmar/i);
+  }
   c.EventLanding({root,event:c.KineticHubPerrunLanding});
   assert.match(html, /13 de febrero de 2027/);
   assert.match(html, /10:00–16:00/);
