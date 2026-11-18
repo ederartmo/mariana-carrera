@@ -10,7 +10,7 @@ test('queue is derived once per pending event and stale leases cannot acknowledg
  try{
   await db.exec('CREATE ROLE anon; CREATE ROLE authenticated; CREATE ROLE service_role BYPASSRLS;');
   await db.exec(file('20261117145659_support_phase_one.sql'));
-  const sql=file('20261118183000_support_internal_notifications.sql');
+  const sql=file('20261118192617_support_internal_notifications.sql');
   await db.exec(sql);
   const A='a'.repeat(64), fingerprint='b'.repeat(64), since='2026-11-18T00:00:00Z';
   const start='SELECT public.support_visitor_action($1,$2,$3,$4,$5) result';

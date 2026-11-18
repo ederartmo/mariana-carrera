@@ -30,11 +30,11 @@ If this scheduler provider is unsuitable for the account or security requirement
 
 ## Production migration already recorded — do not reapply
 
-Production was reported to have applied this migration under `20261118192617_support_internal_notifications`. The Git filename is `20261118183000_support_internal_notifications.sql`. Supabase compares migration versions by timestamp, not by matching SQL content. The mismatch is not a request to execute anything: do not run a linked push, migration up, migration repair, or manual SQL for this file on Production.
+Production records this migration as `20261118192617_support_internal_notifications`. The Git file is `20261118192617_support_internal_notifications.sql`. Only the filename was reconciled; the SQL content and the remote migration history were not changed.
 
-1. With separately authorized read-only access, compare the recorded migration statements (or archived approved SQL) and effective queue table, indexes, RPC definitions and grants to the Git file. Check both timestamps in the deployment target and other linked environments. If the executed SQL cannot be verified or an environment records a different version, stop; do not guess equivalence.
-2. If equivalence and environment compatibility are confirmed, reconcile in Git only: rename this one file to `20261118192617_support_internal_notifications.sql` without changing its SQL bytes, update references, and rerun the clean QA migration order. Keep no second executable copy. Verify the two timestamps by read-only migration listing; leave all database history rows and schema unchanged. Do this as a separately reviewed change before any future linked migration workflow.
-3. Code-only publication and worker activation are separate. Confirm the effective Production flag is unset or not `true` and that no external scheduler is enabled. Do not change configuration in this review.
+Do not reapply this migration in Production or run a migration repair for it. Verify the recorded version in any other deployment target before running a linked migration workflow.
+
+Code publication and worker activation are separate. Confirm the effective Production flag is unset or not `true` and that no external scheduler is enabled before publishing.
 
 ## Activation (not performed)
 
