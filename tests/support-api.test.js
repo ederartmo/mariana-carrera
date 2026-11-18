@@ -114,3 +114,35 @@ test('admin ticket cursor and filters are forwarded only after authorization', a
  const broken=response(); await handler(request('GET',null,{query:{before:query.before}}),broken,deps);
  assert.equal(broken.statusCode,400);
 });
+
+test('origin rejection and empty bearer stop before authentication or persistence', async () => {
+ const handler=require('../lib/support-chat');
+ const body={action:'read',token};
+ for(const [headers,status,code] of [
+   [{origin:'https://example.invalid'},403,'origin_not_allowed'],
+   [{authorization:'Bearer '},401,'invalid_session']
+ ]) {
+   const res=response();
+   await handler(request('POST',body,{headers}),res,{
+     rateLimit:async()=>assert.fail('rate limit called'),
+     rpc:async()=>assert.fail('RPC called'),
+     auth:async()=>assert.fail('Auth called')
+   });
+   assert.equal(res.statusCode,status);
+   assert.equal(res.body.code,code);
+ }
+});
+
+test('expired bearer never falls back to guest or reaches the conversation RPC', async () => {
+ const handler = require('../lib/support-chat');
+ const res = response();
+ let authCalls = 0;
+ await handler(request('POST', {action:'read', token}, {headers:{authorization:'Bearer expired-fixture'}}), res, {
+   rateLimit: allow,
+   auth: async () => { authCalls++; return {error:'expired', status:401}; },
+   rpc: async () => assert.fail('RPC called'),
+ });
+ assert.equal(authCalls, 1);
+ assert.equal(res.statusCode, 401);
+ assert.equal(res.body.code, 'invalid_session');
+});

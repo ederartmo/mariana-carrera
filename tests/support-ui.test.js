@@ -101,3 +101,15 @@ test('admin inbox clears private content and blocks a delayed response after log
     assert.equal(read,false);
   } finally { globalThis.KineticHubSupport=old; }
 });
+
+test('guest transport drops inherited Authorization, account never forwards a blank token', async () => {
+ let sent=0;
+ const guest=support.createSessionTransport({ownerId:null,getSession:async()=>null,fetch:async(_,o)=>{
+   sent++; assert.equal(Object.keys(o.headers).some(k=>k.toLowerCase()==='authorization'),false);
+   return {ok:true};
+ }});
+ await guest('/api/support-chat',{headers:{authorization:'Bearer ', 'Content-Type':'application/json'}});
+ const account=support.createSessionTransport({ownerId:'a',getSession:async()=>({user:{id:'a'},access_token:'  '}),fetch:async()=>assert.fail('blank token forwarded')});
+ await assert.rejects(account('/api/support-chat'),{status:401});
+ assert.equal(sent,1);
+});

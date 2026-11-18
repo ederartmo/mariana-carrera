@@ -51,3 +51,33 @@
 .support-ticket-workspace form { display:grid; gap:8px; }
 @media(max-width:760px) { .support-layout,.support-admin-grid { grid-template-columns:1fr; } .support-aside { order:2; } .support-ticket-list { max-height:280px; } .contact-support-card { align-items:flex-start; flex-direction:column; } .contact-support-card .btn { width:100%; } }
 @media(prefers-reduced-motion:reduce) { .support-page *, .support-page *::before,.support-page *::after { scroll-behavior:auto!important; animation-duration:.01ms!important; transition-duration:.01ms!important; } }
+
+/* Public support layout; shared admin and contact styles stay unchanged. */
+.support-page [hidden] { display:none !important; }
+.support-page .support-hero { padding:clamp(20px,4vw,48px) 0 16px; background:#f1f7f3; }
+.support-page .support-hero h1 { font-size:clamp(1.9rem,4.2vw,3.35rem); margin:0 0 8px; }
+.support-page .support-hero p:last-child { margin:0; font-size:1rem; }
+.support-page .support-layout { padding-top:20px; gap:20px; }
+.support-page .support-chat-card { min-width:0; padding:clamp(16px,3vw,28px); }
+.support-page .support-card-heading { flex-wrap:wrap; margin-bottom:8px; }
+.support-page .support-card-heading h2 { margin:0; }
+.support-ticket-state { color:#075e44; background:#e1f3ea; border-radius:999px; padding:5px 11px; font-size:.86rem; font-weight:700; }
+.support-page .support-history { margin:0 0 14px; padding-bottom:10px; border-bottom:1px solid var(--support-line); }
+.support-empty { margin:0; padding:9px 0; color:#52615e; font-size:.93rem; }
+.support-page .support-transcript { min-height:0; max-height:270px; margin:0; padding:8px 2px; border:0; background:none; border-radius:0; }
+.support-page .support-transcript:empty { display:none; }
+.support-page .support-form { gap:7px; }
+.support-page .support-form h3 { margin:0; color:#17211f; font-size:1.15rem; }
+.support-compose-note { margin:0 0 5px; color:#52615e; line-height:1.5; }
+.support-page .support-actions { margin-top:3px; }
+.support-page .support-send { min-height:44px; }
+.support-page .support-notice { margin:0; min-height:0; }
+.support-page .support-notice:empty { display:none; }
+.support-page .support-toolbar { gap:4px 14px; justify-content:flex-start; margin-top:12px; padding-top:5px; }
+.support-page .support-toolbar .support-link-button { padding-inline:0; font-size:.88rem; font-weight:600; }
+.support-page .support-aside .support-secondary-link { justify-content:flex-start; padding-inline:0; }
+@media (max-width:760px) {
+  .support-page .support-layout { padding-top:12px; padding-bottom:26px; }
+  .support-page .support-send { width:100%; }
+  .support-page .support-toolbar { justify-content:flex-start; }
+}

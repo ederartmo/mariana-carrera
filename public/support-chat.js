@@ -87,7 +87,7 @@
   function createSessionTransport({ ownerId, getSession, fetch: fetcher }) {
     async function checkedSession() {
       const session = await getSession();
-      if ((session?.user?.id || null) !== ownerId || (ownerId && !session?.access_token)) {
+      if ((session?.user?.id || null) !== ownerId || (ownerId && (typeof session?.access_token !== 'string' || !/^[^\s]+$/.test(session.access_token)))) {
         const error = new Error('La sesion cambio. Vuelve a abrir el chat.');
         error.status = 401;
         throw error;
@@ -96,7 +96,7 @@
     }
     return async (url, options = {}) => {
       const session = await checkedSession();
-      const headers = { ...options.headers };
+      const headers = Object.fromEntries(Object.entries(options.headers || {}).filter(([key]) => key.toLowerCase() !== 'authorization'));
       if (ownerId) headers.Authorization = 'Bearer ' + session.access_token;
       const response = await fetcher(url, { ...options, headers });
       await checkedSession();
@@ -141,10 +141,23 @@
     const notice = container.querySelector('[data-support-notice]'); const submit = form.querySelector('button[type="submit"]');
     const readButton = container.querySelector('[data-support-refresh]'); const clearButton = container.querySelector('[data-support-clear]');
     const humanButton = container.querySelector('[data-support-human]');
+    const retry = container.querySelector('[data-support-retry]');
+    const empty = container.querySelector('[data-support-empty]');
+    const state = container.querySelector('[data-support-state]');
+    function syncRetry() {
+      if (retry) { retry.hidden = !client.hasPending; retry.disabled = busy; }
+      submit.disabled = busy || client.hasPending;
+    }
+    function resetHistory() {
+      transcript.replaceChildren();
+      if (empty) empty.hidden = false;
+      if (state) state.hidden = true;
+    }
     let generation = 0; let busy = false; let started = Boolean(client.token);
     const message = text => { notice.textContent = text; };
     function render(data) {
       const version = ++generation;
+      if (empty) empty.hidden = Boolean(data.messages?.length);
       const fragment = doc.createDocumentFragment();
       for (const item of (data.messages || []).slice(-100)) {
         const article = doc.createElement('article'); article.className = `support-message support-message--${item.author === 'admin' ? 'admin' : 'visitor'}`;
@@ -158,7 +171,7 @@
     async function run(action) {
       if (busy) return;
       if (action === 'human' && client.hasPending) { message('Confirma primero el envio pendiente.'); return; }
-      busy = true; submit.disabled = true; readButton.disabled = true; if (humanButton) humanButton.disabled = true;
+      busy = true; syncRetry(); clearButton.disabled = true; readButton.disabled = true; if (humanButton) humanButton.disabled = true;
       try {
         let data;
         if (action === 'retry') data = await client.retryPending();
@@ -171,12 +184,17 @@
         else data = await client.send(bodyInput.value);
         started = true; render(data); if (action !== 'human') bodyInput.value = '';
         const status = { pending: 'Pendiente', in_progress: 'Abierto', resolved: 'Resuelto' }[data.ticket?.status];
-        message((action === 'human' ? 'Solicitud de atencion recibida.' : 'Conversacion actualizada.') + (status ? ' Estado: ' + status + '.' : ''));
+        if (state) {
+          state.hidden = !status;
+          state.textContent = status ? 'Solicitud: ' + status : '';
+        }
+        message(action === 'read' ? 'Historial actualizado.' :
+          action === 'human' ? 'Solicitud de atención recibida.' : 'Mensaje enviado al equipo de soporte.');
       } catch (error) {
         if (account && action === 'read' && error.status === 404) { started = false; message('Todavia no tienes una conversacion. Escribe un mensaje para empezar.'); return; }
-        if (error.status === 401) { transcript.replaceChildren(); started = false; }
+        if (error.status === 401) { resetHistory(); started = false; }
         message(error.status === 404 || error.status === 410 ? 'La sesión de conversación venció o no está disponible. Puedes intentar de nuevo o borrar esta sesión para iniciar otra. Tu mensaje no se envió.' : `No pudimos confirmar la recepción: ${error.message} ${client.hasPending ? 'Usa “Reintentar envío” para repetir la misma solicitud de forma segura.' : ''}`);
-      } finally { busy = false; submit.disabled = false; readButton.disabled = false; if (humanButton) humanButton.disabled = false; }
+      } finally { busy = false; syncRetry(); clearButton.disabled = false; readButton.disabled = false; if (humanButton) humanButton.disabled = false; }
     }
     form.addEventListener('submit', event => { event.preventDefault(); run('send'); });
     humanButton?.addEventListener('click', () => run('human'));
@@ -184,9 +202,10 @@
     clearButton.addEventListener('click', () => {
       const pendingCopy = client.hasPending ? ' Hay un mensaje pendiente que no se confirmó; anótalo antes de continuar.' : '';
       if (!doc.defaultView.confirm(`Borrar esta sesión de este navegador? No borra la conversación del equipo y el historial anterior ya no estará disponible desde este dispositivo.${pendingCopy}`)) return;
-      client.clear(); started = false; transcript.replaceChildren(); bodyInput.value = ''; message('Sesión borrada. El historial anterior sigue en el sistema, pero no estará disponible desde este dispositivo.');
+      client.clear(); started = false; resetHistory(); syncRetry(); bodyInput.value = ''; message('Sesión borrada. El historial anterior sigue en el sistema, pero no estará disponible desde este dispositivo.');
     });
-    if (client.hasPending) { const retry = container.querySelector('[data-support-retry]'); retry.hidden = false; retry.addEventListener('click', () => run('retry')); }
+    retry?.addEventListener('click', () => run('retry'));
+    syncRetry();
     if ((started || account) && !client.hasPending) run('read');
     return client;
   }
