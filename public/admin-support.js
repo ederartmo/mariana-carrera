@@ -1,5 +1,35 @@
 (function (root) {
   'use strict';
+  const statuses = {
+    pending: ['Pendiente', 'La solicitud fue recibida y espera atención.'],
+    in_progress: ['En proceso', 'El equipo está atendiendo la solicitud.'],
+    resolved: ['Resuelto', 'El equipo cerró la solicitud.'],
+  };
+  const subjects = {
+    general: 'Consulta general', events: 'Consulta sobre eventos',
+    registration: 'Consulta sobre inscripciones', other: 'Otra consulta',
+  };
+  const actions = {
+    visitor_reopened: 'El visitante reabrió la solicitud', admin_reply: 'Respuesta del equipo',
+    status_changed: 'Cambio de estado', category_changed: 'Cambio de categoría', assigned: 'Asignación de responsable',
+  };
+  const label = (options, key, fallback) => Object.hasOwn(options, key) ? options[key] : fallback;
+  const dateFormatter = new Intl.DateTimeFormat('es-MX', { dateStyle: 'medium', timeStyle: 'short' });
+  function formatLocalDate(value) {
+    const date = typeof value === 'string' && value ? new Date(value) : null;
+    return date && Number.isFinite(date.getTime()) ? dateFormatter.format(date) : '—';
+  }
+  function presentTicket(ticket) {
+    const [status, explanation] = label(statuses, ticket.status, ['Estado desconocido', 'No se pudo determinar el estado.']);
+    return {
+      identity: 'Visitante sin identificar', folio: '#' + ticket.id.slice(0, 8).toUpperCase(),
+      subject: label(subjects, ticket.category, 'Consulta sin categoría'), status, explanation,
+    };
+  }
+  function updateFields(ticket, status, category, assignee) {
+    return { status, category, ...(assignee && assignee !== ticket?.assigned_to ? { assignTo: assignee } : {}) };
+  }
+
   function mount({ document: doc = document, fetch: fetcher = fetch, getToken, isActive = () => true, root: container = doc.querySelector('[data-admin-support]') } = {}) {
     if (!container || !root.KineticHubSupport) return null;
     const client = root.KineticHubSupport.createAdminClient({ fetch: fetcher, getToken });
@@ -25,6 +55,11 @@
     const say = value => { notice.textContent = value; };
     function setBusy(value) { busy = value; container.querySelectorAll('button, select, textarea').forEach(control => { control.disabled = value; }); renderPager(); }
     function textNode(tag, value, className) { const node = doc.createElement(tag); node.textContent = value || ''; if (className) node.className = className; return node; }
+    function statusBadge(ticket, view) {
+      const badge = textNode('span', view.status, 'support-ticket-status');
+      badge.dataset.status = Object.hasOwn(statuses, ticket.status) ? ticket.status : 'unknown';
+      return badge;
+    }
     async function loadList(quiet = false) {
       if (busy || !isActive() || (quiet && listing)) return;
       const current = ++listSequence;
@@ -49,7 +84,11 @@
         const fragment = doc.createDocumentFragment();
         for (const ticket of data.tickets || []) {
           const button = doc.createElement('button'); button.type = 'button'; button.className = 'support-ticket-row'; button.dataset.ticketId = ticket.id;
-          button.append(textNode('strong', `Solicitud ${ticket.id.slice(0, 8)}`), textNode('span', `${ticket.status === 'pending' ? 'Pendiente' : ticket.status === 'in_progress' ? 'En proceso' : 'Resuelto'} · ${ticket.category}`), textNode('small', `Actualizada: ${ticket.updated_at || '—'}`));
+          const view = presentTicket(ticket);
+          button.title = ticket.id;
+          button.append(textNode('strong', view.subject), textNode('span', view.identity + ' · ' + view.folio),
+            statusBadge(ticket, view), textNode('small', 'Responsable: ' + (ticket.assigned_to || 'Sin asignar')),
+            textNode('small', 'Actividad: ' + formatLocalDate(ticket.updated_at)));
           button.addEventListener('click', () => loadDetail(ticket.id)); fragment.append(button);
         }
         const listTop = list.scrollTop;
@@ -80,27 +119,43 @@
         const priorMessages = quiet && detail.querySelector?.('.support-admin-messages');
         if (!priorMessages) detail.replaceChildren();
         if (assignee && !editing) {
-          assignee.replaceChildren(new Option('Selecciona un responsable', ''));
+          assignee.replaceChildren(new Option('Sin cambio de responsable', ''));
           for (const email of data.assignees || []) assignee.add(new Option(email, email));
           assignee.value = (data.assignees || []).includes(selected.assigned_to) ? selected.assigned_to : ''; shownAssignee = assignee.value;
         }
-        const title = textNode('h3', `Solicitud ${shown.id}`);
-        const meta = textNode('p', `Estado: ${shown.status} · Categoría: ${shown.category} · Responsable: ${shown.assigned_to || 'Sin asignar'}`, 'support-admin-meta');
-        if (priorMessages) {
-          detail.querySelector('h3').replaceWith(title);
-          detail.querySelector('.support-admin-meta').replaceWith(meta);
-        } else detail.append(title, meta);
+        const view = presentTicket(shown);
+        let header = priorMessages && detail.querySelector('.support-ticket-heading');
+        if (!header) {
+          header = doc.createElement('div'); header.className = 'support-ticket-heading';
+          const copy = textNode('button', 'Copiar UUID', 'btn-secondary'); copy.type = 'button';
+          const ticketId = shown.id; copy.title = ticketId;
+          copy.addEventListener('click', async () => {
+            try { await doc.defaultView.navigator.clipboard.writeText(ticketId); if (isActive() && current === sequence) say('UUID copiado.'); }
+            catch { if (isActive() && current === sequence) say('UUID: ' + ticketId); }
+          });
+          header.append(textNode('h3', ''), textNode('p', '', 'support-ticket-identity'), statusBadge(shown,view), copy);
+        }
+        header.querySelector('h3').textContent = view.subject;
+        header.querySelector('.support-ticket-identity').textContent = view.identity + ' · ' + view.folio;
+        const badge = header.querySelector('.support-ticket-status');
+        badge.textContent = view.status; badge.dataset.status = Object.hasOwn(statuses, shown.status) ? shown.status : 'unknown';
+        const meta = textNode('p', view.explanation + ' Responsable: ' + (shown.assigned_to || 'Sin asignar') + ' · Actividad: ' + formatLocalDate(shown.updated_at), 'support-admin-meta');
+        if (priorMessages) detail.querySelector('.support-admin-meta').replaceWith(meta);
+        else detail.append(header,meta);
         const messages = priorMessages || doc.createElement('div'); messages.className = 'support-admin-messages';
         const entries = doc.createDocumentFragment();
         for (const item of root.KineticHubSupport.uniqueMessages(data.messages || []).slice(-100)) {
-          const article = doc.createElement('article'); if (item.id) article.dataset.messageAnchor = item.id; article.append(textNode('strong', item.author === 'admin' ? 'Equipo' : 'Visitante'), textNode('p', item.body), textNode('time', item.created_at || '')); entries.append(article);
+          const article = doc.createElement('article'); if (item.id) article.dataset.messageAnchor = item.id; article.append(textNode('strong', item.author === 'admin' ? 'Equipo' : 'Visitante'), textNode('p', item.body), textNode('time', formatLocalDate(item.created_at))); entries.append(article);
         }
         if (!priorMessages) detail.append(messages);
         root.KineticHubSupport.preserveReading(messages, () => messages.replaceChildren(entries));
         const footer = doc.createElement('div'); footer.className = 'support-admin-history-footer';
         if (data.hasMore) footer.append(textNode('p', 'Se muestran los últimos 100 mensajes; existen mensajes anteriores.'));
         const activity = doc.createElement('section'); activity.append(textNode('h4', 'Historial de actividad'));
-        for (const event of data.activity || []) activity.append(textNode('p', `${event.action} · ${event.actor || 'Sistema'} · ${event.created_at || ''}`));
+        for (const event of data.activity || []) {
+          const actor = event.actor === 'visitor' ? view.identity : (event.actor || 'Sistema');
+          activity.append(textNode('p', [label(actions, event.action, 'Actividad registrada'), actor, formatLocalDate(event.created_at)].join(' · ')));
+        }
         footer.append(activity);
         if (priorMessages) detail.querySelector('.support-admin-history-footer').replaceWith(footer);
         else detail.append(footer);
@@ -137,9 +192,8 @@
     previous?.addEventListener('click', () => { if (!busy && !listing && cursors.length>1) { clearSelection(); cursors.pop(); loadList(); } });
     next?.addEventListener('click', () => { if (!busy && !listing && nextCursor) { clearSelection(); cursors.push(nextCursor); loadList(); } });
     replyForm.addEventListener('submit', event => { event.preventDefault(); const body = replyInput.value.trim(); if (body) change('reply', { body }); });
-    container.querySelector('[data-ticket-save]').addEventListener('click', () => change('update', { status: statusInput.value, category: categoryInput.value }));
+    container.querySelector('[data-ticket-save]').addEventListener('click', () => change('update', updateFields(selected, statusInput.value, categoryInput.value, assignee?.value)));
     assign.addEventListener('click', () => change('update', { assignToMe: true }));
-    container.querySelector('[data-ticket-assign-other]')?.addEventListener('click', () => { if (assignee?.value) change('update', { assignTo: assignee.value }); });
     const tick = root.KineticHubSupport.createRefreshGate({
       isVisible: () => isActive() && !container.hidden && container.isConnected !== false &&
         !doc.hidden && !busy && !listing && !detailReading && container.getClientRects?.().length !== 0,
@@ -201,5 +255,5 @@
     return controller;
   }
   root.connectAdminSupport = connect;
-  if (typeof module === 'object' && module.exports) module.exports = { mount, connect };
+  if (typeof module === 'object' && module.exports) module.exports = { mount, connect, presentTicket, formatLocalDate, updateFields };
 })(typeof window !== 'undefined' ? window : globalThis);
