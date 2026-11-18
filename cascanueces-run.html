@@ -11,6 +11,34 @@
     <link rel="stylesheet" href="styles.min.css?v=__ASSET_VERSION__" />
     <link rel="icon" type="image/png" href="assets/brand/icon.png" />
     <link rel="stylesheet" href="event-memories.css?v=__ASSET_VERSION__" />
+    <style>
+      /* Preserve the complete supplied map; the adjacent link opens full size. */
+      .event-landing[data-event-slug="cascanueces-run"] .event-landing-info-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+      .event-landing[data-event-slug="cascanueces-run"] .event-landing-info-card:nth-child(2) {
+        grid-column: 1 / -1;
+        order: 1;
+        min-width: 0;
+      }
+      .event-landing[data-event-slug="cascanueces-run"] .event-landing-info-media {
+        display: block;
+        width: 100%;
+        max-width: 1000px;
+        height: auto;
+        aspect-ratio: auto;
+        object-fit: contain;
+        margin: 18px auto;
+      }
+      .event-landing[data-event-slug="cascanueces-run"] #informacion .event-landing-text-link {
+        min-height: 44px;
+      }
+      @media (max-width: 700px) {
+        .event-landing[data-event-slug="cascanueces-run"] .event-landing-info-grid {
+          grid-template-columns: minmax(0, 1fr);
+        }
+      }
+    </style>
 </head>
   <body data-event-page data-event-landing-page>
     <header class="site-header">

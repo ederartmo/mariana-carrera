@@ -1,0 +1,3 @@
+# Preserve supplied Perrun legal PDFs byte-for-byte, without text conversion.
+assets/events/perrun-2027/docs/*.pdf binary
+public/assets/events/perrun-2027/docs/*.pdf binary

@@ -16,12 +16,13 @@
   }
   const location=Object.freeze({name:'Bosque de San Juan de Aragón',city:'CDMX'});
   const distances=Object.freeze(['1K','3K','5K']);
+  const starts=Object.freeze({'1K':'08:00','3K':'08:15','5K':'08:30'});
   function validateDistance(value){const distance=String(value||'').trim().toUpperCase();if(!distances.includes(distance))throw new RangeError("Invalid Perrun distance");return distance;}
   return Object.freeze({slug:'perrun-2027',name:'Perrun 2027',date:Object.freeze({iso:'2027-02-14',label:'14 de febrero de 2027'}),
     location,timeZone:stageConfig.TIME_ZONE,distances,recreational:true,awards:false,
     checkoutEnabled:true,featured:true,detailUrl:'perrun-2027.html',
     pricing:Object.freeze({currency:'MXN',stages:stageConfig.PERRUN_STAGE_CATALOG,salesClose:stageConfig.SALES_CLOSE,getCurrentStage:stageConfig.getPerrunStageByDate}),
-    dogRules,categoryForWeight,validateDogWeights,validateDistance,
+    dogRules,categoryForWeight,validateDogWeights,validateDistance,starts,
     dogKit:Object.freeze(['Bandana','Servicio veterinario','Placa conmemorativa']),humanKit:Object.freeze(['Número','Playera']),
-    pickup:Object.freeze({date:'2027-02-13',start:'11:00',end:'17:00',get dateLabel(){return new Intl.DateTimeFormat('es-MX',{weekday:'long',day:'numeric',month:'long',year:'numeric',timeZone:this.timeZone}).format(new Date(this.date+'T12:00:00Z')).replace(',','');},location:location.name,timeZone:stageConfig.TIME_ZONE})});
+    pickup:Object.freeze({date:'2027-02-13',start:'10:00',end:'16:00',get dateLabel(){return new Intl.DateTimeFormat('es-MX',{weekday:'long',day:'numeric',month:'long',year:'numeric',timeZone:this.timeZone}).format(new Date(this.date+'T12:00:00Z')).replace(',','');},location:location.name,timeZone:stageConfig.TIME_ZONE})});
 });
