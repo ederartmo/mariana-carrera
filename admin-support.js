@@ -10,7 +10,7 @@
     registration: 'Consulta sobre inscripciones', other: 'Otra consulta',
   };
   const actions = {
-    visitor_reopened: 'El visitante reabrió la solicitud', admin_reply: 'Respuesta del equipo',
+    visitor_reopened: 'El visitante reabrió la solicitud', admin_reply: 'Respuesta del equipo', agent_acknowledged: 'Acuse automático del agente',
     status_changed: 'Cambio de estado', category_changed: 'Cambio de categoría', assigned: 'Asignación de responsable',
   };
   const label = (options, key, fallback) => Object.hasOwn(options, key) ? options[key] : fallback;
@@ -166,7 +166,7 @@
         viewId = id; detail.hidden = false; placeholder.hidden = true;
         const entries = doc.createDocumentFragment();
         for (const item of root.KineticHubSupport.uniqueMessages(data.messages || []).slice(-100)) {
-          const article = doc.createElement('article'); article.className = item.author === 'admin' ? 'support-admin-message--team' : 'support-admin-message--visitor'; if (item.id) article.dataset.messageAnchor = item.id; article.append(textNode('strong', item.author === 'admin' ? 'Equipo' : 'Visitante'), textNode('p', item.body), textNode('time', formatLocalDate(item.created_at))); entries.append(article);
+          const article = doc.createElement('article'); article.className = item.author === 'visitor' ? 'support-admin-message--visitor' : 'support-admin-message--team'; if (item.id) article.dataset.messageAnchor = item.id; article.append(textNode('strong', item.author === 'agent' ? 'Asistente automático' : item.author === 'admin' ? 'Equipo' : 'Visitante'), textNode('p', item.body), textNode('time', formatLocalDate(item.created_at))); entries.append(article);
         }
         root.KineticHubSupport.preserveReading(messages, () => messages.replaceChildren(entries));
         messageLimit.hidden = !data.hasMore;
