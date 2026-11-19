@@ -11,7 +11,7 @@ async function database() {
   await db.exec('CREATE ROLE anon; CREATE ROLE authenticated; CREATE ROLE service_role;');
   for (const file of [
     '20261117145659_support_phase_one.sql',
-    '20261119010000_support_agent_atomic_ack.sql',
+    '20261119021334_support_agent_atomic_ack.sql',
   ]) await db.exec(fs.readFileSync(path.join(migrations, file), 'utf8'));
   return db;
 }
