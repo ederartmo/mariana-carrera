@@ -69,7 +69,7 @@ BEGIN
   IF v_source.id IS DISTINCT FROM (
      SELECT id FROM public.support_messages WHERE ticket_id=p_ticket_id
      ORDER BY created_at,id LIMIT 1
-  ) OR v_ticket.status <> 'pending'
+  ) OR v_ticket.status <> 'pending' OR v_ticket.created_at < p_not_before
     OR EXISTS (SELECT 1 FROM public.support_messages
                WHERE ticket_id=p_ticket_id AND author IN ('admin','agent'))
   THEN RETURN jsonb_build_object('error','source_not_eligible'); END IF;

@@ -108,3 +108,15 @@ test('failed ledger insert rolls back the message and activity in same transacti
     assert.equal((await acknowledge(db,t)).status,'created');
   } finally {await db.close();}
 });
+
+test('activation cutoff excludes existing old tickets even if the first visitor message is recent',async()=>{
+  const db=await database();
+  try {
+    const t=await createTicket(db,'f'.repeat(64));
+    await db.query("UPDATE support_tickets SET created_at=now()-interval '2 hours' WHERE id=$1",[t.ticketId]);
+    const result=await db.query("SELECT support_agent_acknowledge_first($1,$2,$3,now()-interval '1 hour') data",[t.ticketId,t.sourceId,'Confirmación']);
+    assert.equal(result.rows[0].data.error,'source_not_eligible');
+    const rows=await db.query("SELECT count(*) AS n FROM support_messages WHERE ticket_id=$1 AND author='agent'",[t.ticketId]);
+    assert.equal(rows.rows[0].n,0);
+  } finally {await db.close();}
+});
