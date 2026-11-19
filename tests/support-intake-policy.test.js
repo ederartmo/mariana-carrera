@@ -34,5 +34,5 @@ test('invalid unapproved identifiers, schedule and durations are not echoed', ()
   assert.doesNotMatch(result.body,/not-a-real-folio/);
   assert.doesNotMatch(result.body,/X{30}/);
   assert.doesNotMatch(result.body,/169 horas/);
-  assert.throws(()=>{CATEGORIES.other='changed';},TypeError);
+  assert.equal(Object.isFrozen(CATEGORIES),true);
 });
