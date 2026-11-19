@@ -278,3 +278,38 @@ test('visitor ticket success survives optional intake failure and only start inv
   assert.equal(send.statusCode,200);
   assert.equal(touched,false);
 });
+
+test('operator reads and replies on official aliases without trusting proxy host headers', async (t) => {
+ const old = process.env.SITE_URL;
+ process.env.SITE_URL = 'https://www.kinetichub.com.mx';
+ t.after(() => { if(old === undefined) delete process.env.SITE_URL; else process.env.SITE_URL = old; });
+ const handler = require('../lib/admin-support');
+ const ticketId = crypto.randomUUID();
+ const reply = {id:ticketId,requestId:crypto.randomUUID(),expectedVersion:1,action:'reply',body:'Respuesta ficticia'};
+ const calls = [];
+ const deps = {auth:async()=>({user:{id:adminId},email:'operator@example.test'}),
+   client:{rpc:async(name,args)=>{calls.push([name,args]);return {data:{ok:true,ticket:{id:ticketId}}};}}};
+ for(const origin of ['https://kinetichub.com.mx','https://www.kinetichub.com.mx']){
+   const extra={query:{id:ticketId},headers:{origin,host:'deployment.vercel.app','x-forwarded-host':'untrusted.example'}};
+   const read=response(), write=response();
+   await handler(request('GET',null,extra),read,deps);
+   await handler(request('POST',reply,extra),write,deps);
+   assert.equal(read.statusCode,200);
+   assert.equal(write.statusCode,200);
+   assert.equal(calls.at(-1)[1].p_actor,'admin:'+adminId);
+ }
+ for(const origin of [undefined,'https://evil.test','http://kinetichub.com.mx','https://kinetichub.com.mx.evil.test']){
+   const res=response();
+   await handler(request('POST',reply,{headers:{origin,host:'kinetichub.com.mx','x-forwarded-host':'kinetichub.com.mx','sec-fetch-site':'same-origin'}}),res,
+    {...deps,auth:async()=>assert.fail('auth called on rejected origin')});
+   assert.equal(res.statusCode,403);
+   assert.equal(res.body.code,'origin_not_allowed');
+ }
+ for(const status of [401,403]){
+   const res=response();
+   await handler(request('POST',reply,{headers:{origin:'https://kinetichub.com.mx'}}),res,{...deps,auth:async()=>({error:true,status})});
+   assert.equal(res.statusCode,status);
+   assert.notEqual(res.body.code,'origin_not_allowed');
+ }
+ assert.equal(calls.length,4);
+});

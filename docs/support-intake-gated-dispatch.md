@@ -17,8 +17,6 @@ Solo se ejecuta en `start`, no en `send` o `read`. La V1 no cubre reaperturas, m
 
 - `SUPPORT_INTAKE_ENABLED`: ausente/false por defecto; habilitar solo con aprobación y después de aplicar la migración validada.
 - `SUPPORT_INTAKE_START_AT`: corte ISO UTC explícito; se usa en SQL para evitar contestar tickets antiguos.
-- `SUPPORT_INTAKE_SCHEDULE`: horario aprobado (opcional). Si se omite, no se inventan horarios.
-- `SUPPORT_INTAKE_RESPONSE_BUSINESS_HOURS`: objetivo de primera respuesta (opcional, solo se anuncia si horario aprobado). No implica plazo de solución.
 
 Ninguna de estas variables habilita permisos a visitantes, cambia el acceso de operadores ni otorga un token a agentes.
 

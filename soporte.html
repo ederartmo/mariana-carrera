@@ -61,18 +61,22 @@
       try {
         const authClient = await window.KineticHubSupabase.ensureClient();
         if (!authClient) throw new Error('auth unavailable');
-        const controller = await window.connectAdminSupport({ document, authClient, fetch: async (...args) => {
-          const response = await fetch(...args);
-          if (response.status === 401 || response.status === 403) {
-            notice.textContent = response.status === 401 ? 'Inicia sesión para acceder.' : 'Esta cuenta no tiene acceso a soporte.';
-          } else if (response.ok && panel.isConnected && panel.hasChildNodes()) {
-            panel.hidden = false;
-            notice.textContent = '';
-          } else if (panel.hidden) {
-            notice.textContent = 'No se pudo verificar el acceso. Recarga la página para volver a intentar.';
+        const controller = await window.connectAdminSupport({
+          document, authClient,
+          onAccessDenied(status) {
+            notice.textContent = status === 401 ? 'Inicia sesión para acceder.' : 'Esta cuenta no tiene acceso a soporte.';
+          },
+          fetch: async (...args) => {
+            const response = await fetch(...args);
+            if (response.ok && panel.isConnected && panel.hasChildNodes()) {
+              panel.hidden = false;
+              notice.textContent = '';
+            } else if (panel.hidden) {
+              notice.textContent = 'No se pudo verificar el acceso. Recarga la página para volver a intentar.';
+            }
+            return response;
           }
-          return response;
-        } });
+        });
         if (!controller) notice.textContent = 'Inicia sesión para acceder.';
         authClient.auth.onAuthStateChange((event) => {
           if (event === 'SIGNED_OUT') notice.textContent = 'Inicia sesión para acceder.';

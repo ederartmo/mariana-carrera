@@ -2,7 +2,7 @@
 const test=require('node:test');
 const assert=require('node:assert/strict');
 const {randomUUID}=require('node:crypto');
-const {enabled,policy,dispatch}=require('../lib/support-intake-dispatch');
+const {enabled,dispatch}=require('../lib/support-intake-dispatch');
 
 const ticketId=randomUUID(), sourceId=randomUUID(), hash='c'.repeat(64);
 const base={ok:true,ticket:{id:ticketId,category:'events',status:'pending',version:2},
@@ -10,7 +10,7 @@ const base={ok:true,ticket:{id:ticketId,category:'events',status:'pending',versi
 const cutoff='2026-11-19T00:00:00.000Z';
 const env={SUPPORT_INTAKE_ENABLED:'true',SUPPORT_INTAKE_START_AT:cutoff};
 const now=()=>Date.parse('2026-11-19T00:01:00.000Z');
-test('fails closed without activation or valid cutoff; business targets require a schedule',()=>{
+test('fails closed without activation or valid cutoff',()=>{
   for(const e of [
     {}, {SUPPORT_INTAKE_ENABLED:'false',SUPPORT_INTAKE_START_AT:cutoff},
     {SUPPORT_INTAKE_ENABLED:'true'},
@@ -18,9 +18,7 @@ test('fails closed without activation or valid cutoff; business targets require 
     {SUPPORT_INTAKE_ENABLED:'true',SUPPORT_INTAKE_START_AT:'2026-12-01T00:00:00.000Z'}
   ]) assert.equal(enabled(e,now()),false);
   assert.equal(enabled(env,now()),true);
-  assert.equal(policy({...env,SUPPORT_INTAKE_RESPONSE_BUSINESS_HOURS:'24'}).firstResponseBusinessHours,null);
-  assert.equal(policy({...env,SUPPORT_INTAKE_RESPONSE_BUSINESS_HOURS:'24',
-    SUPPORT_INTAKE_SCHEDULE:'Lunes a viernes 9–18 h'}).firstResponseBusinessHours,24);
+
 });
 test('disabled flow never calls database and returns original transcript',async()=>{
   const result=await dispatch({data:base,capabilityHash:hash,env:{},rpc:async()=>assert.fail('unexpected rpc'),now});
@@ -40,7 +38,9 @@ test('enabled start writes once then reads same visitor conversation for the age
   assert.deepEqual(calls.map(x=>x.name),['support_agent_acknowledge_first','support_visitor_action']);
   assert.equal(calls[0].args.p_source_message_id,sourceId);
   assert.equal(calls[0].args.p_not_before,cutoff);
-  assert.match(calls[0].args.p_body,/Esta confirmación es automática/);
+  assert.equal(calls[0].args.p_body,'Hola, recibimos tu solicitud #'+ticketId.slice(0,8).toUpperCase()+
+    '. Cuéntanos qué pasó y cómo podemos ayudarte.');
+  assert.equal(base.ticket.category,'events');
   assert.equal(calls[1].args.p_capability_hash,hash);
   assert.equal(calls[1].args.p_action,'read');
 });
