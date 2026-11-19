@@ -30,3 +30,12 @@ test('unified save preserves the existing assignment unless an allowed replaceme
   assert.deepEqual(updateFields(current, base.status, base.category, current.assigned_to), base);
   assert.deepEqual(updateFields(current, base.status, base.category, 'other@example.test'), { ...base, assignTo: 'other@example.test' });
 });
+
+test('assignee names change presentation only and preserve legacy or blank assignments', () => {
+  const { assigneeLabel } = require('../admin-support.js');
+  const email = 'operator@example.test';
+  assert.equal(assigneeLabel(email, {[email]:'Equipo Operativo'}), 'Equipo Operativo');
+  assert.equal(assigneeLabel(email, {}), email);
+  assert.equal(assigneeLabel(null, {}), 'Sin asignar');
+  assert.equal(updateFields({},'pending','general',email).assignTo,email);
+});

@@ -236,3 +236,19 @@ test('admin reply cannot inject its actor and missing verified ID fails before R
  await handler(request('POST',{...body,actor:'admin:'+adminId}),spoof,{auth:async()=>({user:{id:adminId},email:'admin@example.test'}),client});
  assert.equal(spoof.statusCode,400);
 });
+
+test('admin returns only configured labels for current authorized assignees', async () => {
+ const handler=require('../lib/admin-support');
+ const previous=process.env.SUPPORT_ASSIGNEE_LABELS;
+ try {
+   process.env.SUPPORT_ASSIGNEE_LABELS=JSON.stringify({'admin@example.test':'Equipo Operativo','inactive@example.test':'Private','other@example.test':'hidden@example.test'});
+   const res=response();
+   await handler(request('GET',null),res,{auth:async()=>({email:'admin@example.test'}),getAdminEmails:()=>['admin@example.test','other@example.test'],client:{rpc:async()=>({data:{ok:true,tickets:[]}})}});
+   assert.equal(res.statusCode,200);
+   assert.deepEqual(res.body.assignees,['admin@example.test','other@example.test']);
+   assert.deepEqual(res.body.assigneeLabels,{'admin@example.test':'Equipo Operativo'});
+ } finally {
+   if(previous===undefined) delete process.env.SUPPORT_ASSIGNEE_LABELS;
+   else process.env.SUPPORT_ASSIGNEE_LABELS=previous;
+ }
+});

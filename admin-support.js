@@ -28,6 +28,10 @@
       subject: label(subjects, ticket.category, 'Consulta sin categoría'), status, explanation,
     };
   }
+  function assigneeLabel(email, labels = {}) {
+    if (!email) return 'Sin asignar';
+    return label(labels || {}, email, email);
+  }
   function updateFields(ticket, status, category, assignee) {
     return { status, category, ...(assignee && assignee !== ticket?.assigned_to ? { assignTo: assignee } : {}) };
   }
@@ -94,7 +98,7 @@
         if (filterAssignee && doc.activeElement !== filterAssignee) {
           const selectedFilter = filterAssignee.value;
           filterAssignee.replaceChildren(new Option('Todos','*'), new Option('Sin asignar',''));
-          for (const email of data.assignees || []) filterAssignee.add(new Option(email,email));
+          for (const email of data.assignees || []) filterAssignee.add(new Option(assigneeLabel(email, data.assigneeLabels),email));
           filterAssignee.value = selectedFilter === '' || (data.assignees || []).includes(selectedFilter) ? selectedFilter : '*';
         }
         const fragment = doc.createDocumentFragment();
@@ -103,7 +107,7 @@
           const view = presentTicket(ticket);
           button.title = ticket.id;
           button.append(textNode('strong', view.subject), textNode('span', view.identity + (view.account ? ' · Cuenta autenticada' : '') + ' · ' + view.folio),
-            statusBadge(ticket, view), textNode('small', 'Responsable: ' + (ticket.assigned_to || 'Sin asignar')),
+            statusBadge(ticket, view), textNode('small', 'Responsable: ' + assigneeLabel(ticket.assigned_to, data.assigneeLabels)),
             textNode('small', 'Actividad: ' + formatLocalDate(ticket.updated_at)));
           button.addEventListener('click', () => loadDetail(ticket.id)); fragment.append(button);
         }
@@ -138,7 +142,7 @@
         const sameView = viewId === id;
         if (assignee && !editing) {
           assignee.replaceChildren(new Option('Sin cambio de responsable', ''));
-          for (const email of data.assignees || []) assignee.add(new Option(email, email));
+          for (const email of data.assignees || []) assignee.add(new Option(assigneeLabel(email, data.assigneeLabels), email));
           assignee.value = (data.assignees || []).includes(selected.assigned_to) ? selected.assigned_to : ''; shownAssignee = assignee.value;
         }
         const view = presentTicket(shown);
@@ -158,7 +162,7 @@
         header.querySelector('.support-ticket-identity').textContent = view.identity + (view.account ? ' · Cuenta autenticada' : '') + ' · ' + view.folio;
         const badge = header.querySelector('.support-ticket-status');
         badge.textContent = view.status; badge.dataset.status = Object.hasOwn(statuses, shown.status) ? shown.status : 'unknown';
-        summary.querySelector('.support-admin-meta').textContent = view.explanation + ' Responsable: ' + (shown.assigned_to || 'Sin asignar') + ' · Última actividad: ' + formatLocalDate(shown.updated_at);
+        summary.querySelector('.support-admin-meta').textContent = view.explanation + ' Responsable: ' + assigneeLabel(shown.assigned_to, data.assigneeLabels) + ' · Última actividad: ' + formatLocalDate(shown.updated_at);
         viewId = id; detail.hidden = false; placeholder.hidden = true;
         const entries = doc.createDocumentFragment();
         for (const item of root.KineticHubSupport.uniqueMessages(data.messages || []).slice(-100)) {
@@ -271,5 +275,5 @@
     return controller;
   }
   root.connectAdminSupport = connect;
-  if (typeof module === 'object' && module.exports) module.exports = { mount, connect, presentTicket, formatLocalDate, updateFields };
+  if (typeof module === 'object' && module.exports) module.exports = { mount, connect, presentTicket, formatLocalDate, updateFields, assigneeLabel };
 })(typeof window !== 'undefined' ? window : globalThis);
