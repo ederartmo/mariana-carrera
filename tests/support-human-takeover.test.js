@@ -7,8 +7,8 @@ const { join } = require('node:path');
 const { PGlite } = require('@electric-sql/pglite');
 const sql = name => readFileSync(join(__dirname,'../supabase/migrations',name),'utf8');
 const base = '20261117145659_support_phase_one.sql';
-const ack = '20261119010000_support_agent_atomic_ack.sql';
-const migration = '20261119020000_support_human_takeover.sql';
+const ack = '20261119021334_support_agent_atomic_ack.sql';
+const migration = '20261119022000_support_human_takeover.sql';
 const actor = 'admin:11111111-1111-4111-8111-111111111111';
 const assignee = 'responsible@example.test';
 
