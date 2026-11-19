@@ -5,8 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="robots" content="noindex">
   <title>Operación de soporte | Kinetic Hub</title>
-  <link rel="stylesheet" href="styles.min.css?v=1795049547958">
-  <link rel="stylesheet" href="support.css?v=1795049547958">
+  <link rel="stylesheet" href="styles.min.css?v=1795067374525">
+  <link rel="stylesheet" href="support.css?v=1795067374525">
 </head>
 <body>
   <main style="width:min(100% - 32px, 1220px);margin:32px auto">
@@ -51,9 +51,9 @@
       </div>
     </section>
   </main>
-  <script src="supabase-client.js?v=1795049547958"></script>
-  <script src="support-chat.js?v=1795049547958"></script>
-  <script src="admin-support.js?v=1795049547958"></script>
+  <script src="supabase-client.js?v=1795067374525"></script>
+  <script src="support-chat.js?v=1795067374525"></script>
+  <script src="admin-support.js?v=1795067374525"></script>
   <script>
     (async () => {
       const panel = document.querySelector('[data-admin-support]');
@@ -61,18 +61,22 @@
       try {
         const authClient = await window.KineticHubSupabase.ensureClient();
         if (!authClient) throw new Error('auth unavailable');
-        const controller = await window.connectAdminSupport({ document, authClient, fetch: async (...args) => {
-          const response = await fetch(...args);
-          if (response.status === 401 || response.status === 403) {
-            notice.textContent = response.status === 401 ? 'Inicia sesión para acceder.' : 'Esta cuenta no tiene acceso a soporte.';
-          } else if (response.ok && panel.isConnected && panel.hasChildNodes()) {
-            panel.hidden = false;
-            notice.textContent = '';
-          } else if (panel.hidden) {
-            notice.textContent = 'No se pudo verificar el acceso. Recarga la página para volver a intentar.';
+        const controller = await window.connectAdminSupport({
+          document, authClient,
+          onAccessDenied(status) {
+            notice.textContent = status === 401 ? 'Inicia sesión para acceder.' : 'Esta cuenta no tiene acceso a soporte.';
+          },
+          fetch: async (...args) => {
+            const response = await fetch(...args);
+            if (response.ok && panel.isConnected && panel.hasChildNodes()) {
+              panel.hidden = false;
+              notice.textContent = '';
+            } else if (panel.hidden) {
+              notice.textContent = 'No se pudo verificar el acceso. Recarga la página para volver a intentar.';
+            }
+            return response;
           }
-          return response;
-        } });
+        });
         if (!controller) notice.textContent = 'Inicia sesión para acceder.';
         authClient.auth.onAuthStateChange((event) => {
           if (event === 'SIGNED_OUT') notice.textContent = 'Inicia sesión para acceder.';

@@ -113,3 +113,43 @@ test('guest transport drops inherited Authorization, account never forwards a bl
  await assert.rejects(account('/api/support-chat'),{status:401});
  assert.equal(sent,1);
 });
+
+test('admin transport keeps the session for origin rejection and clears it for access denial', async () => {
+  const { connect } = require('../admin-support.js');
+  const old = globalThis.KineticHubSupport;
+  let call, cleared = false, next, stopped = false;
+  const notices = [];
+  globalThis.KineticHubSupport = {
+    ...support,
+    createAdminClient: ({fetch}) => { call=fetch; return {list:async()=>({tickets:[]})}; },
+    scheduleRefresh: () => () => { stopped=true; }
+  };
+  const elements = new Map();
+  const element = key => {
+    if (!elements.has(key)) elements.set(key,{addEventListener(){},replaceChildren(){},append(){},querySelector:element});
+    return elements.get(key);
+  };
+  const panel = element('[data-admin-support]');
+  panel.replaceChildren = () => {cleared=true;};
+  try {
+    await connect({
+      document:{querySelector:element,createDocumentFragment:()=>({}),createElement:()=>({})},
+      authClient:{auth:{getSession:async()=>({data:{session:{user:{id:'fixture'},access_token:'fixture'}}}),onAuthStateChange(){}}},
+      fetch:async(_,options)=>{assert.equal(options.headers.Authorization,'Bearer fixture');return next;},
+      onAccessDenied:status=>notices.push(status)
+    });
+    next=Response.json({ok:false,code:'origin_not_allowed'},{status:403});
+    const rejected=await call('/api/admin-support',{method:'POST'});
+    assert.equal((await rejected.json()).code,'origin_not_allowed');
+    assert.equal(cleared,false); assert.equal(stopped,false); assert.deepEqual(notices,[]);
+    next=Response.json({ok:false},{status:403});
+    await call('/api/admin-support',{method:'POST'});
+    assert.equal(cleared,true); assert.equal(stopped,true); assert.deepEqual(notices,[403]);
+  } finally { globalThis.KineticHubSupport=old; }
+});
+
+test('support portal reports session denial only via the shared authorization callback', () => {
+ const html = require('node:fs').readFileSync(require.resolve('../soporte.html'),'utf8');
+ assert.match(html,/onAccessDenied\(status\)/);
+ assert.doesNotMatch(html,/response\.status === 401 \|\| response\.status === 403/);
+});

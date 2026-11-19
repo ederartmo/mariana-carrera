@@ -235,7 +235,7 @@
     loadList();
     return { loadList, loadDetail, tick, stop };
   }
-  async function connect({ document: doc = document, authClient, fetch: fetcher = fetch } = {}) {
+  async function connect({ document: doc = document, authClient, fetch: fetcher = fetch, onAccessDenied } = {}) {
     const panel = doc.querySelector('[data-admin-support]');
     if (!panel) return null;
     const getSession = async () => {
@@ -264,10 +264,14 @@
       fetch: async (...args) => {
         try {
           const response = await scoped(...args);
-          if (response.status === 401 || response.status === 403) { active = false; invalidate(); }
+          const denied = response.status === 403 && typeof response.clone === 'function'
+            ? await response.clone().json().catch(() => null) : null;
+          if (response.status === 401 || (response.status === 403 && denied?.code !== 'origin_not_allowed')) {
+            active = false; invalidate(); onAccessDenied?.(response.status);
+          }
           return response;
         } catch (error) {
-          if (error.status === 401) { active = false; invalidate(); }
+          if (error.status === 401) { active = false; invalidate(); onAccessDenied?.(401); }
           throw error;
         }
       },
