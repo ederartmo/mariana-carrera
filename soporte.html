@@ -64,7 +64,7 @@
         const controller = await window.connectAdminSupport({ document, authClient, fetch: async (...args) => {
           const response = await fetch(...args);
           if (response.status === 401 || response.status === 403) {
-            notice.textContent = response.status === 401 ? 'Inicia sesión para acceder.' : 'Esta cuenta no tiene acceso a soporte.';
+            notice.textContent = response.status === 401 ? 'Inicia sesión para acceder.' : ((args[1]?.method || 'GET') === 'POST' ? 'No se pudo enviar la respuesta. Tu borrador se conserva.' : 'Esta cuenta no tiene acceso a soporte.');
           } else if (response.ok && panel.isConnected && panel.hasChildNodes()) {
             panel.hidden = false;
             notice.textContent = '';

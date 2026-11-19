@@ -264,7 +264,7 @@
       fetch: async (...args) => {
         try {
           const response = await scoped(...args);
-          if (response.status === 401 || response.status === 403) { active = false; invalidate(); }
+          if (response.status === 401 || (response.status === 403 && (!args[1] || (args[1].method || 'GET') === 'GET'))) { active = false; invalidate(); }
           return response;
         } catch (error) {
           if (error.status === 401) { active = false; invalidate(); }

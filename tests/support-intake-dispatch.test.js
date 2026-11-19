@@ -40,7 +40,7 @@ test('enabled start writes once then reads same visitor conversation for the age
   assert.deepEqual(calls.map(x=>x.name),['support_agent_acknowledge_first','support_visitor_action']);
   assert.equal(calls[0].args.p_source_message_id,sourceId);
   assert.equal(calls[0].args.p_not_before,cutoff);
-  assert.match(calls[0].args.p_body,/Esta confirmación es automática/);
+  assert.match(calls[0].args.p_body,/Mensaje automático/);
   assert.equal(calls[1].args.p_capability_hash,hash);
   assert.equal(calls[1].args.p_action,'read');
 });
