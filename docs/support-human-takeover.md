@@ -6,27 +6,15 @@ Migration: `20261119022000_support_human_takeover.sql`. Requires the support sch
 - Reuse the original `requestId` and payload on a retry. The existing request ledger and expected version are unchanged; a replay writes nothing, and a different operation using the stale version conflicts. Opening a new operation with a fresh request ID and current version is not a retry.
 - New messages written through the current RPCs carry `visitor`, `human_operator` or `automatic_ack` provenance. The schema reserves `ai_generated` for a future publisher, but nothing writes it now. Existing message types and historical content are intact; legacy provenance is NULL. Both transcripts expose provenance additively. Pause time and activity are admin-only.
 
-## Apply and verify (separate authorization required)
+## Production status — applied; do not reapply
 
-1. Verify the target migration history, current function bodies/signatures and effective grants against the expected baseline. Save the deployed definitions, owner, settings and ACLs of the four replaced RPCs. Do not blindly apply the whole repository chain.
-2. Test against a clean isolated database, including the dependency migrations and concurrency. Schedule a low-traffic window: adding columns and replacing the activity check takes table locks; assess table size and constraint validation duration first. Apply only this migration transactionally with bounded lock and statement timeouts using the approved process. Any error must roll back the whole migration.
-3. Confirm RPC grants are unchanged, the new columns/constraint exist, and the start/read/reply flows still work with synthetic fixtures under a separately approved scope. The DB change is compatible with the existing API and UI and may be installed before the optional activity label ships.
+The separately authorized wrapper committed migration `20261119022000_support_human_takeover` on Supabase Production project `uycwzhlcnfijjyzkgkem`. A new connection verified it on 2026-11-19 at 12:23:56 UTC.
+
+- Exactly one row records the version and the canonical SQL (SHA-256 `3caa64d439782730f57ce35740571fee093143b3dbc06fb174c3313df428ff12`). The prior acknowledgment, `20261119021334`, and the remaining history were unchanged.
+- All four RPC bodies match the approved migration. Their signatures, ownership, settings and ACL were preserved. The two columns and expected constraints are present; RLS is still enabled on all six support tables.
+- This PR does not apply a migration or enable an AI publisher. Do not reapply the wrapper, run a linked/global migration push, or repair history. A future deployment of the code still needs separate approval.
+
 
 ## Reverse without deleting history
 
 If still uncommitted, roll back the migration transaction. After commit, first pause all automation and keep it paused until forward repair. Use a reviewed compensating migration with bounded lock and statement timeouts: restore only the saved pre-change `support_admin_action` body with its original signature and settings; preserve the schema additions, pause timestamps, provenance, event constraint admitting existing pause events, and guarded acknowledgment RPC. This reverses new automatic transitions, not previously committed ticket states or replies. Legacy reply writes during rollback have NULL provenance and do not create a pause; do not restart automation until that interval has been reviewed. Do not delete migration history, drop columns, restore an activity constraint that rejects existing events, or bulk-revert ticket statuses.
-
-## Production catalog preflight (read-only)
-
-For Production project `uycwzhlcnfijjyzkgkem`, the four RPC bodies matched the repository baseline and their names, input types/defaults and `jsonb` return types match this replacement. All four are owned by `postgres`, use `SECURITY INVOKER`, set `search_path=public, pg_temp`, and grant API execution to `service_role`, not `PUBLIC`, `anon` or `authenticated`. Required support tables and constraints exist with RLS; the two added columns were absent. No support-table locks or custom triggers were observed in that catalog snapshot. PostgreSQL does not necessarily track all PL/pgSQL body references in `pg_depend`; source and table contracts were compared separately. Recheck activity and locks immediately before any application.
-
-**Production apply remains NO-GO pending explicit authorization.** The prerequisite was recorded as `20261119021334_support_agent_atomic_ack`. Its 4,920 stored SQL bytes exactly match the Git blob formerly named `20261119010000_support_agent_atomic_ack.sql`. Both files were aligned in Git only: the prerequisite now has its recorded version and this migration has the later `20261119022000` version. No historical row was modified. Other migration discrepancies are outside this change: do not use a global linked push, include-all, migration repair, or replay the prerequisite.
-
-## Rehearsed single-file Production procedure (not authorized by this PR)
-
-1. Immediately before applying, confirm project identity, the approved commit and file hash, unchanged prerequisite statement and migration history, and that `20261119022000` is unused and later than the latest recorded version. Recheck RPC definitions, owner/settings/ACL, RLS, and current activity/locks. Persist a protected metadata backup outside the repository. Stop on any mismatch.
-2. In one authenticated PostgreSQL session, use `psql -X --single-transaction -v ON_ERROR_STOP=1` with the reviewed wrapper and only the approved SQL file. Set local `lock_timeout=2s` and `statement_timeout=15s`; acquire a `SHARE ROW EXCLUSIVE` lock on the history table and repeat the history/schema guards. Execute the migration SQL unchanged. Insert only the new `20261119022000` row with the exact canonical statements in the same transaction. Check the columns, constraint, RPC signatures and effective grants before committing; fail closed on errors.
-3. In a fresh connection verify the single new history row and exact SQL, the four RPC definitions and privileges, RLS and constraints, and preservation of existing records. Do not send real replies for verification without separate permission.
-4. A pre-commit error must roll back schema and history together. For a lost connection near commit, resolve the outcome from a new read-only session before considering any retry. After a confirmed commit, follow the compensating rollback above, not a history rewrite.
-
-QA on isolated PostgreSQL 17.11 covered exact bytes after rename, forward order, atomic commit, rollback after a deliberate failure, duplicate rejection and lock timeout. No Production execution was performed.
