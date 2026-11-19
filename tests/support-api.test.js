@@ -252,3 +252,29 @@ test('admin returns only configured labels for current authorized assignees', as
    else process.env.SUPPORT_ASSIGNEE_LABELS=previous;
  }
 });
+
+
+test('visitor ticket success survives optional intake failure and only start invokes it', async () => {
+  const handler = require('../lib/support-chat');
+  const ticket = {id:crypto.randomUUID(),status:'pending',category:'general',version:2};
+  const saved={ok:true,ticket,messages:[{id:crypto.randomUUID(),author:'visitor',body:'Hola'}],hasMore:false};
+  const call=async(action,dispatchIntake)=>{
+    const req=request('POST', {
+      action,token,...(action==='read'?{}:{requestId:crypto.randomUUID(),body:'Hola'}),
+      ...(action==='start'?{category:'general',website:''}:{})
+    });
+    const res=response();
+    await handler(req,res,{rpc:async()=>({data:saved}),rateLimit:allow,dispatchIntake});
+    return res;
+  };
+  const failure=await call('start',async()=>{throw Error('agent offline');});
+  assert.equal(failure.statusCode,200);
+  assert.deepEqual(failure.body.messages,saved.messages);
+  let touched=false;
+  const read=await call('read',async()=>{touched=true;throw Error('unexpected');});
+  assert.equal(read.statusCode,200);
+  assert.equal(touched,false);
+  const send=await call('send',async()=>{touched=true;throw Error('unexpected');});
+  assert.equal(send.statusCode,200);
+  assert.equal(touched,false);
+});
