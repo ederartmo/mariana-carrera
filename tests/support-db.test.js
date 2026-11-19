@@ -74,13 +74,17 @@ test('support migration creates private service-role RPC surface', async () => {
     }
     const verify = await db.query(`SELECT status,version FROM support_tickets WHERE id=$1`, [ticketId]);
     assert.deepEqual(verify.rows[0], { status: 'in_progress', version: 3 });
-    const assignment = [ticketId,'55555555-5555-4555-8555-555555555555',3,'update',null,'resolved',null,'other@example.test',true,'admin@example.test'];
+    const assignment = [ticketId,'55555555-5555-4555-8555-555555555555',3,'update',null,'resolved',null,'other@example.test',true,'admin:'+owner];
     const assigned = await db.query('SELECT support_admin_action($1,$2,$3,$4,$5,$6,$7,$8,$9,$10) result',assignment);
     assert.equal(assigned.rows[0].result.ticket.assigned_to,'other@example.test');
     assert.equal(assigned.rows[0].result.ticket.status,'resolved');
-    assert.ok(assigned.rows[0].result.activity.some(x=>x.action==='assigned'));
+    assert.ok(assigned.rows[0].result.activity.some(x=>x.action==='assigned' && x.actor==='admin:'+owner));
+    assert.ok(assigned.rows[0].result.activity.some(x=>x.actor==='admin@example.test'));
+    const rawAudit = await db.query("SELECT actor FROM support_activity WHERE ticket_id=$1 AND action='assigned'",[ticketId]);
+    assert.deepEqual(rawAudit.rows,[{actor:'admin:'+owner}]);
     const readAfterAssignment = await db.query("SELECT support_visitor_action('read',$1) result",[hash]);
     assert.equal(JSON.stringify(readAfterAssignment.rows[0].result).includes('other@example.test'),false);
+    assert.equal(JSON.stringify(readAfterAssignment.rows[0].result).includes(owner),false);
 
   } finally { await db.close(); }
 });

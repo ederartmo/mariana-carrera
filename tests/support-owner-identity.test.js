@@ -69,7 +69,7 @@ test('real admin guard rejects invalid and non-admin bearers before enrichment',
 test('public chat route cannot select another ticket or touch profiles', async()=>{
   process.env.SITE_URL='https://fixture.test';
   const publicHandler=require('../lib/support-chat');
-  const headers={host:'fixture.test',origin:'https://fixture.test','content-type':'application/json'};
+  const headers={host:'kinetichub.com.mx',origin:'https://kinetichub.com.mx','content-type':'application/json'};
   const token='a'.repeat(64);
   for(const [req, auth, expected] of [
     [{method:'POST',headers,body:{action:'read',token,id:T}},undefined,400],
