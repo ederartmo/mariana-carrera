@@ -272,9 +272,9 @@
       if (empty) empty.hidden = Boolean(data.messages?.length);
       const fragment = doc.createDocumentFragment();
       for (const item of items) {
-        const article = doc.createElement('article'); article.className = `support-message support-message--${item.author === 'admin' ? 'admin' : 'visitor'}`;
+        const article = doc.createElement('article'); article.className = `support-message support-message--${item.author === 'visitor' ? 'visitor' : 'admin'}`;
         if (item.id) article.dataset.messageAnchor = item.id;
-        const author = doc.createElement('strong'); author.textContent = item.author === 'admin' ? 'Equipo Kinetic Hub' : 'Tú';
+        const author = doc.createElement('strong'); author.textContent = item.author === 'agent' ? 'Asistente automático de Kinetic Hub' : item.author === 'admin' ? 'Equipo Kinetic Hub' : 'Tú';
         const text = doc.createElement('p'); text.textContent = item.body || '';
         const time = doc.createElement('time'); const date = new Date(item.created_at); time.textContent = item.created_at && Number.isFinite(date.getTime()) ? new Intl.DateTimeFormat('es-MX', { dateStyle: 'short', timeStyle: 'short' }).format(date) : ''; if (item.created_at) time.dateTime = item.created_at;
         article.append(author, text, time); fragment.append(article);
