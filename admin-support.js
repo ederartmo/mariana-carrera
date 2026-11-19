@@ -11,6 +11,7 @@
   };
   const actions = {
     visitor_reopened: 'El visitante reabrió la solicitud', admin_reply: 'Respuesta del equipo', agent_acknowledged: 'Acuse automático del agente',
+    automation_paused: 'Automatizaci\u00f3n pausada por respuesta humana',
     status_changed: 'Cambio de estado', category_changed: 'Cambio de categoría', assigned: 'Asignación de responsable',
   };
   const label = (options, key, fallback) => Object.hasOwn(options, key) ? options[key] : fallback;
