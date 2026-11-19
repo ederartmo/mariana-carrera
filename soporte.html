@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex">
+  <title>Operación de soporte | Kinetic Hub</title>
+  <link rel="stylesheet" href="styles.min.css?v=__ASSET_VERSION__">
+  <link rel="stylesheet" href="support.css?v=__ASSET_VERSION__">
+</head>
+<body>
+  <main style="width:min(100% - 32px, 1220px);margin:32px auto">
+    <h1>Operación de soporte</h1>
+    <p><a href="auth.html?mode=login">Iniciar o cambiar sesión</a></p>
+    <p data-support-access role="status" aria-live="polite">Verificando acceso a soporte…</p>
+    <section class="admin-card support-admin-panel" data-admin-support hidden aria-labelledby="supportAdminTitle">
+      <div class="admin-card-header"><div><h2 id="supportAdminTitle">Atención y solicitudes</h2><p>Conversaciones de visitantes y respuestas manuales del equipo.</p></div><button type="button" class="btn-secondary" data-ticket-refresh>Actualizar solicitudes</button></div>
+
+      <p class="support-admin-notice" data-admin-support-notice role="status" aria-live="polite">Cargando solicitudes…</p>
+      <div class="support-admin-grid"><div>
+        <div class="support-admin-controls">
+          <label>Estado<select data-ticket-filter-status><option value="">Todos</option><option value="pending">Pendiente</option><option value="in_progress">En proceso</option><option value="resolved">Resuelto</option></select></label>
+          <label>Categor&#237;a<select data-ticket-filter-category><option value="">Todas</option><option value="general">General</option><option value="events">Eventos</option><option value="registration">Inscripciones</option><option value="other">Otro</option></select></label>
+          <label>Responsable<select data-ticket-filter-assignee><option value="*">Todos</option><option value="">Sin asignar</option></select></label>
+        </div>
+        <div class="support-ticket-list" data-ticket-list aria-label="Solicitudes de atención"></div>
+        <div class="support-toolbar"><button type="button" data-ticket-page-prev disabled>Anterior</button><button type="button" data-ticket-page-next disabled>Siguiente</button></div>
+      </div>
+        <div class="support-ticket-workspace">
+          <p class="support-admin-meta" data-ticket-placeholder role="status">Selecciona una solicitud para consultar sus mensajes e historial.</p>
+          <div data-ticket-detail hidden>
+            <div data-ticket-summary></div>
+            <details class="support-ticket-edit" data-ticket-edit>
+              <summary>Editar detalles</summary>
+              <div class="support-admin-controls">
+                <label>Estado<select name="ticketStatus"><option value="pending">Pendiente</option><option value="in_progress">En proceso</option><option value="resolved">Resuelto</option></select></label>
+                <label>Categoría<select name="ticketCategory"><option value="general">General</option><option value="events">Eventos</option><option value="registration">Inscripciones</option><option value="other">Otro</option></select></label>
+                <label>Responsable<select name="ticketAssignee"><option value="">Sin cambio de responsable</option></select></label>
+                <div class="support-ticket-edit-actions"><button type="button" class="btn-primary" data-ticket-save>Guardar cambios</button></div>
+              </div>
+            </details>
+            <p class="support-admin-meta support-ticket-message-limit" data-ticket-message-limit hidden>Se muestran los últimos 100 mensajes; existen mensajes anteriores.</p>
+            <div class="support-admin-messages" data-ticket-transcript tabindex="0" role="region" aria-label="Conversación"></div>
+            <form class="support-ticket-compose" data-ticket-reply><label for="supportAdminReply">Respuesta manual</label><textarea id="supportAdminReply" name="reply" rows="3" maxlength="2000" placeholder="Escribe una respuesta para el visitante."></textarea><button type="submit" class="btn-primary">Enviar respuesta</button></form>
+            <details class="support-ticket-activity" data-ticket-activity>
+              <summary><span>Historial de actividad</span><span class="support-ticket-activity-count" data-ticket-activity-count></span></summary>
+              <div class="support-ticket-activity-log" data-ticket-activity-log tabindex="0" role="region" aria-label="Eventos de actividad"></div>
+            </details>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+  <script src="supabase-client.js?v=__ASSET_VERSION__"></script>
+  <script src="support-chat.js?v=__ASSET_VERSION__"></script>
+  <script src="admin-support.js?v=__ASSET_VERSION__"></script>
+  <script>
+    (async () => {
+      const panel = document.querySelector('[data-admin-support]');
+      const notice = document.querySelector('[data-support-access]');
+      try {
+        const authClient = await window.KineticHubSupabase.ensureClient();
+        if (!authClient) throw new Error('auth unavailable');
+        const controller = await window.connectAdminSupport({ document, authClient, fetch: async (...args) => {
+          const response = await fetch(...args);
+          if (response.status === 401 || response.status === 403) {
+            notice.textContent = response.status === 401 ? 'Inicia sesión para acceder.' : 'Esta cuenta no tiene acceso a soporte.';
+          } else if (response.ok && panel.isConnected && panel.hasChildNodes()) {
+            panel.hidden = false;
+            notice.textContent = '';
+          } else if (panel.hidden) {
+            notice.textContent = 'No se pudo verificar el acceso. Recarga la página para volver a intentar.';
+          }
+          return response;
+        } });
+        if (!controller) notice.textContent = 'Inicia sesión para acceder.';
+        authClient.auth.onAuthStateChange((event) => {
+          if (event === 'SIGNED_OUT') notice.textContent = 'Inicia sesión para acceder.';
+        });
+      } catch {
+        notice.textContent = 'No se pudo verificar el acceso. Recarga la página para volver a intentar.';
+      }
+    })();
+  </script>
+</body>
+</html>

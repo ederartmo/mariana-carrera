@@ -90,7 +90,7 @@ test('verified account history is scoped to server identity across browser keys'
 
 test('admin assignment accepts only another allowlisted responsible account',async()=>{
  const handler=require('../lib/admin-support'); const assigned=[];
- const deps={auth:async()=>({user:{id:adminId},email:'admin@example.test'}),getAdminEmails:()=>['admin@example.test','other@example.test'],client:{rpc:async(_,v)=>{assigned.push(v);return {data:{ok:true}}}}};
+ const deps={auth:async()=>({user:{id:adminId},email:'admin@example.test'}),getSupportAssignees:()=>['admin@example.test','other@example.test'],client:{rpc:async(_,v)=>{assigned.push(v);return {data:{ok:true}}}}};
  for(const [assignTo,status] of [['outsider@example.test',400],['other@example.test',200]]) {
    const res=response();
    await handler(request('POST',{id:crypto.randomUUID(),requestId:crypto.randomUUID(),expectedVersion:1,action:'update',assignTo}),res,deps);
@@ -106,7 +106,7 @@ test('admin ticket cursor and filters are forwarded only after authorization', a
  const query={status:'resolved',category:'events',assignee:'other@example.test',before:'2026-11-17T12:00:00.123456+00:00',beforeId:crypto.randomUUID()};
  const req=request('GET',null,{query});
  let got;
- const deps={auth:async()=>({email:'admin@example.test'}),getAdminEmails:()=>['other@example.test'],client:{rpc:async(name,args)=>{got={name,args};return {data:{ok:true,tickets:[],nextCursor:null}};}}};
+ const deps={auth:async()=>({email:'admin@example.test'}),getSupportAssignees:()=>['other@example.test'],client:{rpc:async(name,args)=>{got={name,args};return {data:{ok:true,tickets:[],nextCursor:null}};}}};
  const denied=response();
  await handler(req,denied,{...deps,auth:async()=>({error:'no',status:403})});
  assert.equal(denied.statusCode,403); assert.equal(got,undefined);
@@ -243,7 +243,7 @@ test('admin returns only configured labels for current authorized assignees', as
  try {
    process.env.SUPPORT_ASSIGNEE_LABELS=JSON.stringify({'admin@example.test':'Equipo Operativo','inactive@example.test':'Private','other@example.test':'hidden@example.test'});
    const res=response();
-   await handler(request('GET',null),res,{auth:async()=>({email:'admin@example.test'}),getAdminEmails:()=>['admin@example.test','other@example.test'],client:{rpc:async()=>({data:{ok:true,tickets:[]}})}});
+   await handler(request('GET',null),res,{auth:async()=>({email:'admin@example.test'}),getSupportAssignees:()=>['admin@example.test','other@example.test'],client:{rpc:async()=>({data:{ok:true,tickets:[]}})}});
    assert.equal(res.statusCode,200);
    assert.deepEqual(res.body.assignees,['admin@example.test','other@example.test']);
    assert.deepEqual(res.body.assigneeLabels,{'admin@example.test':'Equipo Operativo'});
