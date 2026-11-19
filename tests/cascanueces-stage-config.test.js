@@ -50,22 +50,22 @@ test('Cascanueces switches to Extemporánea at midnight on November 1', () => {
   assert.equal(getCascanuecesStageByDate('2026-11-15T12:00:00-06:00').isOpen, true);
 });
 
-test('Cascanueces reopening preserves the $500 stage through November 18 Mexico time in both copies', () => {
+test('Cascanueces reopening preserves the $500 stage through November 20 Mexico City time in both copies', () => {
   const source = require('../cascanueces-stage-config');
   const published = require('../public/cascanueces-stage-config');
   assert.deepEqual(published.CASCANUECES_STAGE_CATALOG, source.CASCANUECES_STAGE_CATALOG);
   for (const config of [source, published]) {
-    for (const now of ['2026-11-15T17:00:00-06:00', '2026-11-18T23:59:59-06:00']) {
+    for (const now of ['2026-11-15T17:00:00-06:00', '2026-11-19T00:00:00-06:00', '2026-11-20T23:59:59.999-06:00']) {
       const stage = config.getCascanuecesStageByDate(now);
       assert.equal(stage.isOpen, true);
       assert.equal(stage.key, 'ultimo_minuto');
       assert.equal(stage.label, 'Extemporánea');
       assert.equal(stage.amount, 500);
       assert.equal(stage.price, 500);
-      assert.equal(stage.end, '2026-11-19T00:00:00-06:00');
-      assert.equal(stage.period, '1 de noviembre, 00:00 h a 18 de noviembre, 23:59 h');
+      assert.equal(stage.end, '2026-11-21T00:00:00-06:00');
+      assert.equal(stage.period, '1 de noviembre, 00:00 h a 20 de noviembre, 23:59 h');
     }
-    const closed = config.getCascanuecesStageByDate('2026-11-19T00:00:00-06:00');
+    const closed = config.getCascanuecesStageByDate('2026-11-21T00:00:00-06:00');
     assert.equal(closed.isOpen, false);
     assert.equal(closed.key, 'closed');
     assert.equal(closed.amount, null);
