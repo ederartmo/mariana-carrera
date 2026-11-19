@@ -13,7 +13,7 @@ function fixture({profileFailure=false, profileRows}={}){
   const tickets=[{id:T},{id:U},{id:G},{id:X}];
   const rows=[{id:T,owner:owner(A)},{id:U,owner:owner(B)},{id:G,owner:{owner_user_id:null}},{id:X,owner:{...owner(A),capability_hash:hashCapability('incorrect')}}];
   const profiles=profileRows || [{user_id:A,full_name:'  Nombre Ficticio  '},{user_id:B,full_name:'  '}];
-  return {reads,deps:{auth:async()=>({email:'admin@example.test'}),getAdminEmails:()=>[],
+  return {reads,deps:{auth:async()=>({email:'admin@example.test'}),getSupportAssignees:()=>[],
     client:{rpc:async(name,args)=>({data:name==='support_admin_detail'?{ok:true,ticket:{id:args.p_ticket_id},messages:[]}:{ok:true,tickets}}),
       from(table){return {select(fields){return {in(key,ids){reads.push({table,fields,key,ids});
         if(table==='user_profiles'&&profileFailure)return {error:{code:'42501'}};
