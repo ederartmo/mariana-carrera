@@ -1,0 +1,32 @@
+name: Support intake isolated tests
+on:
+  pull_request:
+    paths:
+      - 'lib/support-intake-*.js'
+      - 'lib/support-chat.js'
+      - 'supabase/migrations/*support_agent_atomic_ack.sql'
+      - 'tests/support-*.test.js'
+      - '.github/workflows/support-intake-tests.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  intake-validation:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73f6f2e6c0e3f16a1b # v4.2.2
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci --ignore-scripts
+      - name: Test intake policy and dispatcher
+        run: node --test tests/support-intake-policy.test.js tests/support-intake-dispatch.test.js
+      - name: Test real PGlite atomic migration and isolation
+        run: node --test tests/support-agent-atomic.test.js
+      - name: Test API regression and support DB
+        run: node --test tests/support-api.test.js tests/support-db.test.js
+      - run: npm run build
