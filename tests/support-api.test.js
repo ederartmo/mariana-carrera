@@ -278,3 +278,36 @@ test('visitor ticket success survives optional intake failure and only start inv
   assert.equal(send.statusCode,200);
   assert.equal(touched,false);
 });
+
+test('support operator can POST a reply on either official same-origin host even if SITE_URL uses the other host', async () => {
+  const handler = require('../lib/admin-support');
+  const savedSite = process.env.SITE_URL;
+  process.env.SITE_URL = 'https://www.kinetichub.com.mx';
+  try {
+    const mutations = [];
+    const deps = {
+      auth:async()=>({user:{id:adminId,email_confirmed_at:'confirmed',is_anonymous:false},email:'soporte@kinetichub.com.mx'}),
+      getSupportAssignees:()=>['soporte@kinetichub.com.mx'],
+      client:{rpc:async(name,args)=>{mutations.push(name);return {data:{ok:true,ticket:{id:args.p_ticket_id,version:3},messages:[]}}}}
+    };
+    const body = { id:crypto.randomUUID(),requestId:crypto.randomUUID(),expectedVersion:2,action:'reply',body:'Mensaje de prueba (no persistido)' };
+    for (const host of ['kinetichub.com.mx','www.kinetichub.com.mx']) {
+      const res = response();
+      await handler(request('POST',body,{headers:{origin:'https://'+host,host,authorization:'Bearer fixture'}}),res,deps);
+      assert.equal(res.statusCode,200,host);
+    }
+    for (const [origin,host] of [
+      ['https://attacker.example','kinetichub.com.mx'],
+      ['https://www.kinetichub.com.mx','kinetichub.com.mx'],
+      ['https://kinetichub.com.mx','www.kinetichub.com.mx']
+    ]) {
+      const res=response();
+      await handler(request('POST',body,{headers:{origin,host,authorization:'Bearer fixture'}}),res,deps);
+      assert.equal(res.statusCode,403,origin+' / '+host);
+    }
+    assert.equal(mutations.length,2);
+  } finally {
+    if(savedSite===undefined)delete process.env.SITE_URL;
+    else process.env.SITE_URL=savedSite;
+  }
+});
