@@ -52,3 +52,27 @@ seconds. One Responses API inference used 180 input and 25 output tokens
 (USD 0.000248 recorded in the quota ledger); the job completed and QA
 automation was disabled again. The previous uncertain attempt was not retried.
 This is QA evidence only, not authorization to enable Production.
+
+## Conversational QA mode
+
+Set `SUPPORT_AI_CONVERSATIONAL_ENABLED=true` only in the QA chat process to
+test composed replies. The Responses API chooses and orders approved excerpts
+and short transitions. The server rejects invented IDs, omissions, duplicates
+and reversed clauses within a source; the original publish RPC still owns
+takeover, stale-version and deduplication checks. It records the primary source
+ID in its existing proposal field. Recent context is interpreted server-side;
+the visitor's raw conversation history is not forwarded.
+
+Perrun policy withheld: the medal handout stage is unconfirmed, and the guide's
+3 km cap for small/medium dogs conflicts with current registration behavior
+and awaits editorial correction. Neither rule is asserted by the agent. No
+checkout, payments, or registration rules change in this PR.
+
+### Compound reply verification in QA
+
+A fresh synthetic visitor asked "¿Cuándo es Perrun y dónde será?". The corrected
+validator recorded `parts_missing_recovered` and published only the approved
+venue, map and date. The visitor read operation returned the reply in 2.511 s.
+One inference used 479 input and 45 output tokens (USD 0.000562 recorded).
+The job completed and the QA tenant was verified disabled afterwards. This run
+validates the compound turn only; it does not repeat the full conversation.
