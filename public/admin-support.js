@@ -164,6 +164,22 @@
         const badge = header.querySelector('.support-ticket-status');
         badge.textContent = view.status; badge.dataset.status = Object.hasOwn(statuses, shown.status) ? shown.status : 'unknown';
         summary.querySelector('.support-admin-meta').textContent = view.explanation + ' Responsable: ' + assigneeLabel(shown.assigned_to, data.assigneeLabels) + ' · Última actividad: ' + formatLocalDate(shown.updated_at);
+        summary.querySelector('.support-private-proposal')?.remove();
+        if (data.ai) {
+          const card = doc.createElement('aside');
+          card.className = 'support-private-proposal';
+          card.setAttribute('aria-label','Propuesta privada de IA');
+          const proposal = data.ai.proposal;
+          card.append(textNode('h4','Propuesta privada de IA'),
+            textNode('p',data.ai.paused ? 'Procesamiento de IA: pausado' : 'Procesamiento de IA: habilitado'));
+          if (proposal) {
+            card.append(textNode('strong',proposal.state === 'current' ? 'Vigente' : 'Obsoleta'),
+              textNode('p',proposal.text || (proposal.decision === 'escalate' ? 'Requiere revisión humana.' : 'La fuente aprobada ya no está disponible.')));
+            if (proposal.source) card.append(textNode('p','Fuente aprobada: '+proposal.source));
+            if (proposal.state !== 'current') card.append(textNode('p','Solo para consulta histórica.'));
+          } else card.append(textNode('p','Todavía no hay una propuesta.'));
+          summary.append(card);
+        }
         viewId = id; detail.hidden = false; placeholder.hidden = true;
         const entries = doc.createDocumentFragment();
         for (const item of root.KineticHubSupport.uniqueMessages(data.messages || []).slice(-100)) {

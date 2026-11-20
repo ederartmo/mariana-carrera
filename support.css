@@ -195,3 +195,14 @@
   .support-operator-page > main { width:calc(100% - 24px)!important; margin:20px auto!important; }
   .support-operator-page .support-admin-panel .admin-card-header { align-items:flex-start; }
 }
+.support-admin-panel .support-private-proposal {
+  margin-block: .75rem;
+  padding: .75rem 1rem;
+  border: 1px solid currentColor;
+  border-radius: .75rem;
+  overflow-wrap: anywhere;
+}
+.support-admin-panel .support-private-proposal h4,
+.support-admin-panel .support-private-proposal p {
+  margin-block: .25rem;
+}

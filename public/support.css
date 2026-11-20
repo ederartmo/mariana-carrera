@@ -123,3 +123,14 @@
   .support-admin-panel .support-admin-messages article { max-width:94%; }
 }
 .support-admin-panel .support-ticket-identity { overflow-wrap:anywhere; min-width:0; }
+.support-admin-panel .support-private-proposal {
+  margin-block: .75rem;
+  padding: .75rem 1rem;
+  border: 1px solid currentColor;
+  border-radius: .75rem;
+  overflow-wrap: anywhere;
+}
+.support-admin-panel .support-private-proposal h4,
+.support-admin-panel .support-private-proposal p {
+  margin-block: .25rem;
+}
