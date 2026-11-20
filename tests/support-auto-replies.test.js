@@ -21,7 +21,7 @@ test('visitor gets approved automatic text, human handoff and no replies after t
   const env={SUPPORT_AI_TENANT:'kinetichub',SUPPORT_AI_SHADOW_ENABLED:'true',SUPPORT_AI_PRIVATE_ENABLED:'true',
     SUPPORT_AI_AUTO_REPLY_ENABLED:'true',SUPPORT_AI_AUTO_REPLY_START_AT:new Date(Date.now()-30000).toISOString(),
     SUPPORT_AI_MODEL:'simulated',SUPPORT_AI_OPENAI_API_KEY:'fixture-only'};
-  let posts=0, intervention;
+  let posts=0, intervention, unavailable=false;
   const rpc=async(name,args)=>{
     const keys=Object.keys(args);
     const {rows}=await db.query('select public.'+name+'('+keys.map((k,i)=>k+' => $'+(i+1)).join(',')+') as data',Object.values(args));
@@ -29,6 +29,8 @@ test('visitor gets approved automatic text, human handoff and no replies after t
   };
   const fake=async(_url,opts)=>{
     posts++;
+    if(unavailable)return {ok:false,status:503};
+    if(posts===1)await new Promise(resolve=>setTimeout(resolve,2500));
     const payload=JSON.parse(opts.body);
     assert.equal(payload.store,false);
     if(intervention)await intervention();
@@ -85,4 +87,27 @@ test('visitor gets approved automatic text, human handoff and no replies after t
     on p.job_id=j.id where j.ticket_id=$1`,[broken.ticket.id]);
   assert.deepEqual(rows,[{state:'claimed',job_id:null}]);
   assert.equal(posts,3);
+  unavailable=true;
+  const rejected={...payload,token:'d'.repeat(64),requestId:randomUUID()};
+  assert.equal(replies(await invoke(rejected)).length,0);
+  assert.equal(replies(await invoke(rejected)).length,0);
+  assert.equal(posts,4);
+});
+
+test('loopback public chat origin is accepted only by the QA development server',t=>{
+  const {writeOriginAllowed}=require('../lib/_support');
+  for(const k of ['VERCEL_ENV','SUPABASE_URL']){
+    const old=process.env[k];
+    t.after(()=>{if(old===undefined)delete process.env[k];else process.env[k]=old;});
+  }
+  const request={headers:{origin:'http://localhost:3142',host:'localhost:3142'}};
+  const allowed=()=>writeOriginAllowed(request,{publicChat:true});
+  process.env.SUPABASE_URL='https://lpujenjnxzszfbcjfrrb.supabase.co';
+  process.env.VERCEL_ENV='production';
+  assert.equal(allowed(),false);
+  process.env.VERCEL_ENV='development';
+  assert.equal(allowed(),true);
+  assert.equal(writeOriginAllowed({headers:{...request.headers,host:'example.com'}},{publicChat:true}),false);
+  process.env.SUPABASE_URL='https://uycwzhlcnfijjyzkgkem.supabase.co';
+  assert.equal(allowed(),false);
 });
