@@ -10,7 +10,7 @@
     registration: 'Consulta sobre inscripciones', other: 'Otra consulta',
   };
   const actions = {
-    visitor_reopened: 'El visitante reabrió la solicitud', admin_reply: 'Respuesta del equipo',
+    visitor_reopened: 'El visitante reabrió la solicitud', admin_reply: 'Respuesta del equipo', agent_acknowledged: 'Acuse automático del agente',
     automation_paused: 'Automatizaci\u00f3n pausada por respuesta humana',
     status_changed: 'Cambio de estado', category_changed: 'Cambio de categoría', assigned: 'Asignación de responsable',
   };
@@ -87,7 +87,7 @@
       const epoch = mutation;
       listing = true;
       if (!quiet) { listPayload = ''; refresh.disabled = true; list.textContent = 'Cargando solicitudes...'; renderPager(); }
-      const filters = {status:filterStatus?.value || undefined,category:filterCategory?.value || undefined,
+      const filters = {order:'attention',status:filterStatus?.value || undefined,category:filterCategory?.value || undefined,
         assignee:filterAssignee?.value === '*' ? undefined : filterAssignee?.value};
       const cursor = cursors.at(-1);
       try {
@@ -105,6 +105,7 @@
         const fragment = doc.createDocumentFragment();
         for (const ticket of data.tickets || []) {
           const button = doc.createElement('button'); button.type = 'button'; button.className = 'support-ticket-row'; button.dataset.ticketId = ticket.id;
+          if(ticket.status==='pending')button.dataset.needsAttention='true';
           const view = presentTicket(ticket);
           button.title = ticket.id;
           button.append(textNode('strong', view.subject), textNode('span', view.identity + (view.account ? ' · Cuenta autenticada' : '') + ' · ' + view.folio),
@@ -183,7 +184,7 @@
         viewId = id; detail.hidden = false; placeholder.hidden = true;
         const entries = doc.createDocumentFragment();
         for (const item of root.KineticHubSupport.uniqueMessages(data.messages || []).slice(-100)) {
-          const article = doc.createElement('article'); article.className = item.author === 'admin' ? 'support-admin-message--team' : 'support-admin-message--visitor'; if (item.id) article.dataset.messageAnchor = item.id; article.append(textNode('strong', item.author === 'admin' ? 'Equipo' : 'Visitante'), textNode('p', item.body), textNode('time', formatLocalDate(item.created_at))); entries.append(article);
+          const article = doc.createElement('article'); article.className = item.author === 'visitor' ? 'support-admin-message--visitor' : 'support-admin-message--team'; if (item.id) article.dataset.messageAnchor = item.id; article.append(textNode('strong', item.author === 'agent' ? 'Asistente automático' : item.author === 'admin' ? 'Equipo' : 'Visitante'), textNode('p', item.body), textNode('time', formatLocalDate(item.created_at))); entries.append(article);
         }
         root.KineticHubSupport.preserveReading(messages, () => messages.replaceChildren(entries));
         messageLimit.hidden = !data.hasMore;
