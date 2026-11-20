@@ -123,3 +123,87 @@
   .support-admin-panel .support-admin-messages article { max-width:94%; }
 }
 .support-admin-panel .support-ticket-identity { overflow-wrap:anywhere; min-width:0; }
+
+
+/* Standalone support operator workspace. The legacy dashboard already uses
+   dark admin colors; its shared rules require a matching dark surface. */
+.support-operator-page {
+  min-height:100vh;
+  margin:0;
+  background:#0a0f14;
+  color:#e2e9ee;
+  color-scheme:dark;
+}
+.support-operator-page > main { padding-bottom:32px; }
+.support-operator-page > main > h1 { color:#d3f7ea; line-height:1.2; }
+.support-operator-page > main > p > a { color:#9be8c9; text-underline-offset:3px; }
+.support-operator-page > main > p > a:hover { color:#c3ffe4; }
+.support-operator-page [data-support-access] { color:#c4d4df; }
+.support-operator-page .support-admin-panel {
+  padding:clamp(16px,2.6vw,24px);
+  border:1px solid #293747;
+  border-radius:14px;
+  background:#11181f;
+  color:#e2e9ee;
+  box-shadow:0 12px 30px rgba(0,0,0,.25);
+}
+.support-operator-page .support-admin-panel .admin-card-header {
+  display:flex;
+  flex-wrap:wrap;
+  justify-content:space-between;
+  align-items:center;
+  gap:12px;
+  margin-bottom:12px;
+}
+.support-operator-page .support-admin-panel .admin-card-header h2 {
+  margin:0 0 5px;
+  color:#d3f7ea;
+}
+.support-operator-page .support-admin-panel .admin-card-header p { margin:0; color:#afc0d0; }
+.support-operator-page .support-admin-panel .support-admin-notice { color:#c3d3df; }
+.support-operator-page .support-admin-panel .support-admin-controls label,
+.support-operator-page .support-admin-panel .support-ticket-workspace form label { color:#e2e9ee; }
+.support-operator-page .support-admin-panel .support-admin-controls select,
+.support-operator-page .support-admin-panel .support-ticket-workspace textarea {
+  color-scheme:light;
+  background:#fff;
+  color:#17211f;
+}
+.support-operator-page .support-admin-panel button[data-ticket-refresh],
+.support-operator-page .support-admin-panel .support-ticket-edit-actions button,
+.support-operator-page .support-admin-panel .support-ticket-compose button {
+  min-height:42px;
+  padding:9px 14px;
+  border:1px solid #1bae80;
+  border-radius:9px;
+  background:#0b8a62;
+  color:#fff;
+  font:inherit;
+  font-weight:700;
+  cursor:pointer;
+}
+.support-operator-page .support-admin-panel .support-ticket-compose button { background:#087454; }
+.support-operator-page .support-admin-panel button[data-ticket-refresh]:hover,
+.support-operator-page .support-admin-panel .support-ticket-edit-actions button:hover,
+.support-operator-page .support-admin-panel .support-ticket-compose button:hover { background:#087454; }
+.support-operator-page .support-admin-panel button:disabled { opacity:.55; cursor:not-allowed; }
+.support-operator-page :is(a,button,select,textarea,summary):focus-visible {
+  outline:3px solid #4ee0ab;
+  outline-offset:3px;
+}
+.support-operator-page .support-admin-panel [hidden] { display:none!important; }
+@media (max-width:760px) {
+  .support-operator-page > main { width:calc(100% - 24px)!important; margin:20px auto!important; }
+  .support-operator-page .support-admin-panel .admin-card-header { align-items:flex-start; }
+}
+.support-admin-panel .support-private-proposal {
+  margin-block: .75rem;
+  padding: .75rem 1rem;
+  border: 1px solid currentColor;
+  border-radius: .75rem;
+  overflow-wrap: anywhere;
+}
+.support-admin-panel .support-private-proposal h4,
+.support-admin-panel .support-private-proposal p {
+  margin-block: .25rem;
+}
