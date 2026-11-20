@@ -207,3 +207,5 @@
 .support-admin-panel .support-private-proposal p {
   margin-block: .25rem;
 }
+
+.support-admin-panel .support-ticket-row[data-needs-attention="true"] { border-inline-start:3px solid #e8a63b; }

@@ -87,7 +87,7 @@
       const epoch = mutation;
       listing = true;
       if (!quiet) { listPayload = ''; refresh.disabled = true; list.textContent = 'Cargando solicitudes...'; renderPager(); }
-      const filters = {status:filterStatus?.value || undefined,category:filterCategory?.value || undefined,
+      const filters = {order:'attention',status:filterStatus?.value || undefined,category:filterCategory?.value || undefined,
         assignee:filterAssignee?.value === '*' ? undefined : filterAssignee?.value};
       const cursor = cursors.at(-1);
       try {
@@ -105,6 +105,7 @@
         const fragment = doc.createDocumentFragment();
         for (const ticket of data.tickets || []) {
           const button = doc.createElement('button'); button.type = 'button'; button.className = 'support-ticket-row'; button.dataset.ticketId = ticket.id;
+          if(ticket.status==='pending')button.dataset.needsAttention='true';
           const view = presentTicket(ticket);
           button.title = ticket.id;
           button.append(textNode('strong', view.subject), textNode('span', view.identity + (view.account ? ' · Cuenta autenticada' : '') + ' · ' + view.folio),

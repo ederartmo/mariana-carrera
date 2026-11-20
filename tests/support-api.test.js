@@ -313,3 +313,49 @@ test('operator reads and replies on official aliases without trusting proxy host
  }
  assert.equal(calls.length,4);
 });
+
+test('attention list crosses priority groups without losing cursor or weakening operator auth',async()=>{
+  const handler=require('../lib/admin-support');
+  const id=i=>`00000000-0000-4000-8000-${String(i).padStart(12,'0')}`;
+  const at=i=>new Date(Date.UTC(2026,10,20,0,i)).toISOString();
+  const rows=[...Array.from({length:51},(_,i)=>({id:id(i),status:'pending',updated_at:at(i),category:'events'})),
+    {id:id(99),status:'in_progress',updated_at:at(90),category:'events'}];
+  const queries=[];
+  const client={from(table){
+    assert.equal(table,'support_tickets'); let candidates=rows;
+    const q={select(){return q},eq(key,value){candidates=candidates.filter(row=>row[key]===value);return q},
+      in(key,values){
+        if(key==='id')return {data:[]};
+        candidates=candidates.filter(row=>values.includes(row[key]));return q;
+      },
+      or(value){
+        queries.push(value);
+        const [,before,beforeId]=value.match(/^updated_at\.lt\.([^,]+),and\(updated_at\.eq\.[^,]+,id\.lt\.([^)]*)\)$/);
+        candidates=candidates.filter(row=>row.updated_at<before||row.updated_at===before&&row.id<beforeId);return q;
+      },
+      order(){return q},
+      limit(n){return {data:[...candidates].sort((a,b)=>b.updated_at.localeCompare(a.updated_at)||b.id.localeCompare(a.id)).slice(0,n)}}
+    };return q;
+  }};
+  const deps={client,auth:async()=>({user:{id:adminId}}),getSupportAssignees:()=>[]};
+  const first=response();
+  await handler(request('GET',null,{query:{order:'attention',category:'events'}}),first,deps);
+  assert.equal(first.statusCode,200);
+  assert.equal(first.body.tickets.length,50);
+  assert.ok(first.body.tickets.every(row=>row.status==='pending'));
+  assert.equal(first.body.nextCursor.priority,1);
+  const cursor=first.body.nextCursor;
+  const next=response();
+  await handler(request('GET',null,{query:{order:'attention',category:'events',before:cursor.createdAt,beforeId:cursor.id,beforePriority:'1'}}),next,deps);
+  assert.equal(next.statusCode,200);
+  assert.equal(queries.length,1);
+  assert.deepEqual(next.body.tickets.map(row=>row.id),[id(0),id(99)]);
+  assert.equal(next.body.nextCursor,null);
+  rows.at(-1).status='pending';
+  const reopened=response();
+  await handler(request('GET',null,{query:{order:'attention'}}),reopened,deps);
+  assert.equal(reopened.body.tickets[0].id,id(99));
+  const denied=response();
+  await handler(request('GET',null,{query:{order:'attention'}}),denied,{...deps,auth:async()=>({error:true,status:403}),client:null});
+  assert.equal(denied.statusCode,403);
+});

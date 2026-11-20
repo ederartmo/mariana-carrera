@@ -58,8 +58,14 @@
     const seen = new Set();
     return messages.filter(m => !m.id || (!seen.has(m.id) && seen.add(m.id)));
   }
-  function preserveReading(scroller, render) {
+  function preserveReading(scroller, render, { followEnd = false } = {}) {
     if (!scroller?.querySelectorAll || !scroller.getBoundingClientRect) return render();
+    const nearEnd = followEnd && scroller.scrollHeight - scroller.clientHeight - scroller.scrollTop <= 48;
+    if (nearEnd) {
+      render();
+      scroller.scrollTop = Math.max(0, scroller.scrollHeight - scroller.clientHeight);
+      return;
+    }
     const read = () => [...scroller.querySelectorAll('[data-message-anchor]')];
     const top = scroller.getBoundingClientRect().top;
     const anchor = read().find(node => node.getBoundingClientRect().bottom > top);
@@ -153,8 +159,8 @@
     return {
       list: (filters = {}, cursor = null) => {
         const query = new URLSearchParams();
-        for (const key of ['status', 'category', 'assignee']) if (filters[key] !== undefined) query.set(key, filters[key]);
-        if (cursor) { query.set('before', cursor.createdAt); query.set('beforeId', cursor.id); }
+        for (const key of ['status', 'category', 'assignee', 'order']) if (filters[key] !== undefined) query.set(key, filters[key]);
+        if (cursor) { query.set('before', cursor.createdAt); query.set('beforeId', cursor.id); if (cursor.priority !== undefined) query.set('beforePriority', String(cursor.priority)); }
         return call(query.size ? endpoint + '?' + query : endpoint);
       },
       detail: id => call(`${endpoint}?id=${encodeURIComponent(id)}`),
@@ -279,7 +285,7 @@
         const time = doc.createElement('time'); const date = new Date(item.created_at); time.textContent = item.created_at && Number.isFinite(date.getTime()) ? new Intl.DateTimeFormat('es-MX', { dateStyle: 'short', timeStyle: 'short' }).format(date) : ''; if (item.created_at) time.dateTime = item.created_at;
         article.append(author, text, time); fragment.append(article);
       }
-      { preserveReading(transcript.closest?.('.premium-scroll') || transcript, () => transcript.replaceChildren(fragment)); if (data.hasMore) message('Mostramos los últimos 100 mensajes. Hay mensajes anteriores disponibles al continuar cargando el historial.'); }
+      { preserveReading(transcript.closest?.('.premium-scroll') || transcript, () => transcript.replaceChildren(fragment), { followEnd: true }); if (data.hasMore) message('Mostramos los últimos 100 mensajes. Hay mensajes anteriores disponibles al continuar cargando el historial.'); }
     }
     async function run(action) {
       if (busy || !isActive() || (action === 'read' && (quietReading || Date.now() < readBackoffUntil))) return;

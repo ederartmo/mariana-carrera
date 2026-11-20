@@ -64,3 +64,13 @@ test('a signed-in account can discover a conversation created elsewhere after in
   assert.equal(reads,2);
   assert.equal(find('[data-support-messages]').children[0].children[0].dataset.messageAnchor,'from-other-session');
 });
+
+test('public transcript follows the end only while the visitor is near it',()=>{
+  const {preserveReading}=require('../support-chat');
+  const make=scrollTop=>({scrollTop,scrollHeight:900,clientHeight:300,
+    querySelectorAll(){return [];},getBoundingClientRect(){return {top:0};}});
+  const near=make(580),far=make(100);
+  for(const node of [near,far])preserveReading(node,()=>{node.scrollHeight+=100;},{followEnd:true});
+  assert.equal(near.scrollTop,700);
+  assert.equal(far.scrollTop,100);
+});
