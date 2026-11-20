@@ -36,7 +36,8 @@ test('visitor gets approved automatic text, human handoff and no replies after t
     if(intervention)await intervention();
     return {ok:true,json:async()=>({status:'completed',model:'simulated',usage:{input_tokens:90,output_tokens:20},
       output:[{type:'message',role:'assistant',content:[{type:'output_text',
-        text:'{"decision":"respond","reason":"none","source_id":"perrun-kit"}'}]}]})};
+        text:JSON.stringify({decision:'respond',reason:'none',source_id:JSON.parse(payload.input).sources[0].id,
+          ...(JSON.parse(payload.input).parts?{parts:['tone:of-course',...Object.keys(JSON.parse(payload.input).parts).filter(id=>!id.startsWith('tone:'))]}:{})})}]}]})};
   };
   const invoke=async(body,override=env)=>{
     const res={setHeader(){},status(n){this.n=n;return this;},json(data){this.data=data;return this;}};
@@ -92,6 +93,40 @@ test('visitor gets approved automatic text, human handoff and no replies after t
   assert.equal(replies(await invoke(rejected)).length,0);
   assert.equal(replies(await invoke(rejected)).length,0);
   assert.equal(posts,4);
+  unavailable=false;
+  await db.exec('drop trigger fail_ai_insert on support_messages');
+  const conversations=[
+    ['e',['Hola','¿Eres una IA?'],['assistant-greeting','assistant-identity']],
+    ['f',['¿Cuándo es Perrun?','¿Y qué incluye?','¿Puedo llevar dos perros?'],['perrun-date','perrun-registration','perrun-two-dogs']],
+    ['3',['Mi perro es pequeño, ¿puede correr 5 km?'],['clarify-dog-distance']],
+    ['1',['Ya hice una transferencia, ¿estoy inscrito?'],[null]],
+    ['2',['¿Puedo cambiar el nombre de mi inscripción?'],[null]],
+  ];
+  const conversationalEnv={...env,SUPPORT_AI_CONVERSATIONAL_ENABLED:'true'};
+  for(const [digit,inputs,sources] of conversations){
+    let before=0;
+    for(let i=0;i<inputs.length;i++){
+      const data=await invoke({action:i?'send':'start',token:digit.repeat(64),body:inputs[i],
+        requestId:randomUUID(),...(i?{}:{category:'general',website:''})},conversationalEnv);
+      const messages=replies(data);
+      assert.equal(messages.length,++before,inputs[i]);
+      if(sources[i])assert.equal(messages.at(-1).body,'Claro. '+kb.sources.find(s=>s.id===sources[i]).text);
+      else assert.match(messages.at(-1).body,/equipo de soporte/);
+    }
+  }
+  const combined=await invoke({...payload,token:'4'.repeat(64),requestId:randomUUID(),body:'¿Cuál es la fecha y ubicación de Perrun?'},conversationalEnv);
+  assert.match(replies(combined).at(-1)?.body,/Mapa:.*14 de febrero de 2027/);
+  const turns=['Hola, ¿eres una IA?','¿Cuándo es Perrun y dónde será?','¿Y qué incluye mi inscripción?'];
+  const texts=[/asistente virtual/, /Mapa:.*14 de febrero de 2027/, /incluye 1 participante humano y 1 perro/];
+  for(let i=0;i<turns.length;i++){
+    const d=await invoke({action:i?'send':'start',token:'7'.repeat(64),body:turns[i],requestId:randomUUID(),
+      ...(i?{}:{category:'general',website:''})},conversationalEnv);
+    const published=replies(d);
+    assert.equal(published.length,i+1);
+    assert.match(published.at(-1).body,texts[i]);
+    assert.doesNotMatch(published.at(-1).body,/equipo de soporte/);
+  }
+  assert.equal(posts,14); // six supported turns; payment and change requests stay local.
 });
 
 test('loopback public chat origin is accepted only by the QA development server',t=>{

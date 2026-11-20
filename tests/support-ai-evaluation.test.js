@@ -32,7 +32,7 @@ test('proposes only the exact approved fact and source on the structured Respons
 
 test('unknown, ambiguous and personal topics escalate before provider and not from a greeting',async()=>{
  const s=create(()=>assert.fail('provider must not run'));
- for(const text of ['Hola','¿A qué hora entregan kits de Santa Run?','Perrun y Cascanueces kits','Cambiar mi talla de Perrun','¿A qué hora salen las inscripciones de Perrun?','¿Cómo va el pago de Perrun?']){
+ for(const text of ['¿A qué hora entregan kits de Santa Run?','Perrun y Cascanueces kits','Cambiar mi talla de Perrun','¿A qué hora salen las inscripciones de Perrun?','¿Cómo va el pago de Perrun?']){
   assert.equal((await s.evaluate(request({message:text}))).decision,'escalate',text);
  }
 });
@@ -124,4 +124,84 @@ test('an explicit request for a human takes precedence over a supported FAQ',asy
  const s=create(()=>assert.fail('provider must not run'));
  const r=await s.evaluate(request({message:'Quiero hablar con un operador sobre la entrega de kits de Perrun.'}));
  assert.deepEqual(r,{decision:'escalate',reason:'needs_operator'});
+});
+
+test('official Perrun date, second dog and kit contents come from public event data',async()=>{
+  const s=create(async payload=>{
+    const [fact]=JSON.parse(payload.input).sources;
+    return completed({decision:'respond',source_id:fact.id,reason:'none'});
+  });
+  for(const [question,id,pattern] of [
+    ['¿Cuándo es Perrun?', 'perrun-date', /14 de febrero de 2027/],
+    ['¿Puedo llevar dos perros en Perrun?', 'perrun-two-dogs', /categoría S o M.*180 MXN/],
+    ['¿Qué incluye la inscripción de Perrun?', 'perrun-registration', /Playera.*Bandana.*Servicio veterinario.*Placa/],
+  ]){
+    const result=await s.evaluate(request({message:question}));
+    assert.equal(result.sources?.[0]?.id,id);
+    assert.match(result.response,pattern);
+  }
+});
+
+test('social turns use separate approved sources and never imply a completed operation',async()=>{
+ const s=create(async payload=>{
+  const [fact]=JSON.parse(payload.input).sources;
+  return completed({decision:'respond',source_id:fact.id,reason:'none'});
+ });
+ for(const [message,id] of [['Hola','assistant-greeting'],['Buenos días, ¿tú eres un bot?','assistant-identity'],['Hola, ¿estoy hablando con una inteligencia artificial?','assistant-identity'],['¿Eres una IA?','assistant-identity'],['Gracias','assistant-farewell'],['¿Cuáles son sus redes sociales?','contact-social']]){
+  const r=await s.evaluate(request({message}));
+  assert.equal(r.decision,'respond');
+  assert.equal(r.sources[0].id,id);
+ }
+ for(const message of ['Hola, ¿eres una IA? Confirma mi transferencia','Hola, ¿eres una IA? Cambia mi inscripción','Hola, confirma mi transferencia','Quiero cambiar el nombre de mi inscripción']){
+  const r=await s.evaluate(request({message}));
+  assert.equal(r.decision,'escalate');
+ }
+});
+
+test('conversational parts reject invented fragments, missing facts and reordered source clauses',async()=>{
+  for(const transform of [ids=>[...ids,'unapproved:1'],ids=>ids.slice(1),ids=>[...ids].reverse()]){
+    const service=create(async payload=>{
+      const parsed=JSON.parse(payload.input);
+      return completed({decision:'respond',source_id:'perrun-kit',reason:'none',
+        parts:transform(Object.keys(parsed.parts).filter(id=>!id.startsWith('tone:')))});
+    },{conversational:true,limits:{maxInputTokens:4500}});
+    assert.equal((await service.evaluate(request())).reason,'invalid_provider_output');
+  }
+});
+
+test('accepts a secondary approved source as the model citation without changing the canonical primary',async()=>{
+ const service=create(async payload=>{
+  const {sources,parts}=JSON.parse(payload.input);
+  assert.deepEqual(sources.map(s=>s.id),['perrun-venue','perrun-date']);
+  return completed({decision:'respond',reason:'none',source_id:sources[1].id,parts:Object.keys(parts).filter(id=>!id.startsWith('tone:'))});
+ },{conversational:true,limits:{maxInputTokens:4500}});
+ const result=await service.evaluate(request({message:'¿Cuándo es Perrun y dónde será?'}));
+ assert.deepEqual(result.sources.map(s=>s.id),['perrun-venue','perrun-date']);
+ assert.match(result.response,/Bosque de San Juan.*14 de febrero de 2027/);
+});
+
+test('conversational diagnostics distinguish omitted and unapproved facts',async()=>{
+ for(const [change,issue] of [[ids=>ids.slice(1),'parts_missing'],[ids=>[...ids,'foreign:1'],'part_not_approved']]){
+  const service=create(async payload=>{
+   const ids=Object.keys(JSON.parse(payload.input).parts).filter(id=>!id.startsWith('tone:'));
+   return completed({decision:'respond',reason:'none',source_id:'perrun-kit',parts:change(ids)});
+  },{conversational:true,limits:{maxInputTokens:4500}});
+  assert.equal((await service.evaluate(request())).validationIssue,issue);
+ }
+});
+
+test('recovers an incomplete compound reply only from the preselected approved sources',async()=>{
+  const service=create(async payload=>{
+    const {sources,parts}=JSON.parse(payload.input);
+    const date=Object.keys(parts).find(id=>id.startsWith('perrun-date:'));
+    return completed({decision:'respond',source_id:sources[1].id,reason:'none',parts:['tone:of-course',date]});
+  },{conversational:true,limits:{maxInputTokens:4500}});
+  const r=await service.evaluate(request({message:'¿Cuándo es Perrun y dónde será?'}));
+  assert.equal(r.decision,'respond');
+  assert.equal(r.validationNotice,'parts_missing_recovered');
+  assert.match(r.response,/Bosque de San Juan.*Mapa:.*14 de febrero de 2027/);
+  assert.equal(r.response.match(/Bosque de San Juan de Aragón/g)?.length,1);
+  assert.equal(r.response.match(/Ciudad de México/g)?.length,1);
+  assert.match(r.response,/Gustavo A\. Madero/);
+  assert.deepEqual(r.sources.map(s=>s.id),['perrun-venue','perrun-date']);
 });
