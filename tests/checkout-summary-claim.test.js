@@ -136,7 +136,7 @@ function createRes() {
   };
 }
 
-async function postCheckout({ host = 'localhost:3000', upsertError = null, unsetSecret = false } = {}) {
+async function postCheckout({ host = 'localhost:3000', upsertError = null, unsetSecret = false, eventSlug = 'axolote-night-run' } = {}) {
   return withMockedNow('2026-09-09T12:00:00-06:00', async () => {
     const createdSessions = [];
     const expiredSessions = [];
@@ -183,8 +183,9 @@ async function postCheckout({ host = 'localhost:3000', upsertError = null, unset
         body: {
           buyerEmail: 'claim@example.com',
           tickets: [{ fullName: 'Runner Claim', shirtSize: 'M', birthDate: '1990-05-14', whatsapp: '5512345678', state: 'Jalisco' }],
-          eventSlug: 'axolote-night-run',
+          eventSlug,
           distance: '5K',
+          ...(eventSlug === 'cascanueces-run' ? { expectedUnitAmount: 450 } : {}),
         },
       }, res);
       return { res, createdSessions, expiredSessions, upsertCalls };
@@ -229,6 +230,29 @@ test('B3-8/9: JSON y success_url no contienen el claim', async () => {
   assert.ok(!createdSessions[0].success_url.includes(COOKIE_NAME));
   const claimValue = res.headers['Set-Cookie'].split(';')[0].split('=')[1];
   assert.ok(!createdSessions[0].success_url.includes(claimValue));
+});
+
+test('Cascanueces returns to the host that set the private cookie even when Vercel supplies a deployment URL', async t => {
+  const previous = process.env.VERCEL_URL;
+  process.env.VERCEL_URL = 'deployment-fixture.vercel.app';
+  t.after(() => {
+    if (previous === undefined) delete process.env.VERCEL_URL;
+    else process.env.VERCEL_URL = previous;
+  });
+  for (const host of ['www.kinetichub.com.mx', 'kinetichub.com.mx']) {
+    const { res, createdSessions } = await postCheckout({ host, eventSlug: 'cascanueces-run' });
+    assert.equal(res.statusCode, 200);
+    const [session] = createdSessions;
+    const returnURL = new URL(session.success_url);
+    const claimCookie = res.headers['Set-Cookie'];
+    assert.doesNotMatch(claimCookie, /;\s*Domain=/i);
+    assert.equal(returnURL.origin, 'https://' + host);
+    assert.equal(returnURL.pathname, '/succes.html');
+    assert.equal(returnURL.searchParams.get('session_id'), '{CHECKOUT_SESSION_ID}');
+    assert.doesNotMatch(session.success_url, /kh_checkout_claim/);
+  }
+  const unknown = await postCheckout({ host: 'external.example.invalid', eventSlug: 'cascanueces-run' });
+  assert.equal(new URL(unknown.createdSessions[0].success_url).host, 'deployment-fixture.vercel.app');
 });
 
 test('B3-10: si pending upsert falla, no hay claim válido y se expira la sesión', async () => {

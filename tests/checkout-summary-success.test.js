@@ -2,6 +2,7 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
 const test = require('node:test');
+const vm = require('node:vm');
 
 process.env.STRIPE_SECRET_KEY = process.env.STRIPE_SECRET_KEY || 'sk_test_mock';
 process.env.SUPABASE_URL = process.env.SUPABASE_URL || 'https://example.supabase.co';
@@ -141,6 +142,92 @@ async function invokeSummary(handler, { sessionId = 'cs_summary_123', cookie } =
   }, res);
   return res;
 }
+
+function confirmationPage({ handler, cookie, storage, search }) {
+  const html = fs.readFileSync(path.join(projectRoot, 'succes.html'), 'utf8');
+  const script = [...html.matchAll(/<script>([\s\S]*?)<\/script>/g)]
+    .find(([, body]) => body.includes('function checkPaymentSuccess'))[1];
+  const elements = new Map();
+  const location = new URL('https://www.kinetichub.com.mx/succes.html' + search);
+  const requests = [];
+  let onLoad;
+  vm.runInNewContext(script, {
+    URL, URLSearchParams, console, setTimeout,
+    localStorage: storage,
+    document: { getElementById(id) {
+      if (!elements.has(id)) elements.set(id, { style: {}, textContent: '', innerHTML: '' });
+      return elements.get(id);
+    } },
+    window: { location, history: { replaceState(_state, _unused, next) {
+      location.href = new URL(next, location).href;
+    } }, addEventListener(event, callback) { if (event === 'load') onLoad = callback; } },
+    async fetch(url) {
+      const target = new URL(url, location);
+      assert.equal(target.pathname, '/api/checkout-summary');
+      requests.push(target.pathname);
+      const res = await invokeSummary(handler, { sessionId: target.searchParams.get('session_id'), cookie });
+      return { status: res.statusCode, ok: res.statusCode === 200, json: async () => res.body };
+    },
+  });
+  return { load: onLoad, elements, location, requests };
+}
+
+const blockedStorage = {
+  getItem() { throw Error('Browser storage is blocked'); },
+  setItem() { throw Error('Browser storage is blocked'); },
+};
+
+test('paid Cascanueces confirmation renders four tickets and reloads with storage blocked', async () => {
+  const rows = Array.from({ length: 4 }, (_, index) => createSummaryRows({
+    id: 'fixture-' + index, ticket_index: index + 1, ticket_count: 4, amount_paid: 500,
+    full_name: 'Participante Ficticio ' + (index + 1),
+  })[0]);
+  await withCheckoutSummaryMocks(rows, async handler => {
+    const options = { handler, cookie: claimCookie('cs_summary_123'), storage: blockedStorage };
+    const first = confirmationPage({ ...options, search: '?session_id=cs_summary_123' });
+    await first.load();
+    assert.equal(first.location.searchParams.get('session_id'), 'cs_summary_123');
+    const reload = confirmationPage({ ...options, search: first.location.search });
+    await reload.load();
+    for (const page of [first, reload]) {
+      assert.equal(page.elements.get('statusBadge').textContent, 'Pago completado');
+      assert.match(page.elements.get('participantsList').innerHTML, /Participante Ficticio 4/);
+      assert.equal(page.elements.get('retryPaymentLink').style.display, 'none');
+      assert.equal(page.requests.length, 1);
+    }
+  });
+});
+
+test('confirmation without a valid cookie offers account and support without showing private details or retrying payment', async () => {
+  await withCheckoutSummaryMocks(createSummaryRows(), async (handler, calls) => {
+    for (const cookie of ['', `${COOKIE_NAME}=invalid`, claimCookie('cs_other_order')]) {
+      const page = confirmationPage({ handler, cookie, storage: blockedStorage, search: '?session_id=cs_summary_123' });
+      await page.load();
+      assert.equal(page.requests.length, 1);
+      assert.match(page.elements.get('statusCopy').textContent, /puede haberse procesado/);
+      assert.equal(page.elements.get('participantsBlock').style.display, 'none');
+      assert.equal(page.elements.get('summaryRecovery').style.display, 'block');
+      assert.equal(page.elements.get('retryPaymentLink').style.display, 'none');
+      assert.equal(page.location.pathname, '/succes.html');
+    }
+    assert.equal(calls.selected, false);
+  });
+});
+
+test('paid confirmation cleans the URL when storage works and can still reload', async () => {
+  const values = new Map();
+  const storage = { getItem: key => values.get(key), setItem: (key, value) => values.set(key, value) };
+  await withCheckoutSummaryMocks(createSummaryRows(), async handler => {
+    const options = { handler, cookie: claimCookie('cs_summary_123'), storage };
+    const first = confirmationPage({ ...options, search: '?session_id=cs_summary_123' });
+    await first.load();
+    assert.equal(first.location.search, '');
+    const reload = confirmationPage({ ...options, search: first.location.search });
+    await reload.load();
+    assert.equal(reload.elements.get('statusBadge').textContent, 'Pago completado');
+    assert.deepEqual(reload.requests, ['/api/checkout-summary']);
+  });
+});
 
 test('checkout-summary returns payment_status paid and primary bib_number', async () => {
   await withCheckoutSummaryMocks(createSummaryRows(), async (handler) => {
@@ -303,6 +390,8 @@ test('B3-succes.html: referrer prudente + estado 403 + limpieza de URL', () => {
   assert.match(html, /<meta name="referrer" content="no-referrer" \/>/);
   assert.match(html, /showPrivateSummaryUnavailable/);
   assert.match(html, /No pudimos mostrar el resumen privado de esta compra/);
+  assert.match(html, /href="\/auth\.html\?mode=login&amp;returnTo=%2Fperfil\.html"/);
+  assert.match(html, /href="\/atencion\.html"/);
   assert.match(html, /window\.history\.replaceState/);
   assert.doesNotMatch(html, /localStorage\.setItem\('kinetic_checkout_claim'|sessionStorage\.setItem\('kh_checkout/);
 });
