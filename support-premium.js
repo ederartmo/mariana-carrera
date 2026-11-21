@@ -47,6 +47,7 @@
           ${quick('help','Otra consulta','other','')}
           </div>`}
         <div class="premium-divider"><span>Historial</span></div>
+        <p class="premium-login-return" data-support-login-return role="status" hidden>Estás en el chat de tu cuenta. Las conversaciones de invitado se mantienen separadas.</p>
         <p class="premium-empty" data-support-empty>Todavía no hay mensajes.</p>
         <div class="support-transcript" data-support-messages role="log" aria-label="Historial de mensajes"></div>
         ${expanded ? '' : `<a class="premium-ticket premium-ticket-link" href="/atencion.html" data-support-draft-link data-premium-ticket hidden>${icon('ticket')}<span><strong>Mi solicitud</strong><small data-premium-category></small></span><span class="premium-status" data-premium-state></span><span aria-hidden="true">›</span></a>`}

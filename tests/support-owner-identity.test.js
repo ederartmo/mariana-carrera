@@ -72,6 +72,7 @@ test('public chat route cannot select another ticket or touch profiles', async()
   const headers={host:'kinetichub.com.mx',origin:'https://kinetichub.com.mx','content-type':'application/json'};
   const token='a'.repeat(64);
   for(const [req, auth, expected] of [
+    [{method:'POST',headers:{...headers,authorization:'Bearer other'},body:{action:'link',token,id:T}},async()=>({user:{id:B,email_confirmed_at:'yes'}}),400],
     [{method:'POST',headers,body:{action:'read',token,id:T}},undefined,400],
     [{method:'POST',headers:{...headers,authorization:'Bearer invalid'},body:{action:'read',token}},async()=>({error:true}),401],
     [{method:'POST',headers:{...headers,authorization:'Bearer other'},body:{action:'read',token}},async()=>({user:{id:B,email_confirmed_at:'yes'}}),404],

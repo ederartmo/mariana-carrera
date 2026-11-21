@@ -8,6 +8,40 @@
   const PENDING_KEY = 'kinetichub-support-pending';
   const CATEGORIES = ['general', 'events', 'registration', 'other'];
   const accountLinks = /(https:\/\/www\.kinetichub\.com\.mx\/(?:auth\.html\?mode=login|perfil\.html|atencion\.html))(?=$|[\s.,;!?])/g;
+  const loginReturn = '/atencion.html?from=support-login#premium-conversation';
+  const accountActions = new Map([
+    ['https://www.kinetichub.com.mx/auth.html?mode=login', ['Iniciar sesión', '/auth.html?mode=login&returnTo=' + encodeURIComponent(loginReturn)]],
+    ['https://www.kinetichub.com.mx/perfil.html', ['Mis carreras', '/perfil.html']],
+    ['https://www.kinetichub.com.mx/atencion.html', ['Atención', '/atencion.html']],
+  ]);
+
+  function renderAssistantReply(doc, body) {
+    function textBlock(tag, content) {
+      const block = doc.createElement(tag);
+      for (const part of content.split(accountLinks)) {
+        const action = accountActions.get(part);
+        if (action) {
+          const link = doc.createElement('a');
+          link.className = 'support-reply-action';
+          [link.textContent, link.href] = action;
+          block.append(link);
+        } else if (part) block.append(part);
+      }
+      return block;
+    }
+    const reply = doc.createElement('div');
+    reply.className = 'support-reply';
+    const procedure = body.match(/^([\s\S]*?)\s+1\.\s+([\s\S]+)$/);
+    if (!procedure) {
+      reply.append(textBlock('p', body));
+      return reply;
+    }
+    reply.append(textBlock('p', procedure[1]));
+    const list = doc.createElement('ol');
+    for (const step of procedure[2].split(/\s+[2-9]\.\s+/)) list.append(textBlock('li', step));
+    reply.append(list);
+    return reply;
+  }
   const json = response => response.json().catch(() => ({}));
   function uuid(cryptoApi) {
     if (cryptoApi && typeof cryptoApi.randomUUID === 'function') return cryptoApi.randomUUID();
@@ -199,20 +233,43 @@
     };
     const session = await getSession();
     const ownerId = session?.user?.id || null;
-    if (ownerId) root.querySelector('[data-support-clear]').hidden = true;
+    const tabStorage = doc.defaultView.sessionStorage;
+    // A guest capability proves access to a tab's history, not who signed in.
+    // Retire it when entering an account so a later logout cannot reopen it.
+    const retireGuestConversation = () => {
+      tabStorage.removeItem(TOKEN_KEY);
+      tabStorage.removeItem(PENDING_KEY);
+    };
+    if (ownerId) {
+      retireGuestConversation();
+      root.querySelector('[data-support-clear]').hidden = true;
+      const loginNotice = root.querySelector('[data-support-login-return]');
+      if (loginNotice && new URLSearchParams(doc.defaultView.location.search).get('from') === 'support-login') {
+        loginNotice.hidden = false;
+      }
+    }
     let active = true;
+    const clearTranscript = () => root.querySelector('[data-support-messages]').replaceChildren();
+    doc.defaultView.addEventListener?.('pagehide', () => {
+      active = false;
+      clearTranscript();
+    });
+    doc.defaultView.addEventListener?.('pageshow', event => {
+      if (event.persisted) doc.defaultView.location.reload();
+    });
     const handoffMode = root.dataset?.draftHandoff;
     let draftHandoff;
     if (handoffMode) {
       try { draftHandoff = createDraftHandoff({ storage: doc.defaultView.sessionStorage, ownerId }); } catch {}
     }
     authClient?.auth.onAuthStateChange((_event, next) => {
-      if ((next?.user?.id || null) !== ownerId) {
+      if (active && (next?.user?.id || null) !== ownerId) {
         active = false;
+        root.hidden = true;
+        clearTranscript();
+        retireGuestConversation();
         draftHandoff?.clear();
         onTicket?.(null);
-        root.hidden = true;
-        root.querySelector('[data-support-messages]').replaceChildren();
         doc.defaultView.location.reload();
       }
     });
@@ -221,7 +278,7 @@
       getItem: key => memory.get(key) ?? null,
       setItem: (key, value) => memory.set(key, value),
       removeItem: key => memory.delete(key),
-    } : doc.defaultView.sessionStorage;
+    } : tabStorage;
     return mountPublicSupportChat({ document: doc, root, storage, account: Boolean(ownerId), onTicket, draftHandoff, handoffMode, isActive: () => active,
       fetch: createSessionTransport({ ownerId, getSession, fetch: fetcher }) });
   }
@@ -282,20 +339,9 @@
         const article = doc.createElement('article'); article.className = `support-message support-message--${item.author === 'visitor' ? 'visitor' : 'admin'}`;
         if (item.id) article.dataset.messageAnchor = item.id;
         const author = doc.createElement('strong'); author.textContent = item.author === 'agent' ? 'Asistente automático de Kinetic Hub' : item.author === 'admin' ? 'Equipo Kinetic Hub' : 'Tú';
-        const text = doc.createElement('p');
         const body = item.body || '';
-        if (item.provenance === 'ai_generated') {
-          body.split(accountLinks).forEach((part, index) => {
-            if (index % 2 === 0) {
-              text.append(part);
-              return;
-            }
-            const link = doc.createElement('a');
-            link.href = part;
-            link.textContent = part;
-            text.append(link);
-          });
-        } else text.textContent = body;
+        const text = item.provenance === 'ai_generated' ? renderAssistantReply(doc, body) : doc.createElement('p');
+        if (item.provenance !== 'ai_generated') text.textContent = body;
         const time = doc.createElement('time'); const date = new Date(item.created_at); time.textContent = item.created_at && Number.isFinite(date.getTime()) ? new Intl.DateTimeFormat('es-MX', { dateStyle: 'short', timeStyle: 'short' }).format(date) : ''; if (item.created_at) time.dateTime = item.created_at;
         article.append(author, text, time); fragment.append(article);
       }
@@ -379,5 +425,5 @@
     return client;
   }
 
-  return { createRefreshGate, scheduleRefresh, retryDelayMs, uniqueMessages, preserveReading, createDraftHandoff, TOKEN_KEY, PENDING_KEY, createPublicClient, createAdminClient, createSessionTransport, connectPublicSupportChat, mountPublicSupportChat, capability, uuid };
+  return { createRefreshGate, scheduleRefresh, retryDelayMs, uniqueMessages, preserveReading, createDraftHandoff, TOKEN_KEY, PENDING_KEY, createPublicClient, createAdminClient, createSessionTransport, connectPublicSupportChat, mountPublicSupportChat, renderAssistantReply, capability, uuid };
 });

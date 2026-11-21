@@ -2,6 +2,96 @@ const test = require('node:test');
 const assert = require('node:assert/strict');
 const support = require('../support-chat.js');
 
+function element(tag) {
+  return {
+    tag, children: [], dataset: {}, value: '', hidden: true, textContent: '',
+    append(...children) { this.children.push(...children); },
+    replaceChildren(...children) { this.children = children; },
+    addEventListener() {},
+  };
+}
+
+test('OXXO renders three steps with fixed, named actions and a token-free login return', () => {
+  const {sources} = require('../lib/ai/kinetichub-knowledge');
+  const {text} = sources.find(source => source.id === 'oxxo-registration');
+  const reply = support.renderAssistantReply({createElement: element}, text);
+  const [intro, steps] = reply.children;
+  assert.match(intro.children.join(''), /comprobar si tu inscripción/);
+  assert.equal(steps.tag, 'ol');
+  assert.equal(steps.children.length, 3);
+  const first = steps.children[0].children;
+  const login = first.find(node => node.textContent === 'Iniciar sesión');
+  const target = new URL(login.href, 'https://www.kinetichub.com.mx');
+  assert.equal(target.pathname, '/auth.html');
+  assert.equal(target.searchParams.get('mode'), 'login');
+  assert.equal(target.searchParams.get('returnTo'), '/atencion.html?from=support-login#premium-conversation');
+  assert.deepEqual([...target.searchParams.keys()], ['mode', 'returnTo']);
+  assert.ok(first.every(part => typeof part !== 'string' || !part.includes('https://')));
+  assert.match(steps.children[1].children.join(''), /Pendiente de pago/);
+  assert.match(steps.children[2].children[0], /Tu referencia de pago OXXO está lista/);
+  const untrusted = support.renderAssistantReply({createElement: element}, 'Ve a https://example.invalid/auth.html');
+  assert.ok(untrusted.children[0].children.every(part => typeof part === 'string'));
+});
+
+test('login return and account switching keep guest and account histories separate in a shared tab', async () => {
+  const guestToken = 'f'.repeat(64);
+  const values = new Map([[support.TOKEN_KEY, guestToken], [support.PENDING_KEY, 'guest-draft']]);
+  const sessionStorage = {
+    getItem: key => values.get(key) ?? null, setItem: (key, value) => values.set(key, value),
+    removeItem: key => values.delete(key),
+  };
+  const accounts = id => ({ user: { id }, access_token: 'fixture-' + id });
+  let session = accounts('a');
+  const calls = [];
+  const mount = async () => {
+    const nodes = new Map();
+    const root = element('section');
+    const find = key => {
+      if (!nodes.has(key)) nodes.set(key, element(key));
+      return nodes.get(key);
+    };
+    root.querySelector = find;
+    find('[data-support-form]').querySelector = find;
+    const events = {};
+    let authChange, reloads = 0;
+    const document = {
+      querySelector: () => root, createElement: element, createDocumentFragment: () => element('fragment'),
+      defaultView: {sessionStorage, location: {search: '?from=support-login', reload() { reloads++; }},
+        addEventListener(name, listener) { events[name] = listener; }},
+    };
+    await support.connectPublicSupportChat({
+      document,
+      authClient: {auth: {getSession: async () => ({data: {session}}), onAuthStateChange(fn) { authChange = fn; }}},
+      fetch: async (_, options) => {
+        calls.push(options);
+        return {ok: true, json: async () => ({ok: true, messages: [{id: 'm1', body: 'Account history', author: 'admin'}]})};
+      },
+    });
+    await new Promise(setImmediate);
+    return { root, find, events, change: next => { session = next; authChange('SIGNED_IN', next); }, reloads: () => reloads };
+  };
+  const first = await mount();
+  assert.equal(values.size, 0);
+  assert.equal(first.find('[data-support-login-return]').hidden, false);
+  assert.equal(calls[0].headers.Authorization, 'Bearer fixture-a');
+  assert.notEqual(JSON.parse(calls[0].body).token, guestToken);
+  assert.equal(first.find('[data-support-messages]').children.length, 1);
+  first.change(accounts('b'));
+  assert.equal(first.root.hidden, true);
+  assert.deepEqual(first.find('[data-support-messages]').children, []);
+  assert.equal(first.reloads(), 1);
+  const second = await mount();
+  assert.equal(calls[1].headers.Authorization, 'Bearer fixture-b');
+  assert.notEqual(JSON.parse(calls[1].body).token, guestToken);
+  second.events.pagehide();
+  assert.deepEqual(second.find('[data-support-messages]').children, []);
+  second.events.pageshow({persisted: true});
+  assert.equal(second.reloads(), 1);
+  session = null;
+  await mount();
+  assert.equal(calls.length, 2, 'logout must not reload the former guest capability');
+});
+
 test('public capability stays in session storage and restores server history', async () => {
   const values = new Map();
   const storage = { getItem: key => values.get(key) ?? null, setItem: (key, value) => values.set(key, value), removeItem: key => values.delete(key) };
