@@ -327,6 +327,25 @@ for (const distance of ['5K', '10K']) {
     assert.equal(accepted.createdSessions[0].metadata.stage_key, 'ultimo_minuto');
   });
 }
+test('Cascanueces creates one Stripe session for orders of 1 and 4 Extemporánea tickets', async () => {
+  const price = 'price_mock_existing_last_minute';
+  for (const quantity of [1, 4]) {
+    const tickets = Array.from({length: quantity}, (_, index) => ({
+      fullName: 'Synthetic Runner ' + (index + 1), shirtSize: 'M', birthDate: '1990-05-14',
+      whatsapp: '5512345678', state: 'Jalisco',
+    }));
+    const {res, createdSessions, upserts} = await createCheckoutSessionPayload({
+      buyerEmail: 'runner@example.invalid', eventSlug: 'cascanueces-run', distance: '5K', expectedUnitAmount: 500, tickets,
+    }, {now: '2026-11-21T17:11:00-06:00', existingPriceId: price});
+    assert.equal(res.statusCode, 200);
+    assert.equal(createdSessions.length, 1);
+    assert.deepEqual(createdSessions[0].line_items, [{quantity, price}]);
+    assert.equal(createdSessions[0].metadata.ticket_count, String(quantity));
+    assert.equal(upserts[0].amount_paid, 500 * quantity);
+    assert.equal(upserts[0].payment_status, 'pending');
+  }
+});
+
 for (const now of ['2026-11-15T17:00:00-06:00', '2026-11-21T00:00:00-06:00', '2026-11-23T11:59:59.999-06:00', '2026-11-23T12:00:00-06:00']) {
   const isOpen = now !== '2026-11-23T12:00:00-06:00';
   test(`Cascanueces landing registration buttons follow reopening at ${now}`, () => {
