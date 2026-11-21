@@ -26,6 +26,74 @@ function browserBinary() {
 }
 
 const chrome = browserBinary();
+for (const quantity of [1, 4]) {
+  test(`Browser: Cascanueces redirects ${quantity} ticket(s) when email storage is blocked`, { skip: !chrome }, () => {
+    const temp = fs.mkdtempSync(path.join(os.tmpdir(), 'kinetichub-cascanueces-redirect-'));
+    try {
+      const checkout = fs.readFileSync(path.join(root, 'checkout.html'), 'utf8');
+      const form = checkout.match(/<form\b[^>]*\bid="checkoutForm"[\s\S]*?<\/form>/)[0];
+      const birthDate = fs.readFileSync(path.join(root, 'birth-date.js'), 'utf8');
+      const fixture = path.join(temp, 'checkout.html');
+      fs.writeFileSync(fixture, `<!doctype html><meta charset="utf-8">${form}<pre id="result"></pre><script>
+        ${birthDate}
+        window.KineticHubCheckoutSelection = {eventSlug:'cascanueces-run', distance:'5K'};
+        document.getElementById('stagePrice').textContent = '$500 MXN';
+        const requests = [], alerts = [];
+        window.alert = message => alerts.push(message);
+        Storage.prototype.setItem = function(key) {
+          if (key === 'kinetic_checkout_email') throw new DOMException('Storage blocked','SecurityError');
+        };
+        window.fetch = async (url, options) => {
+          requests.push({url, body:JSON.parse(options.body)});
+          return {ok:true, text:async()=>JSON.stringify({url:'#stripe-fixture'})};
+        };
+        ${source.slice(start, end)}
+        setupCheckoutForm();
+        for (let k = 1; k < ${quantity}; k++) document.getElementById('addTicketBtn').click();
+        function input(element, value, type='input') {
+          element.value = value;
+          element.dispatchEvent(new Event(type,{bubbles:true}));
+        }
+        document.getElementById('userEmail').value = 'runner@example.invalid';
+        document.getElementById('termsCheck').checked = true;
+        for (let k = 1; k <= ${quantity}; k++) {
+          const field = name => document.getElementById('ticket'+name+k);
+          input(field('Name'), 'Synthetic Runner '+k);
+          input(field('Shirt'), 'M');
+          input(field('Wa'), '5512345678');
+          input(field('State'), 'Jalisco', 'change');
+          const birth = field('Birth').closest('[data-birth-group]');
+          for (const [part, value] of [['day','14'],['month','5'],['year','1990']]) {
+            input(birth.querySelector('[data-birth-part="'+part+'"]'), value);
+          }
+        }
+        document.querySelector('#checkoutForm button[type=submit]').click();
+        setTimeout(() => {
+          document.getElementById('result').textContent = JSON.stringify({
+            requested:requests.map(({url,body})=>[url,body.tickets.length,body.expectedUnitAmount]),
+            alertCount:alerts.length, hash:location.hash, total:document.getElementById('totalPrice').textContent,
+          });
+        }, 100);
+      </script>`);
+      const run = spawnSync(chrome, [
+        '--headless', '--disable-gpu', '--disable-background-networking', '--no-first-run',
+        '--virtual-time-budget=2000', `--user-data-dir=${path.join(temp, 'profile')}`,
+        '--dump-dom', pathToFileURL(fixture).href,
+      ], {encoding:'utf8', timeout:30000, maxBuffer:1024*1024});
+      assert.equal(run.status, 0, run.stderr || run.error?.message);
+      const match = run.stdout.match(/<pre id="result">(\{[^<]+\})<\/pre>/);
+      assert.ok(match, 'Checkout fixture did not finish');
+      const result = JSON.parse(match[1]);
+      assert.deepEqual(result.requested, [['/api/create-checkout-session', quantity, 500]]);
+      assert.equal(result.total, '$' + 500 * quantity + ' MXN');
+      assert.equal(result.hash, '#stripe-fixture', 'browser must use the checkout URL it received');
+      assert.equal(result.alertCount, 0);
+    } finally {
+      fs.rmSync(temp, {recursive:true, force:true});
+    }
+  });
+}
+
 test('Browser: rejecting a higher Cascanueces price does not continue or navigate to Stripe', { skip: !chrome && 'Chromium/Chrome unavailable' }, () => {
   const temp = fs.mkdtempSync(path.join(os.tmpdir(), 'kinetichub-price-browser-'));
   try {

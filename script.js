@@ -5036,7 +5036,13 @@ function setupCheckoutForm() {
       // Éxito → redirigir a Stripe
       if (data.url) {
         if (normalizedEmail) {
-          localStorage.setItem(CHECKOUT_EMAIL_KEY, normalizedEmail);
+          try {
+            localStorage.setItem(CHECKOUT_EMAIL_KEY, normalizedEmail);
+          } catch (error) {
+            // Cascanueces can continue with the Stripe URL even if the browser
+            // blocks saving the email used as a convenience after checkout.
+            if (selectedEventSlug !== "cascanueces-run") throw error;
+          }
         }
         window.location.href = data.url;
       } else {
