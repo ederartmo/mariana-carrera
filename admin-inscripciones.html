@@ -506,6 +506,9 @@
       color: #8ea1b7;
       font-size: 0.82rem;
     }
+    .list-pager-mobile {
+      display: none;
+    }
     .table-scroll table {
       box-shadow: none;
       border-radius: 0;
@@ -661,6 +664,21 @@
       .dashboard-filters .admin-select {
         flex: 1 1 120px;
         width: auto;
+      }
+      .list-pager-mobile {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 8px;
+        padding: 12px;
+      }
+      .list-pager-mobile .admin-select {
+        flex: 1 1 110px;
+        width: auto;
+      }
+      #listPageStatusBottom {
+        flex-basis: 100%;
+        text-align: center;
       }
     }
   </style>
@@ -831,6 +849,11 @@ src="https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1"
         <div id="content">
           <div class="loading">Cargando inscripciones...</div>
         </div>
+        <nav class="list-pager-mobile" aria-label="Paginación al pie de inscripciones">
+          <span id="listPageStatusBottom" role="status" aria-live="polite"></span>
+          <button id="listPreviousBottom" type="button" class="admin-select" disabled>Anterior</button>
+          <button id="listNextBottom" type="button" class="admin-select" disabled>Siguiente</button>
+        </nav>
       </div>
     </section>
 
@@ -1309,13 +1332,16 @@ src="https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1"
 
     // Request only the current server page, never prefetch the whole listing.
     function updateListPager() {
-      const previous = document.getElementById('listPrevious');
-      const next = document.getElementById('listNext');
-      const label = document.getElementById('listPageStatus');
-      if (previous) previous.disabled = listLoading || adminUiState.page <= 1;
-      if (next) next.disabled = listLoading || !adminUiState.hasMore;
-      if (label) label.textContent = listLoading ? 'Cargando inscripciones...' :
+      const pageStatus = listLoading ? 'Cargando inscripciones...' :
         'Página ' + adminUiState.page + ' / ' + Math.max(1, Math.ceil((adminUiState.total || 0) / adminUiState.rowLimit)) + ' - ' + (adminUiState.total ?? '?') + ' resultados';
+      for (const suffix of ['', 'Bottom']) {
+        const previous = document.getElementById('listPrevious' + suffix);
+        const next = document.getElementById('listNext' + suffix);
+        const label = document.getElementById('listPageStatus' + suffix);
+        if (previous) previous.disabled = listLoading || adminUiState.page <= 1;
+        if (next) next.disabled = listLoading || !adminUiState.hasMore;
+        if (label) label.textContent = pageStatus;
+      }
     }
 
     async function fetchAdminInscriptionsPage(token, status, page, eventSlug = 'all', limit = 50, search = '') {
@@ -2701,16 +2727,20 @@ src="https://www.facebook.com/tr?id=917340277990899&ev=PageView&noscript=1"
         reloadFirstPage();
       });
       statusFilter?.addEventListener('change', reloadFirstPage);
-      document.getElementById('listPrevious')?.addEventListener('click', () => {
-        if (listLoading || adminUiState.page <= 1) return;
-        adminUiState.page -= 1;
-        loadPaidInscriptions(client, statusFilter.value || 'all');
-      });
-      document.getElementById('listNext')?.addEventListener('click', () => {
-        if (listLoading || !adminUiState.hasMore) return;
-        adminUiState.page += 1;
-        loadPaidInscriptions(client, statusFilter.value || 'all');
-      });
+      for (const suffix of ['', 'Bottom']) {
+        document.getElementById('listPrevious' + suffix)?.addEventListener('click', () => {
+          if (listLoading || adminUiState.page <= 1) return;
+          adminUiState.page -= 1;
+          loadPaidInscriptions(client, statusFilter.value || 'all');
+          if (suffix) inscriptionsSection?.scrollIntoView({ block: 'start' });
+        });
+        document.getElementById('listNext' + suffix)?.addEventListener('click', () => {
+          if (listLoading || !adminUiState.hasMore) return;
+          adminUiState.page += 1;
+          loadPaidInscriptions(client, statusFilter.value || 'all');
+          if (suffix) inscriptionsSection?.scrollIntoView({ block: 'start' });
+        });
+      }
 
       const refreshEmailsBtn = document.getElementById('refreshEmailsBtn');
       refreshEmailsBtn?.addEventListener('click', () => {

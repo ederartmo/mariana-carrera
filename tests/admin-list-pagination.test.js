@@ -26,7 +26,9 @@ function harness() {
   const listenerStart = source.indexOf('      const reloadFirstPage =');
   const listenerEnd = source.indexOf('      const refreshEmailsBtn',listenerStart);
   vm.runInContext(`const rowsPerPage=document.getElementById('rowsPerPage'),searchFilter=document.getElementById('searchFilter'),
-    eventFilter=document.getElementById('eventFilter'),statusFilter=document.getElementById('statusFilter');
+    eventFilter=document.getElementById('eventFilter'),statusFilter=document.getElementById('statusFilter'),
+    inscriptionsSection=document.getElementById('inscriptionsSection');
+    inscriptionsSection.scrollIntoView = () => { inscriptionsSection.scrolled = true; };
     ${source.slice(listenerStart,listenerEnd)}`,context);
   return {context,calls,rendered,node,timers,run: code => vm.runInContext(code,context)};
 }
@@ -47,6 +49,36 @@ test('initial load requests exactly one page of 50, navigation requests the next
   h.node('listPrevious').click(); await tick();
   assert.equal(new URL(h.calls[2].url,'http://fixture').searchParams.get('page'),'1');
   respond(h.calls[2],[{id:1}]); await tick();
+});
+
+test('mobile footer advances Cascanueces and keeps both pagers in sync', async () => {
+  const h = harness();
+  h.node('eventFilter').value = 'cascanueces-run';
+  h.node('eventFilter').change();
+  await tick();
+  respond(h.calls[0], [{ id: 'first-page' }], 51);
+  await tick();
+  assert.equal(h.node('listNextBottom').disabled, false);
+  h.node('listNextBottom').click();
+  await tick();
+  const params = new URL(h.calls[1].url, 'http://fixture').searchParams;
+  assert.equal(params.get('event'), 'cascanueces-run');
+  assert.equal(params.get('page'), '2');
+  assert.equal(h.node('inscriptionsSection').scrolled, true);
+  assert.equal(h.node('listNextBottom').disabled, true);
+  h.calls[1].resolve({ ok: true, json: async () => ({
+    rows: [{ id: 'last-page' }], total: 51, hasMore: false,
+  }) });
+  await tick();
+  assert.match(h.node('listPageStatusBottom').textContent, /2 \/ 2/);
+  assert.equal(h.node('listPageStatusBottom').textContent, h.node('listPageStatus').textContent);
+  assert.equal(h.node('listNextBottom').disabled, true);
+  assert.equal(h.node('listPreviousBottom').disabled, false);
+  h.node('listPreviousBottom').click();
+  await tick();
+  assert.equal(new URL(h.calls[2].url, 'http://fixture').searchParams.get('page'), '1');
+  respond(h.calls[2], [{ id: 'first-page' }], 51);
+  await tick();
 });
 
 test('search, event, status and page size reset page and are sent to the server', async()=>{
