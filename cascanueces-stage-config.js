@@ -27,9 +27,9 @@
       key: "ultimo_minuto",
       label: "Extemporánea",
       amount: 500,
-      period: "1 de noviembre, 00:00 h a 20 de noviembre, 23:59 h",
+      period: "1 de noviembre, 00:00 h a 23 de noviembre, 12:00 h",
       start: "2026-11-01T00:00:00-06:00",
-      end: "2026-11-21T00:00:00-06:00",
+      end: "2026-11-23T12:00:00-06:00",
     },
   ];
 
