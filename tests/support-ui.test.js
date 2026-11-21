@@ -12,6 +12,85 @@ function element(tag) {
   };
 }
 
+test('desktop Enter sends one nonempty message and leaves Shift, IME and mobile alone', async () => {
+  const nodes = new Map();
+  const find = key => {
+    if (!nodes.has(key)) nodes.set(key, element(key));
+    return nodes.get(key);
+  };
+  find('[data-support-form]').querySelector = find;
+  find('[name="category"]').value = 'general';
+  let desktop = true, finish;
+  const writes = [];
+  support.mountPublicSupportChat({
+    root: {querySelector: find},
+    document: {createElement: element, createDocumentFragment: () => element('fragment'),
+      defaultView: {matchMedia: () => ({matches: desktop})}},
+    storage: {getItem: () => null, setItem() {}, removeItem() {}},
+    fetch: async (_, options) => {
+      writes.push(JSON.parse(options.body));
+      await new Promise(resolve => { finish = resolve; });
+      return {ok: true, json: async () => ({ok: true, messages: []})};
+    },
+  });
+  const input = find('[name="supportMessage"]');
+  function enter(properties = {}) {
+    let prevented = false;
+    input.keydown({key: 'Enter', preventDefault() { prevented = true; }, ...properties});
+    return prevented;
+  }
+  input.value = '  ';
+  assert.equal(enter(), true);
+  input.value = '¿Me pueden apoyar?';
+  assert.equal(enter({shiftKey: true}), false);
+  assert.equal(enter({isComposing: true}), false);
+  assert.equal(enter({keyCode: 229}), false);
+  desktop = false;
+  assert.equal(enter(), false);
+  desktop = true;
+  assert.equal(writes.length, 0);
+  assert.equal(enter(), true);
+  assert.equal(enter({repeat: true}), true);
+  assert.equal(enter(), true);
+  find('[data-support-form]').submit({preventDefault() {}});
+  assert.equal(writes.length, 1);
+  assert.equal(writes[0].body, '¿Me pueden apoyar?');
+  finish();
+  await new Promise(setImmediate);
+  assert.equal(input.value, '');
+});
+
+test('resolved history is collapsible and the same transcript moves back on reopen', async () => {
+  const nodes = new Map();
+  const find = key => {
+    if (!nodes.has(key)) nodes.set(key, element(key));
+    return nodes.get(key);
+  };
+  find('[data-support-form]').querySelector = find;
+  const previous = find('[data-support-previous]');
+  const transcript = find('[data-support-messages]');
+  previous.after = node => { assert.equal(node, transcript); previous.children = []; };
+  const messages = [{id: 'first', author: 'visitor', body: 'Original'}];
+  let status = 'resolved';
+  const client = support.mountPublicSupportChat({
+    root: {querySelector: find},
+    document: {createElement: element, createDocumentFragment: () => element('fragment')},
+    storage: {getItem: key => key === support.TOKEN_KEY ? 'guest-fixture' : null, setItem() {}, removeItem() {}},
+    fetch: async () => ({ok: true, json: async () => ({ok: true, ticket: {status}, messages})}),
+  });
+  await new Promise(setImmediate);
+  assert.equal(previous.hidden, false);
+  assert.equal(previous.open, true);
+  assert.deepEqual(previous.children, [transcript]);
+  previous.open = false;
+  await client.refresh();
+  assert.equal(previous.open, false);
+  status = 'pending';
+  await client.refresh();
+  assert.equal(previous.hidden, true);
+  assert.equal(transcript.children[0].children[0].dataset.messageAnchor, 'first');
+});
+
 test('OXXO renders three steps with fixed, named actions and a token-free login return', () => {
   const {sources} = require('../lib/ai/kinetichub-knowledge');
   const {text} = sources.find(source => source.id === 'oxxo-registration');

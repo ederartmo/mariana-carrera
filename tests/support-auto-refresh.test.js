@@ -74,3 +74,18 @@ test('public transcript follows the end only while the visitor is near it',()=>{
   assert.equal(near.scrollTop,700);
   assert.equal(far.scrollTop,100);
 });
+
+test('initial history starts at the latest message and later updates preserve the visible anchor', () => {
+  const {preserveReading} = require('../support-chat');
+  let offset = 220;
+  const article = {dataset:{messageAnchor:'retained'},
+    getBoundingClientRect: () => ({top:offset - scroller.scrollTop, bottom:offset - scroller.scrollTop + 30})};
+  const scroller = {scrollTop:0, scrollHeight:500, clientHeight:200,
+    getBoundingClientRect:()=>({top:0}), querySelectorAll:()=>[article]};
+  preserveReading(scroller,()=>{scroller.scrollHeight=900;},{followEnd:true,startAtEnd:true});
+  assert.equal(scroller.scrollTop,700);
+  scroller.scrollTop=210;
+  preserveReading(scroller,()=>{offset+=70;scroller.scrollHeight+=70;},{followEnd:true});
+  assert.equal(scroller.scrollTop,280);
+  assert.equal(article.getBoundingClientRect().top,10);
+});

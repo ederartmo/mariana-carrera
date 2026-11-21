@@ -146,6 +146,20 @@ test('visitor gets approved automatic text, human handoff and no replies after t
   assert.equal(replies(followup).length,2);
   assert.ok(followup.messages.some(message=>message.provenance==='human_operator'));
   assert.equal(posts,15);
+
+  const noAutomation = {...env, SUPPORT_AI_AUTO_REPLY_ENABLED:'false'};
+  const guest = await invoke({...payload, token:'9'.repeat(64), requestId:randomUUID(),
+    body:'Primera consulta'}, noAutomation);
+  await rpc('support_admin_action',{p_ticket_id:guest.ticket.id,p_request_id:randomUUID(),
+    p_expected_version:guest.ticket.version,p_action:'update',p_status:'resolved',p_actor:'operator'});
+  const next = {action:'send',token:'9'.repeat(64),requestId:randomUUID(),body:'Necesito continuar'};
+  const reopened = await invoke(next, noAutomation);
+  const repeated = await invoke(next, noAutomation);
+  assert.equal(reopened.ticket.id, guest.ticket.id);
+  assert.equal(reopened.ticket.status, 'pending');
+  assert.deepEqual(repeated.messages.map(m=>m.body), ['Primera consulta','Necesito continuar']);
+  const inbox = await rpc('support_admin_list',{p_limit:50,p_status:'pending'});
+  assert.equal(inbox.data.tickets.filter(ticket=>ticket.id===guest.ticket.id).length,1);
 });
 
 test('loopback public chat origin is accepted only by the QA development server',t=>{
