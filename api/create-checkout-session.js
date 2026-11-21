@@ -246,6 +246,11 @@ module.exports = async function handler(req, res) {
         : null;
 
     const origin = getRequestOrigin(req);
+    const host = String(req.headers.host || '').trim().toLowerCase();
+    // The summary cookie is host-only. Return to the storefront that set it.
+    const successOrigin = event.slug === 'cascanueces-run' &&
+      ['www.kinetichub.com.mx', 'kinetichub.com.mx'].includes(host)
+      ? `https://${host}` : origin;
     const lineItem = await buildStripeLineItem(event, stage, ticketCount);
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ['card', 'oxxo'],
@@ -258,7 +263,7 @@ module.exports = async function handler(req, res) {
         : { allow_promotion_codes: true }),
       customer_email: cleanEmail,
       line_items: [lineItem],
-      success_url: `${origin}/succes.html?session_id={CHECKOUT_SESSION_ID}`,
+      success_url: `${successOrigin}/succes.html?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${origin}/checkout.html?event=${encodeURIComponent(event.slug)}&distance=${encodeURIComponent(event.distance)}`,
       metadata: {
         event_slug: event.slug,
