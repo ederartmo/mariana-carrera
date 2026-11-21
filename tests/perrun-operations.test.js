@@ -66,10 +66,30 @@ test('Profile dogs are owned by composite registration identity; internal detail
 for(const event_slug of ['axolote-night-run','cascanueces-run'])test(event_slug+' legacy enrichment performs no Perrun query and preserves rows',async()=>{const f=fixture();f.human.event_slug=event_slug;assert.deepEqual(await enrichRegistrations(f.client,[f.human]),[f.human]);assert.equal(f.state.calls.length,0);assert.equal(perrunCsv([f.human]).trim().split('\r\n').length,1);});
 test('Settled add-on states are read without creating a payment',async()=>{const f=fixture(1,301);f.state.tables.perrun_engraving_payments=[{dog_id:f.dogs[0].id,status:'paid'}];const [row]=await enrichRegistrations(f.client,[f.human]);assert.equal(row.dogs[0].engraving_status,'Grabado pagado');assert.equal(f.state.writes.length,0);});
 function installAuth(client, auth) {
-  const filename=require.resolve('../lib/_auth');const previous=require.cache[filename];require.cache[filename]={id:filename,filename,loaded:true,exports:{getServiceClient:()=>client,getAdminUser:async()=>auth,getAuthenticatedUser:async()=>auth}};
+  const filename=require.resolve('../lib/_auth');const previous=require.cache[filename];require.cache[filename]={id:filename,filename,loaded:true,exports:{getServiceClient:()=>client,getAdminUser:typeof auth==='function'?auth:async()=>auth,getAuthenticatedUser:async()=>auth}};
   return()=>{if(previous)require.cache[filename]=previous;else delete require.cache[filename];for(const file of ['../lib/admin-list-inscriptions','../lib/admin-export-perrun','../lib/me-registrations'])delete require.cache[require.resolve(file)];};
 }
 const response=()=>({statusCode:200,headers:{},status(n){this.statusCode=n;return this;},json(v){this.body=v;return this;},send(v){this.body=v;return this;},setHeader(k,v){this.headers[k]=v;}});
+test('Perrun CSV preserves the Authorization header on an IncomingMessage', async () => {
+  const { IncomingMessage } = require('node:http');
+  const f = fixture();
+  const req = new IncomingMessage(null);
+  req.method = 'GET';
+  req.query = { status: 'paid' };
+  req.headers = { authorization: 'Bearer synthetic-admin' };
+  const restore = installAuth(f.client, async request =>
+    request.headers?.authorization === 'Bearer synthetic-admin'
+      ? { email: 'admin@example.invalid' }
+      : { status: 401, error: 'Denied' });
+  try {
+    const res = response();
+    await require('../lib/admin-export-perrun')(req, res);
+    assert.equal(res.statusCode, 200);
+    assert.match(res.body, /owner@example\.invalid/);
+  } finally {
+    restore();
+  }
+});
 test('Admin event filter Perrun returns enriched dogs via authenticated handler',async()=>{const f=fixture(2);const restore=installAuth(f.client,{email:'admin@example.invalid'});try{delete require.cache[require.resolve('../lib/admin-list-inscriptions')];const res=response();await require('../lib/admin-list-inscriptions')({method:'GET',query:{event:'perrun-2027',status:'paid'}},res);assert.equal(res.statusCode,200);assert.equal(res.body.rows.length,1);assert.equal(res.body.rows[0].dogs.length,2);}finally{restore();}});
 for(const status of [401,403])test('CSV rejects unauthorized '+status+' before reading DB',async()=>{const f=fixture();const restore=installAuth(f.client,{error:'Denied',status});try{delete require.cache[require.resolve('../lib/admin-list-inscriptions')];delete require.cache[require.resolve('../lib/admin-export-perrun')];const res=response();await require('../lib/admin-export-perrun')({method:'GET',query:{}},res);assert.equal(res.statusCode,status);assert.equal(f.state.calls.length,0);assert.ok(!res.headers['Content-Type']);}finally{restore();}});
 test('Admin CSV action exports filtered real ledger rows, no-store attachment',async()=>{const f=fixture(2);const restore=installAuth(f.client,{email:'admin@example.invalid'});try{delete require.cache[require.resolve('../lib/admin-list-inscriptions')];delete require.cache[require.resolve('../lib/admin-export-perrun')];const res=response();await require('../lib/admin-export-perrun')({method:'GET',query:{status:'paid',event:'axolote-night-run'}},res);assert.equal(res.statusCode,200);assert.equal(res.body.trim().split('\r\n').length,3);assert.equal(res.headers['Cache-Control'],'no-store');assert.match(res.headers['Content-Disposition'],/attachment/);}finally{restore();}});
