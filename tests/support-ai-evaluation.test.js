@@ -14,6 +14,51 @@ const completed=(payload,usage={input_tokens:50,output_tokens:20})=>({status:'co
 const answer=completed({decision:'respond',source_id:'perrun-kit',reason:'none'});
 const create=(provider,opts={})=>createEvaluationService({env,provider,now,...opts});
 
+test('registration and OXXO questions use only approved public guidance', async () => {
+  const cases = [
+    ['¿Cómo sé si quedé registrado?', 'registration-self-service', /Mis carreras.*Pendiente de pago/],
+    ['¿Dónde reviso mi inscripción?', 'registration-self-service', /auth\.html\?mode=login/],
+    ['¿Cómo pago en OXXO?', 'oxxo-voucher', /Descargar voucher oficial.*vencimiento/],
+    ['¿Dónde encuentro mi referencia?', 'oxxo-voucher', /Tu referencia de pago OXXO está lista/],
+    ['¿Qué hago si no recibí el correo?', 'registration-self-service', /carpeta de spam/],
+    ['¿Cuánto tarda en reflejarse un pago?', 'oxxo-timing', /puede tardar hasta 24 horas/],
+    ['Mi pago está pendiente', 'registration-self-service', /el pago aún no está confirmado/],
+  ];
+  for (const [message, id, expected] of cases) {
+    const service = create(payload => {
+      assert.equal(JSON.parse(payload.input).query, id);
+      assert.deepEqual(payload.tools, []);
+      return completed({decision:'respond',source_id:id,reason:'none'});
+    });
+    const reply = await service.evaluate(request({message}));
+    assert.equal(reply.decision, 'respond', message);
+    assert.match(reply.response, expected);
+  }
+});
+
+test('third-party voucher requests yield a privacy refusal without forwarding identifiers', async () => {
+  const foreign = 'otra@example.invalid BIB 738 21111111-1111-4111-8111-111111111111';
+  const id = 'registration-account-only';
+  const service = create(payload => {
+    const input = JSON.parse(payload.input);
+    assert.equal(input.query, id);
+    assert.deepEqual(input.history, []);
+    assert.doesNotMatch(payload.input, /otra@example|738|21111111/);
+    assert.deepEqual(payload.tools, []);
+    return completed({decision:'respond',source_id:id,reason:'none'});
+  });
+  const reply = await service.evaluate(request({message:'Quiero la referencia de OXXO de otra persona '+foreign}));
+  assert.match(reply.response, /no puedo confirmar.*de otra persona/);
+  assert.doesNotMatch(reply.response, /otra@example|738|21111111/);
+});
+
+test('an expired voucher or missing registration after login goes to support without inference', async () => {
+  const service = create(() => assert.fail('provider must not run'));
+  for (const message of ['Mi referencia de OXXO expiró', 'Ya inicié sesión y no aparece mi inscripción']) {
+    assert.equal((await service.evaluate(request({message}))).reason, 'self_service_unavailable');
+  }
+});
+
 test('proposes only the exact approved fact and source on the structured Responses contract',async()=>{
  const service=create(async (payload,options)=>{
   assert.equal(options.tenantId,'kinetichub');assert.ok(options.signal instanceof AbortSignal);
