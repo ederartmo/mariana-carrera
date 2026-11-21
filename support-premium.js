@@ -47,7 +47,11 @@
           ${quick('help','Otra consulta','other','')}
           </div>`}
         <div class="premium-divider"><span>Historial</span></div>
-        <p class="premium-login-return" data-support-login-return role="status" hidden>Estás en el chat de tu cuenta. Las conversaciones de invitado se mantienen separadas.</p>
+        <div class="premium-login-return" data-support-login-return hidden>
+          <p role="status">Tu conversación anterior quedó guardada, pero no está vinculada a esta cuenta</p>
+          <p>Después de iniciar sesión, no podemos verificar que seas la misma persona que abrió el chat de invitado.</p>
+          <button class="support-reply-action" type="button" data-support-continue-account>Continuar con mi cuenta</button>
+        </div>
         <p class="premium-empty" data-support-empty>Todavía no hay mensajes.</p>
         <div class="support-transcript" data-support-messages role="log" aria-label="Historial de mensajes"></div>
         ${expanded ? '' : `<a class="premium-ticket premium-ticket-link" href="/atencion.html" data-support-draft-link data-premium-ticket hidden>${icon('ticket')}<span><strong>Mi solicitud</strong><small data-premium-category></small></span><span class="premium-status" data-premium-state></span><span aria-hidden="true">›</span></a>`}

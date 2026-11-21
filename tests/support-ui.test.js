@@ -7,7 +7,8 @@ function element(tag) {
     tag, children: [], dataset: {}, value: '', hidden: true, textContent: '',
     append(...children) { this.children.push(...children); },
     replaceChildren(...children) { this.children = children; },
-    addEventListener() {},
+    addEventListener(name, listener) { this[name] = listener; },
+    focus() {},
   };
 }
 
@@ -34,6 +35,10 @@ test('OXXO renders three steps with fixed, named actions and a token-free login 
 });
 
 test('login return and account switching keep guest and account histories separate in a shared tab', async () => {
+  const markup = require('node:fs').readFileSync(require.resolve('../support-premium.js'), 'utf8');
+  assert.match(markup, /Tu conversación anterior quedó guardada, pero no está vinculada a esta cuenta/);
+  assert.match(markup, /no podemos verificar que seas la misma persona/);
+  assert.doesNotMatch(markup, /Volver como invitado/);
   const guestToken = 'f'.repeat(64);
   const values = new Map([[support.TOKEN_KEY, guestToken], [support.PENDING_KEY, 'guest-draft']]);
   const sessionStorage = {
@@ -52,6 +57,7 @@ test('login return and account switching keep guest and account histories separa
     };
     root.querySelector = find;
     find('[data-support-form]').querySelector = find;
+    find('[data-support-login-return]').querySelector = find;
     const events = {};
     let authChange, reloads = 0;
     const document = {
@@ -73,14 +79,25 @@ test('login return and account switching keep guest and account histories separa
   const first = await mount();
   assert.equal(values.size, 0);
   assert.equal(first.find('[data-support-login-return]').hidden, false);
+  assert.equal(first.find('[data-support-form]').hidden, true);
+  assert.equal(calls.length, 0, 'login return must wait for Continue');
+  first.find('[data-support-continue-account]').click();
+  await new Promise(setImmediate);
+  assert.equal(first.find('[data-support-login-return]').hidden, true);
+  assert.equal(first.find('[data-support-form]').hidden, false);
   assert.equal(calls[0].headers.Authorization, 'Bearer fixture-a');
   assert.notEqual(JSON.parse(calls[0].body).token, guestToken);
   assert.equal(first.find('[data-support-messages]').children.length, 1);
+  first.find('[data-support-continue-account]').click();
+  assert.equal(calls.length, 1);
   first.change(accounts('b'));
   assert.equal(first.root.hidden, true);
   assert.deepEqual(first.find('[data-support-messages]').children, []);
   assert.equal(first.reloads(), 1);
+  first.find('[data-support-continue-account]').click();
+  assert.equal(calls.length, 1);
   const second = await mount();
+  assert.equal(second.find('[data-support-login-return]').hidden, true);
   assert.equal(calls[1].headers.Authorization, 'Bearer fixture-b');
   assert.notEqual(JSON.parse(calls[1].body).token, guestToken);
   second.events.pagehide();

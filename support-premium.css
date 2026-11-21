@@ -41,6 +41,7 @@
 .premium-support .support-reply-action{display:inline-flex;align-items:center;min-height:44px;max-width:100%;margin:4px 4px 0 0;padding:6px 12px;border:1px solid #087a39;border-radius:10px;color:#075831;background:#f6fff8;font-weight:800;text-decoration:none}
 .premium-support .support-reply-action:hover{text-decoration:underline}
 .premium-support .premium-login-return{margin-bottom:12px;color:var(--muted)}
+.premium-support .premium-login-return p+p{margin-top:6px}
 .premium-support .support-message time{font-size:12px;color:var(--muted);display:block;text-align:right}
 .premium-ticket{display:flex;align-items:center;gap:9px;background:#fff3d9;border:1px solid #f0e6ca;border-radius:16px;padding:12px}
 .premium-ticket-link{margin-top:18px;background:#f6f9f7;border-color:var(--line);text-decoration:none;color:var(--ink)}

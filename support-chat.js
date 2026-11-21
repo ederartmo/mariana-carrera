@@ -234,6 +234,11 @@
     const session = await getSession();
     const ownerId = session?.user?.id || null;
     const tabStorage = doc.defaultView.sessionStorage;
+    const loginNotice = root.querySelector('[data-support-login-return]');
+    const continueAccount = loginNotice?.querySelector('[data-support-continue-account]');
+    const returnedFromGuest = Boolean(ownerId && continueAccount &&
+      new URLSearchParams(doc.defaultView.location.search).get('from') === 'support-login' &&
+      /^[a-f0-9]{64}$/.test(tabStorage.getItem(TOKEN_KEY) || ''));
     // A guest capability proves access to a tab's history, not who signed in.
     // Retire it when entering an account so a later logout cannot reopen it.
     const retireGuestConversation = () => {
@@ -243,10 +248,6 @@
     if (ownerId) {
       retireGuestConversation();
       root.querySelector('[data-support-clear]').hidden = true;
-      const loginNotice = root.querySelector('[data-support-login-return]');
-      if (loginNotice && new URLSearchParams(doc.defaultView.location.search).get('from') === 'support-login') {
-        loginNotice.hidden = false;
-      }
     }
     let active = true;
     const clearTranscript = () => root.querySelector('[data-support-messages]').replaceChildren();
@@ -279,8 +280,25 @@
       setItem: (key, value) => memory.set(key, value),
       removeItem: key => memory.delete(key),
     } : tabStorage;
-    return mountPublicSupportChat({ document: doc, root, storage, account: Boolean(ownerId), onTicket, draftHandoff, handoffMode, isActive: () => active,
+    const openChat = () => mountPublicSupportChat({ document: doc, root, storage, account: Boolean(ownerId), onTicket, draftHandoff, handoffMode, isActive: () => active,
       fetch: createSessionTransport({ ownerId, getSession, fetch: fetcher }) });
+    if (!returnedFromGuest) return openChat();
+
+    const form = root.querySelector('[data-support-form]');
+    const empty = root.querySelector('[data-support-empty]');
+    loginNotice.hidden = false;
+    form.hidden = true;
+    if (empty) empty.hidden = true;
+    let client;
+    continueAccount.addEventListener('click', () => {
+      if (!active || client) return;
+      loginNotice.hidden = true;
+      form.hidden = false;
+      if (empty) empty.hidden = false;
+      client = openChat();
+      root.querySelector('[name="supportMessage"]')?.focus();
+    });
+    return { refresh: () => client?.refresh() };
   }
 
   function mountPublicSupportChat({ document: doc = document, fetch: fetcher = fetch, storage = sessionStorage, crypto: cryptoApi = crypto, account = false, onTicket, draftHandoff, handoffMode, isActive = () => true, root: container = doc.querySelector('[data-support-chat]') } = {}) {
