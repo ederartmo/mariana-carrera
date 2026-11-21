@@ -327,8 +327,8 @@ for (const distance of ['5K', '10K']) {
     assert.equal(accepted.createdSessions[0].metadata.stage_key, 'ultimo_minuto');
   });
 }
-for (const now of ['2026-11-15T17:00:00-06:00', '2026-11-19T00:00:00-06:00', '2026-11-20T23:59:59.999-06:00', '2026-11-21T00:00:00-06:00']) {
-  const isOpen = now !== '2026-11-21T00:00:00-06:00';
+for (const now of ['2026-11-15T17:00:00-06:00', '2026-11-21T00:00:00-06:00', '2026-11-23T11:59:59.999-06:00', '2026-11-23T12:00:00-06:00']) {
+  const isOpen = now !== '2026-11-23T12:00:00-06:00';
   test(`Cascanueces landing registration buttons follow reopening at ${now}`, () => {
     for (const prefix of ['', 'public/']) {
       const context = loadBrowserScriptsWithDate(now, [
@@ -336,7 +336,7 @@ for (const now of ['2026-11-15T17:00:00-06:00', '2026-11-19T00:00:00-06:00', '20
       ]);
       const root = { style: { setProperty() {} }, classList: { add() {} }, dataset: {}, innerHTML: '' };
       context.EventLanding({ root, event: context.KineticHubCascanuecesEvent });
-      assert.match(root.innerHTML, /20 de noviembre, 23:59 h/);
+      assert.match(root.innerHTML, /23 de noviembre, 12:00 h/);
       for (const distance of ['5K', '10K']) {
         const link = `href="checkout.html?event=cascanueces-run&amp;distance=${distance}"`;
         assert.equal(root.innerHTML.includes(link), isOpen);
