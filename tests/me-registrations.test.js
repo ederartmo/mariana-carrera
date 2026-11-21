@@ -32,7 +32,8 @@ function createSupabaseMock(state) {
     eq(col, val) { state.eqCalls.push({ col, val }); return chain; },
     order(col, opts) { state.orderCalls.push({ col, opts }); return chain; },
     then(resolve, reject) {
-      return Promise.resolve({ data: state.rows, error: state.queryError || null }).then(resolve, reject);
+      const data = state.rows?.filter(row => state.eqCalls.every(({ col, val }) => row[col] === val));
+      return Promise.resolve({ data, error: state.queryError || null }).then(resolve, reject);
     },
   };
   return {
@@ -86,6 +87,7 @@ function profileRow(overrides = {}) {
     distance: '5K',
     amount_paid: 500,
     payment_status: 'paid',
+    registration_status: 'active',
     bib_number: '001',
     ...overrides,
   };
@@ -153,6 +155,27 @@ test('me/registrations sin carreras → arreglo vacío', async () => {
     await handler(req, res);
     assert.equal(res.statusCode, 200);
     assert.deepEqual(res.body, { registrations: [] });
+  });
+});
+
+test('Mis carreras returns the account pending row and excludes other and inactive registrations', async () => {
+  const own = profileRow({ id: 'own-pending', event_slug: 'cascanueces-run', payment_status: 'pending', bib_number: null });
+  const foreign = profileRow({ id: 'foreign-paid', email: 'other@example.invalid', bib_number: '738' });
+  const cancelled = profileRow({ id: 'own-cancelled', registration_status: 'cancelled' });
+  const state = {
+    usersByToken: { 'token-a': userA }, eqCalls: [], orderCalls: [], seenTokens: [],
+    rows: [own, foreign, cancelled],
+  };
+  await withMocks(state, async handler => {
+    const { req, res } = createReqRes({
+      headers: { authorization: 'Bearer token-a' },
+      query: { email: foreign.email, id: foreign.id, bib: foreign.bib_number },
+    });
+    await handler(req, res);
+    assert.equal(res.statusCode, 200);
+    assert.deepEqual(res.body.registrations, [own]);
+    assert.equal(res.body.registrations[0].payment_status, 'pending');
+    assert.doesNotMatch(state.selectCols, /voucher|reference|payment_intent_id/i);
   });
 });
 

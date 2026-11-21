@@ -7,6 +7,7 @@
   const TOKEN_KEY = 'kinetichub-support-token';
   const PENDING_KEY = 'kinetichub-support-pending';
   const CATEGORIES = ['general', 'events', 'registration', 'other'];
+  const accountLinks = /(https:\/\/www\.kinetichub\.com\.mx\/(?:auth\.html\?mode=login|perfil\.html|atencion\.html))(?=$|[\s.,;!?])/g;
   const json = response => response.json().catch(() => ({}));
   function uuid(cryptoApi) {
     if (cryptoApi && typeof cryptoApi.randomUUID === 'function') return cryptoApi.randomUUID();
@@ -281,7 +282,20 @@
         const article = doc.createElement('article'); article.className = `support-message support-message--${item.author === 'visitor' ? 'visitor' : 'admin'}`;
         if (item.id) article.dataset.messageAnchor = item.id;
         const author = doc.createElement('strong'); author.textContent = item.author === 'agent' ? 'Asistente automático de Kinetic Hub' : item.author === 'admin' ? 'Equipo Kinetic Hub' : 'Tú';
-        const text = doc.createElement('p'); text.textContent = item.body || '';
+        const text = doc.createElement('p');
+        const body = item.body || '';
+        if (item.provenance === 'ai_generated') {
+          body.split(accountLinks).forEach((part, index) => {
+            if (index % 2 === 0) {
+              text.append(part);
+              return;
+            }
+            const link = doc.createElement('a');
+            link.href = part;
+            link.textContent = part;
+            text.append(link);
+          });
+        } else text.textContent = body;
         const time = doc.createElement('time'); const date = new Date(item.created_at); time.textContent = item.created_at && Number.isFinite(date.getTime()) ? new Intl.DateTimeFormat('es-MX', { dateStyle: 'short', timeStyle: 'short' }).format(date) : ''; if (item.created_at) time.dateTime = item.created_at;
         article.append(author, text, time); fragment.append(article);
       }

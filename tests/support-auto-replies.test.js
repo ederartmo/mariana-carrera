@@ -54,7 +54,7 @@ test('visitor gets approved automatic text, human handoff and no replies after t
   assert.equal(posts,1);
   assert.equal(replies(await invoke(payload)).length,1);
   assert.equal(posts,1);
-  const unknown=await invoke({action:'send',token:payload.token,body:'Confirma si mi pago personal está acreditado',requestId:randomUUID()});
+  const unknown=await invoke({action:'send',token:payload.token,body:'Confirma si el cobro de mi tarjeta está acreditado',requestId:randomUUID()});
   assert.equal(replies(unknown).length,2);
   assert.match(replies(unknown).at(-1).body,/equipo de soporte revisará/);
   assert.equal(unknown.ticket.status,'pending');
@@ -127,6 +127,25 @@ test('visitor gets approved automatic text, human handoff and no replies after t
     assert.doesNotMatch(published.at(-1).body,/equipo de soporte/);
   }
   assert.equal(posts,14); // six supported turns; payment and change requests stay local.
+
+  const oxxo = await invoke({...payload,token:'8'.repeat(64),requestId:randomUUID(),
+    body:'Voy a pagar en el Oxxo, pero no estoy seguro de haber quedado registrado. El registro, según yo, lo hice anoche.'},conversationalEnv);
+  assert.equal(replies(oxxo).at(-1)?.body, 'Claro. '+kb.sources.find(s=>s.id==='oxxo-registration').text);
+  assert.equal(posts,15);
+  const expired = await invoke({action:'send',token:'8'.repeat(64),requestId:randomUUID(),
+    body:'Mi referencia de OXXO expiró.'},conversationalEnv);
+  assert.equal(replies(expired).at(-1)?.body,kb.oxxoHandoff);
+  assert.equal(posts,15);
+  const expiredState = await db.query('select automation_paused_at from support_tickets where id=$1',[expired.ticket.id]);
+  assert.ok(expiredState.rows[0].automation_paused_at);
+
+  await rpc('support_admin_action',{p_ticket_id:oxxo.ticket.id,p_request_id:randomUUID(),
+    p_expected_version:expired.ticket.version,p_action:'reply',p_body:'Yo te atiendo con tu referencia.',p_actor:'operator'});
+  const followup = await invoke({action:'send',token:'8'.repeat(64),requestId:randomUUID(),
+    body:'¿Dónde encuentro mi referencia de OXXO?'},conversationalEnv);
+  assert.equal(replies(followup).length,2);
+  assert.ok(followup.messages.some(message=>message.provenance==='human_operator'));
+  assert.equal(posts,15);
 });
 
 test('loopback public chat origin is accepted only by the QA development server',t=>{
