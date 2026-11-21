@@ -2,6 +2,40 @@ const { test } = require('node:test');
 const assert = require('node:assert/strict');
 const { createVisiblePoll } = require('../support-premium.js');
 
+test('request details describe only the current state and hide the guide without a ticket', async () => {
+  const vm = require('node:vm');
+  const source = require('node:fs').readFileSync(require.resolve('../support-premium.js'), 'utf8');
+  const nodes = new Map();
+  const find = key => {
+    if (!nodes.has(key)) nodes.set(key, {querySelector:find, classList:{add(){}}, dataset:{}, textContent:''});
+    return nodes.get(key);
+  };
+  const host = find('[data-premium-expanded]');
+  host.querySelectorAll = () => [];
+  let present;
+  vm.runInNewContext(source, {
+    document:{querySelector:find, getElementById:()=>null},
+    window:{KineticHubSupabase:{ensureClient:async()=>({})}, KineticHubSupport:{
+      connectPublicSupportChat:async ({onTicket})=>{present=onTicket;},
+      createRefreshGate:()=>()=>{}, scheduleRefresh(){},
+    }},
+  });
+  await new Promise(setImmediate);
+  for (const [status, label, description] of [
+    ['pending', 'Pendiente', /esperando atención/],
+    ['in_progress', 'Abierto', /está atendiendo/],
+    ['resolved', 'Resuelto', /cerró la solicitud/],
+  ]) {
+    present({status});
+    assert.equal(find('[data-premium-state]').textContent,label);
+    assert.equal(find('[data-premium-status-guide]').hidden,false);
+    assert.match(find('[data-premium-status-description]').textContent,description);
+  }
+  present(null);
+  assert.equal(find('[data-premium-status-guide]').hidden,true);
+  assert.equal(find('[data-premium-status-description]').textContent,'');
+});
+
 test('polls only while visible and never overlaps pending work', async () => {
   let visible = false, calls = 0, release;
   const tick = createVisiblePoll(() => visible, async () => {

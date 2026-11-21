@@ -29,6 +29,11 @@
   const icon = name => '<svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' + icons[name] + '</svg>';
   const brand = '<img class="premium-brand" src="/assets/brand/icon.png" alt="" width="46" height="46">';
   const quick = (symbol, label, category, prompt) => '<button type="button" data-topic="' + category + '" data-prompt="' + prompt + '">' + icon(symbol) + label + '</button>';
+  const ticketStates = {
+    pending: ['Pendiente', 'Recibimos tu solicitud y está esperando atención.'],
+    in_progress: ['Abierto', 'El equipo está atendiendo tu solicitud.'],
+    resolved: ['Resuelto', 'El equipo cerró la solicitud. Si envías otro mensaje, se volverá a abrir.'],
+  };
 
   function thread(expanded) {
     return `
@@ -53,6 +58,7 @@
           <button class="support-reply-action" type="button" data-support-continue-account>Continuar con mi cuenta</button>
         </div>
         <p class="premium-empty" data-support-empty>Todavía no hay mensajes.</p>
+        <details class="premium-previous" data-support-previous hidden><summary>Conversaciones anteriores</summary></details>
         <div class="support-transcript" data-support-messages role="log" aria-label="Historial de mensajes"></div>
         ${expanded ? '' : `<a class="premium-ticket premium-ticket-link" href="/atencion.html" data-support-draft-link data-premium-ticket hidden>${icon('ticket')}<span><strong>Mi solicitud</strong><small data-premium-category></small></span><span class="premium-status" data-premium-state></span><span aria-hidden="true">›</span></a>`}
       </div>
@@ -82,9 +88,8 @@
         <div class="premium-ticket"><strong>Mi solicitud</strong><span class="premium-status" data-premium-state></span></div>
         <dl class="premium-fields"><div><dt>Categoría</dt><dd data-premium-category></dd></div></dl>
       </div>
-      <div class="premium-status-guide"><h3>¿Qué significa tu estado?</h3>
-        <p><strong>Pendiente:</strong> recibimos tu solicitud y espera atención.</p>
-        <details><summary>Ver todos los estados</summary><p><strong>Abierto:</strong> el equipo está atendiendo tu solicitud.</p><p><strong>Resuelto:</strong> el equipo cerró la solicitud.</p></details>
+      <div class="premium-status-guide" data-premium-status-guide hidden><h3>¿Qué significa tu estado?</h3>
+        <p data-premium-status-description></p>
       </div>
       <p class="premium-other"><a href="/contacto.html">Otros canales de contacto</a></p>
     </aside>`;
@@ -114,13 +119,19 @@
           authClient, onTicket: ticket => {
             const card = host.querySelector('[data-premium-ticket]');
             const blank = host.querySelector('[data-premium-no-ticket]');
+            const guide = host.querySelector('[data-premium-status-guide]');
             const category = { general: 'Consulta general', events: 'Eventos', registration: 'Inscripciones', other: 'Otro tema' }[ticket?.category];
             card.hidden = !ticket;
             if (blank) blank.hidden = Boolean(ticket);
             host.querySelector('[data-premium-category]').textContent = category || 'No indicada';
             const badge = card.querySelector('[data-premium-state]');
             badge.dataset.status = ticket?.status || '';
-            badge.textContent = { pending: 'Pendiente', in_progress: 'Abierto', resolved: 'Resuelto' }[ticket?.status] || '';
+            const [label = '', description = ''] = Object.hasOwn(ticketStates, ticket?.status) ? ticketStates[ticket.status] : [];
+            badge.textContent = label;
+            if (guide) {
+              guide.hidden = !description;
+              guide.querySelector('[data-premium-status-description]').textContent = description;
+            }
           },
         });
         if (notice.textContent.startsWith('Preparando')) notice.textContent = '';

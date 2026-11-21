@@ -93,17 +93,20 @@
     const seen = new Set();
     return messages.filter(m => !m.id || (!seen.has(m.id) && seen.add(m.id)));
   }
-  function preserveReading(scroller, render, { followEnd = false } = {}) {
+  function preserveReading(scroller, render, { followEnd = false, startAtEnd = false } = {}) {
     if (!scroller?.querySelectorAll || !scroller.getBoundingClientRect) return render();
     const nearEnd = followEnd && scroller.scrollHeight - scroller.clientHeight - scroller.scrollTop <= 48;
-    if (nearEnd) {
+    if (startAtEnd || nearEnd) {
       render();
       scroller.scrollTop = Math.max(0, scroller.scrollHeight - scroller.clientHeight);
       return;
     }
     const read = () => [...scroller.querySelectorAll('[data-message-anchor]')];
     const top = scroller.getBoundingClientRect().top;
-    const anchor = read().find(node => node.getBoundingClientRect().bottom > top);
+    const anchor = read().find(node => {
+      const rect = node.getBoundingClientRect();
+      return rect.bottom > top && rect.bottom > rect.top;
+    });
     const offset = anchor?.getBoundingClientRect().top;
     const scroll = scroller.scrollTop;
     render();
@@ -306,6 +309,7 @@
     const client = createPublicClient({ storage, fetch: fetcher, crypto: cryptoApi });
     const form = container.querySelector('[data-support-form]'); const bodyInput = container.querySelector('[name="supportMessage"]');
     const categoryInput = container.querySelector('[name="category"]'); const transcript = container.querySelector('[data-support-messages]');
+    const previous = container.querySelector('[data-support-previous]');
     const notice = container.querySelector('[data-support-notice]'); const submit = form.querySelector('button[type="submit"]');
     const readButton = container.querySelector('[data-support-refresh]'); const clearButton = container.querySelector('[data-support-clear]');
     const humanButton = container.querySelector('[data-support-human]');
@@ -338,17 +342,30 @@
     }
     function resetHistory() {
       rendered = '';
+      hasRenderedMessages = false;
+      placeHistory(false);
       onTicket?.(null);
       transcript.replaceChildren();
       if (empty) empty.hidden = false;
       if (state) state.hidden = true;
     }
     let readEpoch = 0, quietReading = false, readBackoffUntil = 0;
-    let rendered = ''; let busy = false; let started = Boolean(client.token);
+    let rendered = '', hasRenderedMessages = false, showingPrevious = false;
+    let busy = false; let started = Boolean(client.token);
     const message = text => { notice.textContent = text; };
+    function placeHistory(resolved) {
+      if (!previous || showingPrevious === resolved) return;
+      showingPrevious = resolved;
+      previous.hidden = !resolved;
+      if (resolved) {
+        previous.open = true;
+        previous.append(transcript);
+      } else previous.after(transcript);
+    }
     function render(data) {
       const items = uniqueMessages(data.messages || []).slice(-100);
-      const signature = JSON.stringify(items);
+      const resolved = data.ticket?.status === 'resolved';
+      const signature = JSON.stringify([resolved, items]);
       if (rendered === signature) return;
       rendered = signature;
       if (empty) empty.hidden = Boolean(data.messages?.length);
@@ -363,13 +380,20 @@
         const time = doc.createElement('time'); const date = new Date(item.created_at); time.textContent = item.created_at && Number.isFinite(date.getTime()) ? new Intl.DateTimeFormat('es-MX', { dateStyle: 'short', timeStyle: 'short' }).format(date) : ''; if (item.created_at) time.dateTime = item.created_at;
         article.append(author, text, time); fragment.append(article);
       }
-      { preserveReading(transcript.closest?.('.premium-scroll') || transcript, () => transcript.replaceChildren(fragment), { followEnd: true }); if (data.hasMore) message('Mostramos los últimos 100 mensajes. Hay mensajes anteriores disponibles al continuar cargando el historial.'); }
+      const collapsed = showingPrevious && !previous.open;
+      preserveReading(transcript.closest?.('.premium-scroll') || transcript, () => {
+        placeHistory(resolved);
+        transcript.replaceChildren(fragment);
+      }, { followEnd: !collapsed, startAtEnd: !hasRenderedMessages && items.length > 0 });
+      hasRenderedMessages ||= items.length > 0;
+      if (data.hasMore) message('Mostramos los últimos 100 mensajes. Hay mensajes anteriores disponibles al continuar cargando el historial.');
     }
     async function run(action) {
       if (busy || !isActive() || (action === 'read' && (quietReading || Date.now() < readBackoffUntil))) return;
-      readEpoch++;
       if (action === 'human' && client.hasPending) { message('Confirma primero el envio pendiente.'); return; }
       const submitted = action === 'retry' ? client.pendingBody : bodyInput.value.trim();
+      if (action === 'send' && (!submitted || client.hasPending)) return;
+      readEpoch++;
       busy = true; syncRetry(); clearButton.disabled = true; readButton.disabled = true; if (humanButton) humanButton.disabled = true;
       try {
         let data;
@@ -397,13 +421,18 @@
           readBackoffUntil = Date.now() + (error.retryDelayMs || 60000);
           message('Actualización en pausa por el límite temporal. Puedes seguir escribiendo.'); return;
         }
-        if (error.status === 410) resetHistory();
-        if (account && action === 'read' && error.status === 404) { started = false; message('Todavia no tienes una conversacion. Escribe un mensaje para empezar.'); return; }
-        if (error.status === 401) { resetHistory(); started = false; }
+        if ([401,404,410].includes(error.status)) { resetHistory(); started = false; }
+        if (account && action === 'read' && error.status === 404) { message('Todavia no tienes una conversacion. Escribe un mensaje para empezar.'); return; }
         message(error.status === 404 || error.status === 410 ? 'La sesión de conversación venció o no está disponible. Puedes intentar de nuevo o borrar esta sesión para iniciar otra. Tu mensaje no se envió.' : `No pudimos confirmar la recepción: ${error.message} ${client.hasPending ? 'Usa “Reintentar envío” para repetir la misma solicitud de forma segura.' : ''}`);
       } finally { busy = false; syncRetry(); clearButton.disabled = false; readButton.disabled = false; if (humanButton) humanButton.disabled = false; }
     }
     form.addEventListener('submit', event => { event.preventDefault(); run('send'); });
+    bodyInput.addEventListener('keydown', event => {
+      if (event.key !== 'Enter' || event.shiftKey || event.isComposing || event.keyCode === 229 ||
+        !doc.defaultView?.matchMedia?.('(hover: hover) and (pointer: fine)')?.matches) return;
+      event.preventDefault();
+      if (!event.repeat) run('send');
+    });
     humanButton?.addEventListener('click', () => run('human'));
     readButton.addEventListener('click', () => run('read'));
     clearButton.addEventListener('click', () => {
