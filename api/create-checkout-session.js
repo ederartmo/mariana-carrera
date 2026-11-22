@@ -90,16 +90,18 @@ async function buildStripeLineItem(event, stage, ticketCount) {
 }
 
 function getRequestOrigin(req) {
-  if (process.env.VERCEL_URL) {
-    return `https://${process.env.VERCEL_URL}`;
+  const host = String(req.headers.host || '').trim().toLowerCase();
+  const publicHost = host === 'www.kinetichub.com.mx' || host === 'kinetichub.com.mx';
+  const environment = process.env.VERCEL_ENV;
+  // A host-only claim can only follow Stripe back to the storefront that set it.
+  if (environment === 'production' || (!environment && publicHost)) {
+    return publicHost ? `https://${host}` : null;
   }
-
-  const host = String(req.headers.host || '').trim();
-  if (host.startsWith('localhost') || host.startsWith('127.0.0.1')) {
+  if (environment !== 'preview' && /^(?:localhost|127\.0\.0\.1)(?::\d{1,5})?$/.test(host)) {
     return `http://${host}`;
   }
-
-  return 'https://www.kinetichub.com.mx';
+  const previewHosts = [process.env.VERCEL_URL, process.env.VERCEL_BRANCH_URL];
+  return host && !publicHost && previewHosts.includes(host) ? `https://${host}` : null;
 }
 
 function normalizeFullName(value) {
@@ -123,6 +125,11 @@ module.exports = async function handler(req, res) {
   }
 
   try {
+    const origin = getRequestOrigin(req);
+    if (!origin) {
+      return res.status(400).json({ error: 'Abre el checkout desde el dominio autorizado para este entorno.' });
+    }
+
     // Rate limit por IP ANTES de crear sesión Stripe / escribir DB.
     // Sin límite por email a propósito: no debe romper guest multi-ticket
     // ni reintentos legítimos del mismo comprador.
@@ -134,7 +141,7 @@ module.exports = async function handler(req, res) {
     if (blocked) return blocked;
 
     if (req.body?.flow === 'perrun-engraving-v1') {
-      return require('../lib/_perrun-engraving').handleCheckout({ req, res, stripe, supabase, origin: getRequestOrigin(req) });
+      return require('../lib/_perrun-engraving').handleCheckout({ req, res, stripe, supabase, origin });
     }
 
     const { email, buyerEmail, shirtSize, tickets, metaEventId, promoCode, eventSlug, distance, expectedUnitAmount } = req.body;
@@ -146,7 +153,7 @@ module.exports = async function handler(req, res) {
     }
 
     if (event.slug === 'perrun-2027') {
-      return require('../lib/_perrun-checkout').handlePerrunCheckout({ req, res, stripe, supabase, origin: getRequestOrigin(req) });
+      return require('../lib/_perrun-checkout').handlePerrunCheckout({ req, res, stripe, supabase, origin });
     }
 
     if (event.checkoutEnabled === false) {
@@ -245,12 +252,6 @@ module.exports = async function handler(req, res) {
         ? { coupon: promoResolution.couponId }
         : null;
 
-    const origin = getRequestOrigin(req);
-    const host = String(req.headers.host || '').trim().toLowerCase();
-    // The summary cookie is host-only. Return to the storefront that set it.
-    const successOrigin = event.slug === 'cascanueces-run' &&
-      ['www.kinetichub.com.mx', 'kinetichub.com.mx'].includes(host)
-      ? `https://${host}` : origin;
     const lineItem = await buildStripeLineItem(event, stage, ticketCount);
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ['card', 'oxxo'],
@@ -263,7 +264,7 @@ module.exports = async function handler(req, res) {
         : { allow_promotion_codes: true }),
       customer_email: cleanEmail,
       line_items: [lineItem],
-      success_url: `${successOrigin}/succes.html?session_id={CHECKOUT_SESSION_ID}`,
+      success_url: `${origin}/succes.html?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${origin}/checkout.html?event=${encodeURIComponent(event.slug)}&distance=${encodeURIComponent(event.distance)}`,
       metadata: {
         event_slug: event.slug,

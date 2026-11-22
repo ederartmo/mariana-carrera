@@ -136,11 +136,12 @@ function createRes() {
   };
 }
 
-async function postCheckout({ host = 'localhost:3000', upsertError = null, unsetSecret = false, eventSlug = 'axolote-night-run' } = {}) {
+async function postCheckout({ host = 'localhost:3000', upsertError = null, unsetSecret = false, eventSlug = 'axolote-night-run', flow } = {}) {
   return withMockedNow('2026-09-09T12:00:00-06:00', async () => {
     const createdSessions = [];
     const expiredSessions = [];
     const upsertCalls = [];
+    const forwardedOrigins = [];
     const restoreStripe = mockModule('stripe', () => ({
       checkout: {
         sessions: {
@@ -170,6 +171,12 @@ async function postCheckout({ host = 'localhost:3000', upsertError = null, unset
     const restoreMeta = mockModule('../lib/_meta-capi', {
       trackMetaEvent: async () => ({ ok: true }),
     });
+    const recordOrigin = name => async ({ origin, res }) => {
+      forwardedOrigins.push({ name, origin });
+      return res.status(200).json({});
+    };
+    const restorePerrun = mockModule('../lib/_perrun-checkout', {handlePerrunCheckout: recordOrigin('registration')});
+    const restoreEngraving = mockModule('../lib/_perrun-engraving', {handleCheckout: recordOrigin('engraving')});
     delete require.cache[require.resolve('../api/create-checkout-session')];
     const restoreLogs = silenceLogs();
     const savedSecret = process.env.CHECKOUT_SUMMARY_SECRET;
@@ -185,14 +192,17 @@ async function postCheckout({ host = 'localhost:3000', upsertError = null, unset
           tickets: [{ fullName: 'Runner Claim', shirtSize: 'M', birthDate: '1990-05-14', whatsapp: '5512345678', state: 'Jalisco' }],
           eventSlug,
           distance: '5K',
+          ...(flow ? { flow } : {}),
           ...(eventSlug === 'cascanueces-run' ? { expectedUnitAmount: 450 } : {}),
         },
       }, res);
-      return { res, createdSessions, expiredSessions, upsertCalls };
+      return { res, createdSessions, expiredSessions, upsertCalls, forwardedOrigins };
     } finally {
       if (unsetSecret) process.env.CHECKOUT_SUMMARY_SECRET = savedSecret;
       restoreLogs();
       delete require.cache[require.resolve('../api/create-checkout-session')];
+      restoreEngraving();
+      restorePerrun();
       restoreMeta();
       restorePromo();
       restoreSupabase();
@@ -232,27 +242,71 @@ test('B3-8/9: JSON y success_url no contienen el claim', async () => {
   assert.ok(!createdSessions[0].success_url.includes(claimValue));
 });
 
-test('Cascanueces returns to the host that set the private cookie even when Vercel supplies a deployment URL', async t => {
-  const previous = process.env.VERCEL_URL;
-  process.env.VERCEL_URL = 'deployment-fixture.vercel.app';
+test('Stripe returns and the host-only claim use the authorized storefront in each environment', async t => {
+  const environmentKeys = ['VERCEL_ENV', 'VERCEL_URL', 'VERCEL_BRANCH_URL'];
+  const previous = environmentKeys.map(key => [key, process.env[key]]);
   t.after(() => {
-    if (previous === undefined) delete process.env.VERCEL_URL;
-    else process.env.VERCEL_URL = previous;
+    for (const [key, value] of previous) {
+      if (value === undefined) delete process.env[key];
+      else process.env[key] = value;
+    }
   });
-  for (const host of ['www.kinetichub.com.mx', 'kinetichub.com.mx']) {
-    const { res, createdSessions } = await postCheckout({ host, eventSlug: 'cascanueces-run' });
+  const deploymentHost = 'deployment-fixture.vercel.app';
+  const branchHost = 'branch-fixture.vercel.app';
+  Object.assign(process.env, { VERCEL_URL: deploymentHost, VERCEL_BRANCH_URL: branchHost });
+
+  const sameHost = async (host, eventSlug, protocol = 'https:') => {
+    const { res, createdSessions } = await postCheckout({ host, eventSlug });
     assert.equal(res.statusCode, 200);
     const [session] = createdSessions;
     const returnURL = new URL(session.success_url);
     const claimCookie = res.headers['Set-Cookie'];
     assert.doesNotMatch(claimCookie, /;\s*Domain=/i);
-    assert.equal(returnURL.origin, 'https://' + host);
+    assert.equal(returnURL.origin, protocol + '//' + host);
+    assert.equal(new URL(session.cancel_url).origin, returnURL.origin);
+    assert.equal(new URL(session.cancel_url).searchParams.get('event'), eventSlug);
     assert.equal(returnURL.pathname, '/succes.html');
     assert.equal(returnURL.searchParams.get('session_id'), '{CHECKOUT_SESSION_ID}');
     assert.doesNotMatch(session.success_url, /kh_checkout_claim/);
+    const nowSeconds = Date.parse('2026-09-09T12:00:00-06:00') / 1000;
+    assert.equal(verifyCheckoutSummaryClaim(claimCookie, 'cs_test_claim', {nowSeconds}).ok, true);
+    assert.equal(verifyCheckoutSummaryClaim(claimCookie, 'cs_test_other', {nowSeconds}).ok, false);
+    assert.equal(/; Secure\b/.test(claimCookie), protocol === 'https:');
+  };
+  const denied = async host => {
+    const { res, createdSessions, upsertCalls, forwardedOrigins } = await postCheckout({ host, eventSlug: 'cascanueces-run' });
+    assert.equal(res.statusCode, 400);
+    assert.deepEqual([createdSessions, upsertCalls, forwardedOrigins], [[], [], []]);
+    assert.equal(res.headers['Set-Cookie'], undefined);
+  };
+  const perrun = async (host, origin) => {
+    for (const [name, flow] of [['registration', undefined], ['engraving', 'perrun-engraving-v1']]) {
+      const { res, forwardedOrigins } = await postCheckout({ host, eventSlug: 'perrun-2027', flow });
+      assert.equal(res.statusCode, 200);
+      assert.deepEqual(forwardedOrigins, [{name, origin}]);
+    }
+  };
+
+  process.env.VERCEL_ENV = 'production';
+  for (const host of ['www.kinetichub.com.mx', 'kinetichub.com.mx']) {
+    await sameHost(host, 'cascanueces-run');
+    await sameHost(host, 'axolote-night-run');
+    await perrun(host, 'https://' + host);
   }
-  const unknown = await postCheckout({ host: 'external.example.invalid', eventSlug: 'cascanueces-run' });
-  assert.equal(new URL(unknown.createdSessions[0].success_url).host, 'deployment-fixture.vercel.app');
+  await denied(deploymentHost);
+  await denied('localhost:3142');
+  await denied('www.kinetichub.com.mx.external.example.invalid');
+
+  process.env.VERCEL_ENV = 'preview';
+  await sameHost(deploymentHost, 'cascanueces-run');
+  await sameHost(branchHost, 'axolote-night-run');
+  await perrun(branchHost, 'https://' + branchHost);
+  await denied('www.kinetichub.com.mx');
+
+  process.env.VERCEL_ENV = 'development';
+  await sameHost('localhost:3142', 'cascanueces-run', 'http:');
+  await perrun('127.0.0.1:3142', 'http://127.0.0.1:3142');
+  await denied('localhost.external.example.invalid');
 });
 
 test('B3-10: si pending upsert falla, no hay claim válido y se expira la sesión', async () => {

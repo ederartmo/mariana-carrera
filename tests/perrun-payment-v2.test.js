@@ -9,10 +9,10 @@ test.before(async()=>{db=new PGlite();await f.install(db);});test.after(async()=
 test.beforeEach(async()=>db.exec('truncate public.perrun_registration_edits,public.perrun_promo_slots,public.perrun_checkout_reservation_dogs,public.perrun_checkout_reservations,public.perrun_engraving_payments,public.registration_dogs,public.perrun_checkout_orders,public.inscripciones; update public.perrun_paid_dog_counter set last_sequence=0; insert into public.perrun_promo_slots(slot) select generate_series(1,300);'));
 function body(weights=[10]){return {eventSlug:'perrun-2027',distance:'3K',buyerEmail:'qa@example.invalid',tickets:[{...f.payload().participant,whatsapp:'5512345678'}],dogs:weights.map((w,i)=>({dog_name:'Dog '+i,dog_weight_kg:w,engraving_requested:true})),attemptId:crypto.randomUUID()};}
 const response=()=>({headers:{},status(n){this.code=n;return this;},json(x){this.body=x;return this;},setHeader(k,v){this.headers[k]=v;}});
-function fixture(){
+function fixture(origin = 'http://localhost:3000'){
  const calls=[],supabase=f.adapter(db,calls),sessions=new Map(),creates=[],keys=new Map();let next=0;
  const stripe={checkout:{sessions:{async create(p,options){if(keys.has(options.idempotencyKey))return structuredClone(keys.get(options.idempotencyKey));creates.push({p,options});const s={id:'cs_test_v2_'+(++next),livemode:false,mode:'payment',status:'open',payment_status:'unpaid',currency:'mxn',amount_total:p.line_items.reduce((a,x)=>a+x.price_data.unit_amount,0),metadata:p.metadata,payment_intent:'pi_v2_'+next,expires_at:p.expires_at,url:'https://checkout.stripe.com/c/test_v2'};sessions.set(s.id,s);keys.set(options.idempotencyKey,s);return structuredClone(s);},async retrieve(id){assert.ok(sessions.has(id));return structuredClone(sessions.get(id));}}},paymentIntents:{async retrieve(id){return {id,status:stripe.piStatus||'requires_action',next_action:{oxxo_display_details:{expires_after:Math.floor(Date.now()/1000)+86400}}};}}};
- async function run(input){const res=response();await v2.checkout({req:{body:input,headers:{host:'localhost:3000'}},res,supabase,stripe,origin:'http://localhost:3000'});return res;}
+ async function run(input){const res=response();await v2.checkout({req:{body:input,headers:{host:new URL(origin).host}},res,supabase,stripe,origin});return res;}
  async function prepare(input=body()){const quoted=await run({...input,action:'quote'});assert.equal(quoted.code,200);const create={...input,action:'create',reservationId:quoted.body.reservationId,quoteToken:quoted.body.quoteToken};const result=await run(create);assert.equal(result.code,200);return {input,quoted,create,result,s:sessions.get(result.body.sessionId)};}
  const event=(s,type='checkout.session.completed')=>({id:'evt_v2_'+(++next),type,livemode:false,data:{object:structuredClone(s)}});
  return {calls,supabase,stripe,sessions,creates,run,prepare,event};
@@ -25,6 +25,13 @@ test('V2 quote fixes 700 pesos before Stripe; one Session with dynamic price_dat
  assert.equal(p.success_url,'http://localhost:3000/succes.html?event=perrun-2027&session_id={CHECKOUT_SESSION_ID}');
  assert.equal(p.cancel_url,'http://localhost:3000/checkout.html?event=perrun-2027&distance=3K');
  assert.equal((await db.query('select count(*)::int n from public.inscripciones')).rows[0].n,0);
+});
+test('V2 success and cancel stay on the supplied checkout origin', async () => {
+  const x = fixture('https://www.kinetichub.com.mx');
+  await x.prepare();
+  const [{p}] = x.creates;
+  assert.equal(p.success_url, 'https://www.kinetichub.com.mx/succes.html?event=perrun-2027&session_id={CHECKOUT_SESSION_ID}');
+  assert.equal(p.cancel_url, 'https://www.kinetichub.com.mx/checkout.html?event=perrun-2027&distance=3K');
 });
 test('Real routing uses V2 finalizer exactly; paid duplicate and delayed events never allocate twice',async()=>{
  const x=fixture(),q=await x.prepare();q.s.status='complete';q.s.payment_status='paid';const e=x.event(q.s);
