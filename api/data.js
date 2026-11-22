@@ -7,6 +7,7 @@
 
 const ACTIONS = {
   'support-chat': require('../lib/support-chat'),
+  'support-visitor-email': require('../lib/support-visitor-email').handler,
   'admin-support': require('../lib/admin-support'),
   'support-notification-worker': require('../lib/support-notifications-worker'),
   'admin-support-notification-one-shot': require('../lib/admin-support-notification-one-shot'),

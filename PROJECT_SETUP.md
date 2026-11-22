@@ -106,6 +106,19 @@ never copy the Production secret. This cleanup does not set or rotate remote sec
 Without a valid secret, checkout attempts to expire its Stripe session and returns an
 error before persisting the pending registration; checkout-summary rejects its claim.
 
+## Support reply email
+
+Apply `20261121235900_support_visitor_email.sql` before enabling
+`SUPPORT_VISITOR_EMAIL_ENABLED=true` in Production. Use the existing Resend key,
+sender and rate limiter, with an independent random `SUPPORT_VISITOR_EMAIL_SECRET`
+of at least 32 characters. Rotating this secret invalidates any unused chat links.
+The admin reply makes the first delivery attempt. The existing
+`/api/data?action=support-notification-worker` endpoint can retry pending visitor
+notices with its existing worker secret. Schedule it at least every five minutes
+if it is not already scheduled. This works with internal notifications disabled.
+Preview and local runtimes do not send these notices. The tests inject a simulated
+provider and use disposable PostgreSQL state.
+
 ## Proposed doctor command
 
 A future npm run doctor should verify exact project identities, required variable
