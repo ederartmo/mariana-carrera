@@ -6,6 +6,7 @@
   'use strict';
   const TOKEN_KEY = 'kinetichub-support-token';
   const PENDING_KEY = 'kinetichub-support-pending';
+  const EMAIL_ENDPOINT = '/api/data?action=support-visitor-email';
   const CATEGORIES = ['general', 'events', 'registration', 'other'];
   const accountLinks = /(https:\/\/www\.kinetichub\.com\.mx\/(?:auth\.html\?mode=login|perfil\.html|atencion\.html))(?=$|[\s.,;!?])/g;
   const loginReturn = '/atencion.html?from=support-login#premium-conversation';
@@ -43,6 +44,69 @@
     return reply;
   }
   const json = response => response.json().catch(() => ({}));
+  let guestReplyLink;
+  if (typeof window !== 'undefined' && window.location?.pathname === '/atencion.html') {
+    const match = window.location.hash.match(/^#support-reply=([a-f0-9-]{36})\.([a-f0-9]{64})$/);
+    if (match) {
+      try {
+        window.history.replaceState(null, '', window.location.pathname + window.location.search);
+        guestReplyLink = {job:match[1], proof:match[2]};
+      } catch { /* Leave the standard chat available if the link cannot be removed. */ }
+    }
+  }
+
+  async function emailAction(fetcher, body) {
+    const response = await fetcher(EMAIL_ENDPOINT, {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+    const data = await json(response);
+    if (!response.ok || !data.ok) throw Error(data.error || 'No pudimos procesar la solicitud.');
+    return data;
+  }
+
+  function connectEmailPrompt(container, client, fetcher, account, isActive) {
+    const panel = container.querySelector('[data-support-email]');
+    const request = panel?.querySelector?.('[data-support-email-request]');
+    if (!request) return () => {};
+    const verify = panel.querySelector('[data-support-email-verify]');
+    const feedback = panel.querySelector('[data-support-email-status]');
+    const address = panel.querySelector('[data-support-email-address]');
+    if (account) {
+      address.hidden = true;
+      address.querySelector('input').disabled = true;
+      panel.querySelector('[data-support-email-title]').textContent = '¿Quieres recibir avisos en el correo verificado de tu cuenta cuando responda el equipo?';
+    }
+    let dismissed = false, busy = false, current, ticket;
+    const update = (state, ticketId = ticket) => {
+      if (ticketId !== ticket) {
+        dismissed = false;
+        feedback.textContent = '';
+        ticket = ticketId;
+      }
+      current = state;
+      const available = state === 'eligible' || state === 'code_pending';
+      panel.hidden = dismissed || !available;
+      verify.hidden = account || state !== 'code_pending';
+    };
+    panel.querySelector('[data-support-email-dismiss]').addEventListener('click', () => {
+      dismissed = true;
+      update(current);
+    });
+    async function submit(event, action, details) {
+      event.preventDefault();
+      if (busy || !isActive() || !client.token || panel.hidden) return;
+      busy = true;
+      try {
+        const result = await emailAction(fetcher, {action, token:client.token, ...details});
+        if (!isActive() || panel.hidden) return;
+        feedback.textContent = result.verified ? '' : 'Revisa tu correo si solicitaste un código nuevo.';
+        update(result.verified ? 'verified' : 'code_pending');
+      } catch (error) {
+        if (isActive()) feedback.textContent = error.message;
+      } finally { busy = false; }
+    }
+    request.addEventListener('submit', event => submit(event, 'request', account ? {} : {email:request.elements.email.value}));
+    verify.addEventListener('submit', event => submit(event, 'verify', {code:verify.elements.code.value}));
+    return update;
+  }
   function uuid(cryptoApi) {
     if (cryptoApi && typeof cryptoApi.randomUUID === 'function') return cryptoApi.randomUUID();
     if (cryptoApi && typeof cryptoApi.getRandomValues === 'function') {
@@ -283,8 +347,42 @@
       setItem: (key, value) => memory.set(key, value),
       removeItem: key => memory.delete(key),
     } : tabStorage;
+    const transport = createSessionTransport({ ownerId, getSession, fetch: fetcher });
     const openChat = () => mountPublicSupportChat({ document: doc, root, storage, account: Boolean(ownerId), onTicket, draftHandoff, handoffMode, isActive: () => active,
-      fetch: createSessionTransport({ ownerId, getSession, fetch: fetcher }) });
+      fetch: transport });
+    if (guestReplyLink) {
+      const details = guestReplyLink;
+      guestReplyLink = undefined;
+      const panel = root.querySelector('[data-support-resume]');
+      const button = panel.querySelector('[data-support-resume-open]');
+      const notice = panel.querySelector('[data-support-resume-status]');
+      panel.hidden = false;
+      if (ownerId) {
+        button.hidden = true;
+        notice.textContent = 'Para abrir este chat de invitado, cierra sesión y vuelve a abrir el enlace del correo.';
+        return openChat();
+      }
+      const form = root.querySelector('[data-support-form]');
+      form.hidden = true;
+      notice.textContent = 'Abre la solicitud asociada a este enlace personal.';
+      let client;
+      button.addEventListener('click', async () => {
+        if (!active || button.disabled) return;
+        button.disabled = true;
+        try {
+          const result = await emailAction(transport, {action:'resume', ...details});
+          if (!active || !/^[a-f0-9]{64}$/.test(result.token || '')) return;
+          retireGuestConversation();
+          storage.setItem(TOKEN_KEY, result.token);
+          panel.hidden = true;
+          form.hidden = false;
+          client = openChat();
+        } catch {
+          if (active) notice.textContent = 'El enlace no está disponible. Si tienes acceso al chat original, ábrelo desde allí o solicita ayuda.';
+        } finally { button.disabled = false; }
+      });
+      return {refresh: () => client?.refresh()};
+    }
     if (!returnedFromGuest) return openChat();
 
     const form = root.querySelector('[data-support-form]');
@@ -307,6 +405,7 @@
   function mountPublicSupportChat({ document: doc = document, fetch: fetcher = fetch, storage = sessionStorage, crypto: cryptoApi = crypto, account = false, onTicket, draftHandoff, handoffMode, isActive = () => true, root: container = doc.querySelector('[data-support-chat]') } = {}) {
     if (!container) return null;
     const client = createPublicClient({ storage, fetch: fetcher, crypto: cryptoApi });
+    const updateEmailPrompt = connectEmailPrompt(container, client, fetcher, account, isActive);
     const form = container.querySelector('[data-support-form]'); const bodyInput = container.querySelector('[name="supportMessage"]');
     const categoryInput = container.querySelector('[name="category"]'); const transcript = container.querySelector('[data-support-messages]');
     const previous = container.querySelector('[data-support-previous]');
@@ -341,6 +440,7 @@
       submit.disabled = busy || client.hasPending;
     }
     function resetHistory() {
+      updateEmailPrompt(undefined, null);
       rendered = '';
       hasRenderedMessages = false;
       placeHistory(false);
@@ -363,6 +463,7 @@
       } else previous.after(transcript);
     }
     function render(data) {
+      updateEmailPrompt(data.followup, data.ticket?.id || null);
       const items = uniqueMessages(data.messages || []).slice(-100);
       const resolved = data.ticket?.status === 'resolved';
       const signature = JSON.stringify([resolved, items]);

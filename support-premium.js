@@ -58,6 +58,23 @@
           <button class="support-reply-action" type="button" data-support-continue-account>Continuar con mi cuenta</button>
         </div>
         <p class="premium-empty" data-support-empty>Todavía no hay mensajes.</p>
+        <div class="premium-followup" data-support-resume hidden>
+          <p data-support-resume-status role="status"></p>
+          <button type="button" class="support-reply-action" data-support-resume-open>Abrir conversación de invitado</button>
+        </div>
+        <div class="premium-followup" data-support-email hidden>
+          <p data-support-email-title>¿Quieres recibir un correo cuando nuestro equipo responda?</p>
+          <form data-support-email-request>
+            <label data-support-email-address>Correo electrónico <input type="email" name="email" maxlength="254" autocomplete="email" required></label>
+            <button type="submit" class="support-reply-action">Notificarme</button>
+            <button type="button" class="premium-text-button" data-support-email-dismiss>Ahora no</button>
+          </form>
+          <form data-support-email-verify hidden>
+            <label>Código de verificación <input name="code" maxlength="12" autocomplete="one-time-code" required></label>
+            <button type="submit" class="support-reply-action">Verificar correo</button>
+          </form>
+          <p data-support-email-status role="status"></p>
+        </div>
         <details class="premium-previous" data-support-previous hidden><summary>Conversaciones anteriores</summary></details>
         <div class="support-transcript" data-support-messages role="log" aria-label="Historial de mensajes"></div>
         ${expanded ? '' : `<a class="premium-ticket premium-ticket-link" href="/atencion.html" data-support-draft-link data-premium-ticket hidden>${icon('ticket')}<span><strong>Mi solicitud</strong><small data-premium-category></small></span><span class="premium-status" data-premium-state></span><span aria-hidden="true">›</span></a>`}
