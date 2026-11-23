@@ -137,7 +137,7 @@ test('email link is scrubbed, needs a click, and never redeems under an authenti
   for (const account of [false,true]) {
     const nodes = new Map(), calls = [], values = new Map();
     const node = key => {
-      if (!nodes.has(key)) nodes.set(key,{hidden:true,value:'',textContent:'',querySelector:node,
+      if (!nodes.has(key)) nodes.set(key,{hidden:true,value:'',textContent:'',dataset:{},querySelector:node,
         addEventListener(type, listener){this[type]=listener;},replaceChildren(){},append(){}});
       return nodes.get(key);
     };
@@ -175,11 +175,11 @@ test('email link is scrubbed, needs a click, and never redeems under an authenti
   }
 });
 
-test('chat offers optional email, verifies a code, and hides the prompt once verified', async () => {
+test('human follow-up verifies a code without blocking the message composer or prompting again', async () => {
   const {mountPublicSupportChat,TOKEN_KEY} = require('../support-chat');
   const nodes = new Map(), actions = [];
   const node = key => {
-    if (!nodes.has(key)) nodes.set(key,{hidden:true,value:'',textContent:'',querySelector:node,
+    if (!nodes.has(key)) nodes.set(key,{hidden:true,value:'',textContent:'',dataset:{},querySelector:node,
       addEventListener(type, listener){this[type]=listener;},replaceChildren(){},append(){}});
     return nodes.get(key);
   };
@@ -187,14 +187,16 @@ test('chat offers optional email, verifies a code, and hides the prompt once ver
   const verify = node('[data-support-email-verify]');
   request.elements = {email:{value:'fixture@example.invalid'}};
   verify.elements = {code:{value:'A'.repeat(12)}};
-  let followup = 'eligible', ticket = 'first';
+  let followup = 'eligible', acceptCode = false;
+  node('[name="category"]').value = 'general';
   const client = mountPublicSupportChat({root:{querySelector:node},document:{createDocumentFragment:()=>node('fragment')},
     storage:{getItem:key=>key===TOKEN_KEY?'a'.repeat(64):null,setItem(){},removeItem(){}},
     fetch:async(path,opts)=>{
       const input = JSON.parse(opts.body);
       actions.push([path,input.action]);
-      return {ok:true,json:async()=> input.action==='read'
-        ? {ok:true,ticket:{id:ticket,status:'pending'},messages:[],followup}
+      if (input.action === 'verify' && !acceptCode) return {ok:false,json:async()=>({error:'El código no es válido o ya venció.'})};
+      return {ok:true,json:async()=> ['read','send'].includes(input.action)
+        ? {ok:true,ticket:{id:'first',status:'pending'},messages:[],followup}
         : {ok:true,...(input.action==='verify'?{verified:true}:{})}};
     }});
   const panel = node('[data-support-email]');
@@ -202,17 +204,23 @@ test('chat offers optional email, verifies a code, and hides the prompt once ver
   await new Promise(setImmediate);
   assert.equal(panel.hidden,false);
   await request.submit(event);
+  followup = 'code_pending';
   assert.equal(verify.hidden,false);
   await verify.submit(event);
-  assert.equal(panel.hidden,true);
+  assert.equal(panel.hidden,false);
+  assert.equal(node('[data-support-email-state]').textContent,'Pendiente de verificar');
+  assert.match(node('[data-support-email-status]').textContent,/código no es válido/);
+  node('[name="supportMessage"]').value = 'También tengo otra duda';
+  node('[data-support-form]').submit(event);
+  await new Promise(setImmediate);
+  assert.ok(actions.some(([path, action])=>path==='/api/support-chat' && action==='send'));
+  acceptCode = true;
+  await verify.submit(event);
+  assert.equal(node('[data-support-email-state]').textContent,'Correo verificado');
+  assert.equal(request.hidden,true);
   followup = 'verified';
   await client.refresh();
-  assert.equal(panel.hidden,true);
-  followup = 'eligible';
-  ticket = 'second';
-  await client.refresh();
-  assert.equal(panel.hidden,false);
-  node('[data-support-email-dismiss]').click();
-  assert.equal(panel.hidden,true);
-  assert.deepEqual(actions.filter(([path])=>path.includes('support-visitor-email')).map(([,action])=>action),['request','verify']);
+  assert.equal(request.hidden,true);
+  assert.equal(verify.hidden,true);
+  assert.deepEqual(actions.filter(([path])=>path.includes('support-visitor-email')).map(([,action])=>action),['request','verify','verify']);
 });

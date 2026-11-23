@@ -38,8 +38,7 @@ test('enabled start writes once then reads same visitor conversation for the age
   assert.deepEqual(calls.map(x=>x.name),['support_agent_acknowledge_first','support_visitor_action']);
   assert.equal(calls[0].args.p_source_message_id,sourceId);
   assert.equal(calls[0].args.p_not_before,cutoff);
-  assert.equal(calls[0].args.p_body,'Hola, recibimos tu solicitud #'+ticketId.slice(0,8).toUpperCase()+
-    '. Cuéntanos qué pasó y cómo podemos ayudarte.');
+  assert.equal(calls[0].args.p_body,'Recibimos tu solicitud #'+ticketId.slice(0,8).toUpperCase()+'.');
   assert.equal(base.ticket.category,'events');
   assert.equal(calls[1].args.p_capability_hash,hash);
   assert.equal(calls[1].args.p_action,'read');
