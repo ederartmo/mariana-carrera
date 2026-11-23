@@ -90,6 +90,8 @@
 .support-admin-panel .support-ticket-status[data-status="pending"] { color:#ffe4a6; background:#52370d; }
 .support-admin-panel .support-ticket-status[data-status="in_progress"] { color:#b8e4ff; background:#173c53; }
 .support-admin-panel .support-ticket-status[data-status="resolved"] { color:#a6f1cd; background:#194b3a; }
+.support-admin-panel .support-ticket-badges { display:flex; justify-content:flex-end; align-items:center; flex-wrap:wrap; gap:5px; }
+.support-admin-panel .support-ticket-category { padding:3px 9px; border-radius:999px; font-size:.8rem; font-weight:700; color:#d4e0ea; background:#263443; }
 .support-admin-panel .support-ticket-edit-actions { display:flex; flex-wrap:wrap; gap:8px; flex-basis:100%; }
 .support-admin-panel .support-ticket-row { overflow-wrap:anywhere; }
 .support-admin-panel .support-admin-notice { overflow-wrap:anywhere; }

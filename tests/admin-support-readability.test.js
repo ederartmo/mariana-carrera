@@ -8,6 +8,8 @@ test('ticket presentation uses only the supported category and actual status', (
   assert.equal(view.identity, 'Visitante sin identificar');
   assert.equal(view.folio, '#B9B4D4B0');
   assert.equal(view.subject, 'Consulta sobre inscripciones');
+  assert.equal(view.category, 'Inscripciones');
+  assert.equal(presentTicket({ ...ticket, category: 'test' }).category, 'Prueba');
   assert.equal(view.status, 'Pendiente');
   assert.match(view.explanation, /espera atención/);
   assert.equal(presentTicket({ ...ticket, status: 'in_progress' }).status, 'En proceso');
@@ -29,6 +31,8 @@ test('unified save preserves the existing assignment unless an allowed replaceme
   assert.deepEqual(updateFields(current, base.status, base.category, ''), base);
   assert.deepEqual(updateFields(current, base.status, base.category, current.assigned_to), base);
   assert.deepEqual(updateFields(current, base.status, base.category, 'other@example.test'), { ...base, assignTo: 'other@example.test' });
+  assert.deepEqual(updateFields(current, base.status, 'test', ''), { status: base.status, category: 'test' });
+  assert.deepEqual(updateFields({ ...current, category: 'test' }, base.status, 'test', ''), { status: base.status });
 });
 
 test('assignee names change presentation only and preserve legacy or blank assignments', () => {
