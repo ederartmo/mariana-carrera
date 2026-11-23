@@ -62,45 +62,66 @@
     return data;
   }
 
-  function connectEmailPrompt(container, client, fetcher, account, isActive) {
+  function connectEmailPrompt(container, client, fetcher, account, isActive, present) {
     const panel = container.querySelector('[data-support-email]');
     const request = panel?.querySelector?.('[data-support-email-request]');
     if (!request) return () => {};
     const verify = panel.querySelector('[data-support-email-verify]');
     const feedback = panel.querySelector('[data-support-email-status]');
+    const stateLabel = panel.querySelector('[data-support-email-state]');
+    const title = panel.querySelector('[data-support-email-title]');
+    const resend = panel.querySelector('[data-support-email-resend]');
     const address = panel.querySelector('[data-support-email-address]');
+    const invitation = account
+      ? 'Si continúas, enviaremos avisos al correo verificado de tu cuenta cuando responda el equipo.'
+      : title.textContent;
     if (account) {
       address.hidden = true;
       address.querySelector('input').disabled = true;
-      panel.querySelector('[data-support-email-title]').textContent = '¿Quieres recibir avisos en el correo verificado de tu cuenta cuando responda el equipo?';
     }
-    let dismissed = false, busy = false, current, ticket;
-    const update = (state, ticketId = ticket) => {
+    let busy = false, current, ticket, waiting = false, askingAgain = false;
+    const update = (state, ticketId = ticket, waitingForReply = waiting) => {
       if (ticketId !== ticket) {
-        dismissed = false;
+        askingAgain = false;
         feedback.textContent = '';
         ticket = ticketId;
       }
+      waiting = waitingForReply;
       current = state;
-      const available = state === 'eligible' || state === 'code_pending';
-      panel.hidden = dismissed || !available;
-      verify.hidden = account || state !== 'code_pending';
+      const verified = state === 'verified';
+      const pending = !account && state === 'code_pending';
+      panel.hidden = !['eligible','code_pending','verified'].includes(state);
+      panel.dataset.state = state || '';
+      stateLabel.textContent = verified ? 'Correo verificado' : pending ? 'Pendiente de verificar' :
+        waiting ? 'Esperando respuesta del equipo' : 'Seguimiento por correo';
+      title.textContent = verified ? (waiting ? 'Esperando respuesta del equipo' : 'Recibirás un aviso cuando el equipo responda.') : invitation;
+      request.hidden = panel.hidden || verified || (pending && !askingAgain);
+      verify.hidden = !pending || askingAgain;
+      resend.hidden = !pending || askingAgain;
     };
-    panel.querySelector('[data-support-email-dismiss]').addEventListener('click', () => {
-      dismissed = true;
-      update(current);
+    resend.addEventListener('click', () => {
+      askingAgain = true;
+      present(() => update(current));
+      request.elements.email.focus();
     });
     async function submit(event, action, details) {
       event.preventDefault();
       if (busy || !isActive() || !client.token || panel.hidden) return;
       busy = true;
+      const requestedTicket = ticket;
       try {
         const result = await emailAction(fetcher, {action, token:client.token, ...details});
-        if (!isActive() || panel.hidden) return;
-        feedback.textContent = result.verified ? '' : 'Revisa tu correo si solicitaste un código nuevo.';
-        update(result.verified ? 'verified' : 'code_pending');
+        if (!isActive() || ticket !== requestedTicket) return;
+        askingAgain = false;
+        present(() => {
+          feedback.textContent = result.verified ? '' : 'Revisa tu correo e ingresa el código de verificación.';
+          update(result.verified ? 'verified' : 'code_pending');
+        });
       } catch (error) {
-        if (isActive()) feedback.textContent = error.message;
+        if (isActive() && ticket === requestedTicket) present(() => {
+          if (action === 'verify') update('code_pending');
+          feedback.textContent = error.message;
+        });
       } finally { busy = false; }
     }
     request.addEventListener('submit', event => submit(event, 'request', account ? {} : {email:request.elements.email.value}));
@@ -405,9 +426,12 @@
   function mountPublicSupportChat({ document: doc = document, fetch: fetcher = fetch, storage = sessionStorage, crypto: cryptoApi = crypto, account = false, onTicket, draftHandoff, handoffMode, isActive = () => true, root: container = doc.querySelector('[data-support-chat]') } = {}) {
     if (!container) return null;
     const client = createPublicClient({ storage, fetch: fetcher, crypto: cryptoApi });
-    const updateEmailPrompt = connectEmailPrompt(container, client, fetcher, account, isActive);
     const form = container.querySelector('[data-support-form]'); const bodyInput = container.querySelector('[name="supportMessage"]');
     const categoryInput = container.querySelector('[name="category"]'); const transcript = container.querySelector('[data-support-messages]');
+    const scroller = transcript.closest?.('.premium-scroll') || transcript;
+    const updateEmailPrompt = connectEmailPrompt(container, client, fetcher, account, isActive,
+      render => preserveReading(scroller, render, {followEnd:true}));
+    const welcome = container.querySelector('[data-support-welcome]');
     const previous = container.querySelector('[data-support-previous]');
     const notice = container.querySelector('[data-support-notice]'); const submit = form.querySelector('button[type="submit"]');
     const readButton = container.querySelector('[data-support-refresh]'); const clearButton = container.querySelector('[data-support-clear]');
@@ -423,6 +447,7 @@
       }
     }
     if (handoffMode) bodyInput.disabled = false;
+    if (welcome) welcome.hidden = Boolean(client.token || account);
     if (handoffMode === 'send') container.addEventListener('click', event => {
       const link = event.target.closest?.('[data-support-draft-link]');
       if (!link || event.defaultPrevented || event.button !== 0 || event.altKey || event.ctrlKey ||
@@ -447,6 +472,7 @@
       onTicket?.(null);
       transcript.replaceChildren();
       if (empty) empty.hidden = false;
+      if (welcome) welcome.hidden = false;
       if (state) state.hidden = true;
     }
     let readEpoch = 0, quietReading = false, readBackoffUntil = 0;
@@ -463,10 +489,11 @@
       } else previous.after(transcript);
     }
     function render(data) {
-      updateEmailPrompt(data.followup, data.ticket?.id || null);
       const items = uniqueMessages(data.messages || []).slice(-100);
       const resolved = data.ticket?.status === 'resolved';
-      const signature = JSON.stringify([resolved, items]);
+      const lastParticipant = items.findLast(item => ['visitor','human_operator'].includes(item.provenance));
+      const waiting = !resolved && lastParticipant?.provenance === 'visitor';
+      const signature = JSON.stringify([resolved, data.ticket?.id, data.followup, items]);
       if (rendered === signature) return;
       rendered = signature;
       if (empty) empty.hidden = Boolean(data.messages?.length);
@@ -475,14 +502,18 @@
         const article = doc.createElement('article'); article.className = `support-message support-message--${item.author === 'visitor' ? 'visitor' : 'admin'}`;
         if (item.id) article.dataset.messageAnchor = item.id;
         const author = doc.createElement('strong'); author.textContent = item.author === 'agent' ? 'Asistente automático de Kinetic Hub' : item.author === 'admin' ? 'Equipo Kinetic Hub' : 'Tú';
-        const body = item.body || '';
+        const oldHandoff = item.provenance === 'ai_generated' &&
+          item.body === 'No tengo información aprobada suficiente para responder con confianza. El equipo de soporte revisará tu solicitud.';
+        const body = oldHandoff ? 'Para confirmarte ese detalle, voy a pasar tu consulta a nuestro equipo de atención.' : item.body || '';
         const text = item.provenance === 'ai_generated' ? renderAssistantReply(doc, body) : doc.createElement('p');
         if (item.provenance !== 'ai_generated') text.textContent = body;
         const time = doc.createElement('time'); const date = new Date(item.created_at); time.textContent = item.created_at && Number.isFinite(date.getTime()) ? new Intl.DateTimeFormat('es-MX', { dateStyle: 'short', timeStyle: 'short' }).format(date) : ''; if (item.created_at) time.dateTime = item.created_at;
         article.append(author, text, time); fragment.append(article);
       }
       const collapsed = showingPrevious && !previous.open;
-      preserveReading(transcript.closest?.('.premium-scroll') || transcript, () => {
+      preserveReading(scroller, () => {
+        if (welcome) welcome.hidden = Boolean(data.ticket || items.length);
+        updateEmailPrompt(data.followup, data.ticket?.id || null, waiting);
         placeHistory(resolved);
         transcript.replaceChildren(fragment);
       }, { followEnd: !collapsed, startAtEnd: !hasRenderedMessages && items.length > 0 });
@@ -514,8 +545,8 @@
           state.hidden = !status;
           state.textContent = status ? 'Solicitud: ' + status : '';
         }
-        message(action === 'read' ? 'Historial actualizado.' :
-          action === 'human' ? 'Solicitud de atención recibida.' : 'Mensaje enviado al equipo de soporte.');
+        message(action === 'read' ? '' :
+          action === 'human' ? 'Solicitud de atención recibida. Puedes seguir escribiendo aquí.' : 'Mensaje enviado.');
       } catch (error) {
         if (!isActive()) return;
         if (action === 'read' && error.status === 429) {

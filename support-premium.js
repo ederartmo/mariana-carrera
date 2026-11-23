@@ -44,8 +44,10 @@
         ${expanded ? '' : '<a class="premium-icon" href="/atencion.html" data-support-draft-link aria-label="Abrir seguimiento">' + icon('expand') + '</a><button type="button" class="premium-icon" data-widget-close aria-label="Cerrar chat">' + icon('close') + '</button>'}
       </header>
       <div class="premium-scroll">
-        ${expanded ? '' : `<div class="premium-welcome"><h3>¡Hola! 👋</h3><strong>¿Cómo podemos ayudarte?</strong><p>Déjanos tu mensaje y el equipo de Kinetic Hub podrá responderte aquí.</p></div>
-          <div class="premium-topics">
+        <div class="premium-welcome" data-support-welcome hidden>
+          <p>¡Hola! 👋 Soy el asistente de KineticHub. ¿En qué podemos ayudarte?</p>
+        </div>
+        ${expanded ? '' : `<div class="premium-topics">
           ${quick('box','Entrega de kits','events','Tengo una consulta sobre la entrega de kits.')}
           ${quick('shirt','Cambiar talla','registration','Quisiera consultar sobre un cambio de talla.')}
           <a href="/atencion.html" data-support-draft-link>${icon('ticket')} Mi solicitud</a>
@@ -57,28 +59,29 @@
           <p>Después de iniciar sesión, no podemos verificar que seas la misma persona que abrió el chat de invitado.</p>
           <button class="support-reply-action" type="button" data-support-continue-account>Continuar con mi cuenta</button>
         </div>
-        <p class="premium-empty" data-support-empty>Todavía no hay mensajes.</p>
+        <p class="premium-empty" data-support-empty hidden></p>
         <div class="premium-followup" data-support-resume hidden>
           <p data-support-resume-status role="status"></p>
           <button type="button" class="support-reply-action" data-support-resume-open>Abrir conversación de invitado</button>
         </div>
-        <div class="premium-followup" data-support-email hidden>
-          <p data-support-email-title>¿Quieres recibir un correo cuando nuestro equipo responda?</p>
+        ${expanded ? '' : `<a class="premium-ticket premium-ticket-link" href="/atencion.html" data-support-draft-link data-premium-ticket hidden>${icon('ticket')}<span><strong>Mi solicitud</strong><small data-premium-category></small></span><span class="premium-status" data-premium-state></span><span aria-hidden="true">›</span></a>`}
+        <details class="premium-previous" data-support-previous hidden><summary>Conversaciones anteriores</summary></details>
+        <div class="support-transcript" data-support-messages role="log" aria-label="Historial de mensajes"></div>
+      </div>
+        <section class="premium-followup premium-email-followup" data-support-email hidden aria-label="Seguimiento humano">
+          <p class="premium-email-state" data-support-email-state role="status"></p>
+          <p data-support-email-title>Para que nuestro equipo pueda darte seguimiento, necesitamos un correo donde enviarte su respuesta, aunque cierres esta página.</p>
           <form data-support-email-request>
             <label data-support-email-address>Correo electrónico <input type="email" name="email" maxlength="254" autocomplete="email" required></label>
-            <button type="submit" class="support-reply-action">Notificarme</button>
-            <button type="button" class="premium-text-button" data-support-email-dismiss>Ahora no</button>
+            <button type="submit" class="support-reply-action">Continuar</button>
           </form>
           <form data-support-email-verify hidden>
             <label>Código de verificación <input name="code" maxlength="12" autocomplete="one-time-code" required></label>
             <button type="submit" class="support-reply-action">Verificar correo</button>
           </form>
+          <button type="button" class="premium-text-button" data-support-email-resend hidden>Volver a solicitar código</button>
           <p data-support-email-status role="status"></p>
-        </div>
-        <details class="premium-previous" data-support-previous hidden><summary>Conversaciones anteriores</summary></details>
-        <div class="support-transcript" data-support-messages role="log" aria-label="Historial de mensajes"></div>
-        ${expanded ? '' : `<a class="premium-ticket premium-ticket-link" href="/atencion.html" data-support-draft-link data-premium-ticket hidden>${icon('ticket')}<span><strong>Mi solicitud</strong><small data-premium-category></small></span><span class="premium-status" data-premium-state></span><span aria-hidden="true">›</span></a>`}
-      </div>
+        </section>
       <form data-support-form class="premium-form">
         <input type="hidden" name="category" value="general">
         <div class="premium-compose">

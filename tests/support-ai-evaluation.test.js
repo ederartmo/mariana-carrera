@@ -18,6 +18,7 @@ test('registration and OXXO questions use only approved public guidance', async 
   const cases = [
     ['¿Cómo sé si quedé registrado?', 'registration-self-service', /Mis carreras.*Pendiente de pago/],
     ['¿Dónde reviso mi inscripción?', 'registration-self-service', /auth\.html\?mode=login/],
+    ['¿Dónde veo mi número de corredor?', 'registration-self-service', /Mis carreras.*número de corredor/],
     ['¿Cómo pago en OXXO?', 'oxxo-voucher', /Descargar voucher oficial.*vencimiento/],
     ['¿Dónde encuentro mi referencia?', 'oxxo-voucher', /Tu referencia de pago OXXO está lista/],
     ['¿Qué hago si no recibí el correo?', 'registration-self-service', /carpeta de spam/],

@@ -12,7 +12,7 @@ test('visitor gets approved automatic text, human handoff and no replies after t
   await db.exec('create role anon; create role authenticated; create role service_role;');
   for(const f of ['20261117145659_support_phase_one','20261119021334_support_agent_atomic_ack','20261119022000_support_human_takeover',
     '20261119030000_support_ai_evaluation_quota','20261119040000_support_ai_shadow_queue','20261119050000_support_private_proposal_read',
-    '20261119060000_support_auto_replies'])await db.exec(readFileSync('supabase/migrations/'+f+'.sql','utf8'));
+    '20261119060000_support_auto_replies','20261121235900_support_visitor_email'])await db.exec(readFileSync('supabase/migrations/'+f+'.sql','utf8'));
   await db.exec("insert into support_ai_limits values ('kinetichub',true,'simulated',30,100000,750000,4500000);");
   for(const role of ['anon','authenticated','service_role']){
     const {rows}=await db.query("select has_function_privilege($1,'public.support_auto_claim(text,uuid,uuid,timestamp with time zone)','EXECUTE') as claim, has_function_privilege($1,'public.support_auto_finish(text,uuid,uuid,text,text,text,text,text,text,text)','EXECUTE') as finish",[role]);
@@ -56,7 +56,7 @@ test('visitor gets approved automatic text, human handoff and no replies after t
   assert.equal(posts,1);
   const unknown=await invoke({action:'send',token:payload.token,body:'Confirma si el cobro de mi tarjeta está acreditado',requestId:randomUUID()});
   assert.equal(replies(unknown).length,2);
-  assert.match(replies(unknown).at(-1).body,/equipo de soporte revisará/);
+  assert.match(replies(unknown).at(-1).body,/pasar tu consulta a nuestro equipo de atención/);
   assert.equal(unknown.ticket.status,'pending');
   assert.equal(posts,1);
   await rpc('support_admin_action',{p_ticket_id:unknown.ticket.id,p_request_id:randomUUID(),p_expected_version:unknown.ticket.version,
@@ -111,7 +111,7 @@ test('visitor gets approved automatic text, human handoff and no replies after t
       const messages=replies(data);
       assert.equal(messages.length,++before,inputs[i]);
       if(sources[i])assert.equal(messages.at(-1).body,'Claro. '+kb.sources.find(s=>s.id===sources[i]).text);
-      else assert.match(messages.at(-1).body,/equipo de soporte/);
+      else assert.match(messages.at(-1).body,/pasar tu consulta a nuestro equipo de atención/);
     }
   }
   const combined=await invoke({...payload,token:'4'.repeat(64),requestId:randomUUID(),body:'¿Cuál es la fecha y ubicación de Perrun?'},conversationalEnv);
@@ -124,7 +124,7 @@ test('visitor gets approved automatic text, human handoff and no replies after t
     const published=replies(d);
     assert.equal(published.length,i+1);
     assert.match(published.at(-1).body,texts[i]);
-    assert.doesNotMatch(published.at(-1).body,/equipo de soporte/);
+    assert.doesNotMatch(published.at(-1).body,/pasar tu consulta a nuestro equipo de atención/);
   }
   assert.equal(posts,14); // six supported turns; payment and change requests stay local.
 
@@ -160,6 +160,43 @@ test('visitor gets approved automatic text, human handoff and no replies after t
   assert.deepEqual(repeated.messages.map(m=>m.body), ['Primera consulta','Necesito continuar']);
   const inbox = await rpc('support_admin_list',{p_limit:50,p_status:'pending'});
   assert.equal(inbox.data.tickets.filter(ticket=>ticket.id===guest.ticket.id).length,1);
+
+  const withEmail = {...conversationalEnv, VERCEL_ENV:'production', SUPPORT_VISITOR_EMAIL_ENABLED:'true',
+    SUPPORT_VISITOR_EMAIL_SECRET:'fixture-secret-followup-address-only', RESEND_API_KEY:'fixture-only',
+    SUPPORT_INTAKE_ENABLED:'true', SUPPORT_INTAKE_START_AT:env.SUPPORT_AI_AUTO_REPLY_START_AT};
+  const begin = body => ({...payload,token:randomUUID().replaceAll('-','').repeat(2),requestId:randomUUID(),body});
+  const send = (token, body) => invoke({action:'send',token,requestId:randomUUID(),body},withEmail);
+  const closeQuestion = begin('¿Hasta cuándo venden boletos?');
+  const clarified = await invoke(closeQuestion,withEmail);
+  assert.equal(replies(clarified).length,1);
+  assert.equal(replies(clarified)[0].body,'¡Claro! ¿Te refieres a Cascanueces Run o Perrun?');
+  assert.equal(clarified.followup,undefined);
+  assert.equal((await invoke(closeQuestion,withEmail)).messages.length,2);
+  const dateAnswer = await send(closeQuestion.token,'Perrun');
+  assert.match(replies(dateAnswer).at(-1).body,/25 de enero de 2027.*16:00/);
+  assert.equal(dateAnswer.followup,undefined);
+
+  const pickup = begin('¿Puede alguien más recoger mi kit?');
+  const pickupPrompt = await invoke(pickup,withEmail);
+  assert.match(replies(pickupPrompt).at(-1).body,/¿Para qué carrera/);
+  const pickupAnswer = await send(pickup.token,'Para Perrun 2027');
+  assert.match(replies(pickupAnswer).at(-1).body,/titular debe acudir personalmente/);
+
+  const quick = begin('Tengo una consulta sobre la entrega de kits.');
+  assert.match(replies(await invoke(quick,withEmail)).at(-1).body,/¿De qué carrera/);
+  const unsupportedRace = await send(quick.token,'Cascanueces Run');
+  assert.match(replies(unsupportedRace).at(-1).body,/pasar tu consulta a nuestro equipo de atención/);
+  assert.equal(unsupportedRace.followup,'eligible');
+
+  const repeat = begin('¿Hasta cuándo venden boletos?');
+  await invoke(repeat,withEmail);
+  const escalated = await send(repeat.token,'¿Hasta cuándo venden boletos?');
+  assert.equal(replies(escalated).filter(message=>message.body.includes('¿Te refieres')).length,1);
+  assert.match(replies(escalated).at(-1).body,/pasar tu consulta a nuestro equipo de atención/);
+  assert.equal(escalated.followup,'eligible');
+  const explicit = await invoke(begin('Solicito atencion humana.'),withEmail);
+  assert.equal(explicit.followup,'eligible');
+  assert.match(replies(explicit).at(-1).body,/pasar tu consulta a nuestro equipo de atención/);
 });
 
 test('loopback public chat origin is accepted only by the QA development server',t=>{

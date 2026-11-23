@@ -12,6 +12,36 @@ function element(tag) {
   };
 }
 
+test('opening an anonymous chat shows one welcome and creates no ticket until the first real message', async () => {
+  const markup = require('node:fs').readFileSync(require.resolve('../support-premium.js'), 'utf8');
+  assert.equal(markup.match(/¡Hola! 👋 Soy el asistente de KineticHub\. ¿En qué podemos ayudarte\?/g).length,1);
+  const nodes = new Map(), requests = [];
+  const find = key => {
+    if (!nodes.has(key)) nodes.set(key,element(key));
+    return nodes.get(key);
+  };
+  const form = find('[data-support-form]');
+  form.querySelector = find;
+  find('[name="category"]').value = 'general';
+  support.mountPublicSupportChat({root:{querySelector:find},document:{createDocumentFragment:()=>element('fragment')},
+    storage:{getItem:()=>null,setItem(){},removeItem(){}},
+    fetch:async(_path, options)=>{
+      requests.push(JSON.parse(options.body));
+      return {ok:true,json:async()=>({ok:true,ticket:{id:'fixture',status:'pending'},messages:[]})};
+    }});
+  const welcome = find('[data-support-welcome]');
+  assert.equal(welcome.hidden,false);
+  assert.equal(requests.length,0);
+  const submit = () => form.submit({preventDefault(){}});
+  submit();
+  assert.equal(requests.length,0);
+  find('[name="supportMessage"]').value = '¿Hasta cuándo venden boletos?';
+  submit(); submit();
+  await new Promise(setImmediate);
+  assert.deepEqual(requests.map(request=>request.action),['start']);
+  assert.equal(welcome.hidden,true);
+});
+
 test('desktop Enter sends one nonempty message and leaves Shift, IME and mobile alone', async () => {
   const nodes = new Map();
   const find = key => {
