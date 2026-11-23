@@ -42,6 +42,72 @@
       ...(assignee && assignee !== ticket?.assigned_to ? { assignTo: assignee } : {}) };
   }
 
+  function connectFilters(container, doc, onChange) {
+    const block = container.querySelector('[data-ticket-filters]');
+    const tabs = block?.querySelectorAll?.('[data-ticket-filter-tab]');
+    if (!tabs?.length) return { values: () => ({}), updateAssignees() {} };
+    const select = block.querySelector('[data-ticket-filter-select]');
+    const chips = block.querySelector('[data-ticket-filter-chips]');
+    const all = { status:'', category:'', assignee:'*' };
+    const values = { ...all };
+    const options = {
+      status: [['','Todos'], ...Object.entries(statuses).map(([key,[name]]) => [key,name])],
+      category: [['','Todas'], ...Object.entries(categories)],
+      assignee: [['*','Todos'], ['','Sin asignar']],
+    };
+    let active = tabs[0];
+    function renderSelect() {
+      const key = active.dataset.ticketFilterTab;
+      select.replaceChildren(...options[key].map(([value,name]) => new Option(name,value)));
+      select.value = values[key];
+      select.setAttribute('aria-label',active.textContent);
+    }
+    function renderChips() {
+      const buttons = [];
+      for (const tab of tabs) {
+        const key = tab.dataset.ticketFilterTab;
+        if (values[key] === all[key]) continue;
+        const name = options[key].find(([value]) => value === values[key])?.[1] || values[key];
+        const button = doc.createElement('button');
+        button.type = 'button';
+        button.textContent = tab.textContent + ': ' + name + ' ×';
+        button.setAttribute('aria-label','Quitar filtro ' + tab.textContent + ': ' + name);
+        button.addEventListener('click', () => {
+          values[key] = all[key];
+          if (active === tab) select.value = values[key];
+          renderChips();
+          active.focus();
+          onChange();
+        });
+        buttons.push(button);
+      }
+      chips.replaceChildren(...buttons);
+    }
+    for (const tab of tabs) tab.addEventListener('click', () => {
+      if (tab === active) return;
+      active.setAttribute('aria-pressed','false');
+      active = tab;
+      active.setAttribute('aria-pressed','true');
+      renderSelect();
+    });
+    select.addEventListener('change', () => {
+      values[active.dataset.ticketFilterTab] = select.value;
+      renderChips();
+      onChange();
+    });
+    renderSelect();
+    return {
+      values: () => Object.fromEntries(Object.entries(values).filter(([key,value]) => value !== all[key])),
+      updateAssignees(assignees, labels) {
+        const next = [['*','Todos'],['','Sin asignar'], ...assignees.map(email => [email,assigneeLabel(email,labels)])];
+        if (JSON.stringify(options.assignee) === JSON.stringify(next)) return;
+        options.assignee = next;
+        if (active.dataset.ticketFilterTab === 'assignee') renderSelect();
+        renderChips();
+      },
+    };
+  }
+
   function mount({ document: doc = document, fetch: fetcher = fetch, getToken, isActive = () => true, root: container = doc.querySelector('[data-admin-support]') } = {}) {
     if (!container || !root.KineticHubSupport) return null;
     const client = root.KineticHubSupport.createAdminClient({ fetch: fetcher, getToken });
@@ -65,9 +131,7 @@
       messages.scrollTop = 0; activityLog.scrollTop = 0;
     };
     const assignee = container.querySelector('[name=ticketAssignee]');
-    const filterStatus = container.querySelector('[data-ticket-filter-status]');
-    const filterCategory = container.querySelector('[data-ticket-filter-category]');
-    const filterAssignee = container.querySelector('[data-ticket-filter-assignee]');
+    const filters = connectFilters(container, doc, resetList);
     const previous = container.querySelector('[data-ticket-page-prev]');
     const next = container.querySelector('[data-ticket-page-next]');
     let cursors = [null], nextCursor = null, listing = false;
@@ -92,21 +156,15 @@
       const epoch = mutation;
       listing = true;
       if (!quiet) { listPayload = ''; refresh.disabled = true; list.textContent = 'Cargando solicitudes...'; renderPager(); }
-      const filters = {order:'attention',status:filterStatus?.value || undefined,category:filterCategory?.value || undefined,
-        assignee:filterAssignee?.value === '*' ? undefined : filterAssignee?.value};
+      const query = {order:'attention', ...filters.values()};
       const cursor = cursors.at(-1);
       try {
-        const data = await client.list(filters, cursor); if (!isActive() || current !== listSequence || epoch !== mutation) return;
+        const data = await client.list(query, cursor); if (!isActive() || current !== listSequence || epoch !== mutation) return;
         const payload = JSON.stringify(data);
         if (quiet && payload === listPayload) return;
         listPayload = payload;
         nextCursor = data.nextCursor || null;
-        if (filterAssignee && doc.activeElement !== filterAssignee) {
-          const selectedFilter = filterAssignee.value;
-          filterAssignee.replaceChildren(new Option('Todos','*'), new Option('Sin asignar',''));
-          for (const email of data.assignees || []) filterAssignee.add(new Option(assigneeLabel(email, data.assigneeLabels),email));
-          filterAssignee.value = selectedFilter === '' || (data.assignees || []).includes(selectedFilter) ? selectedFilter : '*';
-        }
+        filters.updateAssignees(data.assignees || [],data.assigneeLabels);
         const fragment = doc.createDocumentFragment();
         for (const ticket of data.tickets || []) {
           const button = doc.createElement('button'); button.type = 'button'; button.className = 'support-ticket-row'; button.dataset.ticketId = ticket.id;
@@ -234,12 +292,11 @@
       emptyWorkspace('Selecciona una solicitud.');
       replyInput.value = '';
     };
-    const resetList = () => {
+    function resetList() {
       if (busy) return;
       clearSelection(); cursors = [null]; nextCursor = null; return loadList();
-    };
+    }
     refresh.addEventListener('click', resetList);
-    for (const filter of [filterStatus,filterCategory,filterAssignee]) filter?.addEventListener('change', resetList);
     previous?.addEventListener('click', () => { if (!busy && !listing && cursors.length>1) { clearSelection(); cursors.pop(); loadList(); } });
     next?.addEventListener('click', () => { if (!busy && !listing && nextCursor) { clearSelection(); cursors.push(nextCursor); loadList(); } });
     replyForm.addEventListener('submit', event => { event.preventDefault(); const body = replyInput.value.trim(); if (body) change('reply', { body }); });

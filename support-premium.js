@@ -56,7 +56,7 @@
         <div class="premium-divider"><span>Historial</span></div>
         <div class="premium-login-return" data-support-login-return hidden>
           <p role="status">Tu conversación anterior quedó guardada, pero no está vinculada a esta cuenta</p>
-          <p>El historial de invitado queda separado. Si quieres retomar esa consulta desde tu cuenta, vuelve a describirla aquí.</p>
+          <p>El historial de invitado queda separado. Si recibiste un aviso del equipo por correo, puedes cerrar sesión y abrir su enlace privado para volver al chat de invitado.</p>
           <button class="support-reply-action" type="button" data-support-continue-account>Continuar con mi cuenta</button>
         </div>
         <p class="premium-empty" data-support-empty hidden></p>
@@ -69,21 +69,30 @@
         <div class="support-transcript" data-support-messages role="log" aria-label="Historial de mensajes"></div>
       </div>
         <section class="premium-followup premium-email-followup" data-support-email hidden aria-label="Seguimiento humano">
-          <p class="premium-email-state" data-support-email-state role="status"></p>
-          <p data-support-email-title>Nuestro equipo te ayudará con esta consulta.</p>
-          <form data-support-email-request>
-            <label data-support-email-address>¿A qué correo podemos enviarte la respuesta? <input type="email" name="email" maxlength="254" autocomplete="email" required></label>
-            <button type="submit" class="support-reply-action" data-support-email-continue>Continuar con mi correo</button>
-          </form>
-          <a class="premium-text-button" data-support-email-login>Ya tengo cuenta · Iniciar sesión</a>
-          <p data-support-email-destination hidden></p>
-          <form data-support-email-verify hidden>
-            <label>Código de verificación <input name="code" maxlength="12" autocomplete="one-time-code" required></label>
-            <button type="submit" class="support-reply-action">Confirmar código</button>
-          </form>
-          <p data-support-email-expiry hidden>El código vence en 15 minutos.</p>
-          <button type="button" class="premium-text-button" data-support-email-resend hidden>Reenviar código</button>
-          <p data-support-email-status role="status"></p>
+          <div class="premium-email-heading">
+            <p class="premium-email-state" data-support-email-state role="status"></p>
+            <button type="button" class="premium-text-button" data-support-email-toggle aria-controls="support-email-fields" aria-expanded="true">Cerrar formulario</button>
+          </div>
+          <div id="support-email-fields" data-support-email-fields>
+            <p data-support-email-title>Nuestro equipo te ayudará con esta consulta.</p>
+            <form data-support-email-request>
+              <label data-support-email-address>¿A qué correo podemos enviarte la respuesta? <input type="email" name="email" maxlength="254" autocomplete="email" required></label>
+              <button type="submit" class="support-reply-action" data-support-email-continue>Continuar con mi correo</button>
+            </form>
+            <p data-support-email-destination hidden></p>
+            <form data-support-email-verify hidden>
+              <label>Código de seis dígitos <input name="code" inputmode="numeric" pattern="[0-9]{6}" maxlength="6" autocomplete="one-time-code" required></label>
+              <button type="submit" class="support-reply-action">Verificar correo</button>
+            </form>
+            <p data-support-email-expiry hidden>El código vence en 15 minutos.</p>
+            <div class="premium-email-actions">
+              <button type="button" class="premium-text-button" data-support-email-change hidden>Cambiar correo</button>
+              <button type="button" class="premium-text-button" data-support-email-back hidden>Volver al código</button>
+              <button type="button" class="premium-text-button" data-support-email-resend hidden>Reenviar código</button>
+              <a class="premium-text-button" data-support-email-login>Ya tengo cuenta · Iniciar sesión</a>
+            </div>
+            <p data-support-email-status role="status"></p>
+          </div>
         </section>
       <form data-support-form class="premium-form">
         <input type="hidden" name="category" value="general">
