@@ -3,15 +3,16 @@
 const {test} = require('node:test');
 const assert = require('node:assert/strict');
 const {readFileSync} = require('node:fs');
-const {randomUUID} = require('node:crypto');
+const {createHmac, randomUUID} = require('node:crypto');
 const vm = require('node:vm');
 const {PGlite} = require('@electric-sql/pglite');
 const email = require('../lib/support-visitor-email');
 const chat = require('../lib/support-chat');
 const admin = require('../lib/admin-support');
 const worker = require('../lib/support-notifications-worker');
+const {hashCapability} = require('../lib/_support');
 
-test('verified guest gets one private notice per human reply and reopens only that ticket', async t => {
+test('six-digit verification, explicit human handoff and private resumption preserve the original ticket', async t => {
   const db = new PGlite();
   t.after(() => db.close());
   await db.exec('CREATE ROLE anon; CREATE ROLE authenticated; CREATE ROLE service_role;');
@@ -31,6 +32,17 @@ test('verified guest gets one private notice per human reply and reopens only th
     const {rows} = await db.query(sql + name + '(' + parameters + ')' + (table ? '' : ' AS data'), Object.values(args));
     return {data: table ? rows : rows[0].data};
   };
+  const legacyHash = hashCapability('e'.repeat(64));
+  const legacy = await rpc('support_visitor_action',{
+    p_action:'start',p_capability_hash:legacyHash,p_request_id:randomUUID(),
+    p_body:'Solicito atencion humana.',p_category:'events',
+  });
+  await rpc('support_email_contact',{p_action:'request',p_hash:legacyHash,p_owner:null,
+    p_email:'legacy@example.invalid',p_proof:'d'.repeat(64)});
+  await db.exec(readFileSync('supabase/migrations/20261124000000_support_email_code_and_handoff.sql','utf8'));
+  const oldContact = (await db.query("SELECT requested_at<=now()-interval '15 minutes' AS expired FROM support_email_contacts WHERE ticket_id=$1",
+    [legacy.data.ticket.id])).rows[0];
+  assert.equal(oldContact.expired,true);
   const env = {VERCEL_ENV:'production', RESEND_API_KEY:'fixture', SUPPORT_VISITOR_EMAIL_ENABLED:'true',
     SUPPORT_VISITOR_EMAIL_SECRET:'fixture-only-independent-secret-12345',
     SUPPORT_NOTIFICATION_WORKER_SECRET:'fixture-worker-secret-not-for-production'};
@@ -56,11 +68,25 @@ test('verified guest gets one private notice per human reply and reopens only th
     {client:{rpc,auth:{admin:{getUserById:async()=>({data:{user:accountUser}})}}},
       auth:async()=>auth,getSupportAssignees:()=>[],visitorEmailEnv:env,visitorEmailFetch:fetch});
   const [guest, other] = ['a','b'].map(hex => hex.repeat(64));
-  const start = (token, extra) => visit({action:'start',token,requestId:randomUUID(),category:'general',website:'',
-    body:'Solicito atencion humana.'},extra);
+  const startBody = token => ({action:'start',token,requestId:randomUUID(),category:'general',website:'',
+    body:'Quiero hablar con una persona'});
+  const start = (token, extra) => visit(startBody(token),extra);
 
-  const initial = await start(guest);
-  const foreign = await start(other);
+  const firstRequest = startBody(guest);
+  const initial = await visit(firstRequest,{dispatchIntake:()=>assert.fail('must not send the generic intake reply')});
+  assert.deepEqual(initial.data.messages.map(message=>message.body),[
+    firstRequest.body, '¡Claro! Voy a comunicarte con nuestro equipo de atención. Para enviarte su respuesta, necesitamos un correo de contacto.',
+  ]);
+  const replay = await visit(firstRequest);
+  assert.deepEqual(replay.data.messages,initial.data.messages);
+  const paused = await db.query("SELECT automation_paused_at IS NOT NULL AS paused FROM support_tickets WHERE id=$1",[initial.data.ticket.id]);
+  assert.equal(paused.rows[0].paused,true);
+  const foreignStart = await visit({...startBody(other),body:'Tengo una consulta.'});
+  assert.equal(foreignStart.data.followup,undefined);
+  const foreign = await visit({action:'send',token:other,requestId:randomUUID(),body:'¡Quiero hablar con una persona!'});
+  assert.equal(foreign.data.ticket.id,foreignStart.data.ticket.id);
+  assert.equal(foreign.data.followup,'eligible');
+  assert.match(foreign.data.messages.at(-1).body,/Voy a comunicarte con nuestro equipo/);
   assert.equal(initial.data.followup,'eligible');
   const requested = await follow({action:'request',token:guest,email:'guest@example.invalid'});
   assert.equal(requested.code,202);
@@ -69,10 +95,18 @@ test('verified guest gets one private notice per human reply and reopens only th
   assert.equal(throttled.code,202);
   assert.deepEqual(throttled.data,{ok:true});
   assert.equal(deliveries.length,1);
-  const code = deliveries[0].text.match(/: ([A-F0-9]{12})/)[1];
+  const code = deliveries[0].text.match(/: (\d{6})\b/)[1];
+  const wrongCode = code => code === '000000' ? '999999' : '000000';
+  const stored = (await db.query("SELECT challenge_hash FROM support_email_contacts WHERE ticket_id=$1",[initial.data.ticket.id])).rows[0];
+  assert.equal(stored.challenge_hash,createHmac('sha256',env.SUPPORT_VISITOR_EMAIL_SECRET)
+    .update('support-visitor-email-code:' + hashCapability(guest) + ':' + code).digest('hex'));
   assert.doesNotMatch(deliveries[0].text,/Folio|Contenido privado|https:/);
-  assert.equal((await follow({action:'verify',token:other,code})).code,403);
-  assert.equal((await follow({action:'verify',token:guest,code:'0'.repeat(12)})).code,403);
+  const foreignCode = await follow({action:'verify',token:other,code});
+  assert.equal(foreignCode.code,403);
+  assert.equal(foreignCode.data.error,'No se pudo verificar este código.');
+  const wrong = await follow({action:'verify',token:guest,code:wrongCode(code)});
+  assert.equal(wrong.code,403);
+  assert.match(wrong.data.error,/incorrecto/);
 
   // The operator can reply while the visit is closed. An unverified recipient gets no notice.
   const beforeVerification = await reply(initial.data.ticket);
@@ -149,9 +183,46 @@ test('verified guest gets one private notice per human reply and reopens only th
   await db.query("UPDATE support_visitor_email_jobs SET created_at=now()-interval '8 days' WHERE id=$1",[oldJob]);
   assert.equal((await follow({action:'resume',job:oldJob,proof:oldProof})).code,403);
   assert.equal((await follow({action:'request',token:other,email:'expiring@example.invalid'})).code,202);
-  const expiredCode = deliveries.at(-1).text.match(/: ([A-F0-9]{12})/)[1];
+  const expiredCode = deliveries.at(-1).text.match(/: (\d{6})\b/)[1];
   await db.query("UPDATE support_email_contacts SET requested_at=now()-interval '16 minutes' WHERE ticket_id=$1",[foreign.data.ticket.id]);
-  assert.equal((await follow({action:'verify',token:other,code:expiredCode})).code,403);
+  const expired = await follow({action:'verify',token:other,code:expiredCode});
+  assert.equal(expired.code,403);
+  assert.match(expired.data.error,/venció/);
+  assert.equal((await follow({action:'request',token:other,email:'corrected@example.invalid'})).data.codeSent,true);
+  assert.deepEqual(deliveries.at(-1).to,['corrected@example.invalid']);
+  const replacement = deliveries.at(-1).text.match(/: (\d{6})\b/)[1];
+  assert.notEqual(replacement,expiredCode);
+  assert.match((await follow({action:'verify',token:other,code:expiredCode})).data.error,/incorrecto/);
+  for (let attempts = 2; attempts <= 5; attempts++) {
+    const result = await follow({action:'verify',token:other,code:wrongCode(replacement)});
+    assert.equal(result.code,attempts === 5 ? 429 : 403);
+    assert.match(result.data.error,attempts === 5 ? /Demasiados intentos/ : /incorrecto/);
+  }
+  assert.equal((await follow({action:'verify',token:other,code:replacement})).code,429);
+  await db.query("UPDATE support_email_contacts SET requested_at=now()-interval '91 seconds' WHERE ticket_id=$1",[foreign.data.ticket.id]);
+  assert.equal((await follow({action:'request',token:other,email:'corrected@example.invalid'})).data.codeSent,true);
+  assert.equal((await follow({action:'verify',token:other,code:deliveries.at(-1).text.match(/: (\d{6})\b/)[1]})).code,200);
+  const afterCorrection = await visit({action:'read',token:other});
+  assert.equal(afterCorrection.data.ticket.id,foreign.data.ticket.id);
+  assert.deepEqual(afterCorrection.data.messages,foreign.data.messages);
+  assert.equal(afterCorrection.data.followup,'verified');
+  const previousSendCount = deliveries.length;
+  const throttledScope = await follow({action:'request',token:other,email:'another@example.invalid'},
+    {enforceRateLimit:async (_request,response,rules) => {
+      if (rules.scope === 'support-email-ticket') {
+        assert.equal(rules.identity,hashCapability(other));
+        assert.equal(rules.limit,4);
+        return response.status(429).json({error:'Demasiadas solicitudes.'});
+      }
+      return null;
+    }});
+  assert.equal(throttledScope.code,429);
+  assert.equal(deliveries.length,previousSendCount);
+  failNext = true;
+  const failedDelivery = await follow({action:'request',token:'e'.repeat(64),email:'legacy@example.invalid'});
+  assert.equal(failedDelivery.code,503);
+  assert.equal(failedDelivery.data.code,'send_failed');
+  assert.equal((await visit({action:'read',token:'e'.repeat(64)})).data.ticket.id,legacy.data.ticket.id);
   const privileges = await db.query("SELECT has_table_privilege('anon','public.support_email_contacts','SELECT') AS guest, has_function_privilege('authenticated','public.support_resume_visitor_email(uuid,text)','EXECUTE') AS resume");
   assert.deepEqual(privileges.rows,[{guest:false,resume:false}]);
   for (const [index, category] of ['general','events','registration','other','test'].entries()) {
@@ -212,12 +283,12 @@ test('guest follow-up offers both paths and keeps its verified email across mess
   const nodes = new Map(), actions = [];
   const node = key => {
     if (!nodes.has(key)) nodes.set(key,{hidden:true,value:'',textContent:'',dataset:{},querySelector:node,
-      addEventListener(type, listener){this[type]=listener;},replaceChildren(){},append(){}});
+      addEventListener(type, listener){this[type]=listener;},setAttribute(){},replaceChildren(){},append(){}});
     return nodes.get(key);
   };
   const request = node('[data-support-email-request]');
   const verify = node('[data-support-email-verify]');
-  request.elements = {email:{value:''}};
+  request.elements = {email:{value:'',focus(){}}};
   verify.elements = {code:{value:''}};
   let followup = 'eligible', acceptCode = false, sentCode = false;
   node('[name="category"]').value = 'general';
@@ -226,7 +297,7 @@ test('guest follow-up offers both paths and keeps its verified email across mess
     fetch:async(path,opts)=>{
       const input = JSON.parse(opts.body);
       actions.push([path,input.action]);
-      if (input.action === 'verify' && !acceptCode) return {ok:false,json:async()=>({error:'El código no es válido o ya venció.'})};
+      if (input.action === 'verify' && !acceptCode) return {ok:false,json:async()=>({error:'El código es incorrecto.'})};
       return {ok:true,json:async()=> ['read','send'].includes(input.action)
         ? {ok:true,ticket:{id:'first',status:'pending'},messages:[],followup}
         : {ok:true,...(input.action==='verify'?{verified:true}:sentCode?{codeSent:true}:{})}};
@@ -248,15 +319,25 @@ test('guest follow-up offers both paths and keeps its verified email across mess
   await request.submit(event);
   followup = 'code_pending';
   assert.equal(verify.hidden,false);
-  assert.equal(login.hidden,true);
+  assert.equal(login.hidden,false);
   assert.equal(node('[data-support-email-destination]').textContent,'fixture@example.invalid');
   assert.equal(node('[data-support-email-expiry]').hidden,false);
   assert.match(node('[data-support-email-title]').textContent,/No necesitas crear una cuenta/);
-  verify.elements.code.value = 'A'.repeat(12);
+  const toggle = node('[data-support-email-toggle]');
+  toggle.click();
+  assert.equal(node('[data-support-email-fields]').hidden,true);
+  toggle.click();
+  assert.equal(node('[data-support-email-fields]').hidden,false);
+  node('[data-support-email-change]').click();
+  assert.equal(request.hidden,false);
+  assert.equal(verify.hidden,true);
+  node('[data-support-email-back]').click();
+  assert.equal(verify.hidden,false);
+  verify.elements.code.value = '012345';
   await verify.submit(event);
   assert.equal(panel.hidden,false);
   assert.equal(node('[data-support-email-state]').textContent,'Pendiente de verificar');
-  assert.match(node('[data-support-email-status]').textContent,/código no es válido/);
+  assert.match(node('[data-support-email-status]').textContent,/código es incorrecto/);
   node('[name="supportMessage"]').value = 'También tengo otra duda';
   node('[data-support-form]').submit(event);
   await new Promise(setImmediate);

@@ -48,6 +48,17 @@
 .support-admin-messages p { white-space:pre-wrap; }
 .support-admin-controls { display:flex; flex-wrap:wrap; gap:10px; align-items:end; margin:14px 0; }
 .support-admin-controls label { flex:1 1 150px; display:grid; gap:6px; color:#dce7f3; }
+.support-inbox-filters { display:grid; gap:6px; min-width:0; margin:12px 0; padding:7px; border:1px solid #344454; border-radius:9px; }
+.support-inbox-filters legend { padding:0 4px; font-size:.88rem; font-weight:700; color:#dce7f3; }
+.support-filter-tabs { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:3px; }
+.support-filter-tabs button,.support-filter-chips button { min-width:0; padding:5px 3px; border:1px solid #344454; border-radius:6px; background:#182431; color:#e2e9ee; font:inherit; font-size:.78rem; cursor:pointer; }
+.support-filter-tabs button { min-height:34px; overflow-wrap:anywhere; }
+.support-filter-tabs [aria-pressed="true"] { border-color:#44c996; background:#194b3a; color:#d8f8e8; }
+.support-inbox-filters select { min-width:0; width:100%; min-height:35px; padding:4px 7px; border:1px solid #344454; border-radius:6px; background:#0d151d; color:#e2e9ee; font:inherit; }
+.support-filter-chips { display:flex; flex-wrap:wrap; gap:4px; }
+.support-filter-chips:empty { display:none; }
+.support-filter-chips button { padding-inline:7px; overflow-wrap:anywhere; }
+.support-inbox-filters :focus-visible { outline:2px solid #44c996; outline-offset:1px; }
 .support-ticket-workspace form { display:grid; gap:8px; }
 @media(max-width:760px) { .support-layout,.support-admin-grid { grid-template-columns:1fr; } .support-aside { order:2; } .support-ticket-list { max-height:280px; } .contact-support-card { align-items:flex-start; flex-direction:column; } .contact-support-card .btn { width:100%; } }
 @media(prefers-reduced-motion:reduce) { .support-page *, .support-page *::before,.support-page *::after { scroll-behavior:auto!important; animation-duration:.01ms!important; transition-duration:.01ms!important; } }

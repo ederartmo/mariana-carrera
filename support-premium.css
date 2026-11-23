@@ -51,7 +51,9 @@
 .premium-email-followup form{display:flex;align-items:end;flex-wrap:wrap;gap:4px 8px}
 .premium-email-followup label{flex:1 1 150px;min-width:0}
 .premium-email-followup .support-reply-action{margin:0 0 4px}
-.premium-email-followup [data-support-email-login]{display:inline-block;margin-top:3px}
+.premium-email-heading,.premium-email-actions{display:flex;align-items:center;flex-wrap:wrap;gap:0 8px}
+.premium-email-heading{justify-content:space-between}
+.premium-email-heading .premium-text-button,.premium-email-actions .premium-text-button{font-size:.86rem;padding:5px 0}
 .premium-email-followup [data-support-email-destination]{font-weight:700;overflow-wrap:anywhere}
 .premium-email-state{font-weight:800;color:#674200}
 .premium-email-followup[data-state=verified] .premium-email-state{color:#075831}

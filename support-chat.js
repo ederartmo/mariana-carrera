@@ -59,7 +59,11 @@
   async function emailAction(fetcher, body) {
     const response = await fetcher(EMAIL_ENDPOINT, {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
     const data = await json(response);
-    if (!response.ok || !data.ok) throw Error(data.error || 'No pudimos procesar la solicitud.');
+    if (!response.ok || !data.ok) {
+      const error = Error(data.error || 'No pudimos procesar la solicitud.');
+      error.code = data.code;
+      throw error;
+    }
     return data;
   }
 
@@ -76,6 +80,10 @@
     const login = panel.querySelector('[data-support-email-login]');
     const destination = panel.querySelector('[data-support-email-destination]');
     const expiry = panel.querySelector('[data-support-email-expiry]');
+    const change = panel.querySelector('[data-support-email-change]');
+    const backToCode = panel.querySelector('[data-support-email-back]');
+    const toggle = panel.querySelector('[data-support-email-toggle]');
+    const fields = panel.querySelector('[data-support-email-fields]');
     const invitation = account
       ? '¿Quieres recibir la respuesta del equipo en el correo verificado de tu cuenta?'
       : title.textContent;
@@ -85,11 +93,12 @@
       address.querySelector('input').disabled = true;
       panel.querySelector('[data-support-email-continue]').textContent = 'Usar el correo de mi cuenta';
     }
-    let busy = false, current, ticket, waiting = false, askingAgain = false;
+    let busy = false, current, ticket, waiting = false, askingAgain = false, collapsed = false;
     let sentTo = '';
     const update = (state, ticketId = ticket, waitingForReply = waiting) => {
       if (ticketId !== ticket) {
         askingAgain = false;
+        collapsed = false;
         sentTo = '';
         request.elements.email.value = '';
         verify.elements.code.value = '';
@@ -102,6 +111,10 @@
       const pending = !account && state === 'code_pending';
       panel.hidden = !['eligible','code_pending','verified'].includes(state);
       panel.dataset.state = state || '';
+      fields.hidden = collapsed && !verified;
+      toggle.hidden = verified;
+      toggle.textContent = fields.hidden ? 'Abrir formulario' : 'Cerrar formulario';
+      toggle.setAttribute('aria-expanded',String(!fields.hidden));
       stateLabel.textContent = verified ? 'Correo verificado' : pending ? 'Pendiente de verificar' :
         waiting ? 'Esperando respuesta del equipo' : 'Seguimiento por correo';
       if (verified) {
@@ -111,25 +124,40 @@
         title.textContent = '¡Listo! Te avisaremos por correo cuando nuestro equipo responda.';
       } else if (pending && !askingAgain) {
         title.textContent = sentTo
-          ? 'Te enviamos un código para confirmar que este correo te pertenece. No necesitas crear una cuenta.'
+          ? 'Te enviamos un código de seis dígitos para confirmar que este correo te pertenece. No necesitas crear una cuenta.'
           : 'Ingresa el código del correo que usaste. No necesitas crear una cuenta.';
       } else title.textContent = invitation;
       request.hidden = panel.hidden || verified || (pending && !askingAgain);
       verify.hidden = !pending || askingAgain;
-      login.hidden = account || request.hidden;
+      login.hidden = account || panel.hidden || verified;
       destination.hidden = verify.hidden || !sentTo;
       destination.textContent = destination.hidden ? '' : sentTo;
       expiry.hidden = verify.hidden;
       resend.hidden = verify.hidden;
+      change.hidden = verify.hidden;
+      backToCode.hidden = !pending || !askingAgain;
     };
-    resend.addEventListener('click', () => {
-      if (sentTo) {
-        submit('request', {email:sentTo});
-        return;
-      }
+    function enterAddress() {
+      if (busy) return;
       askingAgain = true;
+      request.elements.email.value = '';
+      feedback.textContent = '';
       present(() => update(current));
       request.elements.email.focus();
+    }
+    toggle.addEventListener('click', () => {
+      collapsed = !collapsed;
+      present(() => update(current));
+    });
+    change.addEventListener('click', enterAddress);
+    backToCode.addEventListener('click', () => {
+      askingAgain = false;
+      feedback.textContent = '';
+      present(() => update(current));
+    });
+    resend.addEventListener('click', () => {
+      if (sentTo) return submit('request', {email:sentTo});
+      enterAddress();
     });
     async function submit(action, details) {
       if (busy || !isActive() || !client.token || panel.hidden) return;
@@ -138,13 +166,13 @@
       try {
         const result = await emailAction(fetcher, {action, token:client.token, ...details});
         if (!isActive() || ticket !== requestedTicket) return;
-        askingAgain = false;
         present(() => {
           if (result.codeSent) {
             sentTo = details.email.trim().toLowerCase();
             verify.elements.code.value = '';
           }
           if (result.verified || result.codeSent) {
+            askingAgain = false;
             feedback.textContent = '';
             update(result.verified ? 'verified' : 'code_pending');
           } else {
@@ -156,6 +184,12 @@
       } catch (error) {
         if (isActive() && ticket === requestedTicket) present(() => {
           if (action === 'verify') update('code_pending');
+          if (error.code === 'send_failed') {
+            sentTo = '';
+            askingAgain = false;
+            verify.elements.code.value = '';
+            update('code_pending');
+          }
           feedback.textContent = error.message;
         });
       } finally { busy = false; }

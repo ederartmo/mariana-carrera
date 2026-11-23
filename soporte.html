@@ -18,11 +18,16 @@
 
       <p class="support-admin-notice" data-admin-support-notice role="status" aria-live="polite">Cargando solicitudes…</p>
       <div class="support-admin-grid"><div>
-        <div class="support-admin-controls">
-          <label>Estado<select data-ticket-filter-status><option value="">Todos</option><option value="pending">Pendiente</option><option value="in_progress">En proceso</option><option value="resolved">Resuelto</option></select></label>
-          <label>Categor&#237;a<select data-ticket-filter-category><option value="">Todas</option><option value="general">General</option><option value="events">Eventos</option><option value="registration">Inscripciones</option><option value="other">Otro</option><option value="test">Prueba</option></select></label>
-          <label>Responsable<select data-ticket-filter-assignee><option value="*">Todos</option><option value="">Sin asignar</option></select></label>
-        </div>
+        <fieldset class="support-inbox-filters" data-ticket-filters>
+          <legend>Filtrar solicitudes</legend>
+          <div class="support-filter-tabs" role="group" aria-label="Tipo de filtro">
+            <button type="button" data-ticket-filter-tab="status" aria-pressed="true">Estado</button>
+            <button type="button" data-ticket-filter-tab="category" aria-pressed="false">Categoría</button>
+            <button type="button" data-ticket-filter-tab="assignee" aria-pressed="false">Responsable</button>
+          </div>
+          <select data-ticket-filter-select aria-label="Estado"></select>
+          <div class="support-filter-chips" data-ticket-filter-chips aria-label="Filtros activos"></div>
+        </fieldset>
         <div class="support-ticket-list" data-ticket-list aria-label="Solicitudes de atención"></div>
         <div class="support-toolbar"><button type="button" data-ticket-page-prev disabled>Anterior</button><button type="button" data-ticket-page-next disabled>Siguiente</button></div>
       </div>
