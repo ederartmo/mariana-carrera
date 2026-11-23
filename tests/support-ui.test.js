@@ -146,7 +146,7 @@ test('OXXO renders three steps with fixed, named actions and a token-free login 
 test('login return and account switching keep guest and account histories separate in a shared tab', async () => {
   const markup = require('node:fs').readFileSync(require.resolve('../support-premium.js'), 'utf8');
   assert.match(markup, /Tu conversación anterior quedó guardada, pero no está vinculada a esta cuenta/);
-  assert.match(markup, /no podemos verificar que seas la misma persona/);
+  assert.match(markup, /El historial de invitado queda separado/);
   assert.doesNotMatch(markup, /Volver como invitado/);
   const guestToken = 'f'.repeat(64);
   const values = new Map([[support.TOKEN_KEY, guestToken], [support.PENDING_KEY, 'guest-draft']]);
@@ -157,7 +157,7 @@ test('login return and account switching keep guest and account histories separa
   const accounts = id => ({ user: { id }, access_token: 'fixture-' + id });
   let session = accounts('a');
   const calls = [];
-  const mount = async () => {
+  const mount = async (search = '?from=support-login') => {
     const nodes = new Map();
     const root = element('section');
     const find = key => {
@@ -171,7 +171,7 @@ test('login return and account switching keep guest and account histories separa
     let authChange, reloads = 0;
     const document = {
       querySelector: () => root, createElement: element, createDocumentFragment: () => element('fragment'),
-      defaultView: {sessionStorage, location: {search: '?from=support-login', reload() { reloads++; }},
+      defaultView: {sessionStorage, location: {search, reload() { reloads++; }},
         addEventListener(name, listener) { events[name] = listener; }},
     };
     await support.connectPublicSupportChat({
@@ -216,6 +216,17 @@ test('login return and account switching keep guest and account histories separa
   session = null;
   await mount();
   assert.equal(calls.length, 2, 'logout must not reload the former guest capability');
+
+  session = accounts('c');
+  values.set(support.TOKEN_KEY, guestToken);
+  const followup = await mount('?from=support-followup-login');
+  assert.equal(values.size,0);
+  assert.equal(followup.find('[data-support-login-return]').hidden,false);
+  assert.equal(followup.find('[data-support-continue-account]').hidden,true);
+  assert.notEqual(followup.find('[data-support-form]').hidden,true);
+  assert.equal(calls[2].headers.Authorization,'Bearer fixture-c');
+  assert.notEqual(JSON.parse(calls[2].body).token,guestToken);
+  assert.equal(JSON.parse(calls[2].body).action,'read');
 });
 
 test('public capability stays in session storage and restores server history', async () => {
@@ -330,7 +341,7 @@ test('guest transport drops inherited Authorization, account never forwards a bl
  assert.equal(sent,1);
 });
 
-test('admin transport keeps the session for origin rejection and clears it for access denial', async () => {
+test('admin transport keeps the session for a rejected action and clears it for access denial', async () => {
   const { connect } = require('../admin-support.js');
   const old = globalThis.KineticHubSupport;
   let call, cleared = false, next, stopped = false;
@@ -354,10 +365,12 @@ test('admin transport keeps the session for origin rejection and clears it for a
       fetch:async(_,options)=>{assert.equal(options.headers.Authorization,'Bearer fixture');return next;},
       onAccessDenied:status=>notices.push(status)
     });
-    next=Response.json({ok:false,code:'origin_not_allowed'},{status:403});
-    const rejected=await call('/api/admin-support',{method:'POST'});
-    assert.equal((await rejected.json()).code,'origin_not_allowed');
-    assert.equal(cleared,false); assert.equal(stopped,false); assert.deepEqual(notices,[]);
+    for (const code of ['origin_not_allowed','category_not_allowed']) {
+      next=Response.json({ok:false,code},{status:403});
+      const rejected=await call('/api/admin-support',{method:'POST'});
+      assert.equal((await rejected.json()).code,code);
+      assert.equal(cleared,false); assert.equal(stopped,false); assert.deepEqual(notices,[]);
+    }
     next=Response.json({ok:false},{status:403});
     await call('/api/admin-support',{method:'POST'});
     assert.equal(cleared,true); assert.equal(stopped,true); assert.deepEqual(notices,[403]);

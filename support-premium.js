@@ -56,7 +56,7 @@
         <div class="premium-divider"><span>Historial</span></div>
         <div class="premium-login-return" data-support-login-return hidden>
           <p role="status">Tu conversación anterior quedó guardada, pero no está vinculada a esta cuenta</p>
-          <p>Después de iniciar sesión, no podemos verificar que seas la misma persona que abrió el chat de invitado.</p>
+          <p>El historial de invitado queda separado. Si quieres retomar esa consulta desde tu cuenta, vuelve a describirla aquí.</p>
           <button class="support-reply-action" type="button" data-support-continue-account>Continuar con mi cuenta</button>
         </div>
         <p class="premium-empty" data-support-empty hidden></p>
@@ -70,16 +70,19 @@
       </div>
         <section class="premium-followup premium-email-followup" data-support-email hidden aria-label="Seguimiento humano">
           <p class="premium-email-state" data-support-email-state role="status"></p>
-          <p data-support-email-title>Para que nuestro equipo pueda darte seguimiento, necesitamos un correo donde enviarte su respuesta, aunque cierres esta página.</p>
+          <p data-support-email-title>Nuestro equipo te ayudará con esta consulta.</p>
           <form data-support-email-request>
-            <label data-support-email-address>Correo electrónico <input type="email" name="email" maxlength="254" autocomplete="email" required></label>
-            <button type="submit" class="support-reply-action">Continuar</button>
+            <label data-support-email-address>¿A qué correo podemos enviarte la respuesta? <input type="email" name="email" maxlength="254" autocomplete="email" required></label>
+            <button type="submit" class="support-reply-action" data-support-email-continue>Continuar con mi correo</button>
           </form>
+          <a class="premium-text-button" data-support-email-login>Ya tengo cuenta · Iniciar sesión</a>
+          <p data-support-email-destination hidden></p>
           <form data-support-email-verify hidden>
             <label>Código de verificación <input name="code" maxlength="12" autocomplete="one-time-code" required></label>
-            <button type="submit" class="support-reply-action">Verificar correo</button>
+            <button type="submit" class="support-reply-action">Confirmar código</button>
           </form>
-          <button type="button" class="premium-text-button" data-support-email-resend hidden>Volver a solicitar código</button>
+          <p data-support-email-expiry hidden>El código vence en 15 minutos.</p>
+          <button type="button" class="premium-text-button" data-support-email-resend hidden>Reenviar código</button>
           <p data-support-email-status role="status"></p>
         </section>
       <form data-support-form class="premium-form">
@@ -143,7 +146,7 @@
             const category = { general: 'Consulta general', events: 'Eventos', registration: 'Inscripciones', other: 'Otro tema' }[ticket?.category];
             card.hidden = !ticket;
             if (blank) blank.hidden = Boolean(ticket);
-            host.querySelector('[data-premium-category]').textContent = category || 'No indicada';
+            host.querySelector('[data-premium-category]').textContent = category || 'Consulta de soporte';
             const badge = card.querySelector('[data-premium-state]');
             badge.dataset.status = ticket?.status || '';
             const [label = '', description = ''] = Object.hasOwn(ticketStates, ticket?.status) ? ticketStates[ticket.status] : [];

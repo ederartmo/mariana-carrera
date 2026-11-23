@@ -7,7 +7,10 @@
   };
   const subjects = {
     general: 'Consulta general', events: 'Consulta sobre eventos',
-    registration: 'Consulta sobre inscripciones', other: 'Otra consulta',
+    registration: 'Consulta sobre inscripciones', other: 'Otra consulta', test: 'Solicitud de prueba',
+  };
+  const categories = {
+    general: 'General', events: 'Eventos', registration: 'Inscripciones', other: 'Otro', test: 'Prueba',
   };
   const actions = {
     visitor_reopened: 'El visitante reabrió la solicitud', admin_reply: 'Respuesta del equipo', agent_acknowledged: 'Acuse automático del agente',
@@ -26,7 +29,8 @@
     const displayName = typeof ticket.identity?.displayName === 'string' ? ticket.identity.displayName : '';
     return {
       identity: (account && displayName) || 'Visitante sin identificar', account, folio: '#' + ticket.id.slice(0, 8).toUpperCase(),
-      subject: label(subjects, ticket.category, 'Consulta sin categoría'), status, explanation,
+      subject: label(subjects, ticket.category, 'Consulta sin categoría'),
+      category: label(categories, ticket.category, 'Sin categoría'), status, explanation,
     };
   }
   function assigneeLabel(email, labels = {}) {
@@ -34,7 +38,8 @@
     return label(labels || {}, email, email);
   }
   function updateFields(ticket, status, category, assignee) {
-    return { status, category, ...(assignee && assignee !== ticket?.assigned_to ? { assignTo: assignee } : {}) };
+    return { status, ...(category === 'test' && ticket?.category === category ? {} : { category }),
+      ...(assignee && assignee !== ticket?.assigned_to ? { assignTo: assignee } : {}) };
   }
 
   function mount({ document: doc = document, fetch: fetcher = fetch, getToken, isActive = () => true, root: container = doc.querySelector('[data-admin-support]') } = {}) {
@@ -108,8 +113,10 @@
           if(ticket.status==='pending')button.dataset.needsAttention='true';
           const view = presentTicket(ticket);
           button.title = ticket.id;
+          const badges = textNode('span', '', 'support-ticket-badges');
+          badges.append(statusBadge(ticket, view), textNode('span', view.category, 'support-ticket-category'));
           button.append(textNode('strong', view.subject), textNode('span', view.identity + (view.account ? ' · Cuenta autenticada' : '') + ' · ' + view.folio),
-            statusBadge(ticket, view), textNode('small', 'Responsable: ' + assigneeLabel(ticket.assigned_to, data.assigneeLabels)),
+            badges, textNode('small', 'Responsable: ' + assigneeLabel(ticket.assigned_to, data.assigneeLabels)),
             textNode('small', 'Actividad: ' + formatLocalDate(ticket.updated_at)));
           button.addEventListener('click', () => loadDetail(ticket.id)); fragment.append(button);
         }
@@ -198,7 +205,12 @@
         if (!count) events.append(textNode('p', 'Todavía no hay actividad registrada.'));
         const activityTop = activityLog.scrollTop;
         activityLog.replaceChildren(events); activityLog.scrollTop = activityTop;
-        if (!editing) { statusInput.value = selected.status; categoryInput.value = selected.category; }
+        if (!editing) {
+          statusInput.value = selected.status;
+          categoryInput.value = selected.category;
+          const testOption = categoryInput.querySelector('option[value="test"]');
+          if (testOption) testOption.disabled = !data.canSetTestCategory;
+        }
       } catch (error) { if (quiet) throw error; if (isActive() && current === sequence) { emptyWorkspace(error.status === 404 ? 'La solicitud no está disponible.' : `No se pudo cargar el detalle: ${error.message}`); say(error.message); } }
       finally { if (current === sequence) detailReading = false; }
     }
@@ -284,7 +296,7 @@
           const response = await scoped(...args);
           const denied = response.status === 403 && typeof response.clone === 'function'
             ? await response.clone().json().catch(() => null) : null;
-          if (response.status === 401 || (response.status === 403 && denied?.code !== 'origin_not_allowed')) {
+          if (response.status === 401 || (response.status === 403 && !['origin_not_allowed', 'category_not_allowed'].includes(denied?.code))) {
             active = false; invalidate(); onAccessDenied?.(response.status);
           }
           return response;

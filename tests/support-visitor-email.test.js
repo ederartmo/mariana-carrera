@@ -19,7 +19,10 @@ test('verified guest gets one private notice per human reply and reopens only th
     '20261117145659_support_phase_one.sql',
     '20261119021334_support_agent_atomic_ack.sql',
     '20261119022000_support_human_takeover.sql',
+    '20261119030000_support_ai_evaluation_quota.sql',
+    '20261119040000_support_ai_shadow_queue.sql',
     '20261121235900_support_visitor_email.sql',
+    '20261123230000_support_test_category.sql',
   ]) await db.exec(readFileSync('supabase/migrations/' + migration, 'utf8'));
   const rpc = async (name, args) => {
     const parameters = Object.keys(args).map((key, index) => key + '=>$' + (index+1)).join(',');
@@ -59,8 +62,12 @@ test('verified guest gets one private notice per human reply and reopens only th
   const initial = await start(guest);
   const foreign = await start(other);
   assert.equal(initial.data.followup,'eligible');
-  assert.equal((await follow({action:'request',token:guest,email:'guest@example.invalid'})).code,202);
-  assert.equal((await follow({action:'request',token:guest,email:'replacement@example.invalid'})).code,202);
+  const requested = await follow({action:'request',token:guest,email:'guest@example.invalid'});
+  assert.equal(requested.code,202);
+  assert.deepEqual(requested.data,{ok:true,codeSent:true});
+  const throttled = await follow({action:'request',token:guest,email:'replacement@example.invalid'});
+  assert.equal(throttled.code,202);
+  assert.deepEqual(throttled.data,{ok:true});
   assert.equal(deliveries.length,1);
   const code = deliveries[0].text.match(/: ([A-F0-9]{12})/)[1];
   assert.doesNotMatch(deliveries[0].text,/Folio|Contenido privado|https:/);
@@ -79,9 +86,27 @@ test('verified guest gets one private notice per human reply and reopens only th
   const jobs = await db.query('SELECT id FROM support_visitor_email_jobs');
   assert.equal(jobs.rows.length,0);
 
+  const reclassify = (auth, category) => invoke(admin,
+    {id:initial.data.ticket.id,expectedVersion:beforeVerification.data.ticket.version,requestId:randomUUID(),action:'update',category},
+    {client:{rpc},auth:async()=>auth,authOptions:{adminEmails:['admin@example.invalid']},getSupportAssignees:()=>[]});
+  assert.equal((await reclassify(operator,'test')).code,403);
+  const changed = await reclassify({...operator,email:'admin@example.invalid'},'test');
+  assert.equal(changed.code,200);
+  assert.equal(changed.data.ticket.id,initial.data.ticket.id);
+  assert.equal(changed.data.ticket.status,beforeVerification.data.ticket.status);
+  assert.equal(changed.data.ticket.category,'test');
+  const filtered = await rpc('support_admin_list',{p_category:'test'});
+  assert.deepEqual(filtered.data.tickets.map(ticket=>ticket.id),[initial.data.ticket.id]);
+  const byOriginalCategory = await rpc('support_admin_list',{p_category:'general'});
+  assert.deepEqual(byOriginalCategory.data.tickets.map(ticket=>ticket.id),[foreign.data.ticket.id]);
+  const existing = await visit({action:'read',token:guest});
+  assert.equal(existing.data.followup,'verified');
+  assert.ok(existing.data.messages.some(message=>message.body==='Contenido privado de la respuesta'));
+  assert.equal(deliveries.length,1);
+
   const requestId = randomUUID();
-  await reply(beforeVerification.data.ticket,requestId);
-  await reply(beforeVerification.data.ticket,requestId);
+  await reply(changed.data.ticket,requestId);
+  await reply(changed.data.ticket,requestId);
   assert.equal(deliveries.length,2);
   const notice = deliveries[1];
   assert.deepEqual(notice.to,['guest@example.invalid']);
@@ -129,6 +154,12 @@ test('verified guest gets one private notice per human reply and reopens only th
   assert.equal((await follow({action:'verify',token:other,code:expiredCode})).code,403);
   const privileges = await db.query("SELECT has_table_privilege('anon','public.support_email_contacts','SELECT') AS guest, has_function_privilege('authenticated','public.support_resume_visitor_email(uuid,text)','EXECUTE') AS resume");
   assert.deepEqual(privileges.rows,[{guest:false,resume:false}]);
+  for (const [index, category] of ['general','events','registration','other','test'].entries()) {
+    const body = {action:'start',token:String(index).repeat(64),requestId:randomUUID(),category,website:'',body:'Consulta de prueba ficticia'};
+    const response = await visit(body);
+    assert.equal(response.code, category==='test' ? 400 : 200);
+    if (response.code===200) assert.equal(response.data.ticket.category,category);
+  }
 });
 
 test('email link is scrubbed, needs a click, and never redeems under an authenticated account', async () => {
@@ -141,6 +172,7 @@ test('email link is scrubbed, needs a click, and never redeems under an authenti
         addEventListener(type, listener){this[type]=listener;},replaceChildren(){},append(){}});
       return nodes.get(key);
     };
+    node('[data-support-email]').querySelector = key => key === '[data-support-email-request]' ? null : node(key);
     const window = {
       location:{pathname:'/atencion.html',search:'',hash:'#support-reply='+job+'.'+proof},
       history:{replaceState(_state,_title,path){assert.equal(path,'/atencion.html');window.location.hash='';}},
@@ -175,7 +207,7 @@ test('email link is scrubbed, needs a click, and never redeems under an authenti
   }
 });
 
-test('human follow-up verifies a code without blocking the message composer or prompting again', async () => {
+test('guest follow-up offers both paths and keeps its verified email across messages', async () => {
   const {mountPublicSupportChat,TOKEN_KEY} = require('../support-chat');
   const nodes = new Map(), actions = [];
   const node = key => {
@@ -185,9 +217,9 @@ test('human follow-up verifies a code without blocking the message composer or p
   };
   const request = node('[data-support-email-request]');
   const verify = node('[data-support-email-verify]');
-  request.elements = {email:{value:'fixture@example.invalid'}};
-  verify.elements = {code:{value:'A'.repeat(12)}};
-  let followup = 'eligible', acceptCode = false;
+  request.elements = {email:{value:''}};
+  verify.elements = {code:{value:''}};
+  let followup = 'eligible', acceptCode = false, sentCode = false;
   node('[name="category"]').value = 'general';
   const client = mountPublicSupportChat({root:{querySelector:node},document:{createDocumentFragment:()=>node('fragment')},
     storage:{getItem:key=>key===TOKEN_KEY?'a'.repeat(64):null,setItem(){},removeItem(){}},
@@ -197,15 +229,30 @@ test('human follow-up verifies a code without blocking the message composer or p
       if (input.action === 'verify' && !acceptCode) return {ok:false,json:async()=>({error:'El código no es válido o ya venció.'})};
       return {ok:true,json:async()=> ['read','send'].includes(input.action)
         ? {ok:true,ticket:{id:'first',status:'pending'},messages:[],followup}
-        : {ok:true,...(input.action==='verify'?{verified:true}:{})}};
+        : {ok:true,...(input.action==='verify'?{verified:true}:sentCode?{codeSent:true}:{})}};
     }});
   const panel = node('[data-support-email]');
   const event = {preventDefault(){}};
   await new Promise(setImmediate);
   assert.equal(panel.hidden,false);
+  const login = node('[data-support-email-login]');
+  assert.equal(login.hidden,false);
+  const loginUrl = new URL(login.href,'https://example.invalid');
+  assert.equal(loginUrl.pathname,'/auth.html');
+  assert.equal(loginUrl.searchParams.get('returnTo'),'/atencion.html?from=support-followup-login#premium-conversation');
+  request.elements.email.value = 'fixture@example.invalid';
+  await request.submit(event);
+  assert.equal(verify.hidden,true);
+  assert.equal(node('[data-support-email-destination]').hidden,true);
+  sentCode = true;
   await request.submit(event);
   followup = 'code_pending';
   assert.equal(verify.hidden,false);
+  assert.equal(login.hidden,true);
+  assert.equal(node('[data-support-email-destination]').textContent,'fixture@example.invalid');
+  assert.equal(node('[data-support-email-expiry]').hidden,false);
+  assert.match(node('[data-support-email-title]').textContent,/No necesitas crear una cuenta/);
+  verify.elements.code.value = 'A'.repeat(12);
   await verify.submit(event);
   assert.equal(panel.hidden,false);
   assert.equal(node('[data-support-email-state]').textContent,'Pendiente de verificar');
@@ -217,10 +264,12 @@ test('human follow-up verifies a code without blocking the message composer or p
   acceptCode = true;
   await verify.submit(event);
   assert.equal(node('[data-support-email-state]').textContent,'Correo verificado');
+  assert.equal(node('[data-support-email-title]').textContent,'¡Listo! Te avisaremos por correo cuando nuestro equipo responda.');
+  assert.equal(node('[data-support-email-destination]').textContent,'');
   assert.equal(request.hidden,true);
   followup = 'verified';
   await client.refresh();
   assert.equal(request.hidden,true);
   assert.equal(verify.hidden,true);
-  assert.deepEqual(actions.filter(([path])=>path.includes('support-visitor-email')).map(([,action])=>action),['request','verify','verify']);
+  assert.deepEqual(actions.filter(([path])=>path.includes('support-visitor-email')).map(([,action])=>action),['request','request','verify','verify']);
 });

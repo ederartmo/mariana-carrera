@@ -10,6 +10,7 @@
   const CATEGORIES = ['general', 'events', 'registration', 'other'];
   const accountLinks = /(https:\/\/www\.kinetichub\.com\.mx\/(?:auth\.html\?mode=login|perfil\.html|atencion\.html))(?=$|[\s.,;!?])/g;
   const loginReturn = '/atencion.html?from=support-login#premium-conversation';
+  const followupReturn = '/atencion.html?from=support-followup-login#premium-conversation';
   const accountActions = new Map([
     ['https://www.kinetichub.com.mx/auth.html?mode=login', ['Iniciar sesión', '/auth.html?mode=login&returnTo=' + encodeURIComponent(loginReturn)]],
     ['https://www.kinetichub.com.mx/perfil.html', ['Mis carreras', '/perfil.html']],
@@ -72,17 +73,26 @@
     const title = panel.querySelector('[data-support-email-title]');
     const resend = panel.querySelector('[data-support-email-resend]');
     const address = panel.querySelector('[data-support-email-address]');
+    const login = panel.querySelector('[data-support-email-login]');
+    const destination = panel.querySelector('[data-support-email-destination]');
+    const expiry = panel.querySelector('[data-support-email-expiry]');
     const invitation = account
-      ? 'Si continúas, enviaremos avisos al correo verificado de tu cuenta cuando responda el equipo.'
+      ? '¿Quieres recibir la respuesta del equipo en el correo verificado de tu cuenta?'
       : title.textContent;
+    login.href = '/auth.html?mode=login&returnTo=' + encodeURIComponent(followupReturn);
     if (account) {
       address.hidden = true;
       address.querySelector('input').disabled = true;
+      panel.querySelector('[data-support-email-continue]').textContent = 'Usar el correo de mi cuenta';
     }
     let busy = false, current, ticket, waiting = false, askingAgain = false;
+    let sentTo = '';
     const update = (state, ticketId = ticket, waitingForReply = waiting) => {
       if (ticketId !== ticket) {
         askingAgain = false;
+        sentTo = '';
+        request.elements.email.value = '';
+        verify.elements.code.value = '';
         feedback.textContent = '';
         ticket = ticketId;
       }
@@ -94,18 +104,34 @@
       panel.dataset.state = state || '';
       stateLabel.textContent = verified ? 'Correo verificado' : pending ? 'Pendiente de verificar' :
         waiting ? 'Esperando respuesta del equipo' : 'Seguimiento por correo';
-      title.textContent = verified ? (waiting ? 'Esperando respuesta del equipo' : 'Recibirás un aviso cuando el equipo responda.') : invitation;
+      if (verified) {
+        sentTo = '';
+        request.elements.email.value = '';
+        verify.elements.code.value = '';
+        title.textContent = '¡Listo! Te avisaremos por correo cuando nuestro equipo responda.';
+      } else if (pending && !askingAgain) {
+        title.textContent = sentTo
+          ? 'Te enviamos un código para confirmar que este correo te pertenece. No necesitas crear una cuenta.'
+          : 'Ingresa el código del correo que usaste. No necesitas crear una cuenta.';
+      } else title.textContent = invitation;
       request.hidden = panel.hidden || verified || (pending && !askingAgain);
       verify.hidden = !pending || askingAgain;
-      resend.hidden = !pending || askingAgain;
+      login.hidden = account || request.hidden;
+      destination.hidden = verify.hidden || !sentTo;
+      destination.textContent = destination.hidden ? '' : sentTo;
+      expiry.hidden = verify.hidden;
+      resend.hidden = verify.hidden;
     };
     resend.addEventListener('click', () => {
+      if (sentTo) {
+        submit('request', {email:sentTo});
+        return;
+      }
       askingAgain = true;
       present(() => update(current));
       request.elements.email.focus();
     });
-    async function submit(event, action, details) {
-      event.preventDefault();
+    async function submit(action, details) {
       if (busy || !isActive() || !client.token || panel.hidden) return;
       busy = true;
       const requestedTicket = ticket;
@@ -114,8 +140,18 @@
         if (!isActive() || ticket !== requestedTicket) return;
         askingAgain = false;
         present(() => {
-          feedback.textContent = result.verified ? '' : 'Revisa tu correo e ingresa el código de verificación.';
-          update(result.verified ? 'verified' : 'code_pending');
+          if (result.codeSent) {
+            sentTo = details.email.trim().toLowerCase();
+            verify.elements.code.value = '';
+          }
+          if (result.verified || result.codeSent) {
+            feedback.textContent = '';
+            update(result.verified ? 'verified' : 'code_pending');
+          } else {
+            feedback.textContent = account ? 'El seguimiento por correo aún no está disponible para esta solicitud.'
+              : 'Espera un momento antes de solicitar otro código.';
+            update(current);
+          }
         });
       } catch (error) {
         if (isActive() && ticket === requestedTicket) present(() => {
@@ -124,8 +160,14 @@
         });
       } finally { busy = false; }
     }
-    request.addEventListener('submit', event => submit(event, 'request', account ? {} : {email:request.elements.email.value}));
-    verify.addEventListener('submit', event => submit(event, 'verify', {code:verify.elements.code.value}));
+    request.addEventListener('submit', event => {
+      event.preventDefault();
+      return submit('request', account ? {} : {email:request.elements.email.value});
+    });
+    verify.addEventListener('submit', event => {
+      event.preventDefault();
+      return submit('verify', {code:verify.elements.code.value});
+    });
     return update;
   }
   function uuid(cryptoApi) {
@@ -324,8 +366,9 @@
     const tabStorage = doc.defaultView.sessionStorage;
     const loginNotice = root.querySelector('[data-support-login-return]');
     const continueAccount = loginNotice?.querySelector('[data-support-continue-account]');
+    const loginSource = new URLSearchParams(doc.defaultView.location.search).get('from');
     const returnedFromGuest = Boolean(ownerId && continueAccount &&
-      new URLSearchParams(doc.defaultView.location.search).get('from') === 'support-login' &&
+      ['support-login', 'support-followup-login'].includes(loginSource) &&
       /^[a-f0-9]{64}$/.test(tabStorage.getItem(TOKEN_KEY) || ''));
     // A guest capability proves access to a tab's history, not who signed in.
     // Retire it when entering an account so a later logout cannot reopen it.
@@ -338,10 +381,17 @@
       root.querySelector('[data-support-clear]').hidden = true;
     }
     let active = true;
-    const clearTranscript = () => root.querySelector('[data-support-messages]').replaceChildren();
+    const clearChat = () => {
+      root.querySelector('[data-support-messages]').replaceChildren();
+      const email = root.querySelector('[data-support-email]');
+      if (!email) return;
+      email.hidden = true;
+      email.querySelector?.('[data-support-email-destination]')?.replaceChildren();
+      for (const input of email.querySelectorAll?.('input') || []) input.value = '';
+    };
     doc.defaultView.addEventListener?.('pagehide', () => {
       active = false;
-      clearTranscript();
+      clearChat();
     });
     doc.defaultView.addEventListener?.('pageshow', event => {
       if (event.persisted) doc.defaultView.location.reload();
@@ -355,7 +405,7 @@
       if (active && (next?.user?.id || null) !== ownerId) {
         active = false;
         root.hidden = true;
-        clearTranscript();
+        clearChat();
         retireGuestConversation();
         draftHandoff?.clear();
         onTicket?.(null);
@@ -405,10 +455,15 @@
       return {refresh: () => client?.refresh()};
     }
     if (!returnedFromGuest) return openChat();
-
-    const form = root.querySelector('[data-support-form]');
-    const empty = root.querySelector('[data-support-empty]');
     loginNotice.hidden = false;
+    const form = root.querySelector('[data-support-form]');
+    if (loginSource === 'support-followup-login') {
+      continueAccount.hidden = true;
+      form.hidden = false;
+      return openChat();
+    }
+
+    const empty = root.querySelector('[data-support-empty]');
     form.hidden = true;
     if (empty) empty.hidden = true;
     let client;
