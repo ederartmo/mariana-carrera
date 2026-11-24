@@ -76,3 +76,11 @@ venue, map and date. The visitor read operation returned the reply in 2.511 s.
 One inference used 479 input and 45 output tokens (USD 0.000562 recorded).
 The job completed and the QA tenant was verified disabled afterwards. This run
 validates the compound turn only; it does not repeat the full conversation.
+
+## Conversational tools
+
+Enable `SUPPORT_AI_TOOL_CONVERSATION_ENABLED=true` only in a reviewed environment with the existing automatic, shadow and private reply settings. With the flag off, the chat keeps the existing rules and approved-text evaluator. The flag uses the same server-side Responses transport and the existing per-ticket claim, quota ledger and atomic publication.
+
+Each inference receives the current message and up to six recent, redacted visitor or assistant messages from the authorized ticket. Older entries are dropped first to stay within the existing conversational input bound. The model can ask a question, select a short approved reply, request a human handoff or call one of four public read-only functions. The server validates the call and renders the result using the existing catalog, checkout limits and approved sources. A tool result ends that turn without a second inference. Subsequent visitor messages can continue from the result in the chat. The existing decision record captures the tool or clarification source and reason.
+
+The migration `20261124010354_support_explicit_human_request.sql` expands immediate human handoff to natural requests such as «Quiero hablar con alguien». The implementation was tested with synthetic data and a simulated provider. Before enabling the feature, review data minimization and the limits in the target environment using synthetic conversations.
