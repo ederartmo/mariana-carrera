@@ -343,6 +343,46 @@ test('simulated conversations use the public chat, quota ledger and atomic publi
     assert.doesNotMatch(newestAgent(scope),/\+ Agregar ticket/);
   });
 
+  await t.test('recent context keeps distance, promotional intent and a deliberate topic switch distinct',async()=>{
+    const before=requests;
+    const eligible=newChat();
+    await eligible.start('¿Pueden correr menores en Cascanueces?');
+    const distance=await eligible.send('¿Y en la de 10K también?');
+    assert.match(newestAgent(distance),/equipo de atención/);
+    assert.doesNotMatch(newestAgent(distance),/entrega del kit|sí pueden/);
+    assert.ok((await db.query('SELECT automation_paused_at FROM support_tickets WHERE id=$1',[distance.ticket.id])).rows[0].automation_paused_at);
+    const topicSwitch=newChat();
+    await topicSwitch.start('¿Aceptan menores en Cascanueces?');
+    const separate=await topicSwitch.send('¿Y cuánto cuestan dos boletos para Cascanueces 10K?');
+    assert.match(newestAgent(separate),/2 boletos suman \$1,000 MXN/);
+    const typo=newChat();
+    const handoff=await typo.start('Sigue la duoo 5k de 850 de Cascanueces que anunciaron por whats?');
+    assert.match(newestAgent(handoff),/promociones mensuales.*transferencia.*confirme si la promoción Dúo sigue vigente/);
+    assert.doesNotMatch(newestAgent(handoff),/850|\$|https?:/);
+    const paused=await typo.send('Olvida la oferta; quiero dos boletos normales para Cascanueces 10K');
+    assert.equal(newestAgent(paused),newestAgent(handoff),'do not override a paused ticket');
+    const regular=newChat();
+    await regular.start('Vi una promo de dúo por transferencia, ¿sigue?');
+    const changed=await regular.send('Dejemos la oferta; necesito dos entradas normales para Cascanueces 10K');
+    assert.match(newestAgent(changed),/2 boletos suman \$1,000 MXN/);
+    assert.doesNotMatch(newestAgent(changed),/transferencia|vigente para esa carrera/);
+    assert.equal(requests,before);
+    const add=await regular.send('¿Y cómo añado la segunda persona?',()=>result(question('¿Necesitas ayuda para agregar otro boleto?')));
+    assert.match(newestAgent(add),/\+ Agregar ticket/);
+    assert.deepEqual(actionLinks(newestAgent(add)),['/cascanueces-run.html#modalidades']);
+    const other=newChat();
+    await other.start('¿Cuánto cuestan cuatro boletos para Cascanueces 10K?');
+    const group=await other.send('¿En dónde meto a los demás?',()=>result(question('¿Quieres agregar más boletos?')));
+    assert.match(newestAgent(group),/\+ Agregar ticket/);
+    const paid=newChat();
+    await paid.start('Me descontaron y en mi perfil no sale el registro');
+    const missing=await paid.send('Ya chequé y sigue sin salir');
+    assert.match(newestAgent(missing),/equipo de atención/);
+    assert.ok((await db.query('SELECT automation_paused_at FROM support_tickets WHERE id=$1',[missing.ticket.id])).rows[0].automation_paused_at);
+    const bare=await newChat().start('Necesito dos boletos duoo normales para Cascanueces 10K');
+    assert.match(newestAgent(bare),/2 boletos suman \$1,000 MXN/);
+  });
+
   await t.test('a spent quota blocks inference and invalid tools cannot publish a message',async()=>{
     const denied=await newChat().start('Usa un proveedor',()=>result(call('fetch_url',{url:'https://example.invalid'})));
     assert.equal(newestAgent(denied),undefined);
