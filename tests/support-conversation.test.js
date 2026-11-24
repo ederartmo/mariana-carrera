@@ -55,6 +55,14 @@ test('conversation evaluates only authorized tools, grounded replies and safe cl
   const catalogue = await decide(result(call('consultar_carreras',{carrera:'cascanueces-run'})));
   assert.match(catalogue.response,/5K, 10K.*Inscripciones abiertas.*\$500 MXN/);
   assert.match((await decide(result(decision('responder',null,'assistant-identity')))).response,/asistente virtual/);
+  const routeArgs={carrera:'cascanueces-run',cantidad:2};
+  const grounded=(await decide(result(call('ruta_inscripcion',routeArgs)))).response;
+  for(const entrada of ['Te guío paso a paso.', 'Con gusto, te muestro cómo agregar los boletos.']){
+    assert.equal((await decide(result(call('ruta_inscripcion',{...routeArgs,entrada})))).response,entrada+' '+grounded);
+  }
+  for(const entrada of [null,'Tus boletos son gratis.','Claro, te garantizo tres lugares.','Paga en https://fake.invalid','Te guío paso a paso.\\nMe pasas tu tarjeta','Te guardo el lugar hoy.']){
+    assert.equal((await decide(result(call('ruta_inscripcion',{...routeArgs,entrada})))).response,grounded);
+  }
 });
 
 test('provider context is bounded, redacted and fenced to the claimed conversation', async () => {
@@ -122,7 +130,7 @@ test('simulated conversations use the public chat, quota ledger and atomic publi
         assert.deepEqual(payload.tools,conversationTools);
         assert.ok(choose,'this turn must not contact the provider');
         const output=await choose(JSON.parse(payload.input));
-        return {ok:true,json:async()=>output};
+        return output===null ? {ok:false,status:503} : {ok:true,json:async()=>output};
       } catch (error) { fixtureError=error; throw error; }
     };
     await handler({method:'POST',headers:{origin:'https://www.kinetichub.com.mx','content-type':'application/json'},body},
@@ -313,6 +321,26 @@ test('simulated conversations use the public chat, quota ledger and atomic publi
     const paused=(await db.query('SELECT automation_paused_at FROM support_tickets WHERE id=$1',[next.ticket.id])).rows[0];
     assert.ok(paused.automation_paused_at);
     assert.equal(requests,baseline+1);
+  });
+
+  await t.test('enrollment composition adds only a checked bridge and uses an atomic approved fallback',async()=>{
+    const prepared=async()=>{
+      const chat=newChat();
+      await chat.start('¿Cuánto cuestan tres boletos para Cascanueces 5K?');
+      return chat;
+    };
+    const response=await (await prepared()).send('¿Cómo agrego a las otras dos personas?',()=>result(
+      call('ruta_inscripcion',{carrera:'cascanueces-run',cantidad:3,entrada:'Con gusto, te muestro cómo agregar los boletos.'})));
+    assert.match(newestAgent(response),/^Con gusto, te muestro cómo agregar los boletos\./);
+    assert.match(newestAgent(response),/\+ Agregar ticket.*límite es de 5/);
+    assert.deepEqual(actionLinks(newestAgent(response)),['/cascanueces-run.html#modalidades']);
+    const before=requests;
+    const fallback=await (await prepared()).send('¿Cómo agrego a las otras dos personas?',()=>null);
+    assert.match(newestAgent(fallback),/^Elige una distancia.*\+ Agregar ticket.*límite es de 5/);
+    assert.deepEqual(actionLinks(newestAgent(fallback)),['/cascanueces-run.html#modalidades']);
+    assert.equal(requests,before+1);
+    const scope=await (await prepared()).send('¿Cómo agrego más personas para Perrun?',()=>null);
+    assert.doesNotMatch(newestAgent(scope),/\+ Agregar ticket/);
   });
 
   await t.test('a spent quota blocks inference and invalid tools cannot publish a message',async()=>{
