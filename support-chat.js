@@ -8,7 +8,7 @@
   const PENDING_KEY = 'kinetichub-support-pending';
   const EMAIL_ENDPOINT = '/api/data?action=support-visitor-email';
   const CATEGORIES = ['general', 'events', 'registration', 'other'];
-  const accountLinks = /(https:\/\/www\.kinetichub\.com\.mx\/(?:auth\.html\?mode=login|perfil\.html|atencion\.html))(?=$|[\s.,;!?])/g;
+  const assistantLinks = /(https:\/\/www\.kinetichub\.com\.mx\/(?:auth\.html\?mode=login|perfil\.html|atencion\.html|(?:axolote-night-run|cascanueces-run|perrun-2027)\.html#modalidades))(?=$|[\s.,;!?])/g;
   const loginReturn = '/atencion.html?from=support-login#premium-conversation';
   const followupReturn = '/atencion.html?from=support-followup-login#premium-conversation';
   const accountActions = new Map([
@@ -16,11 +16,15 @@
     ['https://www.kinetichub.com.mx/perfil.html', ['Mis carreras', '/perfil.html']],
     ['https://www.kinetichub.com.mx/atencion.html', ['Atención', '/atencion.html']],
   ]);
+  for (const slug of ['axolote-night-run','cascanueces-run','perrun-2027']) {
+    const path = '/' + slug + '.html#modalidades';
+    accountActions.set('https://www.kinetichub.com.mx' + path, ['Comprar boletos', path]);
+  }
 
   function renderAssistantReply(doc, body) {
     function textBlock(tag, content) {
       const block = doc.createElement(tag);
-      for (const part of content.split(accountLinks)) {
+      for (const part of content.split(assistantLinks)) {
         const action = accountActions.get(part);
         if (action) {
           const link = doc.createElement('a');
@@ -237,10 +241,10 @@
       } finally { pending = false; }
     };
   }
-  function scheduleRefresh({ doc, tick, intervalMs }) {
+  function scheduleRefresh({ doc, tick, intervalMs, allowHidden = () => false }) {
     const win = doc.defaultView;
     if (!win?.setInterval) return () => {};
-    const wake = () => { if (!doc.hidden) void tick(); };
+    const wake = () => { if (!doc.hidden || allowHidden()) void tick(); };
     const timer = win.setInterval(wake, intervalMs);
     doc.addEventListener('visibilitychange', wake);
     win.addEventListener('focus', wake);
@@ -358,7 +362,7 @@
     return {
       list: (filters = {}, cursor = null) => {
         const query = new URLSearchParams();
-        for (const key of ['status', 'category', 'assignee', 'order']) if (filters[key] !== undefined) query.set(key, filters[key]);
+        for (const key of ['status', 'category', 'assignee', 'order', 'monitor']) if (filters[key] !== undefined) query.set(key, filters[key]);
         if (cursor) { query.set('before', cursor.createdAt); query.set('beforeId', cursor.id); if (cursor.priority !== undefined) query.set('beforePriority', String(cursor.priority)); }
         return call(query.size ? endpoint + '?' + query : endpoint);
       },
@@ -594,8 +598,9 @@
         const oldHandoff = item.provenance === 'ai_generated' &&
           item.body === 'No tengo información aprobada suficiente para responder con confianza. El equipo de soporte revisará tu solicitud.';
         const body = oldHandoff ? 'Para confirmarte ese detalle, voy a pasar tu consulta a nuestro equipo de atención.' : item.body || '';
-        const text = item.provenance === 'ai_generated' ? renderAssistantReply(doc, body) : doc.createElement('p');
-        if (item.provenance !== 'ai_generated') text.textContent = body;
+        const isAssistant = item.author === 'agent' && ['ai_generated','automatic_ack'].includes(item.provenance);
+        const text = isAssistant ? renderAssistantReply(doc, body) : doc.createElement('p');
+        if (!isAssistant) text.textContent = body;
         const time = doc.createElement('time'); const date = new Date(item.created_at); time.textContent = item.created_at && Number.isFinite(date.getTime()) ? new Intl.DateTimeFormat('es-MX', { dateStyle: 'short', timeStyle: 'short' }).format(date) : ''; if (item.created_at) time.dateTime = item.created_at;
         article.append(author, text, time); fragment.append(article);
       }

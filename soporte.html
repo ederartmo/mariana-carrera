@@ -17,6 +17,14 @@
       <div class="admin-card-header"><div><h2 id="supportAdminTitle">Atención y solicitudes</h2><p>Conversaciones de visitantes y respuestas manuales del equipo.</p></div><button type="button" class="btn-secondary" data-ticket-refresh>Actualizar solicitudes</button></div>
 
       <p class="support-admin-notice" data-admin-support-notice role="status" aria-live="polite">Cargando solicitudes…</p>
+      <div class="support-monitor" data-support-monitor>
+        <span data-monitor-status>Monitoreo en pausa</span>
+        <div class="support-monitor-actions">
+          <button type="button" data-monitor-sound aria-pressed="false">Activar sonido</button>
+          <button type="button" data-monitor-desktop aria-pressed="false">Activar notificaciones</button>
+        </div>
+        <div class="support-monitor-counts" data-monitor-counts></div>
+      </div>
       <div class="support-admin-grid"><div>
         <fieldset class="support-inbox-filters" data-ticket-filters>
           <legend>Filtrar solicitudes</legend>
