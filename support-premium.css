@@ -59,7 +59,7 @@
 .premium-email-followup[data-state=verified] .premium-email-state{color:#075831}
 .premium-support .support-message time{font-size:12px;color:var(--muted);display:block;text-align:right}
 .premium-ticket{display:flex;align-items:center;gap:9px;background:#fff3d9;border:1px solid #f0e6ca;border-radius:16px;padding:12px}
-.premium-ticket-link{margin-top:18px;background:#f6f9f7;border-color:var(--line);text-decoration:none;color:var(--ink)}
+.premium-ticket-link{margin-block:18px 14px;background:#f6f9f7;border-color:var(--line);text-decoration:none;color:var(--ink)}
 .premium-ticket strong,.premium-ticket-link>span:nth-child(2){flex:1}
 .premium-ticket small{display:block;color:var(--muted)}
 .premium-status{margin-left:auto;border-radius:999px;padding:6px 9px;background:#e3f5e9;color:#075831;font-size:13px;font-weight:800}

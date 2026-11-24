@@ -13,7 +13,13 @@
     };
   }
 
-  if (typeof module !== 'undefined') { module.exports = { createVisiblePoll, POLL_INTERVAL_MS }; return; }
+  function publicTicketHeading(ticket) {
+    const id = ticket?.id;
+    return typeof id === 'string' && /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(id)
+      ? 'Mi solicitud: #' + id.slice(0, 8).toUpperCase()
+      : 'Mi solicitud';
+  }
+  if (typeof module !== 'undefined') { module.exports = { createVisiblePoll, POLL_INTERVAL_MS, publicTicketHeading }; return; }
 
   const icons = {
     chat: '<path d="M20 15a3 3 0 0 1-3 3H9l-5 3V6a3 3 0 0 1 3-3h10a3 3 0 0 1 3 3z"/>',
@@ -66,7 +72,7 @@
           <button type="button" class="support-reply-action" data-support-resume-open>Abrir conversación de invitado</button>
           <a href="/atencion.html?chat=account#premium-conversation" class="premium-text-button" data-support-resume-account hidden>Abrir el chat de mi cuenta</a>
         </div>
-        ${expanded ? '' : `<a class="premium-ticket premium-ticket-link" href="/atencion.html" data-support-draft-link data-premium-ticket hidden>${icon('ticket')}<span><strong>Mi solicitud</strong><small data-premium-category></small></span><span class="premium-status" data-premium-state></span><span aria-hidden="true">›</span></a>`}
+        ${expanded ? '' : `<a class="premium-ticket premium-ticket-link" href="/atencion.html" data-support-draft-link data-premium-ticket hidden>${icon('ticket')}<span><strong data-premium-ticket-heading>Mi solicitud</strong><small data-premium-category></small></span><span class="premium-status" data-premium-state></span><span aria-hidden="true">›</span></a>`}
         <details class="premium-previous" data-support-previous hidden><summary>Conversaciones anteriores</summary></details>
         <div class="support-transcript" data-support-messages role="log" aria-label="Historial de mensajes"></div>
       </div>
@@ -119,7 +125,7 @@
       <h2>${icon('help')} Detalle de tu solicitud</h2>
       <p data-premium-no-ticket>Aún no tienes una solicitud en esta conversación.</p>
       <div data-premium-ticket hidden>
-        <div class="premium-ticket"><strong>Mi solicitud</strong><span class="premium-status" data-premium-state></span></div>
+        <div class="premium-ticket"><strong data-premium-ticket-heading>Mi solicitud</strong><span class="premium-status" data-premium-state></span></div>
         <dl class="premium-fields"><div><dt>Categoría</dt><dd data-premium-category></dd></div></dl>
       </div>
       <div class="premium-status-guide" data-premium-status-guide hidden><h3>¿Qué significa tu estado?</h3>
@@ -156,6 +162,7 @@
             const guide = host.querySelector('[data-premium-status-guide]');
             const category = { general: 'Consulta general', events: 'Eventos', registration: 'Inscripciones', other: 'Otro tema' }[ticket?.category];
             card.hidden = !ticket;
+            card.querySelector('[data-premium-ticket-heading]').textContent = publicTicketHeading(ticket);
             if (blank) blank.hidden = Boolean(ticket);
             host.querySelector('[data-premium-category]').textContent = category || 'Consulta de soporte';
             const badge = card.querySelector('[data-premium-state]');
