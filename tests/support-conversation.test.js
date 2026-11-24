@@ -187,6 +187,33 @@ test('simulated conversations use the public chat, quota ledger and atomic publi
     assert.equal(answered.followup,undefined);
   });
 
+  await t.test('Dúo transfer follow-up asks once, never quotes, and parks the exact confirmation for a person',async()=>{
+    const before=requests;
+    const chat=newChat();
+    const first=await chat.start('Vi una promoción Dúo 5K de 850 pesos en WhatsApp, ¿sigue vigente?');
+    assert.match(newestAgent(first),/¿Para qué carrera viste la promoción Dúo\?/);
+    const followup=await chat.send('Para la de Cascanueces 5K');
+    const reply=newestAgent(followup);
+    assert.match(reply,/mensuales.*transferencia.*no se aplican en el checkout web/);
+    assert.match(reply,/confirme si la promoción Dúo sigue vigente para esa carrera.*canal oficial/);
+    assert.doesNotMatch(reply,/850|1,000|500|https?:|#modalidades/);
+    assert.deepEqual(actionLinks(reply),[]);
+    assert.equal(requests,before);
+    const ticket=(await db.query('SELECT automation_paused_at FROM support_tickets WHERE id=$1',[followup.ticket.id])).rows[0];
+    assert.ok(ticket.automation_paused_at);
+    const trace=(await db.query(`SELECT p.reason,p.decision FROM support_ai_proposals p
+      JOIN support_ai_jobs j ON j.id=p.job_id WHERE j.ticket_id=$1 ORDER BY p.created_at DESC LIMIT 1`,[followup.ticket.id])).rows[0];
+    assert.deepEqual(trace,{reason:'confirm_duo_transfer_validity',decision:'escalate'});
+    const direct=await newChat().start('¿Sigue la promo Dúo de Cascanueces por transferencia?');
+    assert.equal(newestAgent(direct),reply);
+    assert.equal(requests,before);
+    const switched=newChat();
+    await switched.start('¿Sigue vigente la promo Dúo por WhatsApp?');
+    const regular=await switched.send('Mejor tres boletos normales para Cascanueces 5K',()=>
+      result(call('cotizar_inscripcion',{carrera:'cascanueces-run',cantidad:3,distancia:'5K'})));
+    assert.match(newestAgent(regular),/3 boletos suman \$1,500 MXN/);
+  });
+
   await t.test('C. directs private registration questions to existing authenticated self-service',async()=>{
     const answer=await newChat().start('No encuentro mi inscripción',()=>result(call('informacion_publica',{fuente:'registration-self-service'})));
     assert.match(newestAgent(answer),/Inicia sesión.*Mis carreras/);
