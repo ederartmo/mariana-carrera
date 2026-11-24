@@ -120,7 +120,7 @@ test('simulated conversations use the public chat, quota ledger and atomic publi
     return {data:rows[0].data};
   };
   let requests=0;
-  const invoke=async (body, choose, override=env)=>{
+  const invoke=async (body, choose, override=env, at=openDate)=>{
     const res={setHeader(){},status(code){this.code=code;return this;},json(value){this.data=value;return this;}};
     let fixtureError;
     const autoFetch=async(url,options)=>{
@@ -137,17 +137,17 @@ test('simulated conversations use the public chat, quota ledger and atomic publi
       } catch (error) { fixtureError=error; throw error; }
     };
     await handler({method:'POST',headers:{origin:'https://www.kinetichub.com.mx','content-type':'application/json'},body},
-      res,{env:override,rpc,rateLimit:async()=>({allowed:true}),now:()=>openDate,autoFetch});
+      res,{env:override,rpc,rateLimit:async()=>({allowed:true}),now:()=>at,autoFetch});
     if(fixtureError)throw fixtureError;
     assert.equal(res.code,200);
     return res.data;
   };
-  const newChat=()=> {
+  const newChat=(at=openDate)=> {
     const token=randomUUID().replaceAll('-','').repeat(2);
     return {
-      start:(body,choose,override)=>invoke({action:'start',body,token,requestId:randomUUID(),category:'general',website:''},choose,override),
-      send:(body,choose)=>invoke({action:'send',body,token,requestId:randomUUID()},choose),
-      read:()=>invoke({action:'read',token}),
+      start:(body,choose,override)=>invoke({action:'start',body,token,requestId:randomUUID(),category:'general',website:''},choose,override,at),
+      send:(body,choose)=>invoke({action:'send',body,token,requestId:randomUUID()},choose,env,at),
+      read:()=>invoke({action:'read',token},undefined,env,at),
     };
   };
 
@@ -199,31 +199,56 @@ test('simulated conversations use the public chat, quota ledger and atomic publi
     assert.equal(answered.followup,undefined);
   });
 
-  await t.test('Dúo transfer follow-up asks once, never quotes, and parks the exact confirmation for a person',async()=>{
+  await t.test('verified Dúo starts with its real route and handles follow-up without pausing other help',async()=>{
     const before=requests;
     const chat=newChat();
-    const first=await chat.start('Vi una promoción Dúo 5K de 850 pesos en WhatsApp, ¿sigue vigente?');
-    assert.match(newestAgent(first),/¿Para qué carrera viste la promoción Dúo\?/);
-    const followup=await chat.send('Para la de Cascanueces 5K');
-    const reply=newestAgent(followup);
-    assert.match(reply,/mensuales.*transferencia.*no se aplican en el checkout web/);
-    assert.match(reply,/confirme si la promoción Dúo sigue vigente para esa carrera.*canal oficial/);
-    assert.doesNotMatch(reply,/850|1,000|500|https?:|#modalidades/);
-    assert.deepEqual(actionLinks(reply),[]);
-    assert.equal(requests,before);
-    const ticket=(await db.query('SELECT automation_paused_at FROM support_tickets WHERE id=$1',[followup.ticket.id])).rows[0];
-    assert.ok(ticket.automation_paused_at);
-    const trace=(await db.query(`SELECT p.reason,p.decision FROM support_ai_proposals p
-      JOIN support_ai_jobs j ON j.id=p.job_id WHERE j.ticket_id=$1 ORDER BY p.created_at DESC LIMIT 1`,[followup.ticket.id])).rows[0];
-    assert.deepEqual(trace,{reason:'confirm_duo_transfer_validity',decision:'escalate'});
-    const direct=await newChat().start('¿Sigue la promo Dúo de Cascanueces por transferencia?');
-    assert.equal(newestAgent(direct),reply);
-    assert.equal(requests,before);
-    const switched=newChat();
-    await switched.start('¿Sigue vigente la promo Dúo por WhatsApp?');
-    const regular=await switched.send('Mejor tres boletos normales para Cascanueces 5K',()=>
-      result(call('cotizar_inscripcion',{carrera:'cascanueces-run',cantidad:3,distancia:'5K'})));
-    assert.match(newestAgent(regular),/3 boletos suman \$1,500 MXN/);
+    const first=await chat.start('hola como compro el duo 5k');
+    const once=newestAgent(first);
+    assert.match(once,/Cascanueces.*\$850 MXN por 2 inscripciones.*solo por transferencia.*domingo 29/);
+    assert.match(once,/https:\/\/wa\.me\/525530790944$/);
+    assert.doesNotMatch(once,/#modalidades|23:59|CLABE|¿Para qué carrera/);
+    const clarified=await chat.send('la promo duo 5k');
+    assert.match(newestAgent(clarified),/\$850/);
+    const race=await chat.send('cascanueces');
+    assert.match(newestAgent(race),/Dúo 5K de Cascanueces/);
+    const follow=await chat.send('puedo comprar por aqui esa promo? acabo de preguntar hace rato si sigue vigente');
+    assert.match(newestAgent(follow),/^No,.*no se compra desde este chat.*solo por transferencia/);
+    assert.match(newestAgent(follow),/domingo 29.*https:\/\/wa\.me\/525530790944/);
+    const ticket=(await db.query('SELECT automation_paused_at FROM support_tickets WHERE id=$1',[follow.ticket.id])).rows[0];
+    assert.equal(ticket.automation_paused_at,null);
+    const turn=await chat.send('¿Me pasas la cuenta para depositar?');
+    assert.match(newestAgent(turn),/WhatsApp oficial/);
+    assert.doesNotMatch(newestAgent(turn).replace('https://wa.me/525530790944',''),/CLABE|\b\d{12,}\b/);
+    assert.equal(requests,before,'known factual promotional replies require no model');
+    const switchTopic=await chat.send('Olvida esa promo, quiero dos boletos normales para Cascanueces 10K');
+    assert.match(newestAgent(switchTopic),/2 boletos suman \$1,000 MXN/);
+    assert.doesNotMatch(newestAgent(switchTopic),/WhatsApp|\$850/);
+  });
+
+  await t.test('Dúo respects CDMX campaign dates, event scope and human ownership',async()=>{
+    const stale=newChat(Date.parse('2026-11-30T06:00:00Z'));
+    const expired=await stale.start('Me interesa la promo Dúo 5K');
+    assert.match(newestAgent(expired),/tenía vigencia hasta el domingo 29.*No tengo confirmada una extensión/);
+    assert.doesNotMatch(newestAgent(expired),/\$850|WhatsApp|https?:|checkout/);
+    const lastDay=newChat(Date.parse('2026-11-30T05:30:00Z'));
+    const current=await lastDay.start('Sigue la duoo 5k de 850 que anunciaron por whats?');
+    assert.match(newestAgent(current),/domingo 29.*https:\/\/wa\.me/);
+    assert.doesNotMatch(newestAgent(current),/23:59|17:30/);
+    const wrong=await newChat().start('¿Cómo compro la promo Dúo 5K para Perrun?');
+    assert.match(newestAgent(wrong),/No tengo confirmada una promoción Dúo/);
+    assert.doesNotMatch(newestAgent(wrong),/\$850|WhatsApp/);
+    assert.equal((await db.query('SELECT automation_paused_at FROM support_tickets WHERE id=$1',[wrong.ticket.id])).rows[0].automation_paused_at,null);
+    const oldContext=await newChat().start('No estoy seguro de la promoción Dúo 5K para otra carrera');
+    assert.match(newestAgent(oldContext),/No tengo confirmada una promoción Dúo/);
+    assert.doesNotMatch(newestAgent(oldContext),/850|WhatsApp|#modalidades/);
+    const wrongDistance=await newChat().start('¿Hay promo Dúo de Cascanueces para 10K?');
+    assert.match(newestAgent(wrongDistance),/No tengo confirmada una promoción Dúo/);
+    assert.doesNotMatch(newestAgent(wrongDistance),/\$850|WhatsApp/);
+    const human=newChat();
+    await human.start('Quiero hablar con alguien porque necesito ayuda');
+    const paused=await human.send('¿Cómo compro el Dúo 5K?');
+    assert.doesNotMatch(newestAgent(paused),/850|WhatsApp/);
+    assert.ok((await db.query('SELECT automation_paused_at FROM support_tickets WHERE id=$1',[paused.ticket.id])).rows[0].automation_paused_at);
   });
 
   await t.test('Cascanueces minors: keeps the race across turns, confirms the waiver, and never assumes age eligibility',async()=>{
@@ -367,10 +392,9 @@ test('simulated conversations use the public chat, quota ledger and atomic publi
     assert.match(newestAgent(separate),/2 boletos suman \$1,000 MXN/);
     const typo=newChat();
     const handoff=await typo.start('Sigue la duoo 5k de 850 de Cascanueces que anunciaron por whats?');
-    assert.match(newestAgent(handoff),/promociones mensuales.*transferencia.*confirme si la promoción Dúo sigue vigente/);
-    assert.doesNotMatch(newestAgent(handoff),/850|\$|https?:/);
-    const paused=await typo.send('Olvida la oferta; quiero dos boletos normales para Cascanueces 10K');
-    assert.equal(newestAgent(paused),newestAgent(handoff),'do not override a paused ticket');
+    assert.match(newestAgent(handoff),/\$850 MXN por 2 inscripciones.*transferencia/);
+    const regularPrice=await typo.send('Olvida la oferta; quiero dos boletos normales para Cascanueces 10K');
+    assert.match(newestAgent(regularPrice),/2 boletos suman \$1,000 MXN/);
     const regular=newChat();
     await regular.start('Vi una promo de dúo por transferencia, ¿sigue?');
     const changed=await regular.send('Dejemos la oferta; necesito dos entradas normales para Cascanueces 10K');

@@ -56,13 +56,15 @@
         <div class="premium-divider"><span>Historial</span></div>
         <div class="premium-login-return" data-support-login-return hidden>
           <p role="status">Tu conversación anterior quedó guardada, pero no está vinculada a esta cuenta</p>
-          <p>El historial de invitado queda separado. Si recibiste un aviso del equipo por correo, puedes cerrar sesión y abrir su enlace privado para volver al chat de invitado.</p>
+          <p>El historial de invitado queda separado. Si verificaste tu correo en ese chat, el aviso de respuesta incluirá un enlace privado a la misma solicitud.</p>
           <button class="support-reply-action" type="button" data-support-continue-account>Continuar con mi cuenta</button>
         </div>
         <p class="premium-empty" data-support-empty hidden></p>
+        <p class="premium-followup" data-support-guest-mode role="status" hidden>Estás viendo una solicitud de invitado, separada de tu cuenta. <a href="/atencion.html?chat=account#premium-conversation">Volver al chat de mi cuenta</a></p>
         <div class="premium-followup" data-support-resume hidden>
           <p data-support-resume-status role="status"></p>
           <button type="button" class="support-reply-action" data-support-resume-open>Abrir conversación de invitado</button>
+          <a href="/atencion.html?chat=account#premium-conversation" class="premium-text-button" data-support-resume-account hidden>Abrir el chat de mi cuenta</a>
         </div>
         ${expanded ? '' : `<a class="premium-ticket premium-ticket-link" href="/atencion.html" data-support-draft-link data-premium-ticket hidden>${icon('ticket')}<span><strong>Mi solicitud</strong><small data-premium-category></small></span><span class="premium-status" data-premium-state></span><span aria-hidden="true">›</span></a>`}
         <details class="premium-previous" data-support-previous hidden><summary>Conversaciones anteriores</summary></details>
@@ -76,7 +78,7 @@
           <div id="support-email-fields" data-support-email-fields>
             <p data-support-email-title>Nuestro equipo te ayudará con esta consulta.</p>
             <form data-support-email-request>
-              <label data-support-email-address>¿A qué correo podemos enviarte la respuesta? <input type="email" name="email" maxlength="254" autocomplete="email" required></label>
+              <label data-support-email-address>¿A qué correo te avisamos cuando recibas respuesta? <input type="email" name="email" maxlength="254" autocomplete="email" required></label>
               <button type="submit" class="support-reply-action" data-support-email-continue>Continuar con mi correo</button>
             </form>
             <p data-support-email-destination hidden></p>
@@ -89,7 +91,7 @@
               <button type="button" class="premium-text-button" data-support-email-change hidden>Cambiar correo</button>
               <button type="button" class="premium-text-button" data-support-email-back hidden>Volver al código</button>
               <button type="button" class="premium-text-button" data-support-email-resend hidden>Reenviar código</button>
-              <a class="premium-text-button" data-support-email-login>Ya tengo cuenta · Iniciar sesión</a>
+              <a class="premium-text-button" data-support-email-login>Abrir un chat separado con mi cuenta</a>
             </div>
             <p data-support-email-status role="status"></p>
           </div>

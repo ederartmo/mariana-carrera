@@ -233,7 +233,7 @@ test('six-digit verification, explicit human handoff and private resumption pres
   }
 });
 
-test('email link is scrubbed, needs a click, and never redeems under an authenticated account', async () => {
+test('private email link explicitly restores only guest mode, with or without a signed-in account', async () => {
   const job = randomUUID(), proof = 'a'.repeat(64), restored = 'b'.repeat(64);
   const script = readFileSync('support-chat.js','utf8');
   for (const account of [false,true]) {
@@ -252,28 +252,40 @@ test('email link is scrubbed, needs a click, and never redeems under an authenti
     vm.runInNewContext(script,{window,URL,URLSearchParams,crypto:globalThis.crypto});
     assert.equal(window.location.hash,'');
     const doc = {defaultView:window,querySelector:node,createDocumentFragment:()=>node('fragment')};
-    const session = account ? {user:{id:'account'},access_token:'fixture'} : null;
-    await window.KineticHubSupport.connectPublicSupportChat({document:doc,
-      authClient:{auth:{getSession:async()=>({data:{session}}),onAuthStateChange(){}}},
+    let session = account ? {user:{id:'account'},access_token:'fixture'} : null;
+    let changeAuth;
+    window.location.reload = () => {};
+    const connect = () => window.KineticHubSupport.connectPublicSupportChat({document:doc,
+      authClient:{auth:{getSession:async()=>({data:{session}}),onAuthStateChange(fn){changeAuth=fn;}}},
       fetch:async(path,opts)=>{
         const body = JSON.parse(opts.body);
         calls.push({path,body,authorization:opts.headers.Authorization});
         return {ok:true,json:async()=>body.action==='resume'?{ok:true,token:restored}:{ok:true,messages:[]}};
       }});
+    await connect();
     const button = node('[data-support-resume-open]');
+    assert.equal(calls.length,0);
+    await button.click();
+    await button.click();
+    await new Promise(setImmediate);
+    assert.deepEqual(calls.map(c=>[c.body.action,c.authorization]),[['resume',undefined],['read',undefined]]);
+    assert.deepEqual(calls[0].body,{action:'resume',job,proof});
+    assert.equal(calls[1].body.token,restored);
+    assert.equal(values.get('kinetichub-support-token'),account ? undefined : restored);
+    assert.equal(node('[data-support-guest-mode]').hidden,!account);
     if (account) {
-      await new Promise(setImmediate);
-      assert.equal(button.hidden,true);
-      assert.equal(button.click,undefined);
-      assert.deepEqual(calls.map(c=>[c.body.action,c.authorization]),[['read','Bearer fixture']]);
-    } else {
-      assert.equal(calls.length,0);
+      assert.equal(JSON.parse(values.get('kinetichub-support-verified-guest-v1')).ownerId,'account');
+      await connect();
+      assert.equal(calls.length,2,'reload must wait before displaying guest history');
       await button.click();
       await new Promise(setImmediate);
-      assert.deepEqual(calls.map(c=>c.body.action),['resume','read']);
-      assert.deepEqual(calls[0].body,{action:'resume',job,proof});
-      assert.equal(calls[1].body.token,restored);
-      assert.equal(values.get('kinetichub-support-token'),restored);
+      assert.deepEqual(calls.map(c=>[c.body.action,c.authorization]),[['resume',undefined],['read',undefined],['read',undefined]]);
+      session = {user:{id:'other'},access_token:'different'};
+      changeAuth('SIGNED_IN',session);
+      assert.equal(values.get('kinetichub-support-verified-guest-v1'),undefined);
+      assert.equal(node('[data-support-guest-mode]').hidden,true);
+      await button.click();
+      assert.equal(calls.length,3);
     }
   }
 });
@@ -283,20 +295,23 @@ test('guest follow-up offers both paths and keeps its verified email across mess
   const nodes = new Map(), actions = [];
   const node = key => {
     if (!nodes.has(key)) nodes.set(key,{hidden:true,value:'',textContent:'',dataset:{},querySelector:node,
-      addEventListener(type, listener){this[type]=listener;},setAttribute(){},replaceChildren(){},append(){}});
+      addEventListener(type, listener){this[type]=listener;},
+      attributes:new Map(),setAttribute(name,value){this.attributes.set(name,value);},
+      removeAttribute(name){this.attributes.delete(name);},replaceChildren(){},append(){}});
     return nodes.get(key);
   };
   const request = node('[data-support-email-request]');
   const verify = node('[data-support-email-verify]');
   request.elements = {email:{value:'',focus(){}}};
   verify.elements = {code:{value:''}};
-  let followup = 'eligible', acceptCode = false, sentCode = false;
+  let followup = 'eligible', acceptCode = false, sentCode = false, failedSend = false;
   node('[name="category"]').value = 'general';
   const client = mountPublicSupportChat({root:{querySelector:node},document:{createDocumentFragment:()=>node('fragment')},
     storage:{getItem:key=>key===TOKEN_KEY?'a'.repeat(64):null,setItem(){},removeItem(){}},
     fetch:async(path,opts)=>{
       const input = JSON.parse(opts.body);
       actions.push([path,input.action]);
+      if (input.action === 'request' && failedSend) return {ok:false,json:async()=>({code:'send_failed',error:'No pudimos enviar el código.'})};
       if (input.action === 'verify' && !acceptCode) return {ok:false,json:async()=>({error:'El código es incorrecto.'})};
       return {ok:true,json:async()=> ['read','send'].includes(input.action)
         ? {ok:true,ticket:{id:'first',status:'pending'},messages:[],followup}
@@ -315,6 +330,14 @@ test('guest follow-up offers both paths and keeps its verified email across mess
   await request.submit(event);
   assert.equal(verify.hidden,true);
   assert.equal(node('[data-support-email-destination]').hidden,true);
+  failedSend = true;
+  await request.submit(event);
+  followup = 'code_pending'; // The DB challenge is stored before the provider reports delivery failure.
+  await client.refresh();
+  assert.equal(verify.hidden,true);
+  assert.equal(request.hidden,false);
+  assert.match(node('[data-support-email-status]').textContent,/No pudimos enviar/);
+  failedSend = false;
   sentCode = true;
   await request.submit(event);
   followup = 'code_pending';
@@ -338,19 +361,30 @@ test('guest follow-up offers both paths and keeps its verified email across mess
   assert.equal(panel.hidden,false);
   assert.equal(node('[data-support-email-state]').textContent,'Pendiente de verificar');
   assert.match(node('[data-support-email-status]').textContent,/código es incorrecto/);
-  node('[name="supportMessage"]').value = 'También tengo otra duda';
+  const composer = node('[name="supportMessage"]');
+  const notice = node('[data-support-notice]');
+  composer.value = 'También tengo otra duda';
+  let prevented = 0;
+  for (const options of [{shiftKey:true},{isComposing:true},{keyCode:229}]) {
+    composer.keydown({key:'Enter',preventDefault(){prevented++;},...options});
+  }
+  assert.equal(prevented,0);
+  composer.keydown({key:'Enter',preventDefault(){prevented++;}});
+  assert.equal(prevented,1);
+  assert.equal(notice.attributes.has('data-support-sending'),true);
   node('[data-support-form]').submit(event);
   await new Promise(setImmediate);
-  assert.ok(actions.some(([path, action])=>path==='/api/support-chat' && action==='send'));
+  assert.equal(notice.attributes.has('data-support-sending'),false);
+  assert.equal(actions.filter(([path, action])=>path==='/api/support-chat' && action==='send').length,1);
   acceptCode = true;
   await verify.submit(event);
   assert.equal(node('[data-support-email-state]').textContent,'Correo verificado');
-  assert.equal(node('[data-support-email-title]').textContent,'¡Listo! Te avisaremos por correo cuando nuestro equipo responda.');
+  assert.match(node('[data-support-email-title]').textContent,/Cuando el equipo responda, te enviaremos un aviso con un enlace privado/);
   assert.equal(node('[data-support-email-destination]').textContent,'');
   assert.equal(request.hidden,true);
   followup = 'verified';
   await client.refresh();
   assert.equal(request.hidden,true);
   assert.equal(verify.hidden,true);
-  assert.deepEqual(actions.filter(([path])=>path.includes('support-visitor-email')).map(([,action])=>action),['request','request','verify','verify']);
+  assert.deepEqual(actions.filter(([path])=>path.includes('support-visitor-email')).map(([,action])=>action),['request','request','request','verify','verify']);
 });

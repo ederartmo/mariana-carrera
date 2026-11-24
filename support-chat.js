@@ -6,15 +6,18 @@
   'use strict';
   const TOKEN_KEY = 'kinetichub-support-token';
   const PENDING_KEY = 'kinetichub-support-pending';
+  const RESUMED_GUEST_KEY = 'kinetichub-support-verified-guest-v1';
   const EMAIL_ENDPOINT = '/api/data?action=support-visitor-email';
   const CATEGORIES = ['general', 'events', 'registration', 'other'];
-  const assistantLinks = /(https:\/\/www\.kinetichub\.com\.mx\/(?:auth\.html\?mode=login|perfil\.html|atencion\.html|(?:axolote-night-run|cascanueces-run|perrun-2027)\.html#modalidades))(?=$|[\s.,;!?])/g;
+  const officialWhatsApp = 'https://wa.me/525530790944';
+  const assistantLinks = /(https:\/\/www\.kinetichub\.com\.mx\/(?:auth\.html\?mode=login|perfil\.html|atencion\.html|(?:axolote-night-run|cascanueces-run|perrun-2027)\.html#modalidades)(?=$|[\s.,;!?])|https:\/\/wa\.me\/525530790944(?=$|\s|[.,;!?)](?=\s|$)))/g;
   const loginReturn = '/atencion.html?from=support-login#premium-conversation';
   const followupReturn = '/atencion.html?from=support-followup-login#premium-conversation';
   const accountActions = new Map([
     ['https://www.kinetichub.com.mx/auth.html?mode=login', ['Iniciar sesión', '/auth.html?mode=login&returnTo=' + encodeURIComponent(loginReturn)]],
     ['https://www.kinetichub.com.mx/perfil.html', ['Mis carreras', '/perfil.html']],
     ['https://www.kinetichub.com.mx/atencion.html', ['Atención', '/atencion.html']],
+    [officialWhatsApp, ['WhatsApp oficial', officialWhatsApp]],
   ]);
   for (const slug of ['axolote-night-run','cascanueces-run','perrun-2027']) {
     const path = '/' + slug + '.html#modalidades';
@@ -30,6 +33,7 @@
           const link = doc.createElement('a');
           link.className = 'support-reply-action';
           [link.textContent, link.href] = action;
+          if (part === officialWhatsApp) { link.target = '_blank'; link.rel = 'noopener noreferrer'; }
           block.append(link);
         } else if (part) block.append(part);
       }
@@ -89,8 +93,8 @@
     const toggle = panel.querySelector('[data-support-email-toggle]');
     const fields = panel.querySelector('[data-support-email-fields]');
     const invitation = account
-      ? '¿Quieres recibir la respuesta del equipo en el correo verificado de tu cuenta?'
-      : title.textContent;
+      ? '¿Quieres recibir un aviso en el correo verificado de tu cuenta cuando responda el equipo?'
+      : 'Verifica tu correo para recibir un aviso y un enlace privado a esta solicitud cuando responda el equipo. No necesitas iniciar sesión.';
     login.href = '/auth.html?mode=login&returnTo=' + encodeURIComponent(followupReturn);
     if (account) {
       address.hidden = true;
@@ -98,12 +102,13 @@
       panel.querySelector('[data-support-email-continue]').textContent = 'Usar el correo de mi cuenta';
     }
     let busy = false, current, ticket, waiting = false, askingAgain = false, collapsed = false;
-    let sentTo = '';
+    let sentTo = '', unsentCode = false;
     const update = (state, ticketId = ticket, waitingForReply = waiting) => {
       if (ticketId !== ticket) {
         askingAgain = false;
         collapsed = false;
         sentTo = '';
+        unsentCode = false;
         request.elements.email.value = '';
         verify.elements.code.value = '';
         feedback.textContent = '';
@@ -112,7 +117,7 @@
       waiting = waitingForReply;
       current = state;
       const verified = state === 'verified';
-      const pending = !account && state === 'code_pending';
+      const pending = !account && state === 'code_pending' && !unsentCode;
       panel.hidden = !['eligible','code_pending','verified'].includes(state);
       panel.dataset.state = state || '';
       fields.hidden = collapsed && !verified;
@@ -125,7 +130,9 @@
         sentTo = '';
         request.elements.email.value = '';
         verify.elements.code.value = '';
-        title.textContent = '¡Listo! Te avisaremos por correo cuando nuestro equipo responda.';
+        title.textContent = account
+          ? 'Tu correo está verificado. Te avisaremos si el equipo responde a esta solicitud.'
+          : 'Tu correo está verificado. Cuando el equipo responda, te enviaremos un aviso con un enlace privado a esta solicitud.';
       } else if (pending && !askingAgain) {
         title.textContent = sentTo
           ? 'Te enviamos un código de seis dígitos para confirmar que este correo te pertenece. No necesitas crear una cuenta.'
@@ -176,6 +183,7 @@
             verify.elements.code.value = '';
           }
           if (result.verified || result.codeSent) {
+            unsentCode = false;
             askingAgain = false;
             feedback.textContent = '';
             update(result.verified ? 'verified' : 'code_pending');
@@ -188,8 +196,9 @@
       } catch (error) {
         if (isActive() && ticket === requestedTicket) present(() => {
           if (action === 'verify') update('code_pending');
-          if (error.code === 'send_failed') {
+          if (action === 'request' && error.code === 'send_failed') {
             sentTo = '';
+            unsentCode = true;
             askingAgain = false;
             verify.elements.code.value = '';
             update('code_pending');
@@ -370,7 +379,7 @@
       update: ({ id, expectedVersion, action, body, status, category, assignToMe, assignTo }) => call(endpoint, { method: 'POST', body: JSON.stringify({ id, requestId: makeId(), expectedVersion, action, ...(body === undefined ? {} : { body }), ...(status ? { status } : {}), ...(category ? { category } : {}), ...(assignToMe === undefined ? {} : { assignToMe }), ...(assignTo === undefined ? {} : { assignTo }) }) })
     };
   }
-  function createSessionTransport({ ownerId, getSession, fetch: fetcher }) {
+  function createSessionTransport({ ownerId, getSession, fetch: fetcher, sendAuthorization = true }) {
     async function checkedSession() {
       const session = await getSession();
       if ((session?.user?.id || null) !== ownerId || (ownerId && (typeof session?.access_token !== 'string' || !/^[^\s]+$/.test(session.access_token)))) {
@@ -383,7 +392,7 @@
     return async (url, options = {}) => {
       const session = await checkedSession();
       const headers = Object.fromEntries(Object.entries(options.headers || {}).filter(([key]) => key.toLowerCase() !== 'authorization'));
-      if (ownerId) headers.Authorization = 'Bearer ' + session.access_token;
+      if (ownerId && sendAuthorization) headers.Authorization = 'Bearer ' + session.access_token;
       const response = await fetcher(url, { ...options, headers });
       await checkedSession();
       return response;
@@ -404,7 +413,8 @@
     const tabStorage = doc.defaultView.sessionStorage;
     const loginNotice = root.querySelector('[data-support-login-return]');
     const continueAccount = loginNotice?.querySelector('[data-support-continue-account]');
-    const loginSource = new URLSearchParams(doc.defaultView.location.search).get('from');
+    const query = new URLSearchParams(doc.defaultView.location.search);
+    const loginSource = query.get('from');
     const returnedFromGuest = Boolean(ownerId && continueAccount &&
       ['support-login', 'support-followup-login'].includes(loginSource) &&
       /^[a-f0-9]{64}$/.test(tabStorage.getItem(TOKEN_KEY) || ''));
@@ -414,6 +424,12 @@
       tabStorage.removeItem(TOKEN_KEY);
       tabStorage.removeItem(PENDING_KEY);
     };
+    let resumedGuest = null;
+    try {
+      const saved = JSON.parse(tabStorage.getItem(RESUMED_GUEST_KEY) || 'null');
+      if (ownerId && saved?.ownerId === ownerId && /^[a-f0-9]{64}$/.test(saved.token || '')) resumedGuest = saved;
+      else tabStorage.removeItem(RESUMED_GUEST_KEY);
+    } catch { tabStorage.removeItem(RESUMED_GUEST_KEY); }
     if (ownerId) {
       retireGuestConversation();
       root.querySelector('[data-support-clear]').hidden = true;
@@ -422,6 +438,8 @@
     const clearChat = () => {
       root.querySelector('[data-support-messages]').replaceChildren();
       const email = root.querySelector('[data-support-email]');
+      const guestMode = root.querySelector('[data-support-guest-mode]');
+      if (guestMode) guestMode.hidden = true;
       if (!email) return;
       email.hidden = true;
       email.querySelector?.('[data-support-email-destination]')?.replaceChildren();
@@ -445,6 +463,7 @@
         root.hidden = true;
         clearChat();
         retireGuestConversation();
+        tabStorage.removeItem(RESUMED_GUEST_KEY);
         draftHandoff?.clear();
         onTicket?.(null);
         doc.defaultView.location.reload();
@@ -457,35 +476,59 @@
       removeItem: key => memory.delete(key),
     } : tabStorage;
     const transport = createSessionTransport({ ownerId, getSession, fetch: fetcher });
-    const openChat = () => mountPublicSupportChat({ document: doc, root, storage, account: Boolean(ownerId), onTicket, draftHandoff, handoffMode, isActive: () => active,
-      fetch: transport });
-    if (guestReplyLink) {
+    const openChat = (guest = null) => mountPublicSupportChat({ document: doc, root,
+      storage: guest?.storage ?? storage, account: Boolean(ownerId && !guest), onTicket,
+      draftHandoff: guest ? undefined : draftHandoff, handoffMode: guest ? undefined : handoffMode,
+      isActive: () => active, fetch: guest?.transport ?? transport });
+    if (guestReplyLink || (resumedGuest && doc.defaultView.location.pathname === '/atencion.html' && query.get('chat') !== 'account')) {
       const details = guestReplyLink;
       guestReplyLink = undefined;
       const panel = root.querySelector('[data-support-resume]');
       const button = panel.querySelector('[data-support-resume-open]');
       const notice = panel.querySelector('[data-support-resume-status]');
       panel.hidden = false;
-      if (ownerId) {
-        button.hidden = true;
-        notice.textContent = 'Para abrir este chat de invitado, cierra sesión y vuelve a abrir el enlace del correo.';
-        return openChat();
-      }
+      button.hidden = false;
+      const accountLink = panel.querySelector('[data-support-resume-account]');
+      if (accountLink) accountLink.hidden = !ownerId;
+      // A private reply link proves guest access independently of any signed-in account.
+      // Explicitly open only the guest transcript, with no account bearer. After redemption, retain access
+      // only in this tab, scoped to the unchanged signed-in identity; do not associate it server-side.
+      const guestTransport = ownerId ? createSessionTransport({ownerId, getSession, fetch: fetcher, sendAuthorization: false}) : transport;
+      const guestStorage = ownerId ? {
+        getItem: key => key === TOKEN_KEY ? resumedGuest?.token ?? null : resumedGuest?.pending ?? null,
+        setItem(key, value) {
+          resumedGuest = {...resumedGuest, ownerId, [key === TOKEN_KEY ? 'token' : 'pending']:value};
+          tabStorage.setItem(RESUMED_GUEST_KEY, JSON.stringify(resumedGuest));
+        },
+        removeItem(key) {
+          if (key === TOKEN_KEY) { resumedGuest = null; tabStorage.removeItem(RESUMED_GUEST_KEY); }
+          else if (resumedGuest) { delete resumedGuest.pending; tabStorage.setItem(RESUMED_GUEST_KEY, JSON.stringify(resumedGuest)); }
+        },
+      } : storage;
       const form = root.querySelector('[data-support-form]');
       form.hidden = true;
-      notice.textContent = 'Abre la solicitud asociada a este enlace personal.';
+      notice.textContent = ownerId
+        ? 'Este enlace abre una solicitud de invitado. No se vinculará a la cuenta que tienes abierta.'
+        : 'Abre la solicitud asociada a este enlace personal.';
       let client;
       button.addEventListener('click', async () => {
-        if (!active || button.disabled) return;
+        if (!active || client || button.disabled) return;
         button.disabled = true;
         try {
-          const result = await emailAction(transport, {action:'resume', ...details});
-          if (!active || !/^[a-f0-9]{64}$/.test(result.token || '')) return;
-          retireGuestConversation();
-          storage.setItem(TOKEN_KEY, result.token);
+          if (details) {
+            const result = await emailAction(guestTransport, {action:'resume', ...details});
+            if (!active || !/^[a-f0-9]{64}$/.test(result.token || '')) return;
+            retireGuestConversation();
+            resumedGuest = null;
+            guestStorage.setItem(TOKEN_KEY, result.token);
+          }
           panel.hidden = true;
           form.hidden = false;
-          client = openChat();
+          if (ownerId) {
+            const label = root.querySelector('[data-support-guest-mode]');
+            if (label) label.hidden = false;
+          }
+          client = openChat(ownerId ? {storage: guestStorage, transport: guestTransport} : null);
         } catch {
           if (active) notice.textContent = 'El enlace no está disponible. Si tienes acceso al chat original, ábrelo desde allí o solicita ayuda.';
         } finally { button.disabled = false; }
@@ -621,6 +664,13 @@
       if (action === 'send' && (!submitted || client.hasPending)) return;
       readEpoch++;
       busy = true; syncRetry(); clearButton.disabled = true; readButton.disabled = true; if (humanButton) humanButton.disabled = true;
+      const sending = action === 'send' || action === 'retry' || action === 'human';
+      const sendingNotice = 'Enviando mensaje';
+      if (sending) {
+        submit.setAttribute('aria-busy', 'true');
+        notice.setAttribute('data-support-sending', '');
+        message(sendingNotice);
+      }
       try {
         let data;
         if (action === 'retry') data = await client.retryPending();
@@ -640,7 +690,7 @@
           state.textContent = status ? 'Solicitud: ' + status : '';
         }
         message(action === 'read' ? '' :
-          action === 'human' ? 'Solicitud de atención recibida. Puedes seguir escribiendo aquí.' : 'Mensaje enviado.');
+          action === 'human' ? 'Solicitud de atención recibida. Puedes seguir escribiendo aquí.' : '');
       } catch (error) {
         if (!isActive()) return;
         if (action === 'read' && error.status === 429) {
@@ -650,12 +700,18 @@
         if ([401,404,410].includes(error.status)) { resetHistory(); started = false; }
         if (account && action === 'read' && error.status === 404) { message('Todavia no tienes una conversacion. Escribe un mensaje para empezar.'); return; }
         message(error.status === 404 || error.status === 410 ? 'La sesión de conversación venció o no está disponible. Puedes intentar de nuevo o borrar esta sesión para iniciar otra. Tu mensaje no se envió.' : `No pudimos confirmar la recepción: ${error.message} ${client.hasPending ? 'Usa “Reintentar envío” para repetir la misma solicitud de forma segura.' : ''}`);
-      } finally { busy = false; syncRetry(); clearButton.disabled = false; readButton.disabled = false; if (humanButton) humanButton.disabled = false; }
+      } finally {
+        if (sending) {
+          submit.removeAttribute('aria-busy');
+          notice.removeAttribute('data-support-sending');
+          if (notice.textContent === sendingNotice) message('');
+        }
+        busy = false; syncRetry(); clearButton.disabled = false; readButton.disabled = false; if (humanButton) humanButton.disabled = false;
+      }
     }
     form.addEventListener('submit', event => { event.preventDefault(); run('send'); });
     bodyInput.addEventListener('keydown', event => {
-      if (event.key !== 'Enter' || event.shiftKey || event.isComposing || event.keyCode === 229 ||
-        !doc.defaultView?.matchMedia?.('(hover: hover) and (pointer: fine)')?.matches) return;
+      if (event.defaultPrevented || event.key !== 'Enter' || event.shiftKey || event.isComposing || event.keyCode === 229) return;
       event.preventDefault();
       if (!event.repeat) run('send');
     });
