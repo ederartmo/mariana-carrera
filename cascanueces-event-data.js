@@ -1,7 +1,8 @@
 (function (root) {
-  const stageConfig = root.KineticHubCascanuecesStageConfig;
+  const commonJs = typeof module !== "undefined" && module.exports;
+  const stageConfig = commonJs ? require("./cascanueces-stage-config") : root.KineticHubCascanuecesStageConfig;
 
-  root.KineticHubCascanuecesEvent = {
+  const event = {
     slug: "cascanueces-run",
     name: "Cascanueces Run 2026",
     titleLines: ["Cascanueces", "Run 2026"],
@@ -273,4 +274,6 @@
       closed: "Inscripciones cerradas",
     },
   };
+  if (commonJs) module.exports = event;
+  else root.KineticHubCascanuecesEvent = event;
 })(typeof globalThis !== "undefined" ? globalThis : window);

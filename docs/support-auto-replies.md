@@ -76,3 +76,13 @@ venue, map and date. The visitor read operation returned the reply in 2.511 s.
 One inference used 479 input and 45 output tokens (USD 0.000562 recorded).
 The job completed and the QA tenant was verified disabled afterwards. This run
 validates the compound turn only; it does not repeat the full conversation.
+
+## Conversational tools
+
+Enable `SUPPORT_AI_TOOL_CONVERSATION_ENABLED=true` only in a reviewed environment with the existing automatic, shadow and private reply settings. With the flag off, the chat keeps the existing rules and approved-text evaluator. The flag uses the same server-side Responses transport and the existing per-ticket claim, quota ledger and atomic publication.
+
+The tool mode sends a structured representation of the current turn and up to six recent relevant turns from the same authorized ticket: role, allowlisted intent, catalog race/distance and a bounded ticket quantity. Raw visitor and assistant text, private identifiers and unsupported instructions remain on the server. Older facts are dropped first within the same input bound. The model selects a clarification type, approved reply, human handoff or one of four read-only tools. The server renders clarification wording and verifies source, current catalog, limits and pinned public facts before publication.
+
+Before any activation, verify in a dedicated QA process that both migrations are present, in order: `20261124010354_support_explicit_human_request.sql`, then `20261124043000_support_contextual_human_request.sql`. Consult the migration history first; do not reapply an existing migration. The correction recognizes affirmative contextual requests and preserves the same locked ticket pause even with AI off. It must not match an explicit negative or quoted example.
+
+Keep `SUPPORT_AI_TOOL_CONVERSATION_ENABLED` absent or `false` by default. To revert the tool-mode behavior, disable that flag and verify the prior response path in the target environment. To stop model-backed auto replies entirely, also disable `SUPPORT_AI_PRIVATE_ENABLED` or `SUPPORT_AI_SHADOW_ENABLED` as appropriate. The human-request handoff is separate from these flags; do not undo the handoff migration as a flag rollback. Do not reuse or print production credentials; do not assume a READY Preview is isolated. Use the local synthetic fixture with an isolated database and a QA-designated model for release validation.

@@ -17,7 +17,7 @@ const cases=[
  ['registration-private','¿Cuál es el folio de mi inscripción?',null],
  ['size','¿Puedo cambiar mi talla de Perrun?',null],
  ['distance-change','¿Puedo modificar la distancia de Perrun?',null],
- ['payment','¿Confirmaron mi pago de Perrun?',null],
+ ['payment','¿Confirmaron mi pago de Perrun?','registration-self-service'],
  ['refund','Quiero un reembolso',null],
  ['ambiguous','Entrega de kits y salidas de Perrun',null],
  ['unclear','¿A qué hora?',null],

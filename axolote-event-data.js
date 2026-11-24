@@ -1,7 +1,8 @@
 (function (root) {
-  const stageConfig = root.KineticHubStageConfig;
+  const commonJs = typeof module !== "undefined" && module.exports;
+  const stageConfig = commonJs ? require("./axolote-stage-config") : root.KineticHubStageConfig;
 
-  root.KineticHubAxoloteEvent = {
+  const event = {
     slug: "axolote-night-run",
     name: "Axolote Night Run 2026",
     titleLines: ["Axolote Night", "Run 2026"],
@@ -260,4 +261,6 @@
       closed: "Inscripciones cerradas",
     },
   };
+  if (commonJs) module.exports = event;
+  else root.KineticHubAxoloteEvent = event;
 })(typeof globalThis !== "undefined" ? globalThis : window);
