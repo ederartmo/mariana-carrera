@@ -214,6 +214,30 @@ test('simulated conversations use the public chat, quota ledger and atomic publi
     assert.match(newestAgent(regular),/3 boletos suman \$1,500 MXN/);
   });
 
+  await t.test('Cascanueces minors: keeps the race across turns, confirms the waiver, and never assumes age eligibility',async()=>{
+    const before=requests;
+    const chat=newChat();
+    const first=await chat.start('¿Pueden participar mis hijos de 7 y 11 años?');
+    assert.match(newestAgent(first),/¿Para qué carrera/);
+    const followup=await chat.send('Para la de Cascanueces 5K');
+    const reply=newestAgent(followup);
+    assert.match(reply,/Cascanueces.*participación de menores.*exoneración.*madre, padre o tutor legal/);
+    assert.match(reply,/No publica una edad mínima ni una restricción de edad por distancia.*no confirma la elegibilidad/);
+    assert.doesNotMatch(reply,/pueden participar ambos|compárteme|envíame|fecha de nacimiento/);
+    const explicit=await newChat().start('¿Mis hijos de 7 y 11 años pueden correr en Cascanueces 5K?');
+    assert.equal(newestAgent(explicit),reply);
+    const different=newChat();
+    await different.start('¿Pueden participar niños de 7 y 11 años?');
+    const other=await different.send('Perrun');
+    assert.match(newestAgent(other),/no tengo confirmada la regla de edad/);
+    assert.doesNotMatch(newestAgent(other),/Cascanueces|tutor legal|edad mínima/);
+    assert.equal(requests,before);
+    const unrelated=await newChat().start('Mi hijo ya pagó pero no aparece su inscripción de Cascanueces',()=>
+      result(call('informacion_publica',{fuente:'registration-self-service'})));
+    assert.match(newestAgent(unrelated),/Mis carreras/);
+    assert.doesNotMatch(newestAgent(unrelated),/tutor legal/);
+  });
+
   await t.test('C. directs private registration questions to existing authenticated self-service',async()=>{
     const answer=await newChat().start('No encuentro mi inscripción',()=>result(call('informacion_publica',{fuente:'registration-self-service'})));
     assert.match(newestAgent(answer),/Inicia sesión.*Mis carreras/);
