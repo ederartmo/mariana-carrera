@@ -422,6 +422,63 @@ test('simulated conversations use the public chat, quota ledger and atomic publi
     assert.equal(newestAgent(poison),undefined);
   });
 
+  await t.test('wire preserves paired support questions and never hands off an explicit negative',async()=>{
+    const cases=[
+      {text:'OXXO: no encuentro mi voucher. Código 764192. RON-123 ficticio.',intent:'oxxo_referencia',wrong:'oxxo-timing',want:/Descargar voucher oficial.*vencimiento/,not:/24 horas/},
+      {text:'Ya pagué en OXXO con referencia 557331, ¿por qué no aparece?',intent:'oxxo_pagado',wrong:'oxxo-voucher',want:/puede tardar hasta 24 horas.*Mis carreras/,not:/Descargar voucher|ya confirmamos/},
+      {text:'¿Dónde y a qué hora se entrega el kit de Cascanueces? Test BIB-SINT-28.',intent:'kit_logistica',wrong:'cascanueces-kit-requirements',want:/5 de diciembre de 2026.*10:00 a 16:00.*Huerto Educativo/,not:/identificación|exoneración/},
+      {text:'¿Qué documentos necesito llevar para recoger mi kit de Cascanueces?',intent:'kit_requisitos',wrong:'cascanueces-kit-logistics',want:/identificación oficial y la exoneración/,not:/10:00|Huerto/},
+      {text:'¿Dónde y cuándo es la entrega del kit de Perrun?',intent:'kit_logistica',wrong:'cascanueces-kit-logistics',want:/13 de febrero de 2027.*10:00 a 16:00.*punto exacto está por confirmar/,not:/Huerto Educativo/},
+    ];
+    for(const item of cases){
+      const chat=newChat();
+      const got=await chat.start(item.text,data=>{
+        assert.equal(data.actual.intencion,item.intent);
+        assert.doesNotMatch(JSON.stringify(data),/764192|557331|BIB-SINT-28|RON-123|qué documentos/i);
+        return result(call('informacion_publica',{fuente:item.wrong}));
+      });
+      assert.match(newestAgent(got),item.want);
+      assert.doesNotMatch(newestAgent(got),item.not);
+    }
+    const follow=newChat();
+    const missing=await follow.start('¿A qué hora es la entrega del paquete?',data=>{
+      assert.equal(data.actual.intencion,'kit_logistica');
+      assert.equal(data.actual.carrera,null);
+      return result(question('carrera'));
+    });
+    assert.match(newestAgent(missing),/¿Para qué carrera/);
+    const located=await follow.send('Cascanueces',data=>{
+      assert.equal(data.actual.carrera,'cascanueces-run');
+      assert.equal(data.historial[0].intencion,'kit_logistica');
+      return result(call('informacion_publica',{fuente:'cascanueces-kit-requirements'}));
+    });
+    assert.match(newestAgent(located),/5 de diciembre.*Huerto Educativo/);
+    const noHandoff=await newChat().start('No quiero hablar con alguien',data=>{
+      assert.equal(data.actual.intencion,'no_quiere_derivacion');
+      return result(decision('transferir'));
+    });
+    assert.match(newestAgent(noHandoff),/¿Sobre qué carrera/);
+    assert.doesNotMatch(newestAgent(noHandoff),/voy a pasar|equipo de atención/);
+    assert.equal((await db.query('SELECT automation_paused_at FROM support_tickets WHERE id=$1',[noHandoff.ticket.id])).rows[0].automation_paused_at,null);
+    const before=requests;
+    const handoff=await newChat().start('Quiero hablar con alguien porque mi inscripción no aparece',undefined,{...env,SUPPORT_AI_AUTO_REPLY_ENABLED:'false'});
+    assert.match(newestAgent(handoff),/equipo de atención/);
+    assert.equal(requests,before);
+    assert.ok((await db.query('SELECT automation_paused_at FROM support_tickets WHERE id=$1',[handoff.ticket.id])).rows[0].automation_paused_at);
+  });
+
+  await t.test('flag-off: legacy public guidance and human handoff work without provider',async()=>{
+    const before=requests;
+    const old={...env,SUPPORT_AI_TOOL_CONVERSATION_ENABLED:'false',SUPPORT_AI_PRIVATE_ENABLED:'false'};
+    const quote=await newChat().start('¿Cuánto cuestan dos boletos para Cascanueces 10K?',undefined,old);
+    assert.match(newestAgent(quote),/2 boletos suman \$1,000 MXN/);
+    const requirements=await newChat().start('¿Qué requisitos necesito para el kit de Cascanueces?',undefined,old);
+    assert.match(newestAgent(requirements),/identificación oficial y la exoneración/);
+    const handoff=await newChat().start('Por favor, ¿me pueden pasar con un asesor por mi inscripción?',undefined,{...old,SUPPORT_AI_AUTO_REPLY_ENABLED:'false'});
+    assert.match(newestAgent(handoff),/equipo de atención/);
+    assert.equal(requests,before);
+  });
+
   await t.test('a spent quota blocks inference and invalid tools cannot publish a message',async()=>{
     const denied=await newChat().start('Usa un proveedor',()=>result(call('fetch_url',{url:'https://example.invalid'})));
     assert.equal(newestAgent(denied),undefined);
