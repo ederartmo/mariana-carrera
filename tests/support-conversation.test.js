@@ -283,6 +283,38 @@ test('simulated conversations use the public chat, quota ledger and atomic publi
     assert.equal(current.messages.filter(message=>message.author==='agent').length,2);
   });
 
+  await t.test('scoped conversational routing resolves known facts before handoff',async()=>{
+    const baseline=requests;
+    const children=newChat();
+    await children.start('¿Pueden participar mis hijos de 7 y 11 años en Cascanueces?');
+    const childFollowup=await children.send('¿Entonces los dos sí pueden participar en 5K?');
+    assert.match(newestAgent(childFollowup),/equipo de atención/);
+    assert.doesNotMatch(newestAgent(childFollowup),/entrega del kit|sí pueden participar/);
+    const anotherRace=newChat();
+    await anotherRace.start('¿Pueden participar mis hijos de 7 y 11 años en Cascanueces?');
+    const another=await anotherRace.send('¿Y pueden participar mis hijos en Perrun?');
+    assert.match(newestAgent(another),/no tengo confirmada la regla de edad/);
+    const order=newChat();
+    await order.start('Quiero tres boletos',()=>result(question('¿Para qué carrera quieres los tres boletos?')));
+    const amount=await order.send('Cascanueces 5K');
+    assert.match(newestAgent(amount),/3 boletos suman \$1,500 MXN/);
+    const variant=await newChat().start('¿Cuánto cuestan 2 entradas para Cascanueces 10K?');
+    assert.match(newestAgent(variant),/2 boletos suman \$1,000 MXN/);
+    const paid=newChat();
+    const first=await paid.start('Ya se reflejó el cargo, pero no veo mi inscripción');
+    assert.match(newestAgent(first),/Mis carreras/);
+    assert.ok(actionLinks(newestAgent(first)).includes('/perfil.html'));
+    const next=await paid.send('Ya revisé y tampoco aparece en Mis carreras');
+    assert.match(newestAgent(next),/equipo de atención/);
+    assert.doesNotMatch(newestAgent(next),/pago confirmado|ya quedaste inscrit/);
+    const explicit=await newChat().start('Quiero hablar con alguien, ya pagué y no veo la inscripción');
+    assert.match(newestAgent(explicit),/equipo de atención/);
+    assert.doesNotMatch(newestAgent(explicit),/Mis carreras/);
+    const paused=(await db.query('SELECT automation_paused_at FROM support_tickets WHERE id=$1',[next.ticket.id])).rows[0];
+    assert.ok(paused.automation_paused_at);
+    assert.equal(requests,baseline+1);
+  });
+
   await t.test('a spent quota blocks inference and invalid tools cannot publish a message',async()=>{
     const denied=await newChat().start('Usa un proveedor',()=>result(call('fetch_url',{url:'https://example.invalid'})));
     assert.equal(newestAgent(denied),undefined);
