@@ -311,7 +311,10 @@ test('operator reads and replies on official aliases without trusting proxy host
    assert.equal(res.statusCode,status);
    assert.notEqual(res.body.code,'origin_not_allowed');
  }
- assert.equal(calls.length,4);
+ assert.deepEqual(calls.map(([name])=>name),[
+   'support_admin_detail','support_admin_email_state','support_admin_action',
+   'support_admin_detail','support_admin_email_state','support_admin_action',
+ ]);
 });
 
 test('attention list crosses priority groups without losing cursor or weakening operator auth',async()=>{

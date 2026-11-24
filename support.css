@@ -103,6 +103,13 @@
 .support-admin-panel .support-ticket-status[data-status="resolved"] { color:#a6f1cd; background:#194b3a; }
 .support-admin-panel .support-ticket-badges { display:flex; justify-content:flex-end; align-items:center; flex-wrap:wrap; gap:5px; }
 .support-admin-panel .support-ticket-category { padding:3px 9px; border-radius:999px; font-size:.8rem; font-weight:700; color:#d4e0ea; background:#263443; }
+.support-monitor { display:flex; align-items:center; flex-wrap:wrap; gap:6px 10px; font-size:.82rem; color:#a8b6c7; }
+.support-monitor-actions { display:flex; flex-wrap:wrap; gap:5px; }
+.support-monitor-actions button { min-height:32px; padding:4px 8px; border:1px solid #344454; border-radius:6px; background:#182431; color:#e2e9ee; font:inherit; cursor:pointer; }
+.support-monitor-actions button[aria-pressed="true"] { border-color:#44c996; background:#194b3a; color:#d8f8e8; }
+.support-monitor-counts { flex-basis:100%; }
+.support-email-indicator { margin:6px 0; color:#dce7f3; font-size:.86rem; }
+.support-email-indicator[data-state="verified"] { color:#a6f1cd; }
 .support-admin-panel .support-ticket-edit-actions { display:flex; flex-wrap:wrap; gap:8px; flex-basis:100%; }
 .support-admin-panel .support-ticket-row { overflow-wrap:anywhere; }
 .support-admin-panel .support-admin-notice { overflow-wrap:anywhere; }

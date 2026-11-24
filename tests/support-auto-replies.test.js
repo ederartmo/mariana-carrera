@@ -12,7 +12,8 @@ test('visitor gets approved automatic text, human handoff and no replies after t
   await db.exec('create role anon; create role authenticated; create role service_role;');
   for(const f of ['20261117145659_support_phase_one','20261119021334_support_agent_atomic_ack','20261119022000_support_human_takeover',
     '20261119030000_support_ai_evaluation_quota','20261119040000_support_ai_shadow_queue','20261119050000_support_private_proposal_read',
-    '20261119060000_support_auto_replies','20261121235900_support_visitor_email'])await db.exec(readFileSync('supabase/migrations/'+f+'.sql','utf8'));
+    '20261119060000_support_auto_replies','20261121235900_support_visitor_email','20261124000000_support_email_code_and_handoff',
+    '20261124010000_support_sales_and_monitor'])await db.exec(readFileSync('supabase/migrations/'+f+'.sql','utf8'));
   await db.exec("insert into support_ai_limits values ('kinetichub',true,'simulated',30,100000,750000,4500000);");
   for(const role of ['anon','authenticated','service_role']){
     const {rows}=await db.query("select has_function_privilege($1,'public.support_auto_claim(text,uuid,uuid,timestamp with time zone)','EXECUTE') as claim, has_function_privilege($1,'public.support_auto_finish(text,uuid,uuid,text,text,text,text,text,text,text)','EXECUTE') as finish",[role]);
@@ -178,9 +179,10 @@ test('visitor gets approved automatic text, human handoff and no replies after t
 
   const pickup = begin('¿Puede alguien más recoger mi kit?');
   const pickupPrompt = await invoke(pickup,withEmail);
-  assert.match(replies(pickupPrompt).at(-1).body,/¿Para qué carrera/);
+  assert.match(pickupPrompt.messages.at(-1).body,/¿Para qué carrera/);
+  assert.equal(pickupPrompt.messages.at(-1).provenance,'automatic_ack');
   const pickupAnswer = await send(pickup.token,'Para Perrun 2027');
-  assert.match(replies(pickupAnswer).at(-1).body,/titular debe acudir personalmente/);
+  assert.match(pickupAnswer.messages.at(-1).body,/titular debe acudir personalmente/);
 
   const quick = begin('Tengo una consulta sobre la entrega de kits.');
   assert.match(replies(await invoke(quick,withEmail)).at(-1).body,/¿De qué carrera/);
@@ -196,7 +198,7 @@ test('visitor gets approved automatic text, human handoff and no replies after t
   assert.equal(escalated.followup,'eligible');
   const explicit = await invoke(begin('Solicito atencion humana.'),withEmail);
   assert.equal(explicit.followup,'eligible');
-  assert.match(replies(explicit).at(-1).body,/pasar tu consulta a nuestro equipo de atención/);
+  assert.match(explicit.messages.at(-1).body,/Voy a comunicarte con nuestro equipo de atención/);
 });
 
 test('loopback public chat origin is accepted only by the QA development server',t=>{

@@ -108,7 +108,131 @@
     };
   }
 
-  function mount({ document: doc = document, fetch: fetcher = fetch, getToken, isActive = () => true, root: container = doc.querySelector('[data-admin-support]') } = {}) {
+  function createVisitorAlerts({ win, ownerId, channels, announce }) {
+    const seen = new Set();
+    let first = true, historyFloor = -Infinity;
+    async function claim(channel, fresh) {
+      const key = 'kinetichub-support-alert:' + ownerId + ':' + channel;
+      const deliver = () => {
+        if (!channels().includes(channel)) return;
+        let unseen = fresh;
+        try {
+          const saved = JSON.parse(win.localStorage.getItem(key) || '[]');
+          const claimed = new Set(Array.isArray(saved) ? saved : []);
+          unseen = fresh.filter(id => !claimed.has(id));
+          if (unseen.length) win.localStorage.setItem(key, JSON.stringify([...claimed, ...unseen].slice(-150)));
+        } catch { /* This tab still deduplicates alerts when storage is unavailable. */ }
+        if (unseen.length) announce(channel, unseen.length);
+      };
+      if (win.navigator?.locks?.request) await win.navigator.locks.request(key, deliver);
+      else deliver();
+    }
+    return async messages => {
+      const fresh = [];
+      for (const message of messages) {
+        const time = Date.parse(message.createdAt);
+        if (!message.id || !Number.isFinite(time)) continue;
+        if (!first && time >= historyFloor && !seen.has(message.id)) fresh.push(message.id);
+        seen.add(message.id);
+      }
+      if (first) {
+        const dates = messages.map(message => Date.parse(message.createdAt)).filter(Number.isFinite);
+        if (dates.length) historyFloor = Math.min(...dates);
+        first = false;
+      }
+      while (seen.size > 150) seen.delete(seen.values().next().value);
+      if (fresh.length) await Promise.all(channels().map(channel => claim(channel, fresh)));
+    };
+  }
+
+  function connectMonitor(container, doc, ownerId, isActive, wake) {
+    const block = container.querySelector('[data-support-monitor]');
+    const win = doc.defaultView;
+    const sound = block?.querySelector?.('[data-monitor-sound]');
+    if (!ownerId || !win || !sound?.setAttribute) return null;
+    const desktop = block.querySelector('[data-monitor-desktop]');
+    const status = block.querySelector('[data-monitor-status]');
+    const counts = block.querySelector('[data-monitor-counts]');
+    const Audio = win.AudioContext || win.webkitAudioContext;
+    let audio, soundOn = false, desktopOn = false;
+    sound.hidden = !Audio;
+    desktop.hidden = !win.Notification;
+    const channels = () => !isActive() ? [] : [
+      ...(soundOn ? ['sound'] : []),
+      ...(desktopOn && win.Notification.permission === 'granted' ? ['desktop'] : []),
+    ];
+    const receive = createVisitorAlerts({win,ownerId,channels,announce(channel, amount) {
+      if (channel === 'sound') {
+        if (audio?.state !== 'running') return;
+        const tone = audio.createOscillator(), gain = audio.createGain();
+        tone.frequency.value = 660;
+        gain.gain.setValueAtTime(0.12,audio.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001,audio.currentTime + 0.18);
+        tone.connect(gain).connect(audio.destination);
+        tone.start();
+        tone.stop(audio.currentTime + 0.18);
+        tone.onended = () => { tone.disconnect(); gain.disconnect(); };
+      } else {
+        try {
+          const notification = new win.Notification('KineticHub · Soporte', {
+            body: amount === 1 ? 'Hay un mensaje nuevo de un visitante.' : 'Hay mensajes nuevos de visitantes.',
+            tag: 'kinetichub-support-inbox',
+            silent: true,
+          });
+          notification.onclick = () => { if (isActive()) win.focus(); notification.close(); };
+        } catch { /* Desktop notifications are optional on platforms without constructor support. */ }
+      }
+    }});
+    sound.addEventListener('click', async () => {
+      try {
+        if (!soundOn) {
+          audio ||= new Audio();
+          await audio.resume();
+          if (!isActive()) return;
+        }
+        soundOn = !soundOn;
+        sound.setAttribute('aria-pressed',String(soundOn));
+        sound.textContent = soundOn ? 'Desactivar sonido' : 'Activar sonido';
+        wake();
+      } catch { sound.textContent = 'Sonido no disponible'; }
+    });
+    desktop.addEventListener('click', async () => {
+      try {
+        desktopOn = !desktopOn && (win.Notification.permission === 'granted' ||
+          await win.Notification.requestPermission() === 'granted');
+        if (!isActive()) return;
+        desktop.setAttribute('aria-pressed',String(desktopOn));
+        desktop.textContent = desktopOn ? 'Desactivar notificaciones' : 'Activar notificaciones';
+        if (win.Notification.permission === 'denied') desktop.textContent = 'Notificaciones bloqueadas';
+        wake();
+      } catch { desktop.textContent = 'Notificaciones no disponibles'; }
+    });
+    return {
+      background: () => channels().length > 0,
+      setStatus: value => { status.textContent = value; },
+      update(overview) {
+        if (!overview) { this.setStatus('Monitoreo no disponible'); counts.textContent = ''; return; }
+        this.setStatus('Monitoreo activo');
+        const {pending,inProgress,resolved} = overview.counts;
+        counts.textContent = `${pending} pendientes · ${inProgress} en proceso · ${resolved} resueltas`;
+        void receive(overview.messages).catch(() => {});
+      },
+      stop() {
+        soundOn = false;
+        desktopOn = false;
+        this.setStatus('Monitoreo en pausa');
+        if (audio) void audio.close().catch(() => {});
+      },
+    };
+  }
+
+  const followupLabels = {
+    none: 'Sin correo',
+    pending: 'Pendiente de verificar',
+    verified: 'Correo verificado · Las respuestas humanas pueden generar notificaciones.',
+  };
+
+  function mount({ document: doc = document, fetch: fetcher = fetch, getToken, ownerId, isActive = () => true, root: container = doc.querySelector('[data-admin-support]') } = {}) {
     if (!container || !root.KineticHubSupport) return null;
     const client = root.KineticHubSupport.createAdminClient({ fetch: fetcher, getToken });
     const list = container.querySelector('[data-ticket-list]'); const detail = container.querySelector('[data-ticket-detail]');
@@ -132,6 +256,7 @@
     };
     const assignee = container.querySelector('[name=ticketAssignee]');
     const filters = connectFilters(container, doc, resetList);
+    const monitor = connectMonitor(container,doc,ownerId,isActive,() => void tick());
     const previous = container.querySelector('[data-ticket-page-prev]');
     const next = container.querySelector('[data-ticket-page-next]');
     let cursors = [null], nextCursor = null, listing = false;
@@ -142,6 +267,10 @@
     let listSequence = 0;
     let sequence = 0; let selected = null; let busy = false; let mutation = 0;
     let detailReading = false, listPayload = '', detailPayload = '', pollWarning = '', shownAssignee = '';
+    let readBackoffUntil = 0;
+    const noteReadError = error => {
+      if (error.status === 429) readBackoffUntil = Date.now() + (error.retryDelayMs || 60000);
+    };
     const say = value => { notice.textContent = value; };
     function setBusy(value) { busy = value; container.querySelectorAll('button, select, textarea').forEach(control => { control.disabled = value; }); renderPager(); }
     function textNode(tag, value, className) { const node = doc.createElement(tag); node.textContent = value || ''; if (className) node.className = className; return node; }
@@ -151,16 +280,18 @@
       return badge;
     }
     async function loadList(quiet = false) {
-      if (busy || !isActive() || (quiet && listing)) return;
+      if (busy || !isActive() || Date.now() < readBackoffUntil || (quiet && listing)) return;
       const current = ++listSequence;
       const epoch = mutation;
       listing = true;
       if (!quiet) { listPayload = ''; refresh.disabled = true; list.textContent = 'Cargando solicitudes...'; renderPager(); }
-      const query = {order:'attention', ...filters.values()};
+      const query = {order:'attention', ...filters.values(), ...(monitor ? { monitor:'1' } : {})};
       const cursor = cursors.at(-1);
       try {
         const data = await client.list(query, cursor); if (!isActive() || current !== listSequence || epoch !== mutation) return;
-        const payload = JSON.stringify(data);
+        const {monitor: overview, ...listData} = data;
+        monitor?.update(overview);
+        const payload = JSON.stringify(listData);
         if (quiet && payload === listPayload) return;
         listPayload = payload;
         nextCursor = data.nextCursor || null;
@@ -184,11 +315,16 @@
         list.scrollTop = listTop;
         if (focusedId) [...list.querySelectorAll('[data-ticket-id]')].find(row => row.dataset.ticketId === focusedId)?.focus({ preventScroll: true }); if (!data.tickets?.length) list.append(textNode('p', 'No hay solicitudes de atención.'));
         if (!quiet) say('Lista actualizada.');
-      } catch (error) { if (quiet) throw error; if (isActive() && current === listSequence) { nextCursor = null; list.textContent = 'No se pudo cargar esta pagina.'; say(error.message); } }
+      } catch (error) {
+        noteReadError(error);
+        monitor?.setStatus('Monitoreo en pausa');
+        if (quiet) throw error;
+        if (isActive() && current === listSequence) { nextCursor = null; list.textContent = 'No se pudo cargar esta página.'; say(error.message); }
+      }
       finally { if (current === listSequence) { listing = false; refresh.disabled = busy; renderPager(); } }
     }
     async function loadDetail(id, quiet = false) {
-      if (!isActive() || (quiet && (detailReading || busy))) return;
+      if (!isActive() || Date.now() < readBackoffUntil || (quiet && (detailReading || busy))) return;
       const current = quiet ? sequence : ++sequence;
       const epoch = mutation;
       detailReading = true;
@@ -223,13 +359,17 @@
             catch { if (isActive() && viewId === ticketId) say('UUID: ' + ticketId); }
           });
           header.append(textNode('h3', ''), textNode('p', '', 'support-ticket-identity'), statusBadge(shown,view), copy);
-          summary.replaceChildren(header, textNode('p', '', 'support-admin-meta'));
+          summary.replaceChildren(header, textNode('p', '', 'support-admin-meta'), textNode('p', '', 'support-email-indicator'));
         }
         header.querySelector('h3').textContent = view.subject;
         header.querySelector('.support-ticket-identity').textContent = view.identity + (view.account ? ' · Cuenta autenticada' : '') + ' · ' + view.folio;
         const badge = header.querySelector('.support-ticket-status');
         badge.textContent = view.status; badge.dataset.status = Object.hasOwn(statuses, shown.status) ? shown.status : 'unknown';
         summary.querySelector('.support-admin-meta').textContent = view.explanation + ' Responsable: ' + assigneeLabel(shown.assigned_to, data.assigneeLabels) + ' · Última actividad: ' + formatLocalDate(shown.updated_at);
+        const email = summary.querySelector('.support-email-indicator');
+        email.textContent = label(followupLabels,data.emailState,'');
+        email.hidden = !email.textContent;
+        email.dataset.state = data.emailState || '';
         summary.querySelector('.support-private-proposal')?.remove();
         if (data.ai) {
           const card = doc.createElement('aside');
@@ -269,7 +409,7 @@
           const testOption = categoryInput.querySelector('option[value="test"]');
           if (testOption) testOption.disabled = !data.canSetTestCategory;
         }
-      } catch (error) { if (quiet) throw error; if (isActive() && current === sequence) { emptyWorkspace(error.status === 404 ? 'La solicitud no está disponible.' : `No se pudo cargar el detalle: ${error.message}`); say(error.message); } }
+      } catch (error) { noteReadError(error); if (quiet) throw error; if (isActive() && current === sequence) { emptyWorkspace(error.status === 404 ? 'La solicitud no está disponible.' : `No se pudo cargar el detalle: ${error.message}`); say(error.message); } }
       finally { if (current === sequence) detailReading = false; }
     }
     async function change(action, fields) {
@@ -293,18 +433,19 @@
       replyInput.value = '';
     };
     function resetList() {
-      if (busy) return;
+      if (busy || Date.now() < readBackoffUntil) return;
       clearSelection(); cursors = [null]; nextCursor = null; return loadList();
     }
     refresh.addEventListener('click', resetList);
-    previous?.addEventListener('click', () => { if (!busy && !listing && cursors.length>1) { clearSelection(); cursors.pop(); loadList(); } });
-    next?.addEventListener('click', () => { if (!busy && !listing && nextCursor) { clearSelection(); cursors.push(nextCursor); loadList(); } });
+    previous?.addEventListener('click', () => { if (!busy && !listing && Date.now() >= readBackoffUntil && cursors.length>1) { clearSelection(); cursors.pop(); loadList(); } });
+    next?.addEventListener('click', () => { if (!busy && !listing && Date.now() >= readBackoffUntil && nextCursor) { clearSelection(); cursors.push(nextCursor); loadList(); } });
     replyForm.addEventListener('submit', event => { event.preventDefault(); const body = replyInput.value.trim(); if (body) change('reply', { body }); });
     container.querySelector('[data-ticket-save]').addEventListener('click', () => change('update', updateFields(selected, statusInput.value, categoryInput.value, assignee?.value)));
-    const tick = root.KineticHubSupport.createRefreshGate({
+    const refreshGate = root.KineticHubSupport.createRefreshGate({
       isVisible: () => isActive() && !container.hidden && container.isConnected !== false &&
-        !doc.hidden && !busy && !listing && !detailReading && container.getClientRects?.().length !== 0,
-      minGapMs: 25000,
+        (!doc.hidden || monitor?.background()) && !busy && !listing && !detailReading &&
+        Date.now() >= readBackoffUntil && container.getClientRects?.().length !== 0,
+      minGapMs: 12000,
       async refresh() {
         const epoch = mutation, choice = sequence;
         await loadList(true);
@@ -314,11 +455,17 @@
       },
       onError(error) {
         if (!isActive()) return;
+        monitor?.setStatus('Monitoreo en pausa');
         pollWarning = error.status === 429 ? 'Actualización en pausa por el límite temporal.' : 'No se pudo actualizar automáticamente. Se volverá a intentar.';
         say(pollWarning);
       },
     });
-    const stop = root.KineticHubSupport.scheduleRefresh({ doc, tick, intervalMs: 35000 });
+    const tick = () => {
+      if (doc.hidden && !monitor?.background()) monitor?.setStatus('Monitoreo en pausa');
+      return refreshGate();
+    };
+    const stopRefresh = root.KineticHubSupport.scheduleRefresh({doc,tick,intervalMs:15000,allowHidden:() => Boolean(monitor)});
+    const stop = () => { stopRefresh(); monitor?.stop(); };
     loadList();
     return { loadList, loadDetail, tick, stop };
   }
@@ -346,7 +493,7 @@
     const scoped = root.KineticHubSupport.createSessionTransport({
       ownerId, fetch: fetcher, getSession: async () => active ? getSession() : null,
     });
-    controller = mount({ document: doc, root: panel, isActive: () => active,
+    controller = mount({ document: doc, root: panel, ownerId, isActive: () => active,
       getToken: async () => active ? (await getSession())?.access_token : null,
       fetch: async (...args) => {
         try {
@@ -366,5 +513,5 @@
     return controller;
   }
   root.connectAdminSupport = connect;
-  if (typeof module === 'object' && module.exports) module.exports = { mount, connect, presentTicket, formatLocalDate, updateFields, assigneeLabel };
+  if (typeof module === 'object' && module.exports) module.exports = { mount, connect, presentTicket, formatLocalDate, updateFields, assigneeLabel, createVisitorAlerts };
 })(typeof window !== 'undefined' ? window : globalThis);
