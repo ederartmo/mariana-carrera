@@ -346,8 +346,25 @@ test('Cascanueces creates one Stripe session for orders of 1 and 4 Extemporánea
   }
 });
 
-for (const now of ['2026-11-15T17:00:00-06:00', '2026-11-21T00:00:00-06:00', '2026-11-29T23:59:59.999-06:00', '2026-11-30T00:00:00-06:00']) {
-  const isOpen = now !== '2026-11-30T00:00:00-06:00';
+test('Cascanueces checkout starts new orders until midnight CDMX and creates nothing at cutoff', async () => {
+  const order = {
+    buyerEmail: 'runner@example.invalid', eventSlug: 'cascanueces-run', distance: '5K',
+    expectedUnitAmount: 500,
+    tickets: [{ fullName: 'Synthetic Runner', shirtSize: 'M', birthDate: '1990-05-14',
+      whatsapp: '5512345678', state: 'Jalisco' }],
+  };
+  const open = await createCheckoutSessionPayload(order, { now: '2026-12-03T05:59:59.999Z' });
+  assert.equal(open.res.statusCode, 200);
+  assert.equal(open.createdSessions.length, 1);
+  const closed = await createCheckoutSessionPayload(order, { now: '2026-12-03T06:00:00.000Z' });
+  assert.equal(closed.res.statusCode, 400);
+  assert.match(closed.res.body.error, /inscripciones.*cerradas/);
+  assert.equal(closed.createdSessions.length, 0);
+  assert.equal(closed.upserts.length, 0);
+});
+
+for (const now of ['2026-11-15T17:00:00-06:00', '2026-11-21T00:00:00-06:00', '2026-11-29T23:59:59.999-06:00', '2026-11-30T00:00:00-06:00', '2026-12-02T23:59:59.999-06:00', '2026-12-03T00:00:00-06:00']) {
+  const isOpen = now !== '2026-12-03T00:00:00-06:00';
   test(`Cascanueces landing registration buttons follow reopening at ${now}`, () => {
     for (const prefix of ['', 'public/']) {
       const context = loadBrowserScriptsWithDate(now, [
@@ -355,7 +372,7 @@ for (const now of ['2026-11-15T17:00:00-06:00', '2026-11-21T00:00:00-06:00', '20
       ]);
       const root = { style: { setProperty() {} }, classList: { add() {} }, dataset: {}, innerHTML: '' };
       context.EventLanding({ root, event: context.KineticHubCascanuecesEvent });
-      assert.match(root.innerHTML, /29 de noviembre, 23:59 h/);
+      assert.match(root.innerHTML, /2 de diciembre, 23:59 h/);
       for (const distance of ['5K', '10K']) {
         const link = `href="checkout.html?event=cascanueces-run&amp;distance=${distance}"`;
         assert.equal(root.innerHTML.includes(link), isOpen);

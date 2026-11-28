@@ -45,7 +45,7 @@ test('conversation evaluates only authorized tools, grounded replies and safe cl
     result(question('¿Me compartes tu contraseña?')),
     result(question('¿Quieres pagar en https://example.invalid?')),
   ]) assert.equal((await decide(output)).reason,'invalid_provider_output');
-  const closed = await decide(result(call('ruta_inscripcion',{carrera:'cascanueces-run',cantidad:2})),Date.parse('2026-11-30T06:00:00Z'));
+  const closed = await decide(result(call('ruta_inscripcion',{carrera:'cascanueces-run',cantidad:2})),Date.parse('2026-12-03T06:00:00Z'));
   assert.match(closed.response,/inscripciones .* cerradas/);
   assert.deepEqual(actionLinks(closed.response),[]);
   const perrun = await decide(result(call('cotizar_inscripcion',{carrera:'perrun-2027',cantidad:3,distancia:'3K'})));

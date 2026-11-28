@@ -27,7 +27,7 @@ test('sales guidance clarifies the race and quotes the current catalog and quant
   assert.match(cascanueces,/cascanueces-run\.html#modalidades$/);
   assert.equal(guide('Para la carrera Cascanueces',openDate,history),cascanueces);
   assert.match(guide('Cascanueces',Date.parse('2026-09-12T08:00:00-06:00'),history),/Acceso General.*\$450 MXN.*\$1,350 MXN/);
-  const closed = guide('Cascanueces',Date.parse('2026-11-30T00:00:00-06:00'),history);
+  const closed = guide('Cascanueces',Date.parse('2026-12-03T00:00:00-06:00'),history);
   assert.match(closed,/inscripciones .* cerradas/);
   assert.doesNotMatch(closed,/https|\$/);
   const perrun = guide('¿Cuánto cuestan tres lugares para Perrun?');
